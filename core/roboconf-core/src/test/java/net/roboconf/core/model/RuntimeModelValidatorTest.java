@@ -57,6 +57,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -702,6 +703,16 @@ public class RuntimeModelValidatorTest {
 		// A target.properties is present => no error
 		File targetPropertiesFile = new File( componentDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Assert.assertTrue( targetPropertiesFile.createNewFile());
+		errors = RuntimeModelValidator.validate( graphs, appDir );
+		Assert.assertEquals( 3, errors.size());
+
+		Iterator<ModelError> it = errors.iterator();
+		Assert.assertEquals( ErrorCode.REC_TARGET_NO_ID, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.REC_TARGET_NO_HANDLER, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.REC_TARGET_NO_NAME, it.next().getErrorCode());
+
+		// Add the required properties
+		Utils.writeStringInto( "id: tid\nhandler: test\nname: n", targetPropertiesFile );
 		errors = RuntimeModelValidator.validate( graphs, appDir );
 		Assert.assertEquals( 0, errors.size());
 	}

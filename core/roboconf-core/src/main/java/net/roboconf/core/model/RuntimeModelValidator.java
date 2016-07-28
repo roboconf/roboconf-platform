@@ -208,6 +208,9 @@ public final class RuntimeModelValidator {
 				error.setDetails( "Component name: " + c.getName());
 				result.add( error );
 
+			} else if( InstanceHelpers.isTarget( new Instance().component( c ) )) {
+				result.addAll( TargetValidator.parseTargetProperties( projectDirectory, c ));
+
 			} else {
 				result.addAll( RecipesValidator.validateComponentRecipes( projectDirectory, c ));
 			}

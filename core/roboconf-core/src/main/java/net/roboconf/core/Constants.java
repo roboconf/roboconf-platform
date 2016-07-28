@@ -85,7 +85,7 @@ public interface Constants {
 	/**
 	 * The {@value #TARGET_PROPERTY_ID} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
 	 */
-	String TARGET_PROERTY_ID = "id";
+	String TARGET_PROPERTY_ID = "id";
 
 	/**
 	 * The {@value #TARGET_PROPERTY_NAME} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.

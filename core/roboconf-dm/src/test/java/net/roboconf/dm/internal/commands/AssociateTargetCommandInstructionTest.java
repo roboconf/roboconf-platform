@@ -71,7 +71,7 @@ public class AssociateTargetCommandInstructionTest {
 	@Test
 	public void testExecute_success() throws Exception {
 
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
@@ -95,7 +95,7 @@ public class AssociateTargetCommandInstructionTest {
 	@Test( expected = CommandException.class )
 	public void testExecute_inexistingApplication() throws Exception {
 
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
@@ -107,7 +107,7 @@ public class AssociateTargetCommandInstructionTest {
 	@Test( expected = CommandException.class )
 	public void testExecute_inexistingInstance() throws Exception {
 
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		AssociateTargetCommandExecution executor = buildExecutor( "associate /inexisting with " + targetId, 1 );
 		executor.execute();
 	}

@@ -26,10 +26,7 @@
 package net.roboconf.maven;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -39,8 +36,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.utils.Utils;
+import net.roboconf.core.RoboconfError;
+import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.TargetValidator;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * The mojo in charge of checking the target properties.
@@ -62,34 +61,12 @@ public class ValidateTargetMojo extends AbstractMojo {
 			throw new MojoExecutionException( "The target directory could not be found. " + outputDirectory );
 
 		// Load and validate the target properties
-		Set<String> targetIds = new HashSet<> ();
-		try {
-			for( File f: Utils.listAllFiles( outputDirectory, Constants.FILE_EXT_PROPERTIES )) {
+		List<ModelError> errors = TargetValidator.parseDirectory( outputDirectory );
+		for( RoboconfError error : errors )
+			MavenUtils.formatError( error, getLog());
 
-				Properties props = Utils.readPropertiesFile( f );
-				String id = props.getProperty( Constants.TARGET_PROERTY_ID );
-				if( Utils.isEmptyOrWhitespaces( id ))
-					throw new MojoFailureException( "The target ID is missing or invalid in " + f.getName());
-
-				if( targetIds.contains( id ))
-					throw new MojoFailureException( "Target ID '" + id + "' is used more than once in this archive." );
-
-				targetIds.add( id );
-				String handler = props.getProperty( Constants.TARGET_PROPERTY_HANDLER );
-				if( Utils.isEmptyOrWhitespaces( handler ))
-					throw new MojoFailureException( "The target handler is missing or invalid in " + f.getName());
-
-				String name = props.getProperty( Constants.TARGET_PROPERTY_NAME );
-				if( Utils.isEmptyOrWhitespaces( name ))
-					getLog().warn( "[ warning ] The 'name' property is missing or invalid in " + f.getName());
-			}
-
-		} catch( IOException e ) {
-			throw new MojoExecutionException( "A target properties file could not be read.", e );
-		}
-
-		// There should be properties files
-		if( targetIds.isEmpty())
-			throw new MojoFailureException( "No properties file was found in the project." );
+		// Fail the build?
+		if( RoboconfErrorHelpers.containsCriticalErrors( errors ))
+			throw new MojoFailureException( "The project contains one or several errors." );
 	}
 }

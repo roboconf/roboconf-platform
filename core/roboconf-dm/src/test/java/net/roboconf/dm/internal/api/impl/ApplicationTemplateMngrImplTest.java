@@ -30,6 +30,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ApplicationTemplateDescriptor;
@@ -47,14 +55,6 @@ import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -374,7 +374,7 @@ public class ApplicationTemplateMngrImplTest {
 		// The VM directory MUST exist for this test
 		File targetPropertiesFile = new File( tplDir, "graph/VM/" + Constants.TARGET_PROPERTIES_FILE_NAME );
 		Assert.assertTrue( targetPropertiesFile.getParentFile().mkdirs());
-		Utils.writeStringInto( "", targetPropertiesFile );
+		Utils.writeStringInto( "id: ti\nhandler: h", targetPropertiesFile );
 
 		Mockito.when( this.targetsMngr.createTarget( Mockito.any( File.class ))).thenReturn( "the_id" );
 
@@ -416,7 +416,7 @@ public class ApplicationTemplateMngrImplTest {
 		// Unlike the previous test, the target properties are not located in "target.properties".
 		File targetPropertiesFile = new File( tplDir, "graph/VM/notDefault.properties" );
 		Assert.assertTrue( targetPropertiesFile.getParentFile().mkdirs());
-		Utils.writeStringInto( "", targetPropertiesFile );
+		Utils.writeStringInto( "id: ti\nhandler: h", targetPropertiesFile );
 
 		Mockito.when( this.targetsMngr.createTarget( Mockito.any( File.class ))).thenReturn( "the_id" );
 
@@ -462,7 +462,7 @@ public class ApplicationTemplateMngrImplTest {
 		final int targetCpt = 4;
 		for( int i=1; i<=targetCpt; i++ ) {
 			File targetPropertiesFile = new File( dir, "target" + i + ".properties" );
-			Utils.writeStringInto( "", targetPropertiesFile );
+			Utils.writeStringInto( "id: ti" + i + "\nhandler: h", targetPropertiesFile );
 			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
 		}
 
@@ -513,12 +513,12 @@ public class ApplicationTemplateMngrImplTest {
 		final int targetCpt = 4;
 		for( int i=1; i<=targetCpt; i++ ) {
 			File targetPropertiesFile = new File( dir, "target" + i + ".properties" );
-			Utils.writeStringInto( "", targetPropertiesFile );
+			Utils.writeStringInto( "id: ti" + i + "\nhandler: h", targetPropertiesFile );
 			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
 		}
 
 		File targetPropertiesFile = new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME );
-		Utils.writeStringInto( "", targetPropertiesFile );
+		Utils.writeStringInto( "id: ti\nhandler: h", targetPropertiesFile );
 		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id" );
 
 		// Load the template
@@ -569,7 +569,7 @@ public class ApplicationTemplateMngrImplTest {
 
 		// A single target for the original root component
 		File targetPropertiesFile = new File( dir, "test.properties" );
-		Utils.writeStringInto( "", targetPropertiesFile );
+		Utils.writeStringInto( "id: op\nhandler: h", targetPropertiesFile );
 		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_original" );
 
 		// Create a new root component
@@ -579,12 +579,12 @@ public class ApplicationTemplateMngrImplTest {
 		final int targetCpt = 4;
 		for( int i=1; i<=targetCpt; i++ ) {
 			targetPropertiesFile = new File( dir, "target" + i + ".properties" );
-			Utils.writeStringInto( "", targetPropertiesFile );
+			Utils.writeStringInto( "id: ti " + i + "\nhandler: h", targetPropertiesFile );
 			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
 		}
 
 		// Create a sibling file with the wrong extension, it should not be picked up.
-		Utils.writeStringInto( "", new File( dir, "invalid.extension" ));
+		Utils.writeStringInto( "id: ti\nhandler: h", new File( dir, "invalid.extension" ));
 
 		// Update the graph
 		File graphFile = new File( tplDir, "graph/lamp.graph" );

@@ -177,6 +177,12 @@ public enum ErrorCode {
 	REC_OFFICIAL_GROUP_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Official recipe projects should use " + Constants.OFFICIAL_RECIPES_GROUP_ID + " as their group ID." ),
 	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' directories should have the same name than their artifact ID." ),
 	REC_AVOID_INSTANCES( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects do not have to contain instances definitions." ),
+	REC_TARGET_NO_ID( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The target ID is missing or invalid." ),
+	REC_TARGET_NO_HANDLER( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The target handler is missing or invalid." ),
+	REC_TARGET_INVALID_FILE_OR_CONTENT( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The target properties could not be parsed." ),
+	REC_TARGET_CONFLICTING_ID( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "A target ID is used more than once." ),
+	REC_TARGET_NO_NAME( ErrorLevel.WARNING, ErrorCategory.RECIPES, "The target name is missing or invalid." ),
+	REC_TARGET_NO_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "No target properties were found." ),
 
 	// Commands Errors
 	CMD_INVALID_TARGET_ID( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An invalid target ID was specified in the command." ),

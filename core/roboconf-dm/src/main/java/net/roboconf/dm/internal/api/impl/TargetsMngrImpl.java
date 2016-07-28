@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.internal.api.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,12 +40,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.TargetValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
@@ -110,14 +111,14 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	public String createTarget( String targetContent ) throws IOException {
 
 		// Get the target ID
-		Properties props = new Properties();
-		props.load( new ByteArrayInputStream( targetContent.getBytes( "UTF-8" )));
-		String targetId = (String) props.remove( Constants.TARGET_PROERTY_ID );
-		if( Utils.isEmptyOrWhitespaces( targetId ))
-			throw new IOException( "Missing ID property in the target definition." );
+		TargetValidator tv = new TargetValidator( targetContent );
+		tv.validate();
+		if( RoboconfErrorHelpers.containsCriticalErrors( tv.getErrors()))
+			throw new IOException( "There are errors in the target definition." );
 
 		// Critical section.
 		// Store the ID, it cannot be reused.
+		String targetId = tv.getProperties().getProperty( Constants.TARGET_PROPERTY_ID );
 		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null )
 			throw new IOException( "ID " + targetId + " is already used." );
 
@@ -125,7 +126,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		// We do not want it to be modified later.
 		// We do not serialize java.util.properties#store because it adds
 		// a time stamp, removes user comments and looses the properties order.
-		targetContent = targetContent.replaceAll( Constants.TARGET_PROERTY_ID + "\\s*(:|=)[^\n]*(\n|$)", "" );
+		targetContent = targetContent.replaceAll( Constants.TARGET_PROPERTY_ID + "\\s*(:|=)[^\n]*(\n|$)", "" );
 
 		// Write the properties
 		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );

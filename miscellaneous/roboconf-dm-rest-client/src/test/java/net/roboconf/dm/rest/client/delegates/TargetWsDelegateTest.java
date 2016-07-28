@@ -120,13 +120,13 @@ public class TargetWsDelegateTest {
 	public void testListTargets_all() throws Exception {
 
 		Assert.assertEquals( 0, this.client.getTargetWsDelegate().listAllTargets().size());
-		this.client.getTargetWsDelegate().createTarget( "id: t1" );
+		this.client.getTargetWsDelegate().createTarget( "id: t1\nhandler: h" );
 		Assert.assertEquals( 1, this.client.getTargetWsDelegate().listAllTargets().size());
-		String t2 = this.client.getTargetWsDelegate().createTarget( "id: t2" );
+		String t2 = this.client.getTargetWsDelegate().createTarget( "id: t2\nhandler: h" );
 		Assert.assertNotNull( t2 );
 
 		Assert.assertEquals( 2, this.client.getTargetWsDelegate().listAllTargets().size());
-		this.client.getTargetWsDelegate().createTarget( "id: t3" );
+		this.client.getTargetWsDelegate().createTarget( "id: t3\nhandler: h" );
 		Assert.assertEquals( 3, this.client.getTargetWsDelegate().listAllTargets().size());
 
 		this.client.getTargetWsDelegate().deleteTarget( t2 );
@@ -137,11 +137,11 @@ public class TargetWsDelegateTest {
 	@Test
 	public void testCreateTarget() throws Exception {
 
-		String content = "id: toto\nprop: ok";
+		String content = "handler: h\nid: toto\nprop: ok";
 		String targetId = this.client.getTargetWsDelegate().createTarget( content );
 		String read = this.manager.targetsMngr().findRawTargetProperties( targetId );
 
-		Assert.assertEquals( "prop: ok", read );
+		Assert.assertEquals( "handler: h\nprop: ok", read );
 	}
 
 
@@ -165,7 +165,7 @@ public class TargetWsDelegateTest {
 	@Test
 	public void testAssociations_success() throws Exception {
 
-		String targetId = this.client.getTargetWsDelegate().createTarget( "id : tid" );
+		String targetId = this.client.getTargetWsDelegate().createTarget( "id : tid\nhandler: h" );
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -189,7 +189,7 @@ public class TargetWsDelegateTest {
 	@Test
 	public void testAssociations_doAndUndo() throws Exception {
 
-		String targetId = this.client.getTargetWsDelegate().createTarget( "id: tid" );
+		String targetId = this.client.getTargetWsDelegate().createTarget( "id: tid\nhandler: h" );
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );

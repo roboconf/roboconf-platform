@@ -122,7 +122,7 @@ public class TargetHelpersTest {
 		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
 
 		props.remove( Constants.TARGET_PROPERTY_HANDLER );
-		Assert.assertEquals( "whatever2", TargetHelpers.findTargetHandlerName( props ));
+		Assert.assertNull( TargetHelpers.findTargetHandlerName( props ));
 	}
 
 
@@ -136,6 +136,6 @@ public class TargetHelpersTest {
 		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
 
 		props.remove( Constants.TARGET_PROPERTY_HANDLER );
-		Assert.assertEquals( "whatever2", TargetHelpers.findTargetHandlerName( props ));
+		Assert.assertNull( TargetHelpers.findTargetHandlerName( props ));
 	}
 }

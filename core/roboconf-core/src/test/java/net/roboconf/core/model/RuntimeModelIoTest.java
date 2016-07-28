@@ -692,7 +692,9 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
-		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+		Utils.writeStringInto(
+				"id: tid\nhandler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
 
 		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
 		Assert.assertTrue( graphFile.createNewFile());
@@ -719,7 +721,9 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
-		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+		Utils.writeStringInto(
+				"id: tid\nhandler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
@@ -751,6 +755,36 @@ public class RuntimeModelIoTest {
 
 
 	@Test
+	public void testApplicationWithInvalidTarget() throws Exception {
+
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_DESC ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
+
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
+		Utils.writeStringInto(
+				"handler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
+
+		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
+		Assert.assertTrue( graphFile.createNewFile());
+
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
+		desc.setName( "app name" );
+		desc.setQualifier( "qualifier" );
+		desc.setGraphEntryPoint( "app.graph" );
+		desc.setDslId( "roboconf-1.0" );
+		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
+
+		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
+		Iterator<RoboconfError> it = RuntimeModelIo.loadApplication( dir ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.REC_TARGET_NO_ID, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+	}
+
+
+	@Test
 	public void testInvalidFileLocation() throws Exception {
 
 		// Valid project
@@ -760,7 +794,9 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
-		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+		Utils.writeStringInto(
+				"id: tid\nhandler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );

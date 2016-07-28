@@ -103,7 +103,7 @@ public class CommandsExecutorTest {
 		File f = TestUtils.findTestFile( "/commands/create-and-delete.commands" );
 		CommandsExecutor executor = new CommandsExecutor( this.manager, this.app, f );
 
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		Assert.assertEquals( "tid", targetId );
 
 		List<String> instancePaths = new ArrayList<> ();

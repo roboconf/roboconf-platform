@@ -100,12 +100,12 @@ public class TargetResourceTest {
 				Status.NOT_FOUND.getStatusCode(),
 				this.resource.getTargetProperties( "whatever" ).getStatus());
 
-		Response resp = this.resource.createOrUpdateTarget( "id: tid\nprop: ok", null );
+		Response resp = this.resource.createOrUpdateTarget( "id: tid\nprop: ok\nhandler: h", null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		String targetId = (String) resp.getEntity();
 		Assert.assertEquals( "tid", targetId );
 
-		resp = this.resource.createOrUpdateTarget( "id: t2\nok: ok", null );
+		resp = this.resource.createOrUpdateTarget( "id: t2\nok: ok\nhandler: h", null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		String newTargetId = (String) resp.getEntity();
 		Assert.assertEquals( "t2", newTargetId );
@@ -113,12 +113,12 @@ public class TargetResourceTest {
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		StringWrapper props = (StringWrapper) resp.getEntity();
-		Assert.assertEquals( "prop: ok", props.toString());
+		Assert.assertEquals( "prop: ok\nhandler: h", props.toString());
 
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		props = (StringWrapper) resp.getEntity();
-		Assert.assertEquals( "prop: ok", props.toString());
+		Assert.assertEquals( "prop: ok\nhandler: h", props.toString());
 
 		this.resource.createOrUpdateTarget( "prop2: ko\nprop1: done", targetId );
 		resp = this.resource.getTargetProperties( targetId );
@@ -155,7 +155,7 @@ public class TargetResourceTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 
-		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nprop: ok", null ).getEntity();
+		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nprop: ok\nhandler: h", null ).getEntity();
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.resource.associateTarget( app.getName(), null, null, targetId, true );
@@ -170,11 +170,11 @@ public class TargetResourceTest {
 	public void testListTargets_all() throws Exception {
 
 		Assert.assertEquals( 0, this.resource.listTargets( null, null ).size());
-		this.resource.createOrUpdateTarget( "id: t1", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t1\nhandler: h", null ).getEntity();
 		Assert.assertEquals( 1, this.resource.listTargets( null, null ).size());
-		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2\nhandler: h", null ).getEntity();
 		Assert.assertEquals( 2, this.resource.listTargets( null, null ).size());
-		this.resource.createOrUpdateTarget( "id: t3", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t3\nhandler: h", null ).getEntity();
 		Assert.assertEquals( 3, this.resource.listTargets( null, null ).size());
 
 		this.resource.deleteTarget( t2 );
@@ -185,8 +185,8 @@ public class TargetResourceTest {
 	@Test
 	public void testHints_onTemplate() throws Exception {
 
-		String t1 = (String) this.resource.createOrUpdateTarget( "id: t1\nprop: ok", null ).getEntity();
-		this.resource.createOrUpdateTarget( "id: t2\nprop: ok", null ).getEntity();
+		String t1 = (String) this.resource.createOrUpdateTarget( "id: t1\nprop: ok\nhandler: h", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t2\nprop: ok\nhandler: h", null ).getEntity();
 
 		TestApplicationTemplate tpl1 = new TestApplicationTemplate();
 		TestApplicationTemplate tpl2 = new TestApplicationTemplate();
@@ -211,8 +211,8 @@ public class TargetResourceTest {
 	@Test
 	public void testHints_onApplication() throws Exception {
 
-		this.resource.createOrUpdateTarget( "id: t1\nprop: ok", null ).getEntity();
-		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2nprop: ok", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t1\nprop: ok\nhandler: h", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2nprop: ok\nhandler: h", null ).getEntity();
 
 		TestApplication app1 = new TestApplication();
 		TestApplication app2 = new TestApplication();
@@ -278,7 +278,7 @@ public class TargetResourceTest {
 	@Test
 	public void testAssociations_onApplication_defaultTarget() throws Exception {
 
-		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nprop: ok", null ).getEntity();
+		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\nprop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -303,7 +303,7 @@ public class TargetResourceTest {
 	@Test
 	public void testAssociations_onApplication_exactInstance() throws Exception {
 
-		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nprop: ok", null ).getEntity();
+		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\nprop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -365,7 +365,7 @@ public class TargetResourceTest {
 		Response resp = this.resource.findTargetById( "2" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 
-		String t2 = (String) this.resource.createOrUpdateTarget( "id: tid\ndescription: we do not care", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\ndescription: we do not care", null ).getEntity();
 		resp = this.resource.findTargetById( t2 );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
@@ -389,13 +389,13 @@ public class TargetResourceTest {
 	public void testFindUsageStatistics() throws Exception {
 
 		// Setup
-		String t1 = (String) this.resource.createOrUpdateTarget( "id: t1\nprop: ok", null ).getEntity();
+		String t1 = (String) this.resource.createOrUpdateTarget( "id: t1\nhandler: h\nprop: ok", null ).getEntity();
 		Assert.assertNotNull( t1 );
 
-		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2\nprop: ok", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2\nhandler: h\nprop: ok", null ).getEntity();
 		Assert.assertNotNull( t2 );
 
-		String t3 = (String) this.resource.createOrUpdateTarget( "id: t3\nprop: ok", null ).getEntity();
+		String t3 = (String) this.resource.createOrUpdateTarget( "id: t3\nhandler: h\nprop: ok", null ).getEntity();
 		Assert.assertNotNull( t3 );
 
 		TestApplication app = new TestApplication();

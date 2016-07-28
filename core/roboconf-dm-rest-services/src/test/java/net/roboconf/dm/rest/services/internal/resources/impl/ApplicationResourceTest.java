@@ -642,7 +642,7 @@ public class ApplicationResourceTest {
 		Assert.assertNull( ta.getTargetDescriptor());
 
 		// Create a target but no association
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 
 		associations = this.resource.findTargetAssociations( this.app.getName());
 		Assert.assertEquals( scopedInstances.size() + 1, associations.size());
@@ -678,7 +678,7 @@ public class ApplicationResourceTest {
 		Assert.assertEquals( targetId, ta.getTargetDescriptor().getId());
 
 		// Add a custom target for a given instance
-		String newTargetId = this.manager.targetsMngr().createTarget( "id: new-tid" );
+		String newTargetId = this.manager.targetsMngr().createTarget( "id: new-tid\nhandler: h" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		this.manager.targetsMngr().associateTargetWithScopedInstance( newTargetId, this.app, instancePath );
 
