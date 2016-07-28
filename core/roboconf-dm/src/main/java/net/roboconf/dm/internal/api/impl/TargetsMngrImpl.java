@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +38,6 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
@@ -84,10 +84,10 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	private static final Object LOCK = new Object();
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final AtomicInteger id = new AtomicInteger();
-
 	private final IConfigurationMngr configurationMngr;
 	private final Map<InstanceContext,String> instanceToCachedId;
+
+	final ConcurrentHashMap<String,Boolean> targetIds = new ConcurrentHashMap<> ();
 
 
 	/**
@@ -109,30 +109,46 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public String createTarget( String targetContent ) throws IOException {
 
-		File targetFile = new File( findTargetDirectory( null ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		// Get the target ID
+		Properties props = new Properties();
+		props.load( new ByteArrayInputStream( targetContent.getBytes( "UTF-8" )));
+		String targetId = (String) props.remove( Constants.TARGET_PROERTY_ID );
+		if( Utils.isEmptyOrWhitespaces( targetId ))
+			throw new IOException( "Missing ID property in the target definition." );
+
+		// Critical section.
+		// Store the ID, it cannot be reused.
+		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null )
+			throw new IOException( "ID " + targetId + " is already used." );
+
+		// Rewrite the properties without the ID.
+		// We do not want it to be modified later.
+		// We do not serialize java.util.properties#store because it adds
+		// a time stamp, removes user comments and looses the properties order.
+		targetContent = targetContent.replaceAll( Constants.TARGET_PROERTY_ID + "\\s*(:|=)[^\n]*(\n|$)", "" );
+
+		// Write the properties
+		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
 		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( targetContent, targetFile );
 
-		return targetFile.getParentFile().getName();
+		return targetId;
 	}
 
 
 	@Override
 	public String createTarget( File targetPropertiesFile ) throws IOException {
 
-		File targetFile = new File( findTargetDirectory( null ), Constants.TARGET_PROPERTIES_FILE_NAME );
-		Utils.createDirectory( targetFile.getParentFile());
-		Utils.copyStream( targetPropertiesFile, targetFile );
-
-		return targetFile.getParentFile().getName();
+		String fileContent = Utils.readFileContent( targetPropertiesFile );
+		return createTarget( fileContent );
 	}
 
 
 	@Override
 	public void updateTarget( String targetId, String newTargetContent ) throws IOException, UnauthorizedActionException {
 
-		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
-		if( ! targetFile.getParentFile().exists())
+		File targetFile = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
+		if( targetFile == null )
 			throw new UnauthorizedActionException( "Target " + targetId + " does not exist." );
 
 		Utils.writeStringInto( newTargetContent, targetFile );
@@ -152,6 +168,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			throw new UnauthorizedActionException( "Deletion is not permitted." );
 
 		// Delete the files related to this target
+		this.targetIds.remove( targetId );
 		File targetDirectory = findTargetDirectory( targetId );
 		Utils.deleteFilesRecursively( targetDirectory );
 	}
@@ -269,7 +286,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		Map<String,String> result = new HashMap<> ();
 		String targetId = findTargetId( app, instancePath );
 		if( targetId != null ) {
-			File f = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
+			File f = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
 			for( Map.Entry<Object,Object> entry : Utils.readPropertiesFileQuietly( f, this.logger ).entrySet()) {
 				result.put((String) entry.getKey(), (String) entry.getValue());
 			}
@@ -282,10 +299,10 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public String findRawTargetProperties( String targetId ) {
 
-		File f = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		File f = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
 		String content = null;
 		try {
-			if( f.exists())
+			if( f != null )
 				content = Utils.readFileContent( f );
 
 		} catch( IOException e ) {
@@ -520,7 +537,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( instancePath != null ) {
 			String oldTargetId = this.instanceToCachedId.remove( key );
 			if( oldTargetId != null ) {
-				File associationFile = new File( findTargetDirectory( oldTargetId ), TARGETS_ASSOC_FILE );
+				File associationFile = findTargetFile( oldTargetId, TARGETS_ASSOC_FILE );
 				Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
 				props.remove( key.toString());
 				writeProperties( props, associationFile );
@@ -529,7 +546,10 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		// Register a potential new association and update the cache.
 		if( add ) {
-			File associationFile = new File( findTargetDirectory( targetId ), TARGETS_ASSOC_FILE );
+			File associationFile = findTargetFile( targetId, TARGETS_ASSOC_FILE );
+			if( associationFile == null )
+				throw new IOException( "Target " + targetId + " does not exist." );
+
 			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
 			props.setProperty( key.toString(), "" );
 			writeProperties( props, associationFile );
@@ -544,10 +564,8 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
 		for( File f : Utils.listDirectories( dir )) {
 
-			// Update the global ID
-			Integer targetId = Integer.valueOf( f.getName());
-			if( targetId > this.id.get())
-				this.id.set( targetId );
+			// Store the ID
+			this.targetIds.put( f.getName(), Boolean.TRUE );
 
 			// Cache associations for quicker access
 			File associationFile = new File( f, TARGETS_ASSOC_FILE );
@@ -565,7 +583,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	throws IOException {
 
 		// Usage means the target has been used to create a real machine.
-		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
+		File usageFile = findTargetFile( targetId, TARGETS_USAGE_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
 
 		String key = mappingKey.toString();
@@ -580,7 +598,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	private boolean isTargetUsed( String targetId ) {
 
-		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
+		File usageFile = findTargetFile( targetId, TARGETS_USAGE_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
 
 		boolean found = false;
@@ -594,7 +612,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	private List<String> applicationsThatUse( String targetId ) {
 
-		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
+		File usageFile = findTargetFile( targetId, TARGETS_USAGE_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
 
 		List<String> result = new ArrayList<> ();
@@ -611,7 +629,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		// A hint is just a preference (some kind of scope for a target).
 		// If a hint is not respected, no exception will be thrown.
-		File hintsFile = new File( findTargetDirectory( targetId ), TARGETS_HINTS_FILE );
+		File hintsFile = findTargetFile( targetId, TARGETS_HINTS_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( hintsFile, this.logger );
 
 		String key = new InstanceContext( app ).toString();
@@ -636,10 +654,19 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	private File findTargetDirectory( String targetId ) {
 
-		if( targetId == null )
-			targetId = String.valueOf( this.id.incrementAndGet());
-
 		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
 		return new File( dir, targetId );
+	}
+
+
+	private File findTargetFile( String targetId, String fileName ) {
+
+		File dir = null;
+		File result = null;
+		if( targetId != null
+				&& (dir = findTargetDirectory( targetId )).exists())
+			result = new File( dir, fileName );
+
+		return result;
 	}
 }

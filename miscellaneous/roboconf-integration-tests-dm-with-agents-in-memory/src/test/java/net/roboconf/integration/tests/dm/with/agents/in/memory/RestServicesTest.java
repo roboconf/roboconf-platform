@@ -163,7 +163,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		// Define a target and set it as the default for the application
 		Assert.assertEquals( 0, client.getTargetWsDelegate().listAllTargets().size());
 
-		String targetId = client.getTargetWsDelegate().createTarget( "handler: in-memory" );
+		String targetId = client.getTargetWsDelegate().createTarget( "id:tid\nhandler: in-memory" );
 		Assert.assertNotNull( targetId );
 
 		Assert.assertEquals( 1, client.getTargetWsDelegate().listAllTargets().size());

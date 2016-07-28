@@ -83,6 +83,11 @@ public interface Constants {
 	String TARGET_PROPERTY_HANDLER = "handler";
 
 	/**
+	 * The {@value #TARGET_PROPERTY_ID} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
+	 */
+	String TARGET_PROERTY_ID = "id";
+
+	/**
 	 * The {@value #TARGET_PROPERTY_NAME} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
 	 */
 	String TARGET_PROPERTY_NAME = "name";

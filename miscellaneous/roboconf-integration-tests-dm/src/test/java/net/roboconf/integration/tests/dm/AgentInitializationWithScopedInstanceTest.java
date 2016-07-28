@@ -162,7 +162,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Associate a default target for this application
-		String targetId = this.manager.targetsMngr().createTarget( "handler: in-memory" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler: in-memory" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
 
 		// There is no agent yet (no root instance was deployed)

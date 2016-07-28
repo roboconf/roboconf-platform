@@ -666,7 +666,7 @@ public class ManagerBasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		// Try a first deployment

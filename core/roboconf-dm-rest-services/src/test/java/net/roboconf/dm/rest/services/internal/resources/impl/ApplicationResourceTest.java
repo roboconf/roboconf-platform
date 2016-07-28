@@ -172,7 +172,7 @@ public class ApplicationResourceTest {
 		TestTargetResolver iaasResolver = new TestTargetResolver();
 		this.manager.setTargetResolver( iaasResolver );
 
-		String targetId = this.manager.targetsMngr().createTarget( "handler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
 
 		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
@@ -642,7 +642,7 @@ public class ApplicationResourceTest {
 		Assert.assertNull( ta.getTargetDescriptor());
 
 		// Create a target but no association
-		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid" );
 
 		associations = this.resource.findTargetAssociations( this.app.getName());
 		Assert.assertEquals( scopedInstances.size() + 1, associations.size());
@@ -678,7 +678,7 @@ public class ApplicationResourceTest {
 		Assert.assertEquals( targetId, ta.getTargetDescriptor().getId());
 
 		// Add a custom target for a given instance
-		String newTargetId = this.manager.targetsMngr().createTarget( "" );
+		String newTargetId = this.manager.targetsMngr().createTarget( "id: new-tid" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		this.manager.targetsMngr().associateTargetWithScopedInstance( newTargetId, this.app, instancePath );
 

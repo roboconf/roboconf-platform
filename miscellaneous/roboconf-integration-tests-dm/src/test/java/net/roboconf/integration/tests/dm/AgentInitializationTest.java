@@ -161,7 +161,7 @@ public class AgentInitializationTest extends DmTest {
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Associate a default target for this application
-		String targetId = this.manager.targetsMngr().createTarget( "handler: whatever" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler: whatever" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
 
 		// There is no agent yet (no root instance was deployed)
