@@ -43,8 +43,8 @@ import org.codehaus.plexus.archiver.zip.ZipArchiver;
  * The <strong>package</strong> mojo.
  * @author Vincent Zurczak - Linagora
  */
-@Mojo( name="package", defaultPhase = LifecyclePhase.PACKAGE )
-public class PackageMojo extends AbstractMojo {
+@Mojo( name="package-application", defaultPhase = LifecyclePhase.PACKAGE )
+public class PackageApplicationMojo extends AbstractMojo {
 
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
