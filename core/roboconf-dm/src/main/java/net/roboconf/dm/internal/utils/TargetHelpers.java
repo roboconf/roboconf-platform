@@ -45,9 +45,6 @@ import net.roboconf.target.api.TargetException;
  */
 public final class TargetHelpers {
 
-	static final String LEGACY_HANDLER_PROPERTY = "target.id";
-
-
 	/**
 	 * Empty private constructor.
 	 */
@@ -133,12 +130,7 @@ public final class TargetHelpers {
 	 * @return a handler name, or null if none was specified
 	 */
 	public static String findTargetHandlerName( Properties props ) {
-
-		String handler = props.getProperty( Constants.TARGET_PROPERTY_HANDLER );
-		if( handler == null )
-			handler = props.getProperty( LEGACY_HANDLER_PROPERTY );
-
-		return handler;
+		return props.getProperty( Constants.TARGET_PROPERTY_HANDLER );
 	}
 
 
@@ -153,11 +145,6 @@ public final class TargetHelpers {
 	 * @return a handler name, or null if none was specified
 	 */
 	public static String findTargetHandlerName( Map<String,String> props ) {
-
-		String handler = props.get( Constants.TARGET_PROPERTY_HANDLER );
-		if( handler == null )
-			handler = props.get( LEGACY_HANDLER_PROPERTY );
-
-		return handler;
+		return props.get( Constants.TARGET_PROPERTY_HANDLER );
 	}
 }

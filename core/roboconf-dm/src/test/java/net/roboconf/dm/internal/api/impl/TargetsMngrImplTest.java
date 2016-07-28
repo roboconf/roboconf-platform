@@ -759,7 +759,7 @@ public class TargetsMngrImplTest {
 
 		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/5" );
 		Utils.createDirectory( dir );
-		Utils.writeStringInto( "prop: done\ntarget.id = test", new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME ));
+		Utils.writeStringInto( "prop: done\nhandler = test", new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME ));
 
 		TargetWrapperDescriptor twb = this.mngr.findTargetById( dir.getName());
 		Assert.assertNotNull( twb );
