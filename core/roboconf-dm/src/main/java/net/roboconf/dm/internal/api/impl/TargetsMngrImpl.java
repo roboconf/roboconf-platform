@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.TargetValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
@@ -148,6 +149,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public void updateTarget( String targetId, String newTargetContent ) throws IOException, UnauthorizedActionException {
 
+		// Validate the new content
+		TargetValidator tv = new TargetValidator( newTargetContent );
+		tv.validate();
+
+		// We should ignore all the ID related errors as we do not care anymore
+		// (only at the creation, not on updates)
+		RoboconfErrorHelpers.filterErrors(
+				tv.getErrors(),
+				ErrorCode.REC_TARGET_NO_ID,
+				ErrorCode.REC_TARGET_CONFLICTING_ID );
+
+		if( RoboconfErrorHelpers.containsCriticalErrors( tv.getErrors()))
+			throw new IOException( "There are errors in the target definition." );
+
+		// Write it
 		File targetFile = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
 		if( targetFile == null )
 			throw new UnauthorizedActionException( "Target " + targetId + " does not exist." );

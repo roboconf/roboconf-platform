@@ -129,11 +129,11 @@ public class TargetResourceTest {
 		props = (StringWrapper) resp.getEntity();
 		Assert.assertEquals( "prop: ok\nhandler: h", props.toString());
 
-		this.resource.createOrUpdateTarget( "prop2: ko\nprop1: done", targetId );
+		this.resource.createOrUpdateTarget( "prop2: ko\nprop1: done\nhandler: my handler", targetId );
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		props = (StringWrapper) resp.getEntity();
-		Assert.assertEquals( "prop2: ko\nprop1: done", props.toString());
+		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: my handler", props.toString());
 
 		this.resource.deleteTarget( targetId );
 		Assert.assertEquals(
@@ -145,7 +145,7 @@ public class TargetResourceTest {
 	@Test
 	public void testCreateOrupdateTarget_updateInexistingTarget() {
 
-		Response resp = this.resource.createOrUpdateTarget( "prop: ok", "4" );
+		Response resp = this.resource.createOrUpdateTarget( "prop: ok\nhandler: my handler", "4" );
 		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
 	}
 

@@ -91,9 +91,21 @@ public class TargetsMngrImplTest {
 		props = this.mngr.findRawTargetProperties( newTargetId );
 		Assert.assertEquals( "ok: ok\nhandler: h", props.trim());
 
-		this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done" );
+		this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done\nhandler: ok" );
 		props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( "prop2: ko\nprop1: done", props );
+		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
+
+		// missing handler
+		try {
+			this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done" );
+			Assert.fail( "Update should have failed, the handler is missing." );
+
+		} catch( IOException e ) {
+			// nothing
+		}
+
+		props = this.mngr.findRawTargetProperties( targetId );
+		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
 
 		this.mngr.deleteTarget( targetId );
 		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
@@ -147,7 +159,7 @@ public class TargetsMngrImplTest {
 	@Test( expected = UnauthorizedActionException.class )
 	public void testUpdateTarget_whenTargetDoesNotExist() throws Exception {
 
-		this.mngr.updateTarget( "inexisting", "prop: ok" );
+		this.mngr.updateTarget( "inexisting", "prop: ok\nhandler: h" );
 	}
 
 

@@ -171,13 +171,26 @@ public final class RoboconfErrorHelpers {
 	 */
 	public static void filterErrorsForRecipes( Collection<? extends RoboconfError> errors ) {
 
-		List<ErrorCode> codesToSkip = Arrays.asList(
-			ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
-			ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE,
-			ErrorCode.RM_UNREACHABLE_COMPONENT,
-			ErrorCode.RM_ORPHAN_FACET,
-			ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN
-		);
+		filterErrors(
+				errors,
+				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
+				ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE,
+				ErrorCode.RM_UNREACHABLE_COMPONENT,
+				ErrorCode.RM_ORPHAN_FACET,
+				ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN );
+	}
+
+
+	/**
+	 * Filters errors by removing those associated with specific error codes.
+	 * @param errors a non-null list of errors
+	 * @param errorCodes error codes
+	 */
+	public static void filterErrors( Collection<? extends RoboconfError> errors, ErrorCode... errorCodes ) {
+
+		List<ErrorCode> codesToSkip = new ArrayList<> ();
+		if( errorCodes != null )
+			codesToSkip.addAll( Arrays.asList( errorCodes ));
 
 		Collection<RoboconfError> toRemove = new ArrayList<> ();
 		for( RoboconfError error : errors ) {
