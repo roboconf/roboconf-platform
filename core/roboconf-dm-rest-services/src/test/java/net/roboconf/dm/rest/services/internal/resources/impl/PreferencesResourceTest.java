@@ -67,14 +67,15 @@ public class PreferencesResourceTest {
 	@Test
 	public void testGetAndSave() {
 
-		List<Preference> prefs = this.resource.getAllPreferences();
+		// Test all preferences
+		List<Preference> prefs = this.resource.getPreferences( null );
 		Assert.assertNotSame( 0, prefs.size());
 
-		int size = prefs.size();
 		Response resp = this.resource.savePreference( "my-key", "my-value" );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
-		prefs = this.resource.getAllPreferences();
+		int size = prefs.size();
+		prefs = this.resource.getPreferences( null );
 		Assert.assertEquals( size + 1, prefs.size());
 
 		boolean found = false;
@@ -86,6 +87,26 @@ public class PreferencesResourceTest {
 		}
 
 		Assert.assertTrue( found );
+
+		// Add and search a specific one
+		resp = this.resource.savePreference( "lang", "fr-FR" );
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		prefs = this.resource.getPreferences( "lang" );
+		Assert.assertEquals( "lang", prefs.get( 0 ).getName());
+		Assert.assertEquals( "fr-FR", prefs.get( 0 ).getValue());
+		Assert.assertEquals( 1, prefs.size());
+
+		prefs = this.resource.getPreferences( "my-key" );
+		Assert.assertEquals( "my-key", prefs.get( 0 ).getName());
+		Assert.assertEquals( "my-value", prefs.get( 0 ).getValue());
+		Assert.assertEquals( 1, prefs.size());
+
+		prefs = this.resource.getPreferences( "unknown" );
+		Assert.assertEquals( 0, prefs.size());
+
+		prefs = this.resource.getPreferences( null );
+		Assert.assertEquals( size + 2, prefs.size());
 	}
 
 

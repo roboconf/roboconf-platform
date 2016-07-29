@@ -50,12 +50,14 @@ public interface IPreferencesResource {
 
 
 	/**
-	 * Gets all the preferences.
+	 * Get a specific or all the preferences.
+	 * @param key a specific key, or null to get all the properties
 	 * @return a non-null list of preferences
+	 *
 	 * @HTTP 200 everything went fine
 	 */
 	@GET
-	List<Preference> getAllPreferences();
+	List<Preference> getPreferences( @QueryParam("key") String key );
 
 
 	/**
