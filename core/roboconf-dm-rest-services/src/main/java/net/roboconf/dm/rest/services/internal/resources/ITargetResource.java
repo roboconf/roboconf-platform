@@ -25,8 +25,10 @@
 
 package net.roboconf.dm.rest.services.internal.resources;
 
+import java.io.InputStream;
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -36,6 +38,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
 
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
@@ -90,6 +95,25 @@ public interface ITargetResource {
 	 */
 	@POST
 	Response createOrUpdateTarget( String rawProperties, @QueryParam("target-id") String targetId );
+
+
+	/**
+	 * Loads target properties from a ZIP file.
+	 * @param uploadedInputStream the uploaded archive
+	 * @param fileDetail the file details
+	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 403 invalid target properties
+	 * @HTTP 406 the targets could not be registered
+	 */
+	@POST
+	@Path("/archive")
+	@Consumes( MediaType.MULTIPART_FORM_DATA )
+	@Produces( MediaType.APPLICATION_JSON )
+	Response loadTargetArchive(
+			@FormDataParam("file") InputStream uploadedInputStream,
+			@FormDataParam("file") FormDataContentDisposition fileDetail );
 
 
 	/**

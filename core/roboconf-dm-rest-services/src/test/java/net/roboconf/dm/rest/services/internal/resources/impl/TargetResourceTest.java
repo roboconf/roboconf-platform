@@ -25,8 +25,13 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -38,12 +43,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.sun.jersey.core.header.FormDataContentDisposition;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -493,5 +502,128 @@ public class TargetResourceTest {
 
 		items = this.resource.findUsageStatistics( t3 );
 		Assert.assertEquals( 0, items.size());
+	}
+
+
+	@Test
+	public void testLoadTargetArchive_ok() throws Exception {
+
+		// Create a ZIP with valid properties
+		Map<String,String> entryToContent = new HashMap<> ();
+		entryToContent.put( "t1.properties", "id: tid-1\nhandler: h" );
+		entryToContent.put( "t2.properties", "id: tid-2\nhandler: h\nname: my main target" );
+
+		File targetFile = this.folder.newFile( "roboconf_targets.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Preconditions
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+
+		// Upload it
+		InputStream in = null;
+		try {
+			FormDataContentDisposition fd = FormDataContentDisposition
+					.name( targetFile.getName())
+					.fileName( targetFile.getName()).build();
+
+			in = new FileInputStream( targetFile );
+			Assert.assertEquals(
+					Status.OK.getStatusCode(),
+					this.resource.loadTargetArchive( in, fd ).getStatus());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Postconditions
+		List<TargetWrapperDescriptor> targetIds = this.manager.targetsMngr().listAllTargets();
+		Assert.assertEquals( 2, targetIds.size());
+		Assert.assertEquals( "tid-1", targetIds.get( 0 ).getId());
+		Assert.assertEquals( "h", targetIds.get( 0 ).getHandler());
+		Assert.assertNull( targetIds.get( 0 ).getName());
+		Assert.assertNull( targetIds.get( 0 ).getDescription());
+
+		Assert.assertEquals( "tid-2", targetIds.get( 1 ).getId());
+		Assert.assertEquals( "h", targetIds.get( 1 ).getHandler());
+		Assert.assertEquals( "my main target", targetIds.get( 1 ).getName());
+		Assert.assertNull( targetIds.get( 1 ).getDescription());
+	}
+
+
+	@Test
+	public void testLoadTargetArchive_conflictingTarget_withRevert() throws Exception {
+
+		// Create a ZIP with valid properties
+		Map<String,String> entryToContent = new HashMap<> ();
+		entryToContent.put( "t1.properties", "id: tid-1\nhandler: h" );
+		entryToContent.put( "t2.properties", "id: tid-2\n\nhandler: h\nnname: my main target" );
+		entryToContent.put( "t3.properties", "id: tid-3\nhandler: h\nname: my main target" );
+
+		File targetFile = this.folder.newFile( "roboconf_targets.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Preconditions
+		Assert.assertNotNull( this.manager.targetsMngr().createTarget( "id: tid-2\nhandler: handler" ));
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Upload it
+		InputStream in = null;
+		try {
+			FormDataContentDisposition fd = FormDataContentDisposition
+					.name( targetFile.getName())
+					.fileName( targetFile.getName()).build();
+
+			in = new FileInputStream( targetFile );
+			Assert.assertEquals(
+					Status.NOT_ACCEPTABLE.getStatusCode(),
+					this.resource.loadTargetArchive( in, fd ).getStatus());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Postconditions
+		List<TargetWrapperDescriptor> targetIds = this.manager.targetsMngr().listAllTargets();
+		Assert.assertEquals( 1, targetIds.size());
+	}
+
+
+	@Test
+	public void testLoadTargetArchive_invalidTarget() throws Exception {
+
+		// Create a ZIP with valid properties
+		Map<String,String> entryToContent = new HashMap<> ();
+		entryToContent.put( "t1.properties", "id: tid-1\nhandler: h" );
+		entryToContent.put( "t2.properties", "id: tid-2\n\nnname: my main target" );
+		entryToContent.put( "t3.properties", "id: tid-3\nhandler: h\nname: my main target" );
+
+		File targetFile = this.folder.newFile( "roboconf_targets.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Preconditions
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+
+		// Upload it
+		InputStream in = null;
+		try {
+			FormDataContentDisposition fd = FormDataContentDisposition
+					.name( targetFile.getName())
+					.fileName( targetFile.getName()).build();
+
+			in = new FileInputStream( targetFile );
+			Assert.assertEquals(
+					Status.FORBIDDEN.getStatusCode(),
+					this.resource.loadTargetArchive( in, fd ).getStatus());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Postconditions
+		List<TargetWrapperDescriptor> targetIds = this.manager.targetsMngr().listAllTargets();
+		Assert.assertEquals( 0, targetIds.size());
 	}
 }

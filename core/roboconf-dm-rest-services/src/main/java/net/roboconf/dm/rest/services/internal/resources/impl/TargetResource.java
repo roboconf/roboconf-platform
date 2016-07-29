@@ -25,19 +25,30 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.core.header.FormDataContentDisposition;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.TargetValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
@@ -65,7 +76,7 @@ public class TargetResource implements ITargetResource {
 		// This class allows to have several exception blocks.
 		// It is more efficient for code coverage and guarantees a coherent
 		// handling of exceptions.
-		this.exceptionclassToErrorCode = new HashMap<Class<?>,Status>( 2 );
+		this.exceptionclassToErrorCode = new HashMap<>( 2 );
 		this.exceptionclassToErrorCode.put( IOException.class, Status.INTERNAL_SERVER_ERROR );
 		this.exceptionclassToErrorCode.put( UnauthorizedActionException.class, Status.FORBIDDEN );
 	}
@@ -115,6 +126,67 @@ public class TargetResource implements ITargetResource {
 		} catch( IOException | UnauthorizedActionException e ) {
 			Status status = this.exceptionclassToErrorCode.get( e.getClass());
 			response = RestServicesUtils.handleException( this.logger, status, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	@Override
+	public Response loadTargetArchive( InputStream uploadedInputStream, FormDataContentDisposition fileDetail ) {
+
+		this.logger.fine( "Request: load targets from an uploaded ZIP file (" + fileDetail.getFileName() + ")." );
+		File tempZipFile = new File( System.getProperty( "java.io.tmpdir" ), fileDetail.getFileName());
+		final Set<String> newTargetIds = new HashSet<> ();
+
+		File dir = null;
+		Response response;
+		try {
+			// Copy the uploaded ZIP file on the disk
+			Utils.copyStream( uploadedInputStream, tempZipFile );
+
+			// Extract the ZIP content
+			String projectName = fileDetail.getFileName().replace( ".zip", "" );
+			dir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf/" + projectName );
+			Utils.extractZipArchive( tempZipFile, dir );
+
+			// Validate the content
+			List<ModelError> errors = TargetValidator.parseDirectory( dir );
+			if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
+				response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Target properties contain errors." ).build();
+			}
+
+			// Register the properties
+			else {
+				response = Response.ok().build();
+				for( File f : Utils.listAllFiles( dir, Constants.FILE_EXT_PROPERTIES )) {
+					String id = this.manager.targetsMngr().createTarget( f );
+					newTargetIds.add( id );
+				}
+			}
+
+		} catch( Exception e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "Target properties could not be loaded.", e ).build();
+
+			// Unregister the targets
+			this.logger.fine( "An error occurred while deploying targets. Unregistering those that were in the same archive." );
+			for( String id : newTargetIds ) {
+				try {
+					this.manager.targetsMngr().deleteTarget( id );
+
+				} catch( Exception e1 ) {
+					Utils.logException( this.logger, e1 );
+					this.logger.severe( "Target " + id + " could not be deleted." );
+				}
+			}
+
+		} finally {
+			Utils.closeQuietly( uploadedInputStream );
+
+			// We do not need the extracted application anymore.
+			// In case of success, it was copied in the DM's configuration.
+			Utils.deleteFilesRecursivelyAndQuietly( dir );
+			Utils.deleteFilesRecursivelyAndQuietly( tempZipFile );
 		}
 
 		return response;
