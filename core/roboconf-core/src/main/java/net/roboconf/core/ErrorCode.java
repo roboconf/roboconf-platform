@@ -122,7 +122,7 @@ public enum ErrorCode {
 	RM_INVALID_APPLICATION_EXPORT_PREFIX( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid prefix for external exports. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but was not defined in its component." ),
 	RM_MISSING_VARIABLE_VALUE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "All the variables (except network ones, such as IP) must have a value." ),
-	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but is ambiguously resolved in its component." ),
+	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "An instance variable overrides several ones with the same name (components with inheritance)." ),
 	RM_INVALID_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable that does not exist in the graph." ),
 	RM_ALREADY_DEFINED_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable more than once. This is probably a copy/paste error." ),
 	RM_INVALID_RANDOM_KIND( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component exports a variable whose value is generated randomly by Roboconf, but its type is invalid." ),

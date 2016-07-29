@@ -402,7 +402,7 @@ public final class RuntimeModelValidator {
 				StringBuilder sb = new StringBuilder();
 				sb.append( "Variable '" );
 				sb.append( entry.getKey());
-				sb.append( "' could mean " );
+				sb.append( "' overrides " );
 
 				for( Iterator<String> it = fullNames.iterator(); it.hasNext(); ) {
 					sb.append( it.next());
