@@ -39,12 +39,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -59,6 +53,13 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * Test correct Docker image generation and container configuration.
@@ -303,24 +304,21 @@ public class DockerHandlerWithPackagesTest {
 	 */
 	private void runAndTestDockerContainer( final List<String> filesToCheck, final String... packages ) throws Exception {
 
-
 		// Create the machine.
-		final String machineId = this.dockerHandler.createMachine(
-				this.targetProperties,
-				MESSAGING_CONFIGURATION,
-				this.instancePath,
-				APPLICATION_NAME);
+		TargetHandlerParameters parameters =
+				new TargetHandlerParameters().targetProperties( this.targetProperties )
+					.messagingProperties( MESSAGING_CONFIGURATION )
+					.scopedInstancePath( this.instancePath )
+					.applicationName( APPLICATION_NAME )
+					.domain( "domain" );
+
+		final String machineId = this.dockerHandler.createMachine( parameters );
+
 		Assert.assertNotNull(machineId);
 		Assert.assertNull(this.instance.data.get(Instance.MACHINE_ID));
 
 		// Configure the machine.
-		this.dockerHandler.configureMachine(
-				this.targetProperties,
-				MESSAGING_CONFIGURATION,
-				machineId,
-				this.instancePath,
-				APPLICATION_NAME,
-				this.instance);
+		this.dockerHandler.configureMachine( parameters, machineId, this.instance);
 
 		// Now wait until the Docker target updates the machine id, or the timeout expires...
 		this.dockerContainerId = DockerTestUtils.waitForMachineId(

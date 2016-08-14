@@ -76,7 +76,7 @@ public final class RoboconfErrorHelpers {
 	 */
 	public static Collection<RoboconfError> findWarnings( Collection<? extends RoboconfError> errors ) {
 
-		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
+		Collection<RoboconfError> result = new ArrayList<> ();
 		for( RoboconfError error : errors ) {
 			if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
 				result.add( error );
@@ -93,7 +93,7 @@ public final class RoboconfErrorHelpers {
 	 */
 	public static List<String> extractAndFormatWarnings( Collection<? extends RoboconfError> errors ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( errors )) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( warning.getErrorCode().getMsg());
@@ -128,7 +128,7 @@ public final class RoboconfErrorHelpers {
 	 */
 	public static List<RoboconfError> resolveErrorsWithLocation( ApplicationLoadResult alr ) {
 
-		List<RoboconfError> result = new ArrayList<RoboconfError> ();
+		List<RoboconfError> result = new ArrayList<> ();
 		for( RoboconfError error : alr.getLoadErrors()) {
 
 			RoboconfError errorToAdd = error;
@@ -171,15 +171,28 @@ public final class RoboconfErrorHelpers {
 	 */
 	public static void filterErrorsForRecipes( Collection<? extends RoboconfError> errors ) {
 
-		List<ErrorCode> codesToSkip = Arrays.asList(
-			ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
-			ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE,
-			ErrorCode.RM_UNREACHABLE_COMPONENT,
-			ErrorCode.RM_ORPHAN_FACET,
-			ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN
-		);
+		filterErrors(
+				errors,
+				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
+				ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE,
+				ErrorCode.RM_UNREACHABLE_COMPONENT,
+				ErrorCode.RM_ORPHAN_FACET,
+				ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN );
+	}
 
-		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
+
+	/**
+	 * Filters errors by removing those associated with specific error codes.
+	 * @param errors a non-null list of errors
+	 * @param errorCodes error codes
+	 */
+	public static void filterErrors( Collection<? extends RoboconfError> errors, ErrorCode... errorCodes ) {
+
+		List<ErrorCode> codesToSkip = new ArrayList<> ();
+		if( errorCodes != null )
+			codesToSkip.addAll( Arrays.asList( errorCodes ));
+
+		Collection<RoboconfError> toRemove = new ArrayList<> ();
 		for( RoboconfError error : errors ) {
 			if( codesToSkip.contains( error.getErrorCode()))
 				toRemove.add( error );

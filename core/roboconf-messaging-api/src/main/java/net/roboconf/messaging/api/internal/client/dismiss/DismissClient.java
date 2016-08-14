@@ -107,7 +107,7 @@ public class DismissClient implements IMessagingClient {
 
 
 	@Override
-	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+	public void setOwnerProperties( RecipientKind ownerKind, String domain, String applicationName, String scopedInstancePath ) {
 		this.logger.warning( DISMISSED_MESSAGE );
 	}
 }

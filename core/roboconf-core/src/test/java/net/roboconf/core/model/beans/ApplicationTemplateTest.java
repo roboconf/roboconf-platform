@@ -28,7 +28,6 @@ package net.roboconf.core.model.beans;
 import java.util.HashSet;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
 /**
@@ -47,7 +46,7 @@ public class ApplicationTemplateTest {
 		app2.setName( "app" );
 		app2.setQualifier( "snapshot" );
 
-		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 1, set.size());
@@ -63,7 +62,7 @@ public class ApplicationTemplateTest {
 		ApplicationTemplate app2 = new ApplicationTemplate();
 		app2.setName( "app" );
 
-		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 1, set.size());
@@ -76,7 +75,7 @@ public class ApplicationTemplateTest {
 		ApplicationTemplate app1 = new ApplicationTemplate();
 		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "whatever" );
 
-		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 2, set.size());
@@ -89,7 +88,7 @@ public class ApplicationTemplateTest {
 		ApplicationTemplate app1 = new ApplicationTemplate( "app" ).qualifier( "v1" );
 		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "v3" );
 
-		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 2, set.size());
@@ -118,5 +117,26 @@ public class ApplicationTemplateTest {
 		Assert.assertEquals( "desc", app.getDescription());
 		Assert.assertEquals( "snapshot", app.getQualifier());
 		Assert.assertNotNull( app.getGraphs());
+	}
+
+
+	@Test
+	public void testSetNameWithAccents() {
+
+		ApplicationTemplate app = new ApplicationTemplate( "avé dés àcçents" );
+		Assert.assertEquals( "ave des accents", app.getName());
+		Assert.assertEquals( "avé dés àcçents", app.getDisplayName());
+
+		app.setName( "   " );
+		Assert.assertEquals( "", app.getName());
+		Assert.assertEquals( "", app.getDisplayName());
+
+		app.setName( null );
+		Assert.assertNull( app.getName());
+		Assert.assertNull( app.getDisplayName());
+
+		app.setName( " âêû éèà " );
+		Assert.assertEquals( "aeu eea", app.getName());
+		Assert.assertEquals( "âêû éèà", app.getDisplayName());
 	}
 }

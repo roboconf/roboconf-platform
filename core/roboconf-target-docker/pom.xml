@@ -71,6 +71,13 @@
 				client details. You should not worry about them as they only appear when
 				Cobertura is used.
 			 -->
+			 
+			 <exclusions>
+			 	<exclusion>
+			 		<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+			 	</exclusion>
+			 </exclusions>
 		</dependency>
 
 		<dependency>
@@ -85,6 +92,13 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.5</version>
 			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.5</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>

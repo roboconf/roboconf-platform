@@ -26,10 +26,10 @@
 package net.roboconf.messaging.api.extensions;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -39,31 +39,31 @@ public class MessagingContextTest {
 	@Test
 	public void testEquals() {
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "whatever" );
-		Assert.assertEquals( ctx, new MessagingContext( RecipientKind.DM, "whatever", null, "whatever" ));
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "domain", "whatever" );
+		Assert.assertEquals( ctx, new MessagingContext( RecipientKind.DM, "domain", "whatever", null, "whatever" ));
 		Assert.assertEquals( ctx, ctx );
 
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.DM, null )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.DM, "whatever2" )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, null )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, null )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.DM, "domain", null )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.DM, "domain", "whatever2" )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "domain", null )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "domain", null )));
 		Assert.assertFalse( ctx.equals( new Object()));
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "app" );
-		Assert.assertEquals( ctx, new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "app2" ));
-		Assert.assertEquals( ctx, new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "app3" ));
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "app" );
+		Assert.assertEquals( ctx, new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "app2" ));
+		Assert.assertEquals( ctx, new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "app3" ));
 		Assert.assertEquals( ctx, ctx );
 
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.IMPORT, "app" )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "facet2", ThoseThat.EXPORT, "app" )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.EXPORT, "app" )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.IMPORT, "app" )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "domain", "facet2", ThoseThat.EXPORT, "app" )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.EXPORT, "app" )));
 		Assert.assertFalse( ctx.equals( new Object()));
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.EXPORT, null );
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.IMPORT, null )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, null )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "facet2", ThoseThat.EXPORT, null )));
-		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.EXPORT, "app" )));
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.EXPORT, null );
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.IMPORT, null )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, null )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "domain", "facet2", ThoseThat.EXPORT, null )));
+		Assert.assertFalse( ctx.equals( new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.EXPORT, "app" )));
 		Assert.assertEquals( ctx, ctx );
 	}
 
@@ -71,11 +71,11 @@ public class MessagingContextTest {
 	@Test
 	public void testHashCode() {
 
-		MessagingContext ctx1 = new MessagingContext( RecipientKind.DM, null );
+		MessagingContext ctx1 = new MessagingContext( RecipientKind.DM, "domain", null );
 		Assert.assertEquals( ctx1.hashCode(), ctx1.hashCode());
-		Assert.assertNotSame( ctx1.hashCode(), new MessagingContext( RecipientKind.DM, "whatever" ).hashCode());
+		Assert.assertNotSame( ctx1.hashCode(), new MessagingContext( RecipientKind.DM, "domain", "whatever" ).hashCode());
 
-		MessagingContext ctx2 = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "app" );
+		MessagingContext ctx2 = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "app" );
 		Assert.assertEquals( ctx2.hashCode(), ctx2.hashCode());
 		Assert.assertNotSame( ctx1.hashCode(), ctx2.hashCode());
 	}
@@ -85,63 +85,63 @@ public class MessagingContextTest {
 	public void testConstructors() {
 
 		// DM
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "domain", null );
 		Assert.assertEquals( RecipientKind.DM, ctx.getKind());
 		Assert.assertNull( ctx.getApplicationName());
 		Assert.assertNull( ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.DM, "whatever" );
+		ctx = new MessagingContext( RecipientKind.DM, "domain", "whatever" );
 		Assert.assertEquals( RecipientKind.DM, ctx.getKind());
 		Assert.assertEquals( "whatever", ctx.getApplicationName());
 		Assert.assertNull( ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
 		// Inter-application
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "whatever" );
 		Assert.assertEquals( RecipientKind.INTER_APP, ctx.getKind());
 		Assert.assertNull( ctx.getApplicationName());
 		Assert.assertNull( ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, null );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", null );
 		Assert.assertEquals( RecipientKind.INTER_APP, ctx.getKind());
 		Assert.assertNull( ctx.getApplicationName());
 		Assert.assertNull( ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", null, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", null, "whatever" );
 		Assert.assertEquals( RecipientKind.INTER_APP, ctx.getKind());
 		Assert.assertNull( ctx.getApplicationName());
 		Assert.assertEquals( "facet", ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "whatever" );
 		Assert.assertEquals( RecipientKind.INTER_APP, ctx.getKind());
 		Assert.assertNull( ctx.getApplicationName());
 		Assert.assertEquals( "facet", ctx.getComponentOrFacetName());
 		Assert.assertEquals( ThoseThat.EXPORT, ctx.getAgentDirection());
 
 		// Agents
-		ctx = new MessagingContext( RecipientKind.AGENTS, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "whatever" );
 		Assert.assertEquals( RecipientKind.AGENTS, ctx.getKind());
 		Assert.assertEquals( "whatever", ctx.getApplicationName());
 		Assert.assertNull( ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, null );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", null );
 		Assert.assertEquals( RecipientKind.AGENTS, ctx.getKind());
 		Assert.assertNull( ctx.getApplicationName());
 		Assert.assertNull( ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", null, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", null, "whatever" );
 		Assert.assertEquals( RecipientKind.AGENTS, ctx.getKind());
 		Assert.assertEquals( "whatever", ctx.getApplicationName());
 		Assert.assertEquals( "facet", ctx.getComponentOrFacetName());
 		Assert.assertNull( ctx.getAgentDirection());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.IMPORT, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.IMPORT, "whatever" );
 		Assert.assertEquals( RecipientKind.AGENTS, ctx.getKind());
 		Assert.assertEquals( "whatever", ctx.getApplicationName());
 		Assert.assertEquals( "facet", ctx.getComponentOrFacetName());
@@ -154,36 +154,36 @@ public class MessagingContextTest {
 	public void testGetTopicName() {
 
 		// DM
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "domain", null );
 		Assert.assertEquals( "", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.DM, "whatever" );
+		ctx = new MessagingContext( RecipientKind.DM, "domain", "whatever" );
 		Assert.assertEquals( "whatever", ctx.getTopicName());
 
 		// Inter-application
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "whatever" );
 		Assert.assertEquals( "", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, null );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", null );
 		Assert.assertEquals( "", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", null, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", null, "whatever" );
 		Assert.assertEquals( "facet", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "whatever" );
 		Assert.assertEquals( "those.that.export.facet", ctx.getTopicName());
 
 		// Agents
-		ctx = new MessagingContext( RecipientKind.AGENTS, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "whatever" );
 		Assert.assertEquals( "", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, null );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", null );
 		Assert.assertEquals( "", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", null, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", null, "whatever" );
 		Assert.assertEquals( "facet", ctx.getTopicName());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.IMPORT, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.IMPORT, "whatever" );
 		Assert.assertEquals( "those.that.import.facet", ctx.getTopicName());
 	}
 
@@ -192,36 +192,36 @@ public class MessagingContextTest {
 	public void testToString() {
 
 		// DM
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "domain", null );
 		Assert.assertEquals( "(DM)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.DM, "whatever" );
+		ctx = new MessagingContext( RecipientKind.DM, "domain", "whatever" );
 		Assert.assertEquals( "whatever (DM)", ctx.toString());
 
 		// Inter-application
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "whatever" );
 		Assert.assertEquals( "(INTER_APP)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, null );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", null );
 		Assert.assertEquals( "(INTER_APP)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", null, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", null, "whatever" );
 		Assert.assertEquals( "facet (INTER_APP)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.EXPORT, "whatever" );
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.EXPORT, "whatever" );
 		Assert.assertEquals( "those.that.export.facet (INTER_APP)", ctx.toString());
 
 		// Agents
-		ctx = new MessagingContext( RecipientKind.AGENTS, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "whatever" );
 		Assert.assertEquals( "@ whatever (AGENTS)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, null );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", null );
 		Assert.assertEquals( "(AGENTS)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", null, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", null, "whatever" );
 		Assert.assertEquals( "facet @ whatever (AGENTS)", ctx.toString());
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.IMPORT, "whatever" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.IMPORT, "whatever" );
 		Assert.assertEquals( "those.that.import.facet @ whatever (AGENTS)", ctx.toString());
 	}
 }

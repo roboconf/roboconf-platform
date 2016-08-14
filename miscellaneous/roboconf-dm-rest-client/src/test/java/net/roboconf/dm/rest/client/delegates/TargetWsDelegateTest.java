@@ -31,7 +31,16 @@ import java.util.Timer;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
@@ -45,15 +54,6 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.TargetWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
-
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -120,13 +120,13 @@ public class TargetWsDelegateTest {
 	public void testListTargets_all() throws Exception {
 
 		Assert.assertEquals( 0, this.client.getTargetWsDelegate().listAllTargets().size());
-		this.client.getTargetWsDelegate().createTarget( "" );
+		this.client.getTargetWsDelegate().createTarget( "id: t1\nhandler: h" );
 		Assert.assertEquals( 1, this.client.getTargetWsDelegate().listAllTargets().size());
-		String t2 = this.client.getTargetWsDelegate().createTarget( "" );
+		String t2 = this.client.getTargetWsDelegate().createTarget( "id: t2\nhandler: h" );
 		Assert.assertNotNull( t2 );
 
 		Assert.assertEquals( 2, this.client.getTargetWsDelegate().listAllTargets().size());
-		this.client.getTargetWsDelegate().createTarget( "" );
+		this.client.getTargetWsDelegate().createTarget( "id: t3\nhandler: h" );
 		Assert.assertEquals( 3, this.client.getTargetWsDelegate().listAllTargets().size());
 
 		this.client.getTargetWsDelegate().deleteTarget( t2 );
@@ -137,11 +137,11 @@ public class TargetWsDelegateTest {
 	@Test
 	public void testCreateTarget() throws Exception {
 
-		String content = "id: toto";
+		String content = "handler: h\nid: toto\nprop: ok";
 		String targetId = this.client.getTargetWsDelegate().createTarget( content );
 		String read = this.manager.targetsMngr().findRawTargetProperties( targetId );
 
-		Assert.assertEquals( content, read );
+		Assert.assertEquals( "handler: h\nprop: ok", read );
 	}
 
 
@@ -165,7 +165,7 @@ public class TargetWsDelegateTest {
 	@Test
 	public void testAssociations_success() throws Exception {
 
-		String targetId = this.client.getTargetWsDelegate().createTarget( "" );
+		String targetId = this.client.getTargetWsDelegate().createTarget( "id : tid\nhandler: h" );
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -189,7 +189,7 @@ public class TargetWsDelegateTest {
 	@Test
 	public void testAssociations_doAndUndo() throws Exception {
 
-		String targetId = this.client.getTargetWsDelegate().createTarget( "" );
+		String targetId = this.client.getTargetWsDelegate().createTarget( "id: tid\nhandler: h" );
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );

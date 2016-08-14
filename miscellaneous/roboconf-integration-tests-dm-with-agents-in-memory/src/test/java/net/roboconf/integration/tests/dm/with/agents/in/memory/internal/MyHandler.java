@@ -34,6 +34,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -48,18 +49,14 @@ public class MyHandler implements TargetHandler {
 	}
 
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String scopedInstancePath,
-			String applicationName )
+	public String createMachine( TargetHandlerParameters parameters )
 	throws TargetException {
 
-		final String messagingType = messagingProperties.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+		final String messagingType = parameters.getMessagingProperties().get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
 
 		Agent agent = new Agent();
-		agent.setApplicationName( applicationName );
-		agent.setScopedInstancePath( scopedInstancePath );
+		agent.setApplicationName( parameters.getApplicationName());
+		agent.setScopedInstancePath( parameters.getScopedInstancePath());
 		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
@@ -67,11 +64,10 @@ public class MyHandler implements TargetHandler {
 		agent.start();
 
 		IMessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingType);
-		if (factory != null) {
-			factory.setConfiguration(messagingProperties);
-		}
+		if( factory != null )
+			factory.setConfiguration( parameters.getMessagingProperties());
 
-		String key = scopedInstancePath + " @ " + applicationName;
+		String key = parameters.getScopedInstancePath() + " @ " + parameters.getApplicationName();
 		this.agentIdToAgent.put( key, agent );
 
 		return key;
@@ -79,13 +75,7 @@ public class MyHandler implements TargetHandler {
 
 
 	@Override
-	public void configureMachine(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String machineId,
-			String scopedInstancePath,
-			String applicationName,
-			Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId,	Instance scopedInstance )
 	throws TargetException {
 		// nothing
 	}

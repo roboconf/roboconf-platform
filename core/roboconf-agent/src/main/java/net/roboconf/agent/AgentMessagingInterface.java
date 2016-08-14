@@ -44,6 +44,11 @@ public interface AgentMessagingInterface {
 	String getApplicationName();
 
 	/**
+	 * @return the domain
+	 */
+	String getDomain();
+
+	/**
 	 * @return the scoped instance's
 	 */
 	Instance getScopedInstance();

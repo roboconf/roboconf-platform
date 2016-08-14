@@ -52,19 +52,20 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import net.roboconf.core.agents.DataHelpers;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
-
 import org.apache.commons.codec.binary.Base64;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Linh-Manh Pham - LIG
@@ -87,31 +88,31 @@ public class AzureIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String, String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		String instanceId;
 		try {
 			// For IaaS, we only expect root instance names to be passed
-			if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+			if( InstanceHelpers.countInstances( parameters.getScopedInstancePath()) > 1 )
 				throw new TargetException( "Only root instances can be passed in arguments." );
 
-			String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-			final AzureProperties azureProperties = buildProperties( targetProperties );
+			String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
+			final AzureProperties azureProperties = buildProperties( parameters.getTargetProperties());
 
 			// The following part enables to transmit data to the VM.
 			// When the VM is up, it will be able to read this data.
 			// TODO: Azure does not allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
 			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
-			String userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString(
+					parameters.getMessagingProperties(),
+					parameters.getDomain(),
+					parameters.getApplicationName(),
+					rootInstanceName );
+
 			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
 
 			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
@@ -179,17 +180,11 @@ public class AzureIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void configureMachine(
-		Map<String,String> targetProperties,
-		Map<String,String> messagingConfiguration,
-		String machineId,
-		String scopedInstancePath,
-		String applicationName,
-		Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
 	}

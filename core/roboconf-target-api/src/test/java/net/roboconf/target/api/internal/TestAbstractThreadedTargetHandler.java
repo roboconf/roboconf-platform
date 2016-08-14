@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -55,12 +56,7 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 	}
 
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String rootInstanceName,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 		return "some-id";
 	}
 
@@ -80,14 +76,7 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 
 
 	@Override
-	public MachineConfigurator machineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String machineId,
-			String rootInstanceName,
-			String applicationName,
-			Instance scopedInstance ) {
-
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
 		return new TestMachineConfigurator( this.cpt, this.failConfiguration, scopedInstance );
 	}
 

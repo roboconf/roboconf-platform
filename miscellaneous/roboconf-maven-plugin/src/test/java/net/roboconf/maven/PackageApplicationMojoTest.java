@@ -44,7 +44,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class PackageMojoTest {
+public class PackageApplicationMojoTest {
 
 	@Rule
 	public TestResources resources = new TestResources();
@@ -85,9 +85,9 @@ public class PackageMojoTest {
 				new File( mvnProject.getBuild().getOutputDirectory()));
 
 		// Package
-		PackageMojo packageMojo = (PackageMojo) this.rule.lookupMojo( "package", pom );
-		this.rule.setVariableValueToObject( packageMojo, "project", mvnProject );
-		packageMojo.execute();
+		PackageApplicationMojo packageApplicationMojo = (PackageApplicationMojo) this.rule.lookupMojo( "package-application", pom );
+		this.rule.setVariableValueToObject( packageApplicationMojo, "project", mvnProject );
+		packageApplicationMojo.execute();
 
 		// Check assertions.
 		// Unfortunately, no filtering here.
@@ -134,8 +134,8 @@ public class PackageMojoTest {
 		// Do NOT copy the resources
 
 		// Package
-		PackageMojo packageMojo = (PackageMojo) this.rule.lookupMojo( "package", pom );
-		this.rule.setVariableValueToObject( packageMojo, "project", mvnProject );
-		packageMojo.execute();
+		PackageApplicationMojo packageApplicationMojo = (PackageApplicationMojo) this.rule.lookupMojo( "package-application", pom );
+		this.rule.setVariableValueToObject( packageApplicationMojo, "project", mvnProject );
+		packageApplicationMojo.execute();
 	}
 }

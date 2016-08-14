@@ -54,6 +54,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 	@Override
 	protected void openConnection( IMessagingClient newMessagingClient ) throws IOException {
+		newMessagingClient.setOwnerProperties( RecipientKind.DM, this.domain, null, null );
 		newMessagingClient.openConnection();
 	}
 
@@ -111,7 +112,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 		// The context match the one used by agents to listen to messages sent by the DM.
 		String topicName = MessagingUtils.buildTopicNameForAgent( instance );
-		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, topicName, application.getName());
+		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, this.domain, topicName, application.getName());
 		getMessagingClient().publish( ctx, message );
 	}
 
@@ -125,7 +126,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	@Override
 	public void sendMessageToTheDm( Message msg ) throws IOException {
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.domain, null );
 		getMessagingClient().publish( ctx, msg );
 	}
 
@@ -133,7 +134,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	@Override
 	public void listenToTheDm( ListenerCommand command ) throws IOException {
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.domain, null );
 		if( command == ListenerCommand.STOP )
 			getMessagingClient().unsubscribe( ctx );
 		else
@@ -154,7 +155,11 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 		this.logger.fine( "The DM is un-publishing exports related to agent of " + rootInstance + " (termination propagation)." );
 		for( Instance instance : instances ) {
 			for( MessagingContext ctx : MessagingContext.forExportedVariables(
-					application.getName(), instance, application.getExternalExports(), ThoseThat.IMPORT )) {
+					this.domain,
+					application.getName(),
+					instance,
+					application.getExternalExports(),
+					ThoseThat.IMPORT )) {
 
 				MsgCmdRemoveImport message = new MsgCmdRemoveImport(
 						application.getName(),
@@ -172,7 +177,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	throws IOException {
 
 		// The context match the one used by agents to send messages to the DM.
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, application.getName());
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.domain, application.getName());
 		if( command == ListenerCommand.STOP )
 			messagingClient.unsubscribe( ctx );
 		else

@@ -77,7 +77,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 public abstract class AbstractMessagingTest {
 
 	protected MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
-	private final List<ReconfigurableClient<?>> clients = new ArrayList<> ();
+	protected final List<ReconfigurableClient<?>> clients = new ArrayList<> ();
 
 
 	@After

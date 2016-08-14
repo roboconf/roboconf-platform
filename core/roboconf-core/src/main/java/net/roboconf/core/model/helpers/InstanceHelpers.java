@@ -134,8 +134,8 @@ public final class InstanceHelpers {
 	 */
 	public static List<Instance> buildHierarchicalList( Instance inst ) {
 
-		List<Instance> instanceList = new ArrayList<Instance> ();
-		List<Instance> todo = new ArrayList<Instance> ();
+		List<Instance> instanceList = new ArrayList<> ();
+		List<Instance> todo = new ArrayList<> ();
 		if( inst != null )
 			todo.add( inst );
 
@@ -179,18 +179,18 @@ public final class InstanceHelpers {
 	public static Map<String,String> findAllExportedVariables( Instance instance ) {
 
 		// Find the variables
-		Map<String,String> result = new HashMap<String,String> ();
+		Map<String,String> result = new HashMap<> ();
 		if( instance.getComponent() != null )
 			result.putAll( ComponentHelpers.findAllExportedVariables( instance.getComponent()));
 
 		// Overridden variables may not contain the facet or component prefix.
 		// To remain as flexible as possible, we will try to resolve them as component or facet variables.
-		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
+		Map<String,Set<String>> localNameToFullNames = new HashMap<> ();
 		for( String inheritedVarName : result.keySet()) {
 			String localName = VariableHelpers.parseVariableName( inheritedVarName ).getValue();
 			Set<String> fullNames = localNameToFullNames.get( localName );
 			if( fullNames == null )
-				fullNames = new HashSet<String> ();
+				fullNames = new HashSet<> ();
 
 			fullNames.add( inheritedVarName );
 			localNameToFullNames.put( localName, fullNames );
@@ -199,13 +199,23 @@ public final class InstanceHelpers {
 		for( Map.Entry<String,String> entry : instance.overriddenExports.entrySet()) {
 			Set<String> fullNames = localNameToFullNames.get( entry.getKey());
 
-			// No inherited variable or too many inherited ones? => Put it in raw mode.
-			if( fullNames == null || fullNames.size() > 1 )
+			// No inherited variable => Put it in raw mode.
+			if( fullNames == null ) {
 				result.put( entry.getKey(), entry.getValue());
+			}
 
-			// Otherwise, override the inherited variable
-			else
+			// Only one prefix, override the inherited variable
+			else if( fullNames.size() == 1 ) {
 				result.put( fullNames.iterator().next(), entry.getValue());
+			}
+
+			// Too many inherited ones? => Put it in raw mode AND override all.
+			// There will be a warning in the validation. See #420
+			else {
+				result.put( entry.getKey(), entry.getValue());
+				for( String name : fullNames )
+					result.put( name, entry.getValue());
+			}
 		}
 
 		// Update some values
@@ -225,11 +235,11 @@ public final class InstanceHelpers {
 	 */
 	public static Instance findInstanceByPath( AbstractApplication application, String instancePath ) {
 
-		Collection<Instance> currentList = new ArrayList<Instance> ();
+		Collection<Instance> currentList = new ArrayList<> ();
 		if( application != null )
 			currentList.addAll( application.getRootInstances());
 
-		List<String> instanceNames = new ArrayList<String> ();
+		List<String> instanceNames = new ArrayList<> ();
 		if( instancePath != null )
 			instanceNames.addAll( Arrays.asList( instancePath.split( "/" )));
 
@@ -285,7 +295,7 @@ public final class InstanceHelpers {
 	 */
 	public static List<Instance> findInstancesByComponentName( AbstractApplication application, String componentName ) {
 
-		List<Instance> result = new ArrayList<Instance> ();
+		List<Instance> result = new ArrayList<> ();
 		for( Instance inst : getAllInstances( application )) {
 			if( componentName.equals( inst.getComponent().getName()))
 				result.add( inst );
@@ -332,8 +342,8 @@ public final class InstanceHelpers {
 	 */
 	public static List<Instance> findAllScopedInstances( Application app ) {
 
-		List<Instance> instanceList = new ArrayList<Instance> ();
-		List<Instance> todo = new ArrayList<Instance> ();
+		List<Instance> instanceList = new ArrayList<> ();
+		List<Instance> todo = new ArrayList<> ();
 		todo.addAll( app.getRootInstances());
 
 		while( ! todo.isEmpty()) {
@@ -363,7 +373,7 @@ public final class InstanceHelpers {
 	 */
 	public static List<Instance> getAllInstances( AbstractApplication application ) {
 
-		List<Instance> result = new ArrayList<Instance> ();
+		List<Instance> result = new ArrayList<> ();
 		for( Instance instance : application.getRootInstances())
 			result.addAll( InstanceHelpers.buildHierarchicalList( instance ));
 
@@ -488,8 +498,8 @@ public final class InstanceHelpers {
 	 */
 	public static Instance replicateInstance( Instance instance ) {
 
-		Map<Instance,Instance> instanceToDuplicate = new HashMap<Instance,Instance> ();
-		List<Instance> toProcess = new ArrayList<Instance> ();
+		Map<Instance,Instance> instanceToDuplicate = new HashMap<> ();
+		List<Instance> toProcess = new ArrayList<> ();
 		toProcess.add( instance );
 
 		while( ! toProcess.isEmpty()) {
@@ -535,7 +545,7 @@ public final class InstanceHelpers {
 	 */
 	public static void removeOffScopeInstances( Instance scopedInstance ) {
 
-		List<Instance> todo = new ArrayList<Instance> ();
+		List<Instance> todo = new ArrayList<> ();
 		todo.addAll( scopedInstance.getChildren());
 
 		while( ! todo.isEmpty()) {

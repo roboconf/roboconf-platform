@@ -31,6 +31,7 @@ import java.util.Objects;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -58,22 +59,15 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String rootInstanceName,
-			String applicationName )
+	public String createMachine( TargetHandlerParameters parameters )
 	throws TargetException {
 		return "whatever";
 	}
 
 	@Override
 	public void configureMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
+			TargetHandlerParameters parameters,
 			String machineId,
-			String rootInstanceName,
-			String applicationName,
 			Instance scopedInstance )
 	throws TargetException {
 		// nothing

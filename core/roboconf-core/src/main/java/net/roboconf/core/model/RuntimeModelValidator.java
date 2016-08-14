@@ -78,7 +78,7 @@ public final class RuntimeModelValidator {
 	 * @return a non-null list of errors
 	 */
 	public static Collection<ModelError> validate( Component component ) {
-		Collection<ModelError> errors = new ArrayList<ModelError> ();
+		Collection<ModelError> errors = new ArrayList<> ();
 
 		// Check the name
 		if( Utils.isEmptyOrWhitespaces( component.getName()))
@@ -166,7 +166,7 @@ public final class RuntimeModelValidator {
 	public static Collection<ModelError> validate( Facet facet ) {
 
 		// Check the name
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ModelError> result = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( facet.getName()))
 			result.add( new ModelError( ErrorCode.RM_EMPTY_FACET_NAME, facet ));
 		else if( ! facet.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
@@ -200,13 +200,16 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<ModelError> validate( Graphs graphs, File projectDirectory ) {
 
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ModelError> result = new ArrayList<> ();
 		for( Component c : ComponentHelpers.findAllComponents( graphs )) {
 			File componentDirectory = ResourceUtils.findInstanceResourcesDirectory( projectDirectory, c );
 			if( ! componentDirectory.exists()) {
 				ModelError error = new ModelError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, c );
 				error.setDetails( "Component name: " + c.getName());
 				result.add( error );
+
+			} else if( InstanceHelpers.isTarget( new Instance().component( c ) )) {
+				result.addAll( TargetValidator.parseTargetProperties( projectDirectory, c ));
 
 			} else {
 				result.addAll( RecipesValidator.validateComponentRecipes( projectDirectory, c ));
@@ -224,7 +227,7 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<ModelError> validate( Graphs graphs ) {
 
-		Collection<ModelError> errors = new ArrayList<ModelError> ();
+		Collection<ModelError> errors = new ArrayList<> ();
 		if( graphs.getRootComponents().isEmpty())
 			errors.add( new ModelError( ErrorCode.RM_NO_ROOT_COMPONENT, graphs ));
 
@@ -235,8 +238,8 @@ public final class RuntimeModelValidator {
 
 		// Validate all the components
 		// Prepare the verification of variable matching
-		Map<String,Boolean> importedVariableNameToExported = new HashMap<String,Boolean> ();
-		Map<String,List<Component>> importedVariableToImporters = new HashMap<String,List<Component>> ();
+		Map<String,Boolean> importedVariableNameToExported = new HashMap<> ();
+		Map<String,List<Component>> importedVariableToImporters = new HashMap<> ();
 		for( Component component : ComponentHelpers.findAllComponents( graphs )) {
 
 			// Basic checks
@@ -258,7 +261,7 @@ public final class RuntimeModelValidator {
 
 				List<Component> importers = importedVariableToImporters.get( importedVariableName );
 				if( importers == null )
-					importers = new ArrayList<Component> ();
+					importers = new ArrayList<> ();
 
 				importers.add( component );
 				importedVariableToImporters.put( importedVariableName, importers );
@@ -275,7 +278,7 @@ public final class RuntimeModelValidator {
 		}
 
 		// Intermediate step: deal with facet variables
-		Set<String> facetVariables = new HashSet<String> ();
+		Set<String> facetVariables = new HashSet<> ();
 		for( Facet f : graphs.getFacetNameToFacet().values()) {
 			facetVariables.addAll( f.exportedVariables.keySet());
 			facetVariables.add( f.getName() + "." + Constants.WILDCARD );
@@ -327,7 +330,7 @@ public final class RuntimeModelValidator {
 	public static Collection<ModelError> validate( Instance instance ) {
 
 		// Check the name
-		Collection<ModelError> errors = new ArrayList<ModelError> ();
+		Collection<ModelError> errors = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( instance.getName()))
 			errors.add( new ModelError( ErrorCode.RM_EMPTY_INSTANCE_NAME, instance ));
 		else if( ! instance.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
@@ -367,7 +370,7 @@ public final class RuntimeModelValidator {
 		// Check overridden exports
 		// Overridden variables may not contain the facet or component prefix.
 		// To remain as flexible as possible, we will try to resolve them as component or facet variables.
-		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
+		Map<String,Set<String>> localNameToFullNames = new HashMap<> ();
 		Set<String> inheritedVarNames;
 		if( instance.getComponent() != null )
 			inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
@@ -378,7 +381,7 @@ public final class RuntimeModelValidator {
 			String localName = VariableHelpers.parseVariableName( inheritedVarName ).getValue();
 			Set<String> fullNames = localNameToFullNames.get( localName );
 			if( fullNames == null )
-				fullNames = new HashSet<String> ();
+				fullNames = new HashSet<> ();
 
 			fullNames.add( inheritedVarName );
 			localNameToFullNames.put( localName, fullNames );
@@ -399,7 +402,7 @@ public final class RuntimeModelValidator {
 				StringBuilder sb = new StringBuilder();
 				sb.append( "Variable '" );
 				sb.append( entry.getKey());
-				sb.append( "' could mean " );
+				sb.append( "' overrides " );
 
 				for( Iterator<String> it = fullNames.iterator(); it.hasNext(); ) {
 					sb.append( it.next());
@@ -450,7 +453,7 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<ModelError> validate( Collection<Instance> instances ) {
 
-		Collection<ModelError> errors = new ArrayList<ModelError> ();
+		Collection<ModelError> errors = new ArrayList<> ();
 		for( Instance i : instances )
 			errors.addAll( validate( i ));
 
@@ -465,14 +468,18 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<ModelError> validate( ApplicationTemplate app ) {
 
-		// Graph validation
-		Collection<ModelError> errors = new ArrayList<ModelError> ();
+		// Name
+		Collection<ModelError> errors = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( app.getName()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_NAME, app ));
+
+		else if( ! app.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
+			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_NAME, app ));
 
 		if( Utils.isEmptyOrWhitespaces( app.getQualifier()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, app ));
 
+		// Graph validation
 		Map<String,String> allExports;
 		if( app.getGraphs() == null ) {
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, app ));
@@ -522,7 +529,7 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<ModelError> validate( ApplicationTemplateDescriptor descriptor ) {
 
-		Collection<ModelError> errors = new ArrayList<ModelError> ();
+		Collection<ModelError> errors = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( descriptor.getName()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_NAME, descriptor ));
 

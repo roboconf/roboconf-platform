@@ -30,12 +30,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
-
-import org.junit.Before;
-import org.junit.Test;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -67,9 +68,15 @@ public class InMemoryHandlerWithoutIPojoTest {
 	@Test( expected = TargetException.class )
 	public void testCreateVm() throws Exception {
 
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.messagingProperties( this.msgCfg )
+				.scopedInstancePath( "vm" )
+				.applicationName( "my app" )
+				.domain( "domain" );
+
 		InMemoryHandler target = new InMemoryHandler();
 		target.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
-		target.createMachine(null, this.msgCfg, "vm", "my app");
+		target.createMachine( parameters );
 	}
 
 
@@ -83,8 +90,15 @@ public class InMemoryHandlerWithoutIPojoTest {
 		Map<String,String> targetProperties = new HashMap<>(1);
 		targetProperties.put( InMemoryHandler.DELAY, "20L" );
 
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( targetProperties )
+				.messagingProperties( this.msgCfg )
+				.scopedInstancePath( "vm" )
+				.applicationName( "my app" )
+				.domain( "domain" );
+
 		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
-		handler.createMachine( targetProperties, this.msgCfg, "vm", "my app" );
+		handler.createMachine( parameters );
 	}
 
 
@@ -96,16 +110,29 @@ public class InMemoryHandlerWithoutIPojoTest {
 		Assert.assertEquals( 10L, handler.getDefaultDelay());
 
 		Map<String,String> targetProperties = new HashMap<>( 0 );
-		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
-		handler.createMachine( targetProperties, this.msgCfg, "vm", "my app" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( targetProperties )
+				.messagingProperties( this.msgCfg )
+				.scopedInstancePath( "vm" )
+				.applicationName( "my app" )
+				.domain( "domain" );
+
+		handler.setMessagingFactoryRegistry( new MessagingClientFactoryRegistry());
+		handler.createMachine( parameters );
 	}
 
 
 	@Test
 	public void testConfigureAndIsRunning() throws Exception {
 
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.messagingProperties( this.msgCfg )
+				.scopedInstancePath( "vm" )
+				.applicationName( "my app" )
+				.domain( "domain" );
+
 		InMemoryHandler handler = new InMemoryHandler();
-		handler.configureMachine( null, this.msgCfg, "my app", null, null, new Instance());
+		handler.configureMachine( parameters, null, new Instance());
 		Assert.assertFalse( handler.isMachineRunning( null, "whatever, there is no iPojo factory" ));
 	}
 

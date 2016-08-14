@@ -31,6 +31,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -58,14 +66,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.target.api.TargetHandler;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -467,7 +468,7 @@ public class ManagerBasicsTest {
 		// Make sure the VM is considered as deployed in the pseudo-IaaS
 		TargetHandler th = this.targetResolver.findTargetHandler( new HashMap<String,String>( 0 ));
 		Assert.assertNotNull( th );
-		th.createMachine( null, null, path, ma.getName());
+		th.createMachine( new TargetHandlerParameters().scopedInstancePath( path ).applicationName( ma.getName()));
 
 		// Update the instances
 		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
@@ -665,7 +666,7 @@ public class ManagerBasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		// Try a first deployment

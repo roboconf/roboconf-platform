@@ -28,9 +28,10 @@ package net.roboconf.target.docker.internal;
 import java.util.HashMap;
 
 import org.junit.Assert;
-import net.roboconf.target.api.TargetException;
-
 import org.junit.Test;
+
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -58,6 +59,6 @@ public class DockerHandlerWithoutContainerTest {
 
 	@Test( expected = TargetException.class )
 	public void testCreateMachine_invalidConfiguration() throws Exception {
-		new DockerHandler().createMachine( new HashMap<String,String>( 0 ), null, null, null );
+		new DockerHandler().createMachine( new TargetHandlerParameters().targetProperties( new HashMap<String,String>( 0 )));
 	}
 }

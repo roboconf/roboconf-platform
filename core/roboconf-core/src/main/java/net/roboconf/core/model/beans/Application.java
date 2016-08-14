@@ -71,7 +71,7 @@ public class Application extends AbstractApplication implements Serializable {
 	 */
 	public Application( String name, ApplicationTemplate template ) {
 		this( template );
-		this.name = name;
+		setName( name );
 	}
 
 	/**

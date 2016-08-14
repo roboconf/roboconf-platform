@@ -31,6 +31,7 @@ import java.util.Map;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * A target for embedded systems (e.g. the local host).
@@ -55,18 +56,12 @@ public class EmbeddedHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #createMachine(java.util.Map, java.lang.String, java.lang.String, java.lang.String,
-	 * java.lang.String, java.lang.String)
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String, String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
-		String machineId = scopedInstancePath + " (" + TARGET_ID + ")";
+		String machineId = parameters.getScopedInstancePath() + " (" + TARGET_ID + ")";
 		this.machineIdToRunning.put( machineId, Boolean.TRUE );
 		return machineId;
 	}
@@ -86,17 +81,11 @@ public class EmbeddedHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void configureMachine(
-		Map<String,String> targetProperties,
-		Map<String,String> messagingConfiguration,
-		String machineId,
-		String scopedInstancePath,
-		String applicationName,
-		Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
 		// nothing
 	}

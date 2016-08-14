@@ -1,60 +1,35 @@
 <project>
 
-	<!-- Do not clone if the target directory was not "cleaned" -->
+	<!-- Do not download anything if the target directory was not "cleaned" -->
 	<target name="target.check" description="Checking if the web-administration was already cloned...">
 		<condition property="already.cloned">
 			<available file="${project.build.directory}/roboconf-web-administration" />
 		</condition>
 	</target>
 	
-	<!-- The clone operation depends on the project's version -->
+	<!-- Which download to perform depends on the project's version -->
 	<target name="target.is.snapshot" description="Checking if the platform is in snapshot version...">
 		<condition property="roboconf.snapshot">
 			<matches string="${project.version}" casesensitive="false" pattern=".*-SNAPSHOT$" />
 		</condition>
 	</target>
 
-	<!-- Clone the Git repository -->
-	<target name="target.clone" depends="target.check, target.is.snapshot" unless="already.cloned" description="Selecting the web-administration version...">
-		<antcall target="target.clone.master" />
-		<antcall target="target.clone.tag" />
+	<!-- Get the right version, if available -->
+	<target name="target.get" depends="target.check, target.is.snapshot" unless="already.cloned" description="Selecting the web-administration version...">
+		<antcall target="target.get.snapshot" />
+		<antcall target="target.get.release" />
 	</target>
 
-	<!-- Only clone the master -->
-	<target name="target.clone.master" if="roboconf.snapshot" description="Cloning the web-administration repository (master branch)...">
-		<exec dir="${project.build.directory}" executable="git" failonerror="true">
-			<arg value="clone" />
-			<arg value="--depth=1" />
-			<arg value="${web.client.git.url}" />
-		</exec>
-		<delete dir="${project.build.directory}/roboconf-web-administration/.git" />
+	<!-- Get the last snapshot -->
+	<target name="target.get.snapshot" if="roboconf.snapshot" description="Downloading the last built distribution...">
+		<get src="https://dl.bintray.com/roboconf/roboconf-web-administration/all/roboconf-web-administration-snapshot.zip" dest="target/" />
+		<unzip src="target/roboconf-web-administration-snapshot.zip" dest="target/roboconf-web-administration-dist/" />
 	</target>
 
-	<!-- Clone a tag -->
-	<target name="target.clone.tag" unless="roboconf.snapshot" description="Cloning the web-administration repository (tag)...">
-		<exec dir="${project.build.directory}" executable="git" failonerror="true">
-			<arg value="clone" />
-			<arg value="--branch" />
-			<arg value="roboconf-web-administration-${project.version}" />
-			<arg value="--depth=1" />
-			<arg value="${web.client.git.url}" />
-		</exec>
-		<delete dir="${project.build.directory}/roboconf-web-administration/.git" />
-	</target>
-
-	<!-- Execute npm install -->
-	<target name="target.npm" description="Invoking NPM to download JS dependencies...">
-		<exec executable="cmd" dir="${project.build.directory}/roboconf-web-administration" osfamily="windows" failonerror="true">
-			<arg line="/c npm install --production" />
-		</exec>
-		<exec executable="npm" dir="${project.build.directory}/roboconf-web-administration" osfamily="unix" failonerror="true">
-			<arg line="install" />
-			<arg line="--production" />
-		</exec>
-		
-		<exec executable="gulp" dir="${project.build.directory}/roboconf-web-administration" failonerror="true">
-			<arg line="embed" />
-		</exec>
+	<!-- Get a release -->
+	<target name="target.get.release" unless="roboconf.snapshot" description="Downloading a released distribution...">
+		<get src="https://dl.bintray.com/roboconf/roboconf-web-administration/all/roboconf-web-administration-${project.version}.zip" dest="target/" />
+		<unzip src="target/roboconf-web-administration-${project.version}.zip" dest="target/roboconf-web-administration-dist/" />
 	</target>
 
 </project>

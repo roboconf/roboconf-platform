@@ -28,12 +28,12 @@ package net.roboconf.target.api;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.target.api.internal.TestAbstractThreadedTargetHandler;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -59,7 +59,7 @@ public class AbstractThreadedTargetHandlerTest {
 			Assert.assertEquals( 0, th.getCpt());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( null, null, "machine-id", null, null, scopedInstance );
+			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
 			th.start();
 
 			Assert.assertEquals( 1, configurators.size());
@@ -103,7 +103,7 @@ public class AbstractThreadedTargetHandlerTest {
 			Assert.assertEquals( 0, th.getCpt());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( null, null, "machine-id", null, null, scopedInstance );
+			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
 			th.start();
 
 			Assert.assertEquals( 0, th.getCpt());
@@ -139,7 +139,7 @@ public class AbstractThreadedTargetHandlerTest {
 			Assert.assertEquals( 0, th.getCpt());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( null, null, "machine-id", null, null, scopedInstance );
+			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
 			th.start();
 
 			Assert.assertEquals( 0, th.getCpt());
@@ -186,7 +186,7 @@ public class AbstractThreadedTargetHandlerTest {
 			Assert.assertEquals( 0, th.getCpt());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( null, null, "machine-id", null, null, null );
+			th.configureMachine( new TargetHandlerParameters(), "machine-id", null );
 			th.start();
 
 			Assert.assertEquals( 1, configurators.size());

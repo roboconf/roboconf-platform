@@ -1,0 +1,25 @@
+instance of VM {
+	name: container-bootstrap-vm;
+
+	instance of PetalsSLPostgreSQL {
+		name: ambiguous;
+       	componentId: petals-sl-postgresql-9.4-1201-jdbc4;
+
+       	domainName: roboconf-demo;
+		subdomainName: roboconf-demo-1;
+	}
+
+	instance of PetalsSLPostgreSQL {
+		name: specific;
+       	PetalsJBIComponent.componentId: comp;
+       	PetalsSL.componentId: sl;
+       	PetalsSLPostgreSQL.componentId: last;
+
+       	domainName: roboconf-demo;
+	}
+
+	instance of PetalsSL {
+		name: superInstance;
+       	componentId: my-sl;
+	}
+}

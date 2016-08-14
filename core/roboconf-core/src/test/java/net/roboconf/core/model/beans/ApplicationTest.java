@@ -238,4 +238,25 @@ public class ApplicationTest {
 		Assert.assertNotNull( app.getGraphs());
 		Assert.assertNotNull( app.getExternalExports());
 	}
+
+
+	@Test
+	public void testSetNameWithAccents() {
+
+		Application app = new Application( "avé dés àcçents", new TestApplicationTemplate());
+		Assert.assertEquals( "ave des accents", app.getName());
+		Assert.assertEquals( "avé dés àcçents", app.getDisplayName());
+
+		app.setName( "   " );
+		Assert.assertEquals( "", app.getName());
+		Assert.assertEquals( "", app.getDisplayName());
+
+		app.setName( null );
+		Assert.assertNull( app.getName());
+		Assert.assertNull( app.getDisplayName());
+
+		app.setName( " âêû éèà " );
+		Assert.assertEquals( "aeu eea", app.getName());
+		Assert.assertEquals( "âêû éèà", app.getDisplayName());
+	}
 }

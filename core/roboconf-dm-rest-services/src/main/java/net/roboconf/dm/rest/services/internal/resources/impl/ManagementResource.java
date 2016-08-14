@@ -40,6 +40,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.sun.jersey.core.header.FormDataContentDisposition;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -51,8 +53,6 @@ import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
-
-import com.sun.jersey.core.header.FormDataContentDisposition;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -98,7 +98,7 @@ public class ManagementResource implements IManagementResource {
 	@Override
 	public Response loadApplicationTemplate( InputStream uploadedInputStream, FormDataContentDisposition fileDetail ) {
 
-		this.logger.fine( "Request: load application from uploaded ZIP file (" + fileDetail.getFileName() + ")." );
+		this.logger.fine( "Request: load application from an uploaded ZIP file (" + fileDetail.getFileName() + ")." );
 		File tempZipFile = new File( System.getProperty( "java.io.tmpdir" ), fileDetail.getFileName());
 		File dir = null;
 		Response response;
@@ -169,7 +169,7 @@ public class ManagementResource implements IManagementResource {
 	public List<ApplicationTemplate> listApplicationTemplates() {
 		this.logger.fine( "Request: list all the application templates." );
 
-		List<ApplicationTemplate> result = new ArrayList<ApplicationTemplate> ();
+		List<ApplicationTemplate> result = new ArrayList<> ();
 		result.addAll( this.manager.applicationTemplateMngr().getApplicationTemplates());
 
 		return result;
@@ -239,7 +239,7 @@ public class ManagementResource implements IManagementResource {
 	public List<Application> listApplications() {
 		this.logger.fine( "Request: list all the applications." );
 
-		List<Application> result = new ArrayList<Application> ();
+		List<Application> result = new ArrayList<> ();
 		for( ManagedApplication ma : this.manager.applicationMngr().getManagedApplications())
 			result.add( ma.getApplication());
 

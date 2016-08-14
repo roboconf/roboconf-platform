@@ -692,7 +692,9 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
-		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+		Utils.writeStringInto(
+				"id: tid\nhandler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
 
 		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
 		Assert.assertTrue( graphFile.createNewFile());
@@ -719,7 +721,9 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
-		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+		Utils.writeStringInto(
+				"id: tid\nhandler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
@@ -751,6 +755,36 @@ public class RuntimeModelIoTest {
 
 
 	@Test
+	public void testApplicationWithInvalidTarget() throws Exception {
+
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_DESC ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
+
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
+		Utils.writeStringInto(
+				"handler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
+
+		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
+		Assert.assertTrue( graphFile.createNewFile());
+
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
+		desc.setName( "app name" );
+		desc.setQualifier( "qualifier" );
+		desc.setGraphEntryPoint( "app.graph" );
+		desc.setDslId( "roboconf-1.0" );
+		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
+
+		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
+		Iterator<RoboconfError> it = RuntimeModelIo.loadApplication( dir ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.REC_TARGET_NO_ID, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+	}
+
+
+	@Test
 	public void testInvalidFileLocation() throws Exception {
 
 		// Valid project
@@ -760,7 +794,9 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
-		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+		Utils.writeStringInto(
+				"id: tid\nhandler: test\nname: n",
+				new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ));
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
@@ -984,5 +1020,69 @@ public class RuntimeModelIoTest {
 		Assert.assertNotNull( alr.getApplicationTemplate());
 		Assert.assertNull( alr.getApplicationTemplate().getGraphs());
 		Assert.assertNotSame( 0, alr.getLoadErrors().size());
+	}
+
+
+	@Test
+	public void testParsingWithInstancesAndComponentExtensions() throws Exception {
+
+		File dir = TestUtils.findApplicationDirectory( "component-extensions" );
+		Assert.assertTrue( dir.isDirectory());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( alr.getLoadErrors()));
+
+		// Ambiguous overriding with multiple inheritance
+		Instance ambiguous = InstanceHelpers.findInstanceByPath( alr.getApplicationTemplate(), "/container-bootstrap-vm/ambiguous" );
+		Assert.assertNotNull( ambiguous );
+
+		Map<String,String> exportedVariables = InstanceHelpers.findAllExportedVariables( ambiguous );
+		Assert.assertEquals( 9, exportedVariables.size());
+
+		Assert.assertEquals( "petals-sl-postgresql-9.4-1201-jdbc4", exportedVariables.get( "PetalsJBIComponent.componentId" ));
+		Assert.assertEquals( "petals-sl-postgresql-9.4-1201-jdbc4", exportedVariables.get( "PetalsSL.componentId" ));
+		Assert.assertEquals( "petals-sl-postgresql-9.4-1201-jdbc4", exportedVariables.get( "PetalsSLPostgreSQL.componentId" ));
+		Assert.assertEquals( "petals-sl-postgresql-9.4-1201-jdbc4", exportedVariables.get( "componentId" ));
+
+		Assert.assertEquals( "SL", exportedVariables.get( "PetalsSL.componentType" ));
+		Assert.assertEquals( "SL", exportedVariables.get( "PetalsSLPostgreSQL.componentType" ));
+		Assert.assertEquals( "true", exportedVariables.get( "PetalsSLPostgreSQL.present" ));
+
+		Assert.assertEquals( "roboconf-demo", exportedVariables.get( "domainName" ));
+		Assert.assertEquals( "roboconf-demo-1", exportedVariables.get( "subdomainName" ));
+
+		// Specific overriding with multiple inheritance
+		Instance specific = InstanceHelpers.findInstanceByPath( alr.getApplicationTemplate(), "/container-bootstrap-vm/specific" );
+		Assert.assertNotNull( specific );
+
+		exportedVariables = InstanceHelpers.findAllExportedVariables( specific );
+		Assert.assertEquals( 7, exportedVariables.size());
+		Assert.assertEquals( "comp", exportedVariables.get( "PetalsJBIComponent.componentId" ));
+		Assert.assertEquals( "sl", exportedVariables.get( "PetalsSL.componentId" ));
+		Assert.assertEquals( "last", exportedVariables.get( "PetalsSLPostgreSQL.componentId" ));
+		Assert.assertNull( exportedVariables.get( "componentId" ));
+
+		Assert.assertEquals( "SL", exportedVariables.get( "PetalsSL.componentType" ));
+		Assert.assertEquals( "SL", exportedVariables.get( "PetalsSLPostgreSQL.componentType" ));
+		Assert.assertEquals( "true", exportedVariables.get( "PetalsSLPostgreSQL.present" ));
+
+		Assert.assertEquals( "roboconf-demo", exportedVariables.get( "domainName" ));
+		Assert.assertNull( exportedVariables.get( "subdomainName" ));
+
+		// Instance from a super component
+		Instance superInstance = InstanceHelpers.findInstanceByPath( alr.getApplicationTemplate(), "/container-bootstrap-vm/superInstance" );
+		Assert.assertNotNull( superInstance );
+
+		exportedVariables = InstanceHelpers.findAllExportedVariables( superInstance );
+		Assert.assertEquals( 4, exportedVariables.size());
+		Assert.assertEquals( "my-sl", exportedVariables.get( "PetalsJBIComponent.componentId" ));
+		Assert.assertEquals( "my-sl", exportedVariables.get( "PetalsSL.componentId" ));
+		Assert.assertEquals( "my-sl", exportedVariables.get( "componentId" ));
+
+		Assert.assertEquals( "SL", exportedVariables.get( "PetalsSL.componentType" ));
+
+		Assert.assertNull( exportedVariables.get( "PetalsSLPostgreSQL.componentId" ));
+		Assert.assertNull( exportedVariables.get( "domainName" ));
+		Assert.assertNull( exportedVariables.get( "subdomainName" ));
 	}
 }

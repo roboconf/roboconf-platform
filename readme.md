@@ -17,5 +17,5 @@ groups of machines (public clouds, hybrid clouds...). Transposing the concepts o
 Roboconf can install and also reconfigure dynamically a topology of applications.
 
 More information and tutorials are available on the [web site](http://roboconf.net).  
-Build instructions can be found on [here](http://roboconf.net/en/sources.html).  
+Build instructions can be found [here](http://roboconf.net/en/sources.html).  
 Roboconf is licensed under the terms of the **Apache License v2**.

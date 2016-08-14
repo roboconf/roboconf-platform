@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -70,6 +71,7 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 public final class JSonBindingUtils {
 
 	private static final String NAME = "name";
+	private static final String DISPLAY_NAME = "displayName";
 	private static final String QUALIFIER = "qualifier";
 	private static final String DESC = "desc";
 	private static final String EEP = "eep";
@@ -513,6 +515,9 @@ public final class JSonBindingUtils {
 			if( app.getName() != null )
 				generator.writeStringField( NAME, app.getName());
 
+			if( ! Objects.equals( app.getName(), app.getDisplayName()))
+				generator.writeStringField( DISPLAY_NAME, app.getDisplayName());
+
 			if( app.getDescription() != null )
 				generator.writeStringField( DESC, app.getDescription());
 
@@ -753,6 +758,9 @@ public final class JSonBindingUtils {
 			generator.writeStartObject();
 			if( app.getName() != null )
 				generator.writeStringField( NAME, app.getName());
+
+			if( ! Objects.equals( app.getName(), app.getDisplayName()))
+				generator.writeStringField( DISPLAY_NAME, app.getDisplayName());
 
 			if( app.getDescription() != null )
 				generator.writeStringField( DESC, app.getDescription());

@@ -26,6 +26,11 @@
 package net.roboconf.dm.internal.commands;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.commands.AssociateTargetCommandInstruction;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -34,11 +39,6 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -71,7 +71,7 @@ public class AssociateTargetCommandInstructionTest {
 	@Test
 	public void testExecute_success() throws Exception {
 
-		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
@@ -95,7 +95,7 @@ public class AssociateTargetCommandInstructionTest {
 	@Test( expected = CommandException.class )
 	public void testExecute_inexistingApplication() throws Exception {
 
-		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
@@ -107,7 +107,7 @@ public class AssociateTargetCommandInstructionTest {
 	@Test( expected = CommandException.class )
 	public void testExecute_inexistingInstance() throws Exception {
 
-		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		AssociateTargetCommandExecution executor = buildExecutor( "associate /inexisting with " + targetId, 1 );
 		executor.execute();
 	}

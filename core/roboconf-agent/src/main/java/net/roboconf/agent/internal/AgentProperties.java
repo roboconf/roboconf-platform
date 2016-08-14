@@ -26,8 +26,10 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -41,7 +43,7 @@ import net.roboconf.messaging.api.MessagingConstants;
  */
 public final class AgentProperties {
 
-	private String applicationName, ipAddress, scopedInstancePath;
+	private String applicationName, ipAddress, scopedInstancePath, domain;
 	private Map<String,String> messagingConfiguration;
 
 
@@ -66,6 +68,22 @@ public final class AgentProperties {
 	 */
 	public void setApplicationName( String applicationName ) {
 		this.applicationName = applicationName;
+	}
+
+
+	/**
+	 * @return the domain
+	 */
+	public String getDomain() {
+		return this.domain;
+	}
+
+
+	/**
+	 * @param domain the domain to set
+	 */
+	public void setDomain( String domain ) {
+		this.domain = domain;
 	}
 
 
@@ -164,12 +182,14 @@ public final class AgentProperties {
 		AgentProperties result = new AgentProperties();
 		result.setApplicationName( updatedField( props, DataHelpers.APPLICATION_NAME ));
 		result.setScopedInstancePath( updatedField( props, DataHelpers.SCOPED_INSTANCE_PATH ));
+		result.setDomain( updatedField( props, DataHelpers.DOMAIN ));
 
 		final Map<String, String> messagingConfiguration = new LinkedHashMap<> ();
-		for (String k : props.stringPropertyNames()) {
-			if (! DataHelpers.APPLICATION_NAME.equals(k) && ! DataHelpers.SCOPED_INSTANCE_PATH.equals(k)) {
+		List<String> toSkip = Arrays.asList( DataHelpers.APPLICATION_NAME, DataHelpers.DOMAIN, DataHelpers.SCOPED_INSTANCE_PATH );
+		for( String k : props.stringPropertyNames()) {
+			if( ! toSkip.contains( k )) {
 				// All other properties are considered messaging-specific.
-				messagingConfiguration.put(k, updatedField( props, k));
+				messagingConfiguration.put(k, updatedField( props, k ));
 			}
 		}
 

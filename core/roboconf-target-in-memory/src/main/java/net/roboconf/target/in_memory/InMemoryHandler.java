@@ -47,6 +47,7 @@ import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * A target that runs agents in memory.
@@ -79,19 +80,14 @@ public class InMemoryHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		this.logger.fine( "Creating a new agent in memory." );
-		targetProperties = preventNull( targetProperties );
+		Map<String,String> targetProperties = preventNull( parameters.getTargetProperties());
 
 		// Need to wait?
 		try {
@@ -105,8 +101,14 @@ public class InMemoryHandler implements TargetHandler {
 			Utils.logException( this.logger, e );
 		}
 
-		String machineId = scopedInstancePath + " @ " + applicationName;
-		createIPojo( targetProperties, messagingConfiguration, machineId, scopedInstancePath, applicationName );
+		String machineId = parameters.getScopedInstancePath() + " @ " + parameters.getApplicationName();
+		createIPojo(
+				targetProperties,
+				parameters.getMessagingProperties(),
+				machineId,
+				parameters.getScopedInstancePath(),
+				parameters.getApplicationName(),
+				parameters.getDomain());
 
 		return machineId;
 	}
@@ -114,17 +116,11 @@ public class InMemoryHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void configureMachine(
-		Map<String,String> targetProperties,
-		Map<String,String> messagingConfiguration,
-		String machineId,
-		String scopedInstancePath,
-		String applicationName,
-		Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
 
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
@@ -161,7 +157,7 @@ public class InMemoryHandler implements TargetHandler {
 			if( scopedInstance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
 				this.logger.fine( "In-memory agent for " + machineId + " is supposed to be running but is not. It will be restored." );
 				Map<String,String> messagingConfiguration = this.manager.messagingMngr().getMessagingClient().getConfiguration();
-				createIPojo( targetProperties, messagingConfiguration, machineId, ctx.getKey(), ctx.getValue());
+				createIPojo( targetProperties, messagingConfiguration, machineId, ctx.getKey(), ctx.getValue(), this.manager.getDomain());
 				result = true;
 				// The agent will restore its model by asking it to the DM.
 			}
@@ -258,7 +254,9 @@ public class InMemoryHandler implements TargetHandler {
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName ) throws TargetException {
+			String applicationName,
+			String domain )
+	throws TargetException {
 
 		// Reconfigure the messaging factory.
 		final String messagingType = messagingConfiguration.get("net.roboconf.messaging.type");
@@ -271,6 +269,7 @@ public class InMemoryHandler implements TargetHandler {
 		configuration.put( "application-name", applicationName );
 		configuration.put( "scoped-instance-path", scopedInstancePath );
 		configuration.put( "messaging-type", messagingType );
+		configuration.put( "domain", domain );
 
 		// Execute real recipes?
 		boolean simulatePlugins = simulatePlugins( targetProperties );

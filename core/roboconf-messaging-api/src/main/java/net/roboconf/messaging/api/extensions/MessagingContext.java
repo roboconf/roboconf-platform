@@ -77,28 +77,30 @@ public class MessagingContext implements Serializable {
 	private static final long serialVersionUID = 5529159467155629784L;
 
 	private final RecipientKind kind;
-	private final String componentOrFacetName, applicationName;
+	private final String domain, componentOrFacetName, applicationName;
 	private final ThoseThat thoseThat;
 
 
 	/**
 	 * Constructor.
 	 * @param kind the recipient kind
+	 * @param domain the domain
 	 * @param applicationName an application name
 	 */
-	public MessagingContext( RecipientKind kind, String applicationName ) {
-		this( kind, null, null, applicationName );
+	public MessagingContext( RecipientKind kind, String domain, String applicationName ) {
+		this( kind, domain, null, null, applicationName );
 	}
 
 
 	/**
 	 * Constructor.
 	 * @param kind the recipient kind
+	 * @param domain the domain
 	 * @param topicName a topic name
 	 * @param applicationName an application name
 	 */
-	public MessagingContext( RecipientKind kind, String topicName, String applicationName ) {
-		this( kind, topicName, null, applicationName );
+	public MessagingContext( RecipientKind kind, String domain, String topicName, String applicationName ) {
+		this( kind, domain, topicName, null, applicationName );
 	}
 
 
@@ -111,12 +113,14 @@ public class MessagingContext implements Serializable {
 	 * </p>
 	 *
 	 * @param kind the recipient kind
+	 * @param domain the domain
 	 * @param componentOrFacetName the component or facet name
 	 * @param thoseThat do we target "those that export" or "those that import" <code>componentOrFacetName</code>?
 	 * @param applicationName an application name
 	 */
-	public MessagingContext( RecipientKind kind, String componentOrFacetName, ThoseThat thoseThat, String applicationName ) {
+	public MessagingContext( RecipientKind kind, String domain, String componentOrFacetName, ThoseThat thoseThat, String applicationName ) {
 		this.kind = kind;
+		this.domain = domain;
 
 		if( kind == RecipientKind.DM ) {
 			// The application name will be used to build a topic name.
@@ -154,6 +158,11 @@ public class MessagingContext implements Serializable {
 
 	public ThoseThat getAgentDirection() {
 		return this.thoseThat;
+	}
+
+
+	public String getDomain() {
+		return this.domain;
 	}
 
 
@@ -218,12 +227,14 @@ public class MessagingContext implements Serializable {
 
 	/**
 	 * Builds a list of messaging contexts.
+	 * @param domain the domain
 	 * @param applicationName the name of the agent's application
 	 * @param instance the current instance
 	 * @param thoseThat whether we target "those that import" or "those that export"
 	 * @return a non-null list
 	 */
 	public static Collection<MessagingContext> forImportedVariables(
+			String domain,
 			String applicationName,
 			Instance instance,
 			ThoseThat thoseThat ) {
@@ -236,7 +247,7 @@ public class MessagingContext implements Serializable {
 
 			// When we import a variable, it is either internal or external, but not both!
 			RecipientKind kind = var.isExternal() ? RecipientKind.INTER_APP : RecipientKind.AGENTS;
-			MessagingContext ctx = new MessagingContext( kind, componentOrApplicationTemplateName, thoseThat, applicationName );
+			MessagingContext ctx = new MessagingContext( kind, domain, componentOrApplicationTemplateName, thoseThat, applicationName );
 			result.put( componentOrApplicationTemplateName, ctx );
 		}
 
@@ -246,6 +257,7 @@ public class MessagingContext implements Serializable {
 
 	/**
 	 * Builds a list of messaging contexts.
+	 * @param domain the domain
 	 * @param applicationName the name of the agent's application
 	 * @param instance the current instance
 	 * @param externalExports a non-null map that associates internal exported variables with global ones
@@ -253,6 +265,7 @@ public class MessagingContext implements Serializable {
 	 * @return a non-null list
 	 */
 	public static List<MessagingContext> forExportedVariables(
+			String domain,
 			String applicationName,
 			Instance instance,
 			Map<String,String> externalExports,
@@ -271,7 +284,7 @@ public class MessagingContext implements Serializable {
 		// Internal variables
 		boolean publishExternal = false;
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
-			MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, facetOrComponentName, thoseThat, applicationName );
+			MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, domain, facetOrComponentName, thoseThat, applicationName );
 			result.add( ctx );
 
 			if( externalExportPrefixes.contains( facetOrComponentName ))
@@ -285,7 +298,7 @@ public class MessagingContext implements Serializable {
 
 			// We indicate the application name, but it will most likely not be used
 			// for inter-application messages.
-			MessagingContext ctx = new MessagingContext( RecipientKind.INTER_APP, prefix, thoseThat, applicationName );
+			MessagingContext ctx = new MessagingContext( RecipientKind.INTER_APP, domain, prefix, thoseThat, applicationName );
 			result.add( ctx );
 		}
 

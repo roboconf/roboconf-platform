@@ -49,19 +49,11 @@ public interface TargetHandler {
 	 * storage and so on, should be done {@link #configureMachine(Map, Map, String, String, String, Instance)}.
 	 * </p>
 	 *
-	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
-	 * @param messagingProperties the configuration for the messaging.
-	 * @param applicationName the application name
-	 * @param scopedInstancePath the scoped instance's path
+	 * @param parameters the target parameters
 	 * @return the (machine) ID of this machine (should be unique for the target manager)
 	 * @throws TargetException
 	 */
-	String createMachine(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException;
+	String createMachine( TargetHandlerParameters parameters ) throws TargetException;
 
 
 	/**
@@ -75,21 +67,12 @@ public interface TargetHandler {
 	 * may use them at this level (in particular, those that do not support user data mechanisms).
 	 * </p>
 	 *
-	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
-	 * @param messagingProperties the configuration for the messaging.
-	 * @param applicationName the application name
-	 * @param scopedInstancePath the scoped instance's path
 	 * @param scopedInstance the scoped instance
 	 * @throws TargetException
 	 */
-	void configureMachine(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String machineId,
-			String scopedInstancePath,
-			String applicationName,
-			Instance scopedInstance )
+	void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException;
 
 

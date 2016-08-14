@@ -39,6 +39,7 @@ public final class DataHelpers {
 
 	public static final String SCOPED_INSTANCE_PATH = "scoped.instance.path";
 	public static final String APPLICATION_NAME = "application.name";
+	public static final String DOMAIN = "domain";
 
 
 	/**
@@ -51,18 +52,21 @@ public final class DataHelpers {
 
 	/**
 	 * Writes user data as a string.
+	 * @param domain the domain (used among other things in the messaging)
 	 * @param messagingConfiguration the messaging configuration
 	 * @param applicationName the application name
-	 * @param rootInstanceName the root instance name
+	 * @param scopedInstancePath the scoped instance's path (the instance associated with the agent)
 	 * @return a non-null string
 	 * @throws IOException if something went wrong
 	 */
 	public static String writeUserDataAsString(
 			Map<String,String> messagingConfiguration,
+			String domain,
 			String applicationName,
-			String rootInstanceName ) throws IOException {
+			String scopedInstancePath )
+	throws IOException {
 
-		Properties props = writeUserDataAsProperties( messagingConfiguration, applicationName, rootInstanceName );
+		Properties props = writeUserDataAsProperties( messagingConfiguration, domain, applicationName, scopedInstancePath );
 		StringWriter writer = new StringWriter();
 		props.store( writer, "" );
 
@@ -72,6 +76,7 @@ public final class DataHelpers {
 
 	/**
 	 * Writes user data as properties.
+	 * @param domain the domain (used among other things in the messaging)
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped instance's path (the instance associated with the agent)
 	 * @param messagingConfiguration a map containing the messaging configuration
@@ -79,6 +84,7 @@ public final class DataHelpers {
 	 */
 	public static Properties writeUserDataAsProperties(
 			Map<String,String> messagingConfiguration,
+			String domain,
 			String applicationName,
 			String scopedInstancePath ) {
 
@@ -89,11 +95,13 @@ public final class DataHelpers {
 		if( scopedInstancePath != null )
 			result.setProperty( SCOPED_INSTANCE_PATH, scopedInstancePath );
 
+		if( domain != null )
+			result.setProperty( DOMAIN, domain );
+
 		if( messagingConfiguration != null ) {
-			for (Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
-				if (e.getValue() != null) {
-					result.setProperty(e.getKey(), e.getValue());
-				}
+			for( Map.Entry<String,String> e : messagingConfiguration.entrySet()) {
+				if( e.getValue() != null )
+					result.setProperty( e.getKey(), e.getValue());
 			}
 		}
 

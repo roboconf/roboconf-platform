@@ -59,6 +59,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	// Component properties (ipojo)
 	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
+	String domain = Constants.DEFAULT_DOMAIN;
 	String networkInterface = AgentConstants.DEFAULT_NETWORK_INTERFACE;
 	boolean overrideProperties = false, simulatePlugins = true;
 
@@ -98,6 +99,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		this.logger.info( "IP address resolved to " + this.ipAddress );
 
 		this.messagingClient = new ReconfigurableClientAgent();
+		this.messagingClient.setDomain( this.domain );
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
@@ -469,6 +471,23 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		} else {
 			this.logger.info( "User data are used. The IP address will not be refreshed." );
 		}
+	}
+
+
+	/**
+	 * @param domain the domain to set
+	 */
+	public void setDomain( String domain ) {
+		this.domain = domain;
+		this.logger.fine( "Domain set to " + domain );
+		if( this.messagingClient != null )
+			this.messagingClient.setDomain( domain );
+	}
+
+
+	@Override
+	public String getDomain() {
+		return this.domain;
 	}
 
 

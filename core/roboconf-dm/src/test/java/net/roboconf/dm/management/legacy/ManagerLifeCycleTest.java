@@ -31,6 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -52,14 +60,6 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInsta
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -115,7 +115,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -184,7 +184,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -352,7 +352,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -380,7 +380,7 @@ public class ManagerLifeCycleTest {
 		final ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		final Instance instance = app.getMySqlVm();
@@ -434,7 +434,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -457,7 +457,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
@@ -505,7 +505,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -530,7 +530,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -552,7 +552,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -588,7 +588,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
@@ -631,7 +631,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -679,7 +679,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -716,7 +716,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
@@ -746,7 +746,7 @@ public class ManagerLifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());

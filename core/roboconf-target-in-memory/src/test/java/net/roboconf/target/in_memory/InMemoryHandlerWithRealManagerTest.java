@@ -32,7 +32,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Timer;
 
+import org.apache.felix.ipojo.ComponentInstance;
+import org.apache.felix.ipojo.Factory;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -42,15 +51,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-
-import org.apache.felix.ipojo.ComponentInstance;
-import org.apache.felix.ipojo.Factory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora

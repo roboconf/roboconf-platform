@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.AbstractApplication;
@@ -39,9 +42,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.ITargetsMngr;
-
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -121,11 +121,8 @@ public class TargetHelpersTest {
 		props.put( Constants.TARGET_PROPERTY_HANDLER, "whatever" );
 		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
 
-		props.put( TargetHelpers.LEGACY_HANDLER_PROPERTY, "whatever2" );
-		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
-
 		props.remove( Constants.TARGET_PROPERTY_HANDLER );
-		Assert.assertEquals( "whatever2", TargetHelpers.findTargetHandlerName( props ));
+		Assert.assertNull( TargetHelpers.findTargetHandlerName( props ));
 	}
 
 
@@ -138,10 +135,7 @@ public class TargetHelpersTest {
 		props.put( Constants.TARGET_PROPERTY_HANDLER, "whatever" );
 		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
 
-		props.put( TargetHelpers.LEGACY_HANDLER_PROPERTY, "whatever2" );
-		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
-
 		props.remove( Constants.TARGET_PROPERTY_HANDLER );
-		Assert.assertEquals( "whatever2", TargetHelpers.findTargetHandlerName( props ));
+		Assert.assertNull( TargetHelpers.findTargetHandlerName( props ));
 	}
 }

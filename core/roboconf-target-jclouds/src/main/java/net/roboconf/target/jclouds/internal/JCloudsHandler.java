@@ -44,6 +44,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * FIXME: add user data support.
@@ -80,26 +81,22 @@ public class JCloudsHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
+		Map<String,String> targetProperties = parameters.getTargetProperties();
 		final String providerId = targetProperties.get( PROVIDER_ID );
 		ComputeService computeService = jcloudContext( targetProperties );
 
 		// For IaaS, we only expect root instance names to be passed
-		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+		if( InstanceHelpers.countInstances( parameters.getScopedInstancePath()) > 1 )
 			throw new TargetException( "Only root instances can be passed in arguments." );
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
 		String machineId = null;
 		try {
 			// Create a template from an image and a flavor/hardware
@@ -129,8 +126,9 @@ public class JCloudsHandler implements TargetHandler {
 
 			Template template = computeService.templateBuilder().fromImage( image ).hardwareId( hardware.getId()).build();
 			template.getOptions().securityGroups( targetProperties.get( SECURITY_GROUP ));
-			template.getOptions().userMetadata( "Application Name", applicationName );
+			template.getOptions().userMetadata( "Application Name", parameters.getApplicationName());
 			template.getOptions().userMetadata( "Root Instance Name", rootInstanceName );
+			template.getOptions().userMetadata( "Domain", parameters.getDomain());
 			template.getOptions().userMetadata( "Created by", "Roboconf" );
 
 			// Specify our own key pair if the current provider supports it
@@ -145,7 +143,7 @@ public class JCloudsHandler implements TargetHandler {
 				throw new TargetException( "Provider: " + providerId + " does not support specifying key pairs.", e );
 			}
 
-			String vmName = (applicationName + "." + rootInstanceName).replaceAll( "\\.|\\s+", "-" );
+			String vmName = (parameters.getApplicationName() + "." + rootInstanceName).replaceAll( "\\.|\\s+", "-" );
 			Set<? extends NodeMetadata> nodes = computeService.createNodesInGroup( vmName, 1, template );
 			machineId = nodes.iterator().next().getId();
 
@@ -163,17 +161,11 @@ public class JCloudsHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void configureMachine(
-		Map<String,String> targetProperties,
-		Map<String,String> messagingConfiguration,
-		String machineId,
-		String scopedInstancePath,
-		String applicationName,
-		Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
 	}

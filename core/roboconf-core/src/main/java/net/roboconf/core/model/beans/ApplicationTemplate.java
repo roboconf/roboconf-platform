@@ -77,7 +77,7 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	 * @param name
 	 */
 	public ApplicationTemplate( String name ) {
-		this.name = name;
+		setName( name );
 	}
 
 	/**

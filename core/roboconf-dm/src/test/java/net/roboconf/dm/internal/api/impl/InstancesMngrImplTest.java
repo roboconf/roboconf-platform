@@ -33,6 +33,14 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
@@ -50,14 +58,7 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -110,7 +111,7 @@ public class InstancesMngrImplTest {
 
 		// We want to make sure target locking is correctly invoked by the instances manager.
 		// So, we store requests to lock or unlock a target for a given instance.
-		final Map<Instance,Integer> instancePathToLock = new HashMap<Instance,Integer> ();
+		final Map<Instance,Integer> instancePathToLock = new HashMap<> ();
 		Mockito.when( targetsMngr.lockAndGetTarget( app, app.getMySqlVm())).thenAnswer( new Answer<Map<String,String>>() {
 
 			@Override
@@ -121,7 +122,7 @@ public class InstancesMngrImplTest {
 				count = count == null ? 1 : count + 1;
 				instancePathToLock.put( inst, count );
 
-				Map<String,String> result = new HashMap<String,String>( 0 );
+				Map<String,String> result = new HashMap<>( 0 );
 				return result;
 			}
 		});
@@ -161,7 +162,6 @@ public class InstancesMngrImplTest {
 
 
 	@Test
-	@SuppressWarnings( "unchecked" )
 	public void testTargetsLocking_whenCreatingMachines_withExceptionInDeploy() throws Exception {
 
 		// Prepare stuff
@@ -176,11 +176,9 @@ public class InstancesMngrImplTest {
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
 
 		final TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
-		Mockito.when( targetHandler.createMachine(
-				Mockito.any( Map.class ),
-				Mockito.any( Map.class ),
-				Mockito.anyString(),
-				Mockito.anyString())).thenThrow( new TargetException( "for test" ));
+		Mockito.when( targetHandler
+				.createMachine( Mockito.any( TargetHandlerParameters.class )))
+				.thenThrow( new TargetException( "for test" ));
 
 		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
@@ -203,7 +201,7 @@ public class InstancesMngrImplTest {
 			@Override
 			public Map<String,String> answer( InvocationOnMock invocation ) throws Throwable {
 				acquired.set( true );
-				Map<String,String> result = new HashMap<String,String>( 0 );
+				Map<String,String> result = new HashMap<>( 0 );
 				return result;
 			}
 		});

@@ -100,6 +100,7 @@ public enum ErrorCode {
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
+	RM_INVALID_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is invalid. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_MISSING_APPLICATION_DSL_ID( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The DSL identifier to read model files is missing. The default parser will be used." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
@@ -121,7 +122,7 @@ public enum ErrorCode {
 	RM_INVALID_APPLICATION_EXPORT_PREFIX( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid prefix for external exports. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but was not defined in its component." ),
 	RM_MISSING_VARIABLE_VALUE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "All the variables (except network ones, such as IP) must have a value." ),
-	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but is ambiguously resolved in its component." ),
+	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "An instance variable overrides several ones with the same name (components with inheritance)." ),
 	RM_INVALID_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable that does not exist in the graph." ),
 	RM_ALREADY_DEFINED_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable more than once. This is probably a copy/paste error." ),
 	RM_INVALID_RANDOM_KIND( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component exports a variable whose value is generated randomly by Roboconf, but its type is invalid." ),
@@ -176,6 +177,12 @@ public enum ErrorCode {
 	REC_OFFICIAL_GROUP_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Official recipe projects should use " + Constants.OFFICIAL_RECIPES_GROUP_ID + " as their group ID." ),
 	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' directories should have the same name than their artifact ID." ),
 	REC_AVOID_INSTANCES( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects do not have to contain instances definitions." ),
+	REC_TARGET_NO_ID( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The target ID is missing or invalid." ),
+	REC_TARGET_NO_HANDLER( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The target handler is missing or invalid." ),
+	REC_TARGET_INVALID_FILE_OR_CONTENT( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The target properties could not be parsed." ),
+	REC_TARGET_CONFLICTING_ID( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "A target ID is used more than once." ),
+	REC_TARGET_NO_NAME( ErrorLevel.WARNING, ErrorCategory.RECIPES, "The target name is missing or invalid." ),
+	REC_TARGET_NO_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "No target properties were found." ),
 
 	// Commands Errors
 	CMD_INVALID_TARGET_ID( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An invalid target ID was specified in the command." ),

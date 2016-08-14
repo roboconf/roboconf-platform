@@ -33,13 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.roboconf.core.agents.DataHelpers;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler;
-import net.roboconf.target.api.TargetException;
-
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
@@ -52,6 +45,14 @@ import org.jclouds.openstack.nova.v2_0.extensions.VolumeApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeAttachmentApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.v2_0.domain.Resource;
+
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -113,31 +114,27 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
 		// For IaaS, we only expect root instance names to be passed
-		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+		if( InstanceHelpers.countInstances( parameters.getScopedInstancePath()) > 1 )
 			throw new TargetException( "Only root instances can be passed in arguments." );
 
 		// Validate all the properties here
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-		validateAll( targetProperties, applicationName, rootInstanceName );
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
+		Map<String,String> targetProperties = parameters.getTargetProperties();
+		validateAll( targetProperties, parameters.getApplicationName(), rootInstanceName );
 
 		// Prepare the work
 		NovaApi novaApi = OpenstackIaasHandler.novaApi( targetProperties );
 		String zoneName = findZoneName( novaApi, targetProperties );
-		String vmName = applicationName + "." + rootInstanceName;
+		String vmName = parameters.getApplicationName() + "." + rootInstanceName;
 
 		// Find flavor and image IDs
 		String flavorId = null;
@@ -166,12 +163,12 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 		// Prepare the server creation
 		Map<String,String> metadata = new HashMap<>(3);
-		metadata.put( "Application Name", applicationName );
+		metadata.put( "Application Name", parameters.getApplicationName());
 		metadata.put( "Root Instance Name", rootInstanceName );
 		metadata.put( "Created by", "Roboconf" );
 
 		try {
-			String userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString( parameters.getMessagingProperties(), parameters.getDomain(), parameters.getApplicationName(), rootInstanceName );
 			CreateServerOptions options = CreateServerOptions.Builder
 					.keyPairName( targetProperties.get( OpenstackIaasHandler.KEY_PAIR ))
 					.securityGroupNames( targetProperties.get( OpenstackIaasHandler.SECURITY_GROUP ))
@@ -217,19 +214,12 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
-	 * java.util.Map, java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String machineId,
-			String scopedInstancePath,
-			String applicationName,
-			Instance scopedInstance ) {
-
-		return new OpenstackMachineConfigurator( targetProperties, machineId, applicationName, scopedInstance );
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance  ) {
+		return new OpenstackMachineConfigurator( parameters.getTargetProperties(), machineId, parameters.getApplicationName(), scopedInstance );
 	}
 
 
@@ -415,7 +405,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	 */
 	static List<String> findStorageIds( Map<String,String> targetProperties ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		String prop = targetProperties.get( USE_BLOCK_STORAGE );
 		if( ! Utils.isEmptyOrWhitespaces( prop )) {
 			for( String s : Utils.splitNicely( prop, "," )) {

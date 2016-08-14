@@ -58,10 +58,29 @@ public class PreferencesResource implements IPreferencesResource {
 
 
 	@Override
-	public List<Preference> getAllPreferences() {
+	public List<Preference> getPreferences( String key ) {
 
-		this.logger.fine( "Request: get all the preferences." );
-		return this.manager.preferencesMngr().getAllPreferences();
+		if( key == null )
+			this.logger.fine( "Request: get all the preferences." );
+		else
+			this.logger.fine( "Request: get the preferences for key = " + key + "." );
+
+		List<Preference> result = this.manager.preferencesMngr().getAllPreferences();
+		if( key != null ) {
+			Preference pref = null;
+			for( Preference p : result ) {
+				if( key.equals( p.getName())) {
+					pref = p;
+					break;
+				}
+			}
+
+			result.clear();
+			if( pref != null )
+				result.add( pref );
+		}
+
+		return result;
 	}
 
 

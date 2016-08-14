@@ -101,6 +101,7 @@ public class Manager implements IReconfigurable {
 
 	// Injected by iPojo or Admin Config
 	protected String messagingType;
+	protected String domain = Constants.DEFAULT_DOMAIN;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
@@ -156,7 +157,6 @@ public class Manager implements IReconfigurable {
 
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
-
 		this.instancesMngr.setRuleBasedHandler( this.autonomicMngr );
 	}
 
@@ -179,6 +179,7 @@ public class Manager implements IReconfigurable {
 		// Start the messaging
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
 		this.messagingClient = new RCDm( this.applicationMngr );
+		this.messagingClient.setDomain( this.domain );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 		this.messagingMngr.setMessagingClient( this.messagingClient );
 
@@ -349,6 +350,18 @@ public class Manager implements IReconfigurable {
 
 
 	/**
+	 * @param domain the domain to set
+	 */
+	public void setDomain( String domain ) {
+
+		this.domain = domain;
+		this.logger.fine( "Domain set to " + domain );
+		if( this.messagingClient != null )
+			this.messagingClient.setDomain( domain );
+	}
+
+
+	/**
 	 * Sets the target resolver.
 	 * @param targetHandlerResolver a resolver for target handlers
 	 */
@@ -363,6 +376,13 @@ public class Manager implements IReconfigurable {
 
 	// Getters
 
+
+	/**
+	 * @return the domain
+	 */
+	public String getDomain() {
+		return this.domain;
+	}
 
 	/**
 	 * @return the notification API

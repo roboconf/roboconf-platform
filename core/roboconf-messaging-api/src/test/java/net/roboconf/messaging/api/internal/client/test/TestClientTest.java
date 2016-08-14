@@ -93,9 +93,9 @@ public class TestClientTest {
 	@Test
 	public void testSubscriptions() throws Exception {
 
-		MessagingContext ctx1 = new MessagingContext( RecipientKind.DM, "app1" );
-		MessagingContext ctx2 = new MessagingContext( RecipientKind.AGENTS, "app2" );
-		MessagingContext ctx3 = new MessagingContext( RecipientKind.AGENTS, "app1" );
+		MessagingContext ctx1 = new MessagingContext( RecipientKind.DM, "domain", "app1" );
+		MessagingContext ctx2 = new MessagingContext( RecipientKind.AGENTS, "domain", "app2" );
+		MessagingContext ctx3 = new MessagingContext( RecipientKind.AGENTS, "domain", "app1" );
 
 		TestClient client = new TestClient();
 		client.subscribe( ctx1 );
@@ -114,7 +114,7 @@ public class TestClientTest {
 
 		TestClient client = new TestClient();
 		client.failSubscribing.set( true );
-		client.subscribe( new MessagingContext( RecipientKind.DM, "app1" ));
+		client.subscribe( new MessagingContext( RecipientKind.DM, "domain", "app1" ));
 	}
 
 
@@ -122,7 +122,7 @@ public class TestClientTest {
 	public void testPublish() throws Exception {
 
 		TestClient client = new TestClient();
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "app1" );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "domain", "app1" );
 
 		Assert.assertEquals( 0, client.ctxToMessages.size());
 		client.publish( ctx, new MsgCmdSendInstances());
@@ -137,7 +137,7 @@ public class TestClientTest {
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 1 ).getClass());
 
 		Assert.assertEquals( 0, client.messagesForAgents.size());
-		ctx = new MessagingContext( RecipientKind.AGENTS, "app1" );
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "app1" );
 		client.publish( ctx, new MsgCmdResynchronize());
 
 		Assert.assertEquals( 1, client.messagesForAgents.size());
@@ -161,7 +161,7 @@ public class TestClientTest {
 
 		List<Message> messages = new ArrayList<> ();
 		messages.add( new MsgCmdRemoveInstance( "/root" ));
-		client.ctxToMessages.put( new MessagingContext( RecipientKind.DM, "app" ), messages );
+		client.ctxToMessages.put( new MessagingContext( RecipientKind.DM, "domain", "app" ), messages );
 
 		client.messagesForAgents.add( new MsgCmdRemoveInstance( "/root1" ));
 		client.messagesForTheDm.add( new MsgCmdRemoveInstance( "/root2" ));

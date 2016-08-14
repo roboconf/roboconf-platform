@@ -32,19 +32,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.felix.ipojo.ComponentInstance;
+import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-
-import org.apache.felix.ipojo.ComponentInstance;
-import org.apache.felix.ipojo.Factory;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -91,7 +92,14 @@ public class InMemoryHandlerMockedIPojoTest {
 		Map<String,String> targetProperties = new HashMap<> ();
 		targetProperties.put( InMemoryHandler.AGENT_IP_ADDRESS, "127.0.0.1" );
 
-		String machineId = this.handler.createMachine( targetProperties, this.msgCfg, "/VM", "my-app" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( targetProperties )
+				.messagingProperties( this.msgCfg )
+				.scopedInstancePath( "/VM" )
+				.applicationName( "my-app" )
+				.domain( "default-domain" );
+
+		String machineId = this.handler.createMachine( parameters );
 		Assert.assertEquals( "/VM @ my-app", machineId );
 		Mockito.verify( this.agentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
 		Mockito.verify( componentInstance, Mockito.times( 1 )).start();

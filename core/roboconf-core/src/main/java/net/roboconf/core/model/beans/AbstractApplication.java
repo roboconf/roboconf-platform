@@ -26,16 +26,20 @@
 package net.roboconf.core.model.beans;
 
 import java.io.File;
+import java.text.Normalizer;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Pattern;
+
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public abstract class AbstractApplication {
 
-	protected final Collection<Instance> rootInstances = new CopyOnWriteArraySet<Instance> ();
-	protected String name, description;
+	protected final Collection<Instance> rootInstances = new CopyOnWriteArraySet<> ();
+	protected String name, displayName, description;
 	protected File directory;
 
 
@@ -56,8 +60,25 @@ public abstract class AbstractApplication {
 	/**
 	 * @param name the name to set
 	 */
-	public void setName( String name ) {
-		this.name = name;
+	public final void setName( String name ) {
+
+		// "display name" can contain accents.
+		// "name" cannot, we replace them by their equivalent without accent.
+		if( name == null ) {
+			this.name = null;
+			this.displayName = null;
+
+		} else if( Utils.isEmptyOrWhitespaces( name )) {
+			this.displayName = name.trim();
+			this.name = name.trim();
+
+		} else {
+			this.displayName = name.trim();
+
+			String temp = Normalizer.normalize( name, Normalizer.Form.NFD );
+			Pattern pattern = Pattern.compile( "\\p{InCombiningDiacriticalMarks}+" );
+			this.name = pattern.matcher( temp ).replaceAll( "" ).trim();
+		}
 	}
 
 	/**
@@ -93,6 +114,13 @@ public abstract class AbstractApplication {
 	 */
 	public abstract Graphs getGraphs();
 
+
+	/**
+	 * @return the displayName
+	 */
+	public String getDisplayName() {
+		return this.displayName;
+	}
 
 	@Override
 	public String toString() {

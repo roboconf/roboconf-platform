@@ -83,6 +83,11 @@ public interface Constants {
 	String TARGET_PROPERTY_HANDLER = "handler";
 
 	/**
+	 * The {@value #TARGET_PROPERTY_ID} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
+	 */
+	String TARGET_PROPERTY_ID = "id";
+
+	/**
 	 * The {@value #TARGET_PROPERTY_NAME} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
 	 */
 	String TARGET_PROPERTY_NAME = "name";
@@ -164,6 +169,11 @@ public interface Constants {
 	 * The default polling period for probes.
 	 */
 	Long PROBES_POLLING_PERIOD = 20000L;
+
+	/**
+	 * The default domain name.
+	 */
+	String DEFAULT_DOMAIN = "default";
 
 
 	/**

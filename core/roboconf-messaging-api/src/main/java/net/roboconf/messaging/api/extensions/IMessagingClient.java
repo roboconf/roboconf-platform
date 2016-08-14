@@ -57,10 +57,11 @@ public interface IMessagingClient {
 	 * </p>
 	 *
 	 * @param ownerKind {@link RecipientKind#DM} or {@link RecipientKind#AGENTS}
+	 * @param domain the domain
 	 * @param applicationName the application name (only makes sense for agents)
 	 * @param scopedInstancePath the scoped instance path  (only makes sense for agents)
 	 */
-	void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath );
+	void setOwnerProperties( RecipientKind ownerKind, String domain, String applicationName, String scopedInstancePath );
 
 	/**
 	 * Opens a connection with the message server.

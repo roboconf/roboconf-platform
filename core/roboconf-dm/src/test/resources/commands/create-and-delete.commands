@@ -11,6 +11,6 @@ replicate /tomcat-vm-tpl as $(NAME)
 define NAME = tomcat $(SMART_INDEX)
 create vm as $(NAME)
 create tomcat as my-tomcat-server under /$(NAME)
-associate /$(NAME) with 1
+associate /$(NAME) with tid
 
 delete /tomcat-vm-tpl

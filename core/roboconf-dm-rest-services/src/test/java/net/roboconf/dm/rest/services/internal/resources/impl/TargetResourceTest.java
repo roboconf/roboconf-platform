@@ -25,19 +25,34 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.sun.jersey.core.header.FormDataContentDisposition;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -45,12 +60,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.messaging.api.MessagingConstants;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 
 /**
@@ -100,31 +109,31 @@ public class TargetResourceTest {
 				Status.NOT_FOUND.getStatusCode(),
 				this.resource.getTargetProperties( "whatever" ).getStatus());
 
-		Response resp = this.resource.createOrUpdateTarget( "prop: ok", null );
+		Response resp = this.resource.createOrUpdateTarget( "id: tid\nprop: ok\nhandler: h", null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		String targetId = (String) resp.getEntity();
-		Assert.assertEquals( "1", targetId );
+		Assert.assertEquals( "tid", targetId );
 
-		resp = this.resource.createOrUpdateTarget( "ok: ok", null );
+		resp = this.resource.createOrUpdateTarget( "id: t2\nok: ok\nhandler: h", null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		String newTargetId = (String) resp.getEntity();
-		Assert.assertEquals( "2", newTargetId );
+		Assert.assertEquals( "t2", newTargetId );
 
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		StringWrapper props = (StringWrapper) resp.getEntity();
-		Assert.assertEquals( "prop: ok", props.toString());
+		Assert.assertEquals( "prop: ok\nhandler: h", props.toString());
 
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		props = (StringWrapper) resp.getEntity();
-		Assert.assertEquals( "prop: ok", props.toString());
+		Assert.assertEquals( "prop: ok\nhandler: h", props.toString());
 
-		this.resource.createOrUpdateTarget( "prop2: ko\nprop1: done", targetId );
+		this.resource.createOrUpdateTarget( "prop2: ko\nprop1: done\nhandler: my handler", targetId );
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		props = (StringWrapper) resp.getEntity();
-		Assert.assertEquals( "prop2: ko\nprop1: done", props.toString());
+		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: my handler", props.toString());
 
 		this.resource.deleteTarget( targetId );
 		Assert.assertEquals(
@@ -136,7 +145,7 @@ public class TargetResourceTest {
 	@Test
 	public void testCreateOrupdateTarget_updateInexistingTarget() {
 
-		Response resp = this.resource.createOrUpdateTarget( "prop: ok", "4" );
+		Response resp = this.resource.createOrUpdateTarget( "prop: ok\nhandler: my handler", "4" );
 		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
 	}
 
@@ -155,7 +164,7 @@ public class TargetResourceTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 
-		String targetId = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nprop: ok\nhandler: h", null ).getEntity();
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.resource.associateTarget( app.getName(), null, null, targetId, true );
@@ -170,11 +179,11 @@ public class TargetResourceTest {
 	public void testListTargets_all() throws Exception {
 
 		Assert.assertEquals( 0, this.resource.listTargets( null, null ).size());
-		this.resource.createOrUpdateTarget( "", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t1\nhandler: h", null ).getEntity();
 		Assert.assertEquals( 1, this.resource.listTargets( null, null ).size());
-		String t2 = (String) this.resource.createOrUpdateTarget( "", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2\nhandler: h", null ).getEntity();
 		Assert.assertEquals( 2, this.resource.listTargets( null, null ).size());
-		this.resource.createOrUpdateTarget( "", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t3\nhandler: h", null ).getEntity();
 		Assert.assertEquals( 3, this.resource.listTargets( null, null ).size());
 
 		this.resource.deleteTarget( t2 );
@@ -185,8 +194,8 @@ public class TargetResourceTest {
 	@Test
 	public void testHints_onTemplate() throws Exception {
 
-		String t1 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
-		this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String t1 = (String) this.resource.createOrUpdateTarget( "id: t1\nprop: ok\nhandler: h", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t2\nprop: ok\nhandler: h", null ).getEntity();
 
 		TestApplicationTemplate tpl1 = new TestApplicationTemplate();
 		TestApplicationTemplate tpl2 = new TestApplicationTemplate();
@@ -211,8 +220,8 @@ public class TargetResourceTest {
 	@Test
 	public void testHints_onApplication() throws Exception {
 
-		this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
-		String t2 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		this.resource.createOrUpdateTarget( "id: t1\nprop: ok\nhandler: h", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2nprop: ok\nhandler: h", null ).getEntity();
 
 		TestApplication app1 = new TestApplication();
 		TestApplication app2 = new TestApplication();
@@ -278,7 +287,7 @@ public class TargetResourceTest {
 	@Test
 	public void testAssociations_onApplication_defaultTarget() throws Exception {
 
-		String targetId = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\nprop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -303,7 +312,7 @@ public class TargetResourceTest {
 	@Test
 	public void testAssociations_onApplication_exactInstance() throws Exception {
 
-		String targetId = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\nprop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -365,7 +374,7 @@ public class TargetResourceTest {
 		Response resp = this.resource.findTargetById( "2" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 
-		String t2 = (String) this.resource.createOrUpdateTarget( "description: we do not care", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\ndescription: we do not care", null ).getEntity();
 		resp = this.resource.findTargetById( t2 );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
@@ -389,13 +398,13 @@ public class TargetResourceTest {
 	public void testFindUsageStatistics() throws Exception {
 
 		// Setup
-		String t1 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String t1 = (String) this.resource.createOrUpdateTarget( "id: t1\nhandler: h\nprop: ok", null ).getEntity();
 		Assert.assertNotNull( t1 );
 
-		String t2 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2\nhandler: h\nprop: ok", null ).getEntity();
 		Assert.assertNotNull( t2 );
 
-		String t3 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		String t3 = (String) this.resource.createOrUpdateTarget( "id: t3\nhandler: h\nprop: ok", null ).getEntity();
 		Assert.assertNotNull( t3 );
 
 		TestApplication app = new TestApplication();
@@ -493,5 +502,128 @@ public class TargetResourceTest {
 
 		items = this.resource.findUsageStatistics( t3 );
 		Assert.assertEquals( 0, items.size());
+	}
+
+
+	@Test
+	public void testLoadTargetArchive_ok() throws Exception {
+
+		// Create a ZIP with valid properties
+		Map<String,String> entryToContent = new HashMap<> ();
+		entryToContent.put( "t1.properties", "id: tid-1\nhandler: h" );
+		entryToContent.put( "t2.properties", "id: tid-2\nhandler: h\nname: my main target" );
+
+		File targetFile = this.folder.newFile( "roboconf_targets.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Preconditions
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+
+		// Upload it
+		InputStream in = null;
+		try {
+			FormDataContentDisposition fd = FormDataContentDisposition
+					.name( targetFile.getName())
+					.fileName( targetFile.getName()).build();
+
+			in = new FileInputStream( targetFile );
+			Assert.assertEquals(
+					Status.OK.getStatusCode(),
+					this.resource.loadTargetArchive( in, fd ).getStatus());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Postconditions
+		List<TargetWrapperDescriptor> targetIds = this.manager.targetsMngr().listAllTargets();
+		Assert.assertEquals( 2, targetIds.size());
+		Assert.assertEquals( "tid-1", targetIds.get( 0 ).getId());
+		Assert.assertEquals( "h", targetIds.get( 0 ).getHandler());
+		Assert.assertNull( targetIds.get( 0 ).getName());
+		Assert.assertNull( targetIds.get( 0 ).getDescription());
+
+		Assert.assertEquals( "tid-2", targetIds.get( 1 ).getId());
+		Assert.assertEquals( "h", targetIds.get( 1 ).getHandler());
+		Assert.assertEquals( "my main target", targetIds.get( 1 ).getName());
+		Assert.assertNull( targetIds.get( 1 ).getDescription());
+	}
+
+
+	@Test
+	public void testLoadTargetArchive_conflictingTarget_withRevert() throws Exception {
+
+		// Create a ZIP with valid properties
+		Map<String,String> entryToContent = new HashMap<> ();
+		entryToContent.put( "t1.properties", "id: tid-1\nhandler: h" );
+		entryToContent.put( "t2.properties", "id: tid-2\n\nhandler: h\nnname: my main target" );
+		entryToContent.put( "t3.properties", "id: tid-3\nhandler: h\nname: my main target" );
+
+		File targetFile = this.folder.newFile( "roboconf_targets.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Preconditions
+		Assert.assertNotNull( this.manager.targetsMngr().createTarget( "id: tid-2\nhandler: handler" ));
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Upload it
+		InputStream in = null;
+		try {
+			FormDataContentDisposition fd = FormDataContentDisposition
+					.name( targetFile.getName())
+					.fileName( targetFile.getName()).build();
+
+			in = new FileInputStream( targetFile );
+			Assert.assertEquals(
+					Status.NOT_ACCEPTABLE.getStatusCode(),
+					this.resource.loadTargetArchive( in, fd ).getStatus());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Postconditions
+		List<TargetWrapperDescriptor> targetIds = this.manager.targetsMngr().listAllTargets();
+		Assert.assertEquals( 1, targetIds.size());
+	}
+
+
+	@Test
+	public void testLoadTargetArchive_invalidTarget() throws Exception {
+
+		// Create a ZIP with valid properties
+		Map<String,String> entryToContent = new HashMap<> ();
+		entryToContent.put( "t1.properties", "id: tid-1\nhandler: h" );
+		entryToContent.put( "t2.properties", "id: tid-2\n\nnname: my main target" );
+		entryToContent.put( "t3.properties", "id: tid-3\nhandler: h\nname: my main target" );
+
+		File targetFile = this.folder.newFile( "roboconf_targets.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Preconditions
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+
+		// Upload it
+		InputStream in = null;
+		try {
+			FormDataContentDisposition fd = FormDataContentDisposition
+					.name( targetFile.getName())
+					.fileName( targetFile.getName()).build();
+
+			in = new FileInputStream( targetFile );
+			Assert.assertEquals(
+					Status.FORBIDDEN.getStatusCode(),
+					this.resource.loadTargetArchive( in, fd ).getStatus());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Postconditions
+		List<TargetWrapperDescriptor> targetIds = this.manager.targetsMngr().listAllTargets();
+		Assert.assertEquals( 0, targetIds.size());
 	}
 }

@@ -1,0 +1,22 @@
+
+# Not exact, but let's simplify!
+VM {
+	installer: target;
+	children: PetalsJBIComponent;
+}
+
+# the part that is failing with version 0.7
+PetalsJBIComponent {
+	installer: script;
+	exports: componentId = my-component-id;
+}
+
+PetalsSL {
+	extends: PetalsJBIComponent;
+	exports: componentType = SL;
+}
+
+PetalsSLPostgreSQL {
+	extends: PetalsSL;
+	exports: present = true;
+}

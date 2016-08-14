@@ -49,7 +49,7 @@ public class RoboconfErrorHelpersTest {
 	@Test
 	public void testContainsCriticalErrors() {
 
-		List<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		List<RoboconfError> errors = new ArrayList<> ();
 		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( errors ));
 
 		errors.add( new RoboconfError( ErrorCode.PM_MALFORMED_COMMENT ));
@@ -63,7 +63,7 @@ public class RoboconfErrorHelpersTest {
 	@Test
 	public void testFindWarnings() {
 
-		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		Collection<RoboconfError> errors = new ArrayList<> ();
 		Assert.assertEquals( 0, RoboconfErrorHelpers.findWarnings( errors ).size());
 
 		errors.add( new RoboconfError( ErrorCode.PM_DUPLICATE_PROPERTY ));
@@ -79,7 +79,7 @@ public class RoboconfErrorHelpersTest {
 	@Test
 	public void testExtractAndFormatWarnings() {
 
-		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		Collection<RoboconfError> errors = new ArrayList<> ();
 		Assert.assertEquals( 0, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
 
 		RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY );
@@ -141,5 +141,48 @@ public class RoboconfErrorHelpersTest {
 		RoboconfErrorHelpers.filterErrorsForRecipes( errors );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, errors.iterator().next().getErrorCode());
+	}
+
+
+	@Test
+	public void testFilterErrors() {
+
+		// Original list
+		List<RoboconfError> errors = new ArrayList<> ();
+		errors.add( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT ));
+		errors.add( new RoboconfError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET ));
+		errors.add( new RoboconfError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET ));
+		errors.add( new RoboconfError( ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE ));
+		errors.add( new RoboconfError( ErrorCode.RM_UNREACHABLE_COMPONENT ));
+		errors.add( new RoboconfError( ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN ));
+		errors.add( new RoboconfError( ErrorCode.RM_ORPHAN_FACET ));
+
+		// Remove nothing
+		int size = errors.size();
+		RoboconfErrorHelpers.filterErrors( errors );
+		Assert.assertEquals( size, errors.size());
+
+		// Remove orphan facets codes
+		RoboconfErrorHelpers.filterErrors( errors, ErrorCode.RM_ORPHAN_FACET );
+		Assert.assertEquals( size - 1, errors.size());
+		for( RoboconfError error : errors )
+			Assert.assertNotEquals( ErrorCode.RM_ORPHAN_FACET, error.getErrorCode());
+
+		// Remove "root installer must be target" and "unreachable component" codes
+		RoboconfErrorHelpers.filterErrors(
+				errors,
+				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
+				ErrorCode.RM_UNREACHABLE_COMPONENT );
+
+		Assert.assertEquals( size - 4, errors.size());
+		for( RoboconfError error : errors ) {
+			Assert.assertNotEquals( ErrorCode.RM_ORPHAN_FACET, error.getErrorCode());
+			Assert.assertNotEquals( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, error.getErrorCode());
+			Assert.assertNotEquals( ErrorCode.RM_UNREACHABLE_COMPONENT, error.getErrorCode());
+		}
+
+		// Remove something that was not here
+		RoboconfErrorHelpers.filterErrors( errors, ErrorCode.REC_ARTIFACT_ID_IN_LOWER_CASE );
+		Assert.assertEquals( size - 4, errors.size());
 	}
 }
