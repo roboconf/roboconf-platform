@@ -61,10 +61,10 @@ public interface ISchedulerResource {
 	 * @param cron the CRON expression to trigger the job
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 403 if Roboconf's scheduler is not available
-	 * @HTTP 404 if the application or the command was not found
-	 * @HTTP 400 if a problem arose with the parameters
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 403 If Roboconf's scheduler is not available.
+	 * @HTTP 404 If the application or the command was not found.
+	 * @HTTP 400 If a problem arose with the parameters.
 	 */
 	@POST
 	Response saveJob(
@@ -80,8 +80,8 @@ public interface ISchedulerResource {
 	 * @param jobId the job's ID
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 403 if Roboconf's scheduler is not available
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 403 If Roboconf's scheduler is not available.
 	 */
 	@DELETE
 	@Path( "{job-id}" )
@@ -105,7 +105,7 @@ public interface ISchedulerResource {
 	 * @param cmdName a command name (optional, only makes sense when the application name is given)
 	 * @return a non-null list of jobs
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	List<ScheduledJob> listJobs(
@@ -118,9 +118,9 @@ public interface ISchedulerResource {
 	 * @param jobId the job's ID
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 403 if Roboconf's scheduler is not available
-	 * @HTTP 404 if the job was not found
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 403 If Roboconf's scheduler is not available.
+	 * @HTTP 404 If the job was not found.
 	 */
 	@GET
 	@Path( "{job-id}" )

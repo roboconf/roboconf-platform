@@ -65,9 +65,9 @@ public interface IApplicationResource {
 	 * @param instancePath the instance path (not null)
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
-	 * @HTTP 403 invalid state or permission issue
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
+	 * @HTTP 403 Invalid state or permission issue.
 	 */
 	@POST
 	@Path( "/change-state" )
@@ -80,9 +80,9 @@ public interface IApplicationResource {
 	 * @param desc the new description
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application was not found
-	 * @HTTP 403 the application's description could not be updated
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 403 The application's description could not be updated.
 	 */
 	@POST
 	@Path( "/description" )
@@ -95,9 +95,9 @@ public interface IApplicationResource {
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
-	 * @HTTP 403 invalid state or permission issue
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
+	 * @HTTP 403 Invalid state or permission issue.
 	 */
 	@POST
 	@Path( "/deploy-all" )
@@ -110,9 +110,9 @@ public interface IApplicationResource {
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
-	 * @HTTP 403 invalid state or permission issue
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
+	 * @HTTP 403 Invalid state or permission issue.
 	 */
 	@POST
 	@Path( "/stop-all" )
@@ -125,9 +125,9 @@ public interface IApplicationResource {
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
-	 * @HTTP 403 invalid state or permission issue
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
+	 * @HTTP 403 Invalid state or permission issue.
 	 */
 	@POST
 	@Path( "/undeploy-all" )
@@ -141,9 +141,9 @@ public interface IApplicationResource {
 	 * @param instance the new instance
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance's component was not found
-	 * @HTTP 403 the insertion does not comply with the graph definition
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance's component was not found.
+	 * @HTTP 403 The insertion does not comply with the graph definition.
 	 */
 	@POST
 	@Path( "/instances" )
@@ -157,10 +157,10 @@ public interface IApplicationResource {
 	 * @param instancePath the path of the instance to remove
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
-	 * @HTTP 403 invalid instance state
-	 * @HTTP 406 the request could not be handled
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
+	 * @HTTP 403 Invalid instance state.
+	 * @HTTP 406 The request could not be handled.
 	 */
 	@DELETE
 	@Path( "/instances" )
@@ -172,7 +172,7 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @return a non-null list of target associations
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path( "/targets" )
@@ -184,9 +184,9 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application was not found
-	 * @HTTP 406 the request could not be processed
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 406 The request could not be processed.
 	 */
 	@POST
 	@Path( "/resynchronize" )
@@ -200,9 +200,9 @@ public interface IApplicationResource {
 	 * @param boundApp the name of the application (instance of <code>tplName</code>)
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application was not found
-	 * @HTTP 403 such a binding is not allowed
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 403 Such a binding is not allowed.
 	 */
 	@POST
 	@Path( "/bind" )
@@ -217,8 +217,8 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine (application bindings were returned too)
-	 * @HTTP 404 the application was not found
+	 * @HTTP 200 Everything went fine (application bindings were returned too).
+	 * @HTTP 404 The application was not found.
 	 */
 	@GET
 	@Path( "/bind" )
@@ -232,7 +232,7 @@ public interface IApplicationResource {
 	 * @param allChildren true to get all the children, false to only get the direct children
 	 * @return a non-null list of instances
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path( "/children" )
@@ -248,7 +248,7 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @return a non-null list of components
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path( "/components" )
@@ -261,7 +261,7 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @return a non-null list of components
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path("/components/ancestors")
@@ -275,7 +275,7 @@ public interface IApplicationResource {
 	 * @param componentName a component name (if not specified, returns all the root components)
 	 * @return a non-null list of components
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path( "/components/children" )
@@ -288,7 +288,7 @@ public interface IApplicationResource {
 	 * @param app the associated application
 	 * @return a non-null list of commands
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path( "/commands" )
@@ -301,8 +301,8 @@ public interface IApplicationResource {
 	 * @param commandName the command name
 	 * @return the commands content (never null)
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 204 no instruction was found
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 204 No instruction was found.
 	 */
 	@GET
 	@Path( "/commands/{command-name}" )
@@ -320,9 +320,9 @@ public interface IApplicationResource {
 	 * then this operation is considered as successful.
 	 * </p>
 	 *
-	 * @HTTP 200 the command was found and successfully executed
-	 * @HTTP 404 the application or the command was not found
-	 * @HTTP 409 if the command execution failed
+	 * @HTTP 200 The command was found and successfully executed.
+	 * @HTTP 404 The application or the command was not found.
+	 * @HTTP 409 If the command execution failed.
 	 */
 	@POST
 	@Path( "/commands/execute" )

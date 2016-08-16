@@ -41,7 +41,7 @@
 	<packaging>bundle</packaging>
 	
 	<properties>
-		<enunciate.version>2.2.0</enunciate.version>
+		<enunciate.version>2.5.0</enunciate.version>
 	</properties>
 	
 	<dependencies>
@@ -280,7 +280,8 @@
 									<module name="TreeWalker">
 										<module name="WriteTag">
 											<property name="tag" value="@HTTP" />
-											<property name="tagFormat" value="\S" />
+											<!-- Not empty, start with an upper-case letter and ends with a dot. -->
+											<property name="tagFormat" value="[A-Z].*\.$" />
 											<property name="severity" value="error" />
 											<property name="tagSeverity" value="ignore" />
 											<property name="tokens" value="METHOD_DEF" />
@@ -297,7 +298,7 @@
 			<plugin>
 				<groupId>com.webcohesion.enunciate</groupId>
 				<artifactId>enunciate-maven-plugin</artifactId>
-				<version>2.2.0</version>
+				<version>${enunciate.version}</version>
 				<executions>
 					<execution>
 						<goals>

@@ -75,7 +75,7 @@ public interface IDebugResource {
 	 * @param message a customized message content (not null)
 	 * @return the response to the messaging server connection check
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path("/check-dm")
@@ -106,9 +106,9 @@ public interface IDebugResource {
 	 * @param message a customized message content (not null)
 	 * @return the response to the agent connection check
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
-	 * @HTTP 400 the agent is not started
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
+	 * @HTTP 400 The agent is not started.
 	 */
 	@GET
 	@Path("/check-agent")
@@ -125,8 +125,8 @@ public interface IDebugResource {
 	 *
 	 * @return a response (with a diagnostic in case of code 200)
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application or the instance was not found.
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
@@ -142,7 +142,8 @@ public interface IDebugResource {
 	 * </p>
 	 *
 	 * @return a non-null list of diagnostics (one per instance in the application)
-	 * @HTTP 200 everything went fine
+	 *
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
