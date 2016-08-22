@@ -54,7 +54,7 @@ public interface IPreferencesResource {
 	 * @param key a specific key, or null to get all the properties
 	 * @return a non-null list of preferences
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	List<Preference> getPreferences( @QueryParam("key") String key );
@@ -71,7 +71,7 @@ public interface IPreferencesResource {
 	 * @param value the preference value
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
+	 * @HTTP 200 Everything went fine.
 	 */
 	@POST
 	Response savePreference( @QueryParam("key") String key, @QueryParam("value") String value );

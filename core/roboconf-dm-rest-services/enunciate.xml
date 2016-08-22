@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <enunciate 
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:noNamespaceSchemaLocation="http://enunciate.webcohesion.com/schemas/enunciate-2.2.0.xsd">
+		xsi:noNamespaceSchemaLocation="http://enunciate.webcohesion.com/schemas/enunciate-2.5.0.xsd">
 
 	<title>Roboconf REST API</title>
 	<description>The REST API for Roboconf's Administration</description>
 	<contact name="the Roboconf team" url="http://roboconf.net" />
-
+	
 	<modules>
 		<!-- Disabled modules: almost all -->
 		<jackson disabled="true" />
@@ -29,7 +29,7 @@
 		<jackson1 disabled="false" honorJaxb="false" />
 		<jaxrs disabled="false" />
 		<docs disabled="false" />
-		<swagger disabled="false" />
+		<swagger disabled="false" basePath="/roboconf-dm" host="localhost:8181" />
 	</modules>
 
 </enunciate>

@@ -70,8 +70,8 @@ public interface IManagementResource {
 	 * @param fileDetail the file details
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 406 the application could not be created (e.g. invalid)
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 406 The application could not be created (e.g. invalid).
 	 */
 	@POST
 	@Path("/templates")
@@ -80,6 +80,7 @@ public interface IManagementResource {
 	Response loadApplicationTemplate(
 			@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail );
+
 
 	/**
 	 * Loads an application template from a local ZIP file.
@@ -98,10 +99,10 @@ public interface IManagementResource {
 	 * @param localFilePath the local file path of the application directory
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 406 invalid application template
-	 * @HTTP 403 an application template with this name already exists
-	 * @HTTP 401 the application template could not be registered (e.g. DM not ready)
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 406 Invalid application template.
+	 * @HTTP 403 An application template with this name already exists.
+	 * @HTTP 401 The application template could not be registered (e.g. DM not ready).
 	 */
 	@POST
 	@Path("/templates/local")
@@ -109,15 +110,18 @@ public interface IManagementResource {
 	@Produces( MediaType.APPLICATION_JSON )
 	Response loadApplicationTemplate( @QueryParam( "local-file-path" ) String localFilePath );
 
+
 	/**
 	 * Lists the application templates.
 	 * @return a non-null list of application templates
-	 * @HTTP 200 everything went fine
+	 *
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path("/templates")
 	@Produces( MediaType.APPLICATION_JSON )
 	List<ApplicationTemplate> listApplicationTemplates();
+
 
 	/**
 	 * Deletes an application template.
@@ -125,9 +129,9 @@ public interface IManagementResource {
 	 * @param tplQualifier the application template's qualifier
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application template was not found
-	 * @HTTP 403 there are still applications attached to this template
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application template was not found.
+	 * @HTTP 403 There are still applications attached to this template.
 	 */
 	@DELETE
 	@Path("/templates/{name}/{qualifier}")
@@ -143,10 +147,10 @@ public interface IManagementResource {
 	 * @param app an application
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application's template was not found
-	 * @HTTP 403 an application with this name already exists
-	 * @HTTP 401 the application could not be created (e.g. DM not ready)
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application's template was not found.
+	 * @HTTP 403 An application with this name already exists.
+	 * @HTTP 401 The application could not be created (e.g. DM not ready).
 	 */
 	@POST
 	@Consumes( MediaType.APPLICATION_JSON )
@@ -157,11 +161,13 @@ public interface IManagementResource {
 	/**
 	 * Lists the applications.
 	 * @return a non-null list of applications
-	 * @HTTP 200 everything went fine
+	 *
+	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Application> listApplications();
+
 
 	/**
 	 * Shutdowns an application.
@@ -174,23 +180,24 @@ public interface IManagementResource {
 	 * @param applicationName the application name
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application was not found
-	 * @HTTP 403 the application could not be shutdown (e.g. messaging error)
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 403 The application could not be shutdown (e.g. messaging error).
 	 */
 	@POST
 	@Path("/{name}/shutdown")
 	@Produces( MediaType.APPLICATION_JSON )
 	Response shutdownApplication( @PathParam("name") String applicationName );
 
+
 	/**
 	 * Deletes an application.
 	 * @param applicationName the application name
 	 * @return a response
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 404 the application was not found
-	 * @HTTP 403 the application could not be deleted (e.g. messaging error)
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 403 The application could not be deleted (e.g. messaging error).
 	 */
 	@DELETE
 	@Path("/{name}")
@@ -213,8 +220,8 @@ public interface IManagementResource {
 	 * @param fileDetail the image details.
 	 * @return a response.
 	 *
-	 * @HTTP 200 everything went fine
-	 * @HTTP 400 the application was not found or the image type or extension is invalid
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 400 The application was not found or the image type or extension is invalid.
 	 */
 	@POST
 	@Path("/image")
