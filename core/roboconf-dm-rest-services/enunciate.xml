@@ -6,15 +6,15 @@
 	<title>Roboconf REST API</title>
 	<description>The REST API for Roboconf's Administration</description>
 	<contact name="the Roboconf team" url="http://roboconf.net" />
-	
+
 	<modules>
 		<!-- Disabled modules: almost all -->
-		<jackson disabled="true" />
+		<jackson1 disabled="true" />
 		<jaxb disabled="true" />
 		<jaxws disabled="true" />
 		<spring-web disabled="true" />
 		<idl disabled="true" />
-		
+
 		<c-xml-client disabled="true" />
 		<csharp-xml-client disabled="true" />
 		<java-xml-client disabled="true" />
@@ -26,7 +26,7 @@
 		<ruby-json-client disabled="true" />
 
 		<!-- Enabled modules -->
-		<jackson1 disabled="false" honorJaxb="false" />
+		<jackson disabled="false" collapse-type-hierarchy="true" />
 		<jaxrs disabled="false" />
 		<docs disabled="false" />
 		<swagger disabled="false" basePath="/roboconf-dm" host="localhost:8181" />

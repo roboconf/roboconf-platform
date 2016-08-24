@@ -41,7 +41,7 @@
 	<packaging>bundle</packaging>
 	
 	<properties>
-		<enunciate.version>2.5.0</enunciate.version>
+		<enunciate.version>2.6.0</enunciate.version>
 	</properties>
 	
 	<dependencies>
@@ -215,6 +215,13 @@
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.2.2</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -310,6 +317,25 @@
 					<docsDir>${project.build.directory}/docs</docsDir>
 					<configFile>${project.basedir}/enunciate.xml</configFile>
 				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>test-compile</phase>
+						<configuration>
+							<target>
+								<property name="test_classpath" refid="maven.test.classpath"/>
+								<java classname="net.roboconf.dm.rest.services.swagger.UpdateSwaggerJson" classpath="${test_classpath}" />
+							</target>	
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			
 			<plugin>
