@@ -70,6 +70,48 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
  */
 public final class JSonBindingUtils {
 
+	// We use global maps to verify some little things in tests.
+	public static final Map<Class<?>,? super JsonSerializer<?>> SERIALIZERS = new HashMap<> ();
+	public static final Map<Class<?>,? super JsonDeserializer<?>> DESERIALIZERS = new HashMap<> ();
+
+	static {
+		SERIALIZERS.put( Instance.class, new InstanceSerializer());
+		DESERIALIZERS.put( Instance.class, new InstanceDeserializer());
+
+		SERIALIZERS.put( ApplicationTemplate.class, new ApplicationTemplateSerializer());
+		DESERIALIZERS.put( ApplicationTemplate.class, new ApplicationTemplateDeserializer());
+
+		SERIALIZERS.put( Application.class, new ApplicationSerializer());
+		DESERIALIZERS.put( Application.class, new ApplicationDeserializer());
+
+		SERIALIZERS.put( Component.class, new ComponentSerializer());
+		DESERIALIZERS.put( Component.class, new ComponentDeserializer());
+
+		SERIALIZERS.put( Diagnostic.class, new DiagnosticSerializer());
+		DESERIALIZERS.put( Diagnostic.class, new DiagnosticDeserializer());
+
+		SERIALIZERS.put( DependencyInformation.class, new DependencyInformationSerializer());
+		DESERIALIZERS.put( DependencyInformation.class, new DependencyInformationDeserializer());
+
+		SERIALIZERS.put( TargetWrapperDescriptor.class, new TargetWDSerializer());
+		DESERIALIZERS.put( TargetWrapperDescriptor.class, new TargetWDDeserializer());
+
+		SERIALIZERS.put( StringWrapper.class, new StringWrapperSerializer());
+		DESERIALIZERS.put( StringWrapper.class, new StringWrapperDeserializer());
+
+		SERIALIZERS.put( MapWrapper.class, new MapWrapperSerializer());
+		DESERIALIZERS.put( MapWrapper.class, new MapWrapperDeserializer());
+
+		SERIALIZERS.put( ScheduledJob.class, new ScheduledJobSerializer());
+		DESERIALIZERS.put( ScheduledJob.class, new ScheduledJobDeserializer());
+
+		SERIALIZERS.put( MappedCollectionWrapper.class, new MappedCollectionWrapperSerializer());
+		SERIALIZERS.put( TargetUsageItem.class, new TargetUsageItemSerializer());
+		SERIALIZERS.put( TargetAssociation.class, new TargetAssociationSerializer());
+		SERIALIZERS.put( Preference.class, new PreferenceSerializer());
+	}
+
+
 	private static final String NAME = "name";
 	private static final String DISPLAY_NAME = "displayName";
 	private static final String QUALIFIER = "qualifier";
@@ -130,47 +172,18 @@ public final class JSonBindingUtils {
 	 * Creates a mapper with specific binding for Roboconf types.
 	 * @return a non-null, configured mapper
 	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public static ObjectMapper createObjectMapper() {
 
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false );
-
 		SimpleModule module = new SimpleModule( "RoboconfModule", new Version( 1, 0, 0, null, null, null ));
 
-		module.addSerializer( Instance.class, new InstanceSerializer());
-		module.addDeserializer( Instance.class, new InstanceDeserializer());
+		for( Map.Entry<Class<?>,? super JsonSerializer<?>> entry : SERIALIZERS.entrySet())
+			module.addSerializer((Class) entry.getKey(), (JsonSerializer) entry.getValue());
 
-		module.addSerializer( ApplicationTemplate.class, new ApplicationTemplateSerializer());
-		module.addDeserializer( ApplicationTemplate.class, new ApplicationTemplateDeserializer());
-
-		module.addSerializer( Application.class, new ApplicationSerializer());
-		module.addDeserializer( Application.class, new ApplicationDeserializer());
-
-		module.addSerializer( Component.class, new ComponentSerializer());
-		module.addDeserializer( Component.class, new ComponentDeserializer());
-
-		module.addSerializer( Diagnostic.class, new DiagnosticSerializer());
-		module.addDeserializer( Diagnostic.class, new DiagnosticDeserializer());
-
-		module.addSerializer( DependencyInformation.class, new DependencyInformationSerializer());
-		module.addDeserializer( DependencyInformation.class, new DependencyInformationDeserializer());
-
-		module.addSerializer( TargetWrapperDescriptor.class, new TargetWDSerializer());
-		module.addDeserializer( TargetWrapperDescriptor.class, new TargetWDDeserializer());
-
-		module.addSerializer( StringWrapper.class, new StringWrapperSerializer());
-		module.addDeserializer( StringWrapper.class, new StringWrapperDeserializer());
-
-		module.addSerializer( MapWrapper.class, new MapWrapperSerializer());
-		module.addDeserializer( MapWrapper.class, new MapWrapperDeserializer());
-
-		module.addSerializer( ScheduledJob.class, new ScheduledJobSerializer());
-		module.addDeserializer( ScheduledJob.class, new ScheduledJobDeserializer());
-
-		module.addSerializer( MappedCollectionWrapper.class, new MappedCollectionWrapperSerializer());
-		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
-		module.addSerializer( TargetAssociation.class, new TargetAssociationSerializer());
-		module.addSerializer( Preference.class, new PreferenceSerializer());
+		for( Map.Entry<Class<?>,? super JsonDeserializer<?>> entry : DESERIALIZERS.entrySet())
+			module.addDeserializer((Class) entry.getKey(), (JsonDeserializer) entry.getValue());
 
 		mapper.registerModule( module );
 		return mapper;
