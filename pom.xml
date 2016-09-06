@@ -346,15 +346,22 @@
 		</profile>
 		
 		<profile>
-			<id>run-integration-tests</id>
+			<id>run-integration-tests-dm-agent</id>
 			<modules>
 				<module>miscellaneous/roboconf-integration-tests-commons</module>
 				<module>miscellaneous/roboconf-integration-tests-agent</module>
 				<module>miscellaneous/roboconf-integration-tests-dm</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<id>run-integration-tests-dm-agent-in-memory</id>
+			<modules>
+				<module>miscellaneous/roboconf-integration-tests-commons</module>
 				<module>miscellaneous/roboconf-integration-tests-dm-with-agents-in-memory</module>
 			</modules>
 		</profile>
-		
+
 		<!-- Add other profiles if necessary... -->
 	</profiles>
 
