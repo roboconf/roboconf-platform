@@ -28,6 +28,7 @@ package net.roboconf.target.openstack.internal;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.API_URL;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.DELETE_ON_TERMINATION;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.FLOATING_IP_POOL;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.OBJ_STORAGE_DOMAINS;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_DELETE_OT_PREFIX;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_MOUNT_POINT_PREFIX;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_NAME_PREFIX;
@@ -35,15 +36,12 @@ import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_TYPE_PREFIX;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
 
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
@@ -54,6 +52,13 @@ import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeAttachmentApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateVolumeOptions;
+import org.jclouds.openstack.swift.v1.SwiftApi;
+import org.jclouds.openstack.swift.v1.domain.Container;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
 
 /**
  * A machine configurator for Openstack.
@@ -76,13 +81,16 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	 * <ul>
 	 * <li>WAITING_VM: we wait for the VM to be active.</li>
 	 * <li>ASSOCIATE_FLOATING_IP: a floating IP has to be associated, if necessary and if possible.</li>
+	 * <li>OBJ_STORAGE: create domains for object storage.</li>
+	 * <li>CREATE_VOLUME: create volumes.</li>
+	 * <li>ATTACH_VOLUME: attach volumes to the VM.</li>
 	 * <li>COMPLETE: there is nothing to do anymore.</li>
 	 * </ul>
 	 *
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static enum State {
-		WAITING_VM, ASSOCIATE_FLOATING_IP, COMPLETE, CREATE_VOLUME, ATTACH_VOLUME;
+		WAITING_VM, ASSOCIATE_FLOATING_IP, COMPLETE, OBJ_STORAGE, CREATE_VOLUME, ATTACH_VOLUME;
 	}
 
 	private final Instance scopedInstance;
@@ -134,13 +142,20 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		if( this.novaApi == null )
 			this.novaApi = OpenstackIaasHandler.novaApi( this.targetProperties );
 
-		if( this.state == State.WAITING_VM )
+		if( this.state == State.WAITING_VM ) {
 			if( checkVmIsOnline())
 				this.state = State.ASSOCIATE_FLOATING_IP;
+		}
 
-		if( this.state == State.ASSOCIATE_FLOATING_IP )
+		if( this.state == State.ASSOCIATE_FLOATING_IP ) {
 			if( associateFloatingIp())
+				this.state = State.OBJ_STORAGE;
+		}
+
+		if( this.state == State.OBJ_STORAGE ) {
+			if( prepareObjectStorage())
 				this.state = State.CREATE_VOLUME;
+		}
 
 		if( this.state == State.CREATE_VOLUME ) {
 			if( createVolumes())
@@ -215,6 +230,53 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		}
 
 		return done;
+	}
+
+
+	/**
+	 * Configures the object storage.
+	 * @return true if the configuration is over
+	 * @throws TargetException
+	 */
+	public boolean prepareObjectStorage() throws TargetException {
+
+		String domains = this.targetProperties.get( OBJ_STORAGE_DOMAINS );
+		if( ! Utils.isEmptyOrWhitespaces( domains )) {
+
+			// Get the Swift API
+			String zoneName = OpenstackIaasHandler.findZoneName( this.novaApi, this.targetProperties );
+			SwiftApi swiftApi = OpenstackIaasHandler.swiftApi( this.targetProperties );
+
+			try {
+				// List domains
+				List<String> existingDomainNames = new ArrayList<> ();
+				for( Container container : swiftApi.getContainerApi( zoneName ).list()) {
+					existingDomainNames.add( container.getName());
+				}
+
+				// Create missing domains
+				List<String> domainsToCreate = Utils.splitNicely( domains, "," );
+				domainsToCreate.removeAll( existingDomainNames );
+				for( String domainName : domainsToCreate ) {
+					this.logger.info( "Creating container " + domainName + " (object storage)..." );
+					swiftApi.getContainerApi( zoneName ).create( domainName );
+				}
+
+			} catch( Exception e ) {
+				throw new TargetException( e );
+
+			} finally {
+				// Release the API
+				try {
+					swiftApi.close();
+
+				} catch( IOException e ) {
+					throw new TargetException( e );
+				}
+			}
+		}
+
+		return true;
 	}
 
 
