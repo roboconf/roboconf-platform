@@ -100,7 +100,7 @@ public enum ErrorCode {
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
-	RM_INVALID_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is invalid. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
+	RM_INVALID_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is invalid. Expected pattern: " + ParsingConstants.PATTERN_APP_NAME ),
 	RM_MISSING_APPLICATION_DSL_ID( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The DSL identifier to read model files is missing. The default parser will be used." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
