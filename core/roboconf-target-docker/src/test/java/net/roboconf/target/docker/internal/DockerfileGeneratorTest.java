@@ -31,11 +31,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
-import net.roboconf.core.utils.Utils;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -52,7 +52,7 @@ public class DockerfileGeneratorTest {
 		File agentPackZip = this.folder.newFile( "dockertest.zip" );
 		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null, null, null);
 		Assert.assertEquals( "openjdk-7-jre-headless", gen.getPackages());
-		Assert.assertEquals( "ubuntu", gen.getBaseImageName());
+		Assert.assertEquals( "ubuntu:14.04", gen.getBaseImageName());
 		Assert.assertFalse( gen.isTar());
 
 		File agentPackTgz = this.folder.newFile( "dockertest.tar.gz" );
@@ -83,7 +83,7 @@ public class DockerfileGeneratorTest {
 				Assert.assertTrue( file.getName(), f.length() > 0 );
 
 				String dfContent = Utils.readFileContent( f );
-				Assert.assertTrue( dfContent.startsWith( "FROM ubuntu\n" ));
+				Assert.assertTrue( dfContent.startsWith( "FROM ubuntu:" ));
 
 				f = new File(dockerfile, "start.sh");
 				Assert.assertTrue( file.getName(), f.exists());
@@ -136,7 +136,7 @@ public class DockerfileGeneratorTest {
 	@Test
 	public void testDockerfileWithAdditionalDeploys() throws Exception {
 
-		List<String> urls = new ArrayList<String>( 2 );
+		List<String> urls = new ArrayList<>( 2 );
 		urls.add("toto");
 		urls.add("tutu");
 
@@ -200,7 +200,7 @@ public class DockerfileGeneratorTest {
 	@Test
 	public void testPrepareKarafFeature() throws Exception {
 
-		List<String> urls = new ArrayList<String> ();
+		List<String> urls = new ArrayList<> ();
 		String res = DockerfileGenerator.prepareKarafFeature( urls );
 		Assert.assertNull( res );
 
@@ -222,7 +222,7 @@ public class DockerfileGeneratorTest {
 	public void testHandleAdditionalDeployments() throws Exception {
 
 		// Empty
-		List<String> urls = new ArrayList<String> ();
+		List<String> urls = new ArrayList<> ();
 		DockerfileGenerator gen = new DockerfileGenerator( "file://whatever.zip", null, urls, null );
 
 		String content = gen.handleAdditionalDeployments();
@@ -231,7 +231,7 @@ public class DockerfileGeneratorTest {
 		Assert.assertEquals( 0, gen.fileUrlsToCopyInDockerFile.size());
 
 		// Mix local and remote bundles, local and remote XML
-		urls = new ArrayList<String> ();
+		urls = new ArrayList<> ();
 		urls.add( "file:///oops/my_local_bundle.jar" );
 		urls.add( "http://oops/my_remote_bundle.jar" );
 		urls.add( "file:///oops/my_local_feature.xml" );

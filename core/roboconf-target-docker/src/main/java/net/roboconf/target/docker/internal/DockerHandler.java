@@ -25,6 +25,8 @@
 
 package net.roboconf.target.docker.internal;
 
+import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -153,7 +155,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		try {
 			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
 			ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
-			result = state != null && state.isRunning();
+			result = state != null && extractBoolean( state.getRunning());
 
 		} catch( Exception e ) {
 			// nothing, we consider it is not running
@@ -183,7 +185,8 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			// just mark the Roboconf instance as "not deployed" without throwing an exception.
 			if( container != null ) {
 				ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
-				if( state.isRunning() || state.isPaused())
+				if( state != null
+						&& ( extractBoolean( state.getRunning()) || extractBoolean( state.getPaused())))
 					dockerClient.killContainerCmd( container.getId()).exec();
 
 				dockerClient.removeContainerCmd( container.getId()).withForce( true ).exec();

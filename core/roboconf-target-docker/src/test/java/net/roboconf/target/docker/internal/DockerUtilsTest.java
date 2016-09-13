@@ -32,13 +32,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
-import net.roboconf.target.api.TargetException;
-
 import org.junit.Test;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Capability;
+
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -137,7 +137,6 @@ public class DockerUtilsTest {
 
 		DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
 		CreateContainerCmd cmd = dockerClient.createContainerCmd( "whatever, we won't execute it" );
-		Assert.assertFalse( cmd.isAttachStdin());
 
 		DockerUtils.configureOptions( options, cmd );
 
@@ -151,9 +150,9 @@ public class DockerUtilsTest {
 				new Capability[] { Capability.AUDIT_CONTROL },
 				cmd.getCapDrop()));
 
-		Assert.assertEquals( 50L, cmd.getMemorySwap());
-		Assert.assertEquals( 1024, cmd.getMemoryLimit());
-		Assert.assertEquals( 2, cmd.getCpuShares());
+		Assert.assertEquals( Long.valueOf( 50L ), cmd.getMemorySwap());
+		Assert.assertEquals( Long.valueOf( 1024L ), cmd.getMemory());
+		Assert.assertEquals( Integer.valueOf( 2 ), cmd.getCpuShares());
 		Assert.assertTrue( Arrays.deepEquals(
 				new String[] { "env1", "env2", "env3" },
 				cmd.getEnv()));
@@ -350,5 +349,14 @@ public class DockerUtilsTest {
 		Assert.assertEquals( "msg.pen=to write the answer", args.get( 1 ));
 		Assert.assertEquals( "start.sh", args.get( 2 ));
 		Assert.assertEquals( "etc/net.roboconf.messaging.bird.cfg", args.get( 3 ));
+	}
+
+
+	@Test
+	public void testExtractBoolean() {
+
+		Assert.assertEquals( true, DockerUtils.extractBoolean( Boolean.TRUE ));
+		Assert.assertEquals( false, DockerUtils.extractBoolean( Boolean.FALSE ));
+		Assert.assertEquals( false, DockerUtils.extractBoolean( null ));
 	}
 }

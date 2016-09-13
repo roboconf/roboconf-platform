@@ -48,13 +48,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.ManifestUtils;
-import net.roboconf.core.utils.MavenUtils;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -62,6 +55,13 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.ManifestUtils;
+import net.roboconf.core.utils.MavenUtils;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -234,9 +234,8 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			}
 
 			if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
-				throw new TargetException(
-						"No Maven package was found for the agent distribution "
-								+ mavenVersion + " (guessing the agent package URL failed).", exception );
+				String s = "No Maven package was found for the agent distribution " + mavenVersion + " (guessing the agent package URL failed).";
+				throw new TargetException( s, exception );
 			}
 		}
 

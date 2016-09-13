@@ -220,9 +220,11 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 
 		// Create target properties
 		StringBuilder sb = new StringBuilder();
+		sb.append( "id = docker-target\n" );
 		sb.append( "handler = docker\n" );
-		sb.append( "docker.endpoint = http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
+		sb.append( "docker.endpoint = tcp://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 		sb.append( "\ndocker.user = roboconf-it\ndocker.generate.image = true\n" );
+		sb.append( "docker.generate.image = true\n" );
 		sb.append( "docker.agent.package = " );
 		sb.append( agentLocation );
 
@@ -236,7 +238,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 			// The image is generated once, on the first deployment.
 			// 30 seconds is enough is the internet speed connection is very good...
 			this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-			Thread.sleep( 1000 * 30 );
+			Thread.sleep( 1000 * 80 );
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 			logger.info( "The first root instance was sucessfully deployed." );
 

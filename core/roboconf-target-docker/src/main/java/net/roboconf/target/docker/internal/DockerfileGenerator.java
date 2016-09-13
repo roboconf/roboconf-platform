@@ -63,11 +63,11 @@ public class DockerfileGenerator {
 
 	private String packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
 	private boolean isTar = true;
-	private String baseImageName = "ubuntu";
+	private String baseImageName = "ubuntu:14.04";
 
 	final List<String> deployList;
-	final List<String> fileUrlsToCopyInDockerFile = new ArrayList<String> ();
-	final List<String> bundleUrls = new ArrayList<String> ();
+	final List<String> fileUrlsToCopyInDockerFile = new ArrayList<> ();
+	final List<String> bundleUrls = new ArrayList<> ();
 
 
 
@@ -148,7 +148,8 @@ public class DockerfileGenerator {
 			String actualPackages = this.packages;
 			if( ! this.isTar )
 				actualPackages = "unzip " + actualPackages;
-			out.println("RUN apt-get update && apt-get install -y "+ actualPackages + " && rm -rf /var/lib/apt/lists/*");
+
+			out.println("RUN apt-get update && apt-get install -y " + actualPackages + " && rm -rf /var/lib/apt/lists/*");
 
 			// Copy and unzip the agent archive.
 			out.println("COPY " + agentFilename + " /usr/local/");
