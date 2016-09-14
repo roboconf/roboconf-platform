@@ -236,7 +236,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		logger.info( "About to deploy the first root instance." );
 		try {
 			// The image is generated once, on the first deployment.
-			// 30 seconds is enough is the internet speed connection is very good...
+			// 30 seconds are enough if the internet speed connection is very good...
 			this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
 			Thread.sleep( 1000 * 80 );
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());

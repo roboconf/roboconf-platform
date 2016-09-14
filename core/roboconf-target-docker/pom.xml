@@ -77,8 +77,36 @@
 			 		<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-api</artifactId>
 			 	</exclusion>
+			 	
+			 	<!-- Class path error -->
+			 	<exclusion>
+			 		<groupId>com.fasterxml.jackson.core</groupId>
+			 		<artifactId>jackson-databind</artifactId>
+			 	</exclusion>
+			 	
+			 	<!-- Class path error -->
+			 	<exclusion>
+			 		<groupId>com.fasterxml.jackson.core</groupId>
+			 		<artifactId>jackson-core</artifactId>
+			 	</exclusion>
 			 </exclusions>
 		</dependency>
+
+		<!-- To fix a class path error with Docker Java -->
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.6.4</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.6.4</version>
+		</dependency>
+
+		<!-- Normal dependencies -->
 
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -132,6 +160,9 @@
 					<instructions>
 						<Import-Package>
 							net.roboconf.*;version="${version.range}",
+							!javax.swing.*,
+							!javax.jmdns.*,
+							!javax.jms.*,
 							javax.*,
 							org.xml.*,
 							org.w3c.*,

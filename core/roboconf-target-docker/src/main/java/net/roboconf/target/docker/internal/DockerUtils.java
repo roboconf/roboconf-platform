@@ -45,7 +45,6 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -105,11 +104,8 @@ public final class DockerUtils {
 				.withRegistryEmail( targetProperties.get( DockerHandler.EMAIL ))
 				.withApiVersion( targetProperties.get( DockerHandler.VERSION ));
 
-		// We must force the factory because otherwise, its finding relies on services loaders.
-		// And this Java mechanism does not work in OSGi.
-		DockerClientBuilder clientBuilder = DockerClientBuilder
-				.getInstance( config.build())
-				.withDockerCmdExecFactory( new NettyDockerCmdExecFactory());
+		// Build the client.
+		DockerClientBuilder clientBuilder = DockerClientBuilder.getInstance( config.build());
 
 		return clientBuilder.build();
 	}
