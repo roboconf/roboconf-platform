@@ -158,6 +158,21 @@
 					</execution>
 				</executions>
 			</plugin>
+			
+			<!-- Disable the enforcer plug-in for IT -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>analyze</id>
+						<phase>none</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 		</plugins>
 	</build>

@@ -362,4 +362,15 @@
 		</plugins>
 	</build>
 
+	<!-- To solve issues with dependency convergence -->	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>javax.servlet</groupId>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>3.1.0</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 </project>
