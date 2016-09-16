@@ -120,6 +120,12 @@
 		
 		<!-- To update on every release -->
 		<version.range>[${project.version},0.9)</version.range>
+		
+		<!-- 
+			We should not embed any SLF4J library in bundles.
+			Instead, we should stick with the one that is already shipped with Karaf.
+		 -->
+		<slf4j.version>1.7.12</slf4j.version>
 	</properties>
 
 	<dependencyManagement>
