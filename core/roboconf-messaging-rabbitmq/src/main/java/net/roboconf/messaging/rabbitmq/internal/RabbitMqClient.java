@@ -187,6 +187,7 @@ public class RabbitMqClient implements IMessagingClient {
 		RoboconfConsumer consumer = new RoboconfConsumer( getId(), this.channel, this.messageQueue );
 		consumer.handleConsumeOk( queueName );
 		this.consumerTag = this.channel.basicConsume( queueName, true, consumer );
+		this.logger.finer( "A new consumer tag was created: " + this.consumerTag );
 	}
 
 
@@ -202,13 +203,18 @@ public class RabbitMqClient implements IMessagingClient {
 		// Stop listening messages
 		if( this.channel != null
 				&& this.channel.isOpen()
-				&& this.consumerTag != null )
+				&& this.consumerTag != null ) {
+
 			this.channel.basicCancel( this.consumerTag );
+			this.logger.finer( "A consumer tag was cancelled: " + this.consumerTag );
+		}
 
 		// Close the connection
 		this.consumerTag = null;
-		if( isConnected())
+		if( isConnected()) {
+			this.logger.finer( "Closing the connection and the channel # " + this.channel.getChannelNumber());
 			RabbitMqUtils.closeConnection( this.channel );
+		}
 
 		this.channel = null;
 	}

@@ -164,6 +164,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	public void switchMessagingType( String factoryName ) {
 
 		// Create a new client
+		this.logger.fine( "The messaging is requested to switch its type to " + factoryName + "." );
 		IMessagingClient newMessagingClient = null;
 		try {
 			newMessagingClient = createMessagingClient( factoryName );
@@ -218,6 +219,8 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 						openConnection(newMessagingClient);
 					}
 
+					this.logger.fine( "A new messaging factory was added: " + factory.getType());
+
 				} catch( IOException e ) {
 					this.logger.warning( "An error occurred while creating a new messaging client. " + e.getMessage());
 					Utils.logException( this.logger, e );
@@ -247,6 +250,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		}
 
 		closeConnection( oldClient, "The previous client could not be terminated correctly.", this.logger );
+		this.logger.fine( "A messaging factory was removed: " + factory != null ? factory.getType() : null );
 	}
 
 
