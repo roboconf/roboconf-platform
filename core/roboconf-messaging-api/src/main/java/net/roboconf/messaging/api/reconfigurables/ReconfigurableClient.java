@@ -26,7 +26,9 @@
 package net.roboconf.messaging.api.reconfigurables;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -180,7 +182,9 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			// #594: print a message to be visible in a console
 			StringBuilder sb = new StringBuilder();
 			sb.append( "\n\n**** WARNING ****\n" );
-			sb.append( "Connection failed.\n" );
+			sb.append( "Connection failed at " );
+			sb.append( new SimpleDateFormat( "HH:mm:ss, 'on' EEEE dd (MMMM)" ).format( new Date()));
+			sb.append( ".\n" );
 			sb.append( "The messaging configuration may be invalid.\n" );
 			sb.append( "Or the messaging server may not be started yet.\n\n" );
 			sb.append( "Consider using the 'roboconf:force-reconnect' command if you forgot to start the messaging server.\n" );
