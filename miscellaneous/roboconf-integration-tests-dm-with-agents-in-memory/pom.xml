@@ -204,6 +204,13 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-nop</artifactId>
+			<version>${slf4j.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
 		<!-- Dependencies for pax exam karaf container -->
 		
 		<dependency>

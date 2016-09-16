@@ -58,8 +58,6 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
-
-	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
 	private File karafDirectory, tmpFile;
 
 
@@ -95,14 +93,15 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 		try {
 			// Start the DM's distribution... and wait... :(
 			container.start();
-			ItUtils.waitForDmRestServices();
+			ItUtils.waitForDmRestServices( getCurrentPort());
 
 			// Find the Karaf directory
 			this.karafDirectory = TestUtils.getInternalField( container, "targetFolder", File.class );
 			Assert.assertNotNull( this.karafDirectory );
 
 			// Build a REST client
-			client = new WsClient( ROOT_URL );
+			String rootUrl = "http://localhost:" + getCurrentPort() + "/roboconf-dm";
+			client = new WsClient( rootUrl );
 
 			// Perform the checks
 			testScheduler( appDirectory.getAbsolutePath(), client );

@@ -64,14 +64,14 @@ public class WebSocketTest extends DmTest {
 		try {
 			// Start the agent's distribution... and wait... :(
 			container.start();
-			ItUtils.waitForDmRestServices();
+			ItUtils.waitForDmRestServices( getCurrentPort());
 
 			// Try to connect to our web socket.
 			WebSocketClient client = new WebSocketClient();
 			TestWebsocket socket = new TestWebsocket();
 			try {
 				client.start();
-				URI echoUri = new URI( "ws://localhost:8181/roboconf-dm-websocket" );
+				URI echoUri = new URI( "ws://localhost:" + getCurrentPort() + "/roboconf-dm-websocket" );
 				ClientUpgradeRequest request = new ClientUpgradeRequest();
 				client.connect( socket, echoUri, request );
 

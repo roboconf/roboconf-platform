@@ -26,10 +26,12 @@
 package net.roboconf.integration.tests.dm.with.agents.in.memory.probes;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -52,6 +54,12 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  */
 public abstract class DmWithAgentInMemoryTest extends AbstractIntegrationTest {
+
+	/**
+	 * A random port for the DM's web server (starting from 8382 and incrementing for every test).
+	 */
+	private static final AtomicInteger RP = new AtomicInteger( 8382 );
+
 
 	@Inject
 	protected Manager manager;
@@ -89,7 +97,18 @@ public abstract class DmWithAgentInMemoryTest extends AbstractIntegrationTest {
 				.version( roboconfVersion )
 				.start());
 
+		RP.incrementAndGet();
+		options.add( editConfigurationFilePut(
+				"etc/org.ops4j.pax.web.cfg",
+				"org.osgi.service.http.port",
+				String.valueOf( getCurrentPort())));
+
 		return options;
+	}
+
+
+	protected int getCurrentPort() {
+		return RP.get();
 	}
 
 

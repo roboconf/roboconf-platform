@@ -40,7 +40,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.ops4j.pax.exam.ExamSystem;
-import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.TestContainer;
 import org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer;
 import org.ops4j.pax.exam.spi.PaxExamRuntime;
@@ -63,8 +62,6 @@ import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
  */
 public class RestServicesTest extends DmWithAgentInMemoryTest {
 
-	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
-	private static final String ICONS_URL = "http://localhost:8181/roboconf-icons";
 	private File karafDirectory;
 
 
@@ -75,8 +72,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		File appDirectory = TestUtils.findApplicationDirectory( "lamp" );
 
 		// Prepare to run an agent distribution
-		Option[] options = config();
-		ExamSystem system = PaxExamRuntime.createServerSystem( options );
+		ExamSystem system = PaxExamRuntime.createServerSystem( config());
 		TestContainer container = PaxExamRuntime.createContainer( system );
 		Assert.assertEquals( KarafTestContainer.class, container.getClass());
 
@@ -84,17 +80,18 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		try {
 			// Start the DM's distribution... and wait... :(
 			container.start();
-			ItUtils.waitForDmRestServices();
+			ItUtils.waitForDmRestServices( getCurrentPort());
 
 			// Find the Karaf directory
 			this.karafDirectory = TestUtils.getInternalField( container, "targetFolder", File.class );
 			Assert.assertNotNull( this.karafDirectory );
 
 			// Build a REST client
-			client = new WsClient( ROOT_URL );
+			String rootUrl = "http://localhost:" + getCurrentPort() + "/roboconf-dm";
+			client = new WsClient( rootUrl );
 
 			// Perform the checks
-			testRestInteractions( appDirectory.getAbsolutePath(), client );
+			testRestInteractions( appDirectory.getAbsolutePath(), rootUrl, client );
 
 		} finally {
 			container.stop();
@@ -104,7 +101,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 	}
 
 
-	private void testRestInteractions( String appLocation, WsClient client  ) throws Exception {
+	private void testRestInteractions( String appLocation, String rootUrl, WsClient client  ) throws Exception {
 
 		// Load an application template
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplicationTemplates().size());
@@ -128,7 +125,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( "sample", receivedApp.getTemplate().getQualifier());
 
 		// Check the JSon serialization
-		URI targetUri = URI.create( ROOT_URL + "/app/app1/children?instance-path=/Apache%20VM" );
+		URI targetUri = URI.create( rootUrl + "/app/app1/children?instance-path=/Apache%20VM" );
 		String s = TestUtils.readUriContent( targetUri );
 		Assert.assertEquals(
 				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
@@ -138,12 +135,13 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		copyImage();
 
 		// Make sure we can get the image from the server
-		URL url = new URL( ICONS_URL + "/app1/application.png" );
+		String iconsUrl = "http://localhost:" + getCurrentPort() + "/roboconf-icons";
+		URL url = new URL( iconsUrl + "/app1/application.png" );
 		InputStream in = url.openStream();
 		Utils.copyStreamSafely( in, new ByteArrayOutputStream());
 
 		// Make sure getting an invalid icon returns an error
-		url = new URL( ICONS_URL + "/invalid-app-name/application.png" );
+		url = new URL( iconsUrl + "/invalid-app-name/application.png" );
 		try {
 			in = url.openStream();
 			Utils.copyStreamSafely( in, new ByteArrayOutputStream());

@@ -64,10 +64,10 @@ public class WebAdminCustomizationTest extends DmTest {
 		try {
 			// Start the DM's distribution... and wait... :(
 			container.start();
-			ItUtils.waitForDmRestServices();
+			ItUtils.waitForDmRestServices( getCurrentPort());
 
 			// Verify we get the default CSS, which is quite big
-			URL url = new URL( "http://localhost:8181/roboconf-web-administration/roboconf.min.css" );
+			URL url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css" );
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			InputStream in = url.openStream();
 			try {
@@ -91,7 +91,7 @@ public class WebAdminCustomizationTest extends DmTest {
 			Utils.writeStringInto( "hi!", new File( etcDirectory, "roboconf.custom.css" ));
 
 			// Now, verify what we get
-			url = new URL( "http://localhost:8181/roboconf-web-administration/roboconf.min.css" );
+			url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css" );
 			os = new ByteArrayOutputStream();
 			in = url.openStream();
 			try {
