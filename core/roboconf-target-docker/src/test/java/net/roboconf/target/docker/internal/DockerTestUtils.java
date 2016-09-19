@@ -51,6 +51,7 @@ import net.roboconf.core.utils.Utils;
 public final class DockerTestUtils {
 
 	public static final String DOCKER_TCP_PORT = "4243";
+
 	/**
 	 * The maximum time we allow the docker handler to take to configure a machine.
 	 * <p>

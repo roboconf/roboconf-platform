@@ -119,6 +119,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-nop</artifactId>
+			<version>${slf4j.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 	
 	<build>
@@ -154,6 +161,21 @@
 						<id>generate-depends-file</id>
 						<goals>
 							<goal>generate-depends-file</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Disable the enforcer plug-in for IT -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>analyze</id>
+						<phase>none</phase>
+						<goals>
+							<goal>enforce</goal>
 						</goals>
 					</execution>
 				</executions>

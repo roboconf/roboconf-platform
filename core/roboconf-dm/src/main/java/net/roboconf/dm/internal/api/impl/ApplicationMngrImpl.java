@@ -363,8 +363,8 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( Utils.isEmptyOrWhitespaces( name ))
 			throw new IOException( "An application name cannot be empty." );
 
-		if( ! name.matches( ParsingConstants.PATTERN_FLEX_ID ))
-			throw new IOException( "Application names cannot contain invalid characters. Letters, digits, dots, underscores, spaces and the minus symbol are allowed." );
+		if( ! name.matches( ParsingConstants.PATTERN_APP_NAME ))
+			throw new IOException( "Application names cannot contain invalid characters. Letters, digits, dots, underscores, brackets, spaces and the minus symbol are allowed." );
 
 		if( this.nameToManagedApplication.containsKey( name ))
 			throw new AlreadyExistingException( name );

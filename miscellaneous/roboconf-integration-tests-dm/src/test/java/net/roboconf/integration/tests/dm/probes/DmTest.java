@@ -25,6 +25,11 @@
 
 package net.roboconf.integration.tests.dm.probes;
 
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
@@ -39,13 +44,32 @@ import net.roboconf.integration.tests.commons.internal.parameterized.RabbitMqCon
  */
 public abstract class DmTest extends AbstractIntegrationTest {
 
+	/**
+	 * A random port for the DM's web server (starting from 8282 and incrementing for every test).
+	 */
+	private static final AtomicInteger RP = new AtomicInteger( 8282 );
+
+
 	@Configuration
 	public Option[] config() throws Exception {
-		return ItUtils.getBaseOptions( getConfigurationBean(), new RabbitMqConfiguration());
+
+		RP.incrementAndGet();
+
+		List<Option> options = ItUtils.getBaseOptionsAsList( getConfigurationBean(), new RabbitMqConfiguration());
+		options.add( editConfigurationFilePut(
+				"etc/org.ops4j.pax.web.cfg",
+				"org.osgi.service.http.port",
+				String.valueOf( getCurrentPort())));
+
+		return ItUtils.asArray( options );
 	}
 
 	@Override
 	protected ItConfigurationBean getConfigurationBean() {
 		return new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm" );
+	}
+
+	protected int getCurrentPort() {
+		return RP.get();
 	}
 }

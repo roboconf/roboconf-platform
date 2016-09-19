@@ -39,11 +39,6 @@
 	<artifactId>roboconf-maven-plugin</artifactId>
 	<name>Roboconf :: Maven Plug-in</name>
 	<packaging>maven-plugin</packaging>
-	
-	<prerequisites>
-		<!-- Necessary with respect to Aether and Maven's API -->
-		<maven>3.1</maven>
-	</prerequisites>
 
 	<properties>
 		<maven.version>3.2.2</maven.version>
@@ -154,6 +149,7 @@
 				</configuration>
 			</plugin>
 
+			<!-- To run integration tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-invoker-plugin</artifactId>
@@ -186,6 +182,46 @@
 								<goal>clean</goal>
 								<goal>package</goal>
 							</goals>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Not any Maven version can build this plug-in... -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+				
+					<!-- 
+						Ignore dependencies convergence here.
+						Maven is such a mess sometimes...
+					-->
+					<execution>
+						<id>analyze</id>
+						<phase>none</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+					</execution>
+					
+					<!-- 
+						Only verify the current Maven version that builds the plug-in
+						follows a given version.
+					 -->
+					<execution>
+						<id>maven-version</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<fail>true</fail>
+							<rules>
+								<requireMavenVersion>
+									<version>[${maven.version},)</version>
+									<message>Maven ${maven.version} or higher is required to build this plug-in.</message>
+								</requireMavenVersion>
+							</rules>
 						</configuration>
 					</execution>
 				</executions>

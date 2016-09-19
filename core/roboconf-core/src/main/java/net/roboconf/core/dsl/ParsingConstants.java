@@ -74,6 +74,11 @@ public interface ParsingConstants {
 	 */
 	String PATTERN_ID = "[a-zA-Z_](\\w|-|\\.)*";
 
+	/**
+	 * The pattern for an application name (allow brackets).
+	 */
+	String PATTERN_APP_NAME = "[a-zA-Z_](\\w|[-.() ])*";
+
 
 	/**
 	 * Keyword for component property.

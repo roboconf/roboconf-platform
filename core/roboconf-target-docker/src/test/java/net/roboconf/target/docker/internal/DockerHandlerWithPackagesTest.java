@@ -25,9 +25,10 @@
 
 package net.roboconf.target.docker.internal;
 
+import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,8 +52,9 @@ import org.junit.rules.TemporaryFolder;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.command.ExecStartResultCallback;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
@@ -139,11 +141,12 @@ public class DockerHandlerWithPackagesTest {
 		// Create a client.
 		try {
 			this.dockerClient = DockerClientBuilder.getInstance(
-					DockerClientConfig.createDefaultConfigBuilder()
-							.withUri(this.targetProperties.get(DockerHandler.ENDPOINT))
+					DefaultDockerClientConfig.createDefaultConfigBuilder()
+							.withDockerHost( this.targetProperties.get( DockerHandler.ENDPOINT ))
 							.build())
 					.build();
-		} catch (Exception e) {
+
+		} catch( Exception e ) {
 			LOGGER.warning("Tests are skipped because Docker is misconfigured.");
 			Utils.logException(LOGGER, e);
 			Assume.assumeNoException(e);
@@ -177,7 +180,9 @@ public class DockerHandlerWithPackagesTest {
 				final InspectContainerResponse.ContainerState state =
 						DockerUtils.getContainerState( this.dockerContainerId, this.dockerClient);
 
-				if (state != null && (state.isRunning() || state.isPaused())) {
+				if( state != null
+						&& ( extractBoolean( state.getRunning()) || extractBoolean( state.getPaused()))) {
+
 					try {
 						this.dockerClient.killContainerCmd(this.dockerContainerId) .exec();
 
@@ -398,9 +403,7 @@ public class DockerHandlerWithPackagesTest {
 
 
 	/**
-	 * Execute a command on the tested docker container.
-	 * TODO refactor & put that method in DockerUtils.
-	 *
+	 * Executes a command on the tested docker container.
 	 * @param commandLine the command line to run.
 	 * @return the result of the command execution.
 	 * @throws Exception if something bas happened during the command execution
@@ -409,16 +412,17 @@ public class DockerHandlerWithPackagesTest {
 	private CommandResult execDockerCommand( String... commandLine ) throws Exception {
 
 		// Create the command and get its execId (execCreateCmd)
-		final String execId = this.dockerClient.execCreateCmd(this.dockerContainerId)
-				.withCmd(commandLine)
-				.withAttachStdout()
+		final String execId = this.dockerClient.createContainerCmd( this.dockerContainerId )
+				.withCmd( commandLine )
+				.withAttachStdout( true )
 				.exec()
 				.getId();
 
 		// Start the command (execStartCmd), and get the output.
-		final InputStream in = this.dockerClient.execStartCmd(this.dockerContainerId)
+		ByteArrayOutputStream stdOutAndErr = new ByteArrayOutputStream();
+		this.dockerClient.execStartCmd( this.dockerContainerId )
 				.withExecId(execId)
-				.exec();
+				.exec( new ExecStartResultCallback( stdOutAndErr, stdOutAndErr )).awaitCompletion();
 
 		// Wait until the command has finished...
 		InspectExecResponse cmd;
@@ -427,13 +431,9 @@ public class DockerHandlerWithPackagesTest {
 
 		} while (cmd.isRunning());
 
-		// Put the command output into a string.
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Utils.copyStreamSafely( in, out );
-
 		// Now return...
 		return new CommandResult(
 				cmd.getExitCode(),
-				out.toString("UTF-8"));
+				stdOutAndErr.toString("UTF-8"));
 	}
 }

@@ -473,7 +473,7 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( app.getName()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_NAME, app ));
 
-		else if( ! app.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
+		else if( ! app.getName().matches( ParsingConstants.PATTERN_APP_NAME ))
 			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_NAME, app ));
 
 		if( Utils.isEmptyOrWhitespaces( app.getQualifier()))
