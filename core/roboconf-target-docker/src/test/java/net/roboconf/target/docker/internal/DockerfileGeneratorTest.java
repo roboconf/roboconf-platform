@@ -26,14 +26,16 @@
 package net.roboconf.target.docker.internal;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import net.roboconf.core.utils.Utils;
 
@@ -64,7 +66,7 @@ public class DockerfileGeneratorTest {
 
 
 	@Test
-	public void testGenerateDockerFile() throws IOException {
+	public void testGenerateDockerFile() throws Exception {
 
 		File dockerfile = null;
 		File[] files = new File[] {
@@ -111,7 +113,7 @@ public class DockerfileGeneratorTest {
 
 
 	@Test
-	public void testGenerateDockerFile_withOtherBaseImage() throws IOException {
+	public void testGenerateDockerFile_withOtherBaseImage() throws Exception {
 
 		File dockerfile = null;
 		File file = this.folder.newFile( "dockertest.tar.gz" );
@@ -174,6 +176,14 @@ public class DockerfileGeneratorTest {
 		Assert.assertEquals(
 				"roboconf-agent.zip",
 				DockerfileGenerator.findAgentFileName( "https://oss.sonatype.org/.../redirect?a=roboconf-karaf-dist-agent&v=0.4&p=zip", false ));
+
+		Assert.assertEquals(
+				"roboconf-agent.zip",
+				DockerfileGenerator.findAgentFileName( "mvn:net.roboconf/roboconf-karaf-dist-agent/0.7/zip", false ));
+
+		Assert.assertEquals(
+				"roboconf-agent.tar.gz",
+				DockerfileGenerator.findAgentFileName( "mvn:net.roboconf/roboconf-karaf-dist-agent/0.7/tar.gz", true ));
 	}
 
 
@@ -219,36 +229,65 @@ public class DockerfileGeneratorTest {
 
 
 	@Test
-	public void testHandleAdditionalDeployments() throws Exception {
+	public void testHandleAdditionalDeployments_noUrl() throws Exception {
 
 		// Empty
-		List<String> urls = new ArrayList<> ();
+		List<String> urls = new ArrayList<>( 0 );
 		DockerfileGenerator gen = new DockerfileGenerator( "file://whatever.zip", null, urls, null );
 
-		String content = gen.handleAdditionalDeployments();
+		File targetFile = this.folder.newFile( "some.jar" );
+		gen.mavenResolver = Mockito.mock( MavenResolver.class );
+		Mockito.when( gen.mavenResolver.resolve( Mockito.anyString())).thenReturn( targetFile );
+
+		File dockerfileDir = this.folder.newFolder();
+		String content = gen.handleAdditionalDeployments( dockerfileDir );
 		Assert.assertEquals( 0, content.length());
 		Assert.assertEquals( 0, gen.bundleUrls.size());
-		Assert.assertEquals( 0, gen.fileUrlsToCopyInDockerFile.size());
+		Assert.assertEquals( 0, dockerfileDir.listFiles().length );
+	}
+
+
+	@Test
+	public void testHandleAdditionalDeployments_withUrls() throws Exception {
 
 		// Mix local and remote bundles, local and remote XML
-		urls = new ArrayList<> ();
-		urls.add( "file:///oops/my_local_bundle.jar" );
+		List<String> urls = new ArrayList<> ();
+		urls.add( this.folder.newFile( "my_local_bundle.jar" ).toURI().toString());
 		urls.add( "http://oops/my_remote_bundle.jar" );
-		urls.add( "file:///oops/my_local_feature.xml" );
+		urls.add( "mvn:org.ow2.petals/petals-roboconf-plugin/some-jar" );
+		urls.add( "mvn:org.ow2.petals/petals-roboconf-plugin/not-a-jar" );
+		urls.add( this.folder.newFile( "my_local_feature.xml" ).toURI().toString());
 		urls.add( "http://oops/my_remote_feature.xml" );
 
-		gen = new DockerfileGenerator( "file://whatever.zip", null, urls, null );
+		DockerfileGenerator gen = new DockerfileGenerator( "file://whatever.zip", null, urls, null );
+		File dockerfileDir = this.folder.newFolder();
 
-		content = gen.handleAdditionalDeployments();
+		gen.mavenResolver = Mockito.mock( MavenResolver.class );
+
+		File jarFile = this.folder.newFile( "some.jar" );
+		Mockito.when( gen.mavenResolver.resolve( "mvn:org.ow2.petals/petals-roboconf-plugin/some-jar" )).thenReturn( jarFile );
+
+		File notAJarFile = this.folder.newFile( "some.txt" );
+		Mockito.when( gen.mavenResolver.resolve( "mvn:org.ow2.petals/petals-roboconf-plugin/not-a-jar" )).thenReturn( notAJarFile );
+
+		String content = gen.handleAdditionalDeployments( dockerfileDir );
 		Assert.assertTrue( content.length() > 0 );
 
-		Assert.assertEquals( 2, gen.bundleUrls.size());
-		Assert.assertEquals( 2, gen.fileUrlsToCopyInDockerFile.size());
+		// MVN and file:/ files must have been copied in the Docekrfile
+		File[] arrayOfFiles = dockerfileDir.listFiles();
+		Assert.assertNotNull( arrayOfFiles );
 
-		Assert.assertTrue( gen.fileUrlsToCopyInDockerFile.contains( "file:///oops/my_local_bundle.jar" ));
-		Assert.assertTrue( gen.fileUrlsToCopyInDockerFile.contains( "file:///oops/my_local_feature.xml" ));
+		List<File> files = Arrays.asList( arrayOfFiles );
+		Assert.assertEquals( 4, files.size());
+		Assert.assertTrue( files.contains( new File( dockerfileDir, "my_local_feature.xml" )));
+		Assert.assertTrue( files.contains( new File( dockerfileDir, "my_local_bundle.jar" )));
+		Assert.assertTrue( files.contains( new File( dockerfileDir, jarFile.getName())));
+		Assert.assertTrue( files.contains( new File( dockerfileDir, notAJarFile.getName())));
 
+		// And JAR files must have been added to the list of bundles
+		Assert.assertEquals( 3, gen.bundleUrls.size());
 		Assert.assertTrue( gen.bundleUrls.contains( "http://oops/my_remote_bundle.jar" ));
+		Assert.assertTrue( gen.bundleUrls.contains( "file://" + DockerfileGenerator.RBCF_DIR + DockerfileGenerator.BACKUP + jarFile.getName()));
 		Assert.assertTrue( gen.bundleUrls.contains( "file://" + DockerfileGenerator.RBCF_DIR + DockerfileGenerator.BACKUP + "my_local_bundle.jar" ));
 	}
 }
