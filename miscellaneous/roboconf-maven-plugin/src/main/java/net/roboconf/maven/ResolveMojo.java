@@ -31,9 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.utils.Utils;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -50,6 +47,13 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.utils.ResourceUtils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * The <strong>resolve</strong> mojo.
@@ -79,7 +83,7 @@ public class ResolveMojo extends AbstractMojo {
 		File completeAppDirectory = new File( this.project.getBuild().getOutputDirectory());
 
 		// Copy the dependencies resources in the target directory
-		Set<Artifact> artifacts = new HashSet<Artifact> ();
+		Set<Artifact> artifacts = new HashSet<> ();
 		if( this.project.getDependencyArtifacts() != null )
 			artifacts.addAll( this.project.getDependencyArtifacts());
 
@@ -116,7 +120,6 @@ public class ResolveMojo extends AbstractMojo {
 			}
 
 			// Prepare the extraction
-			File temporaryDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-temp" );
 			File targetDirectory = new File( completeAppDirectory, Constants.PROJECT_DIR_GRAPH + "/" + artifactId );
 			getLog().debug( "Copying the content of artifact " + artifactId + " under " + targetDirectory );
 			try {
@@ -129,6 +132,31 @@ public class ResolveMojo extends AbstractMojo {
 
 			} catch( IOException e ) {
 				throw new MojoExecutionException( "The ZIP archive for artifact " + artifactId + " could not be extracted.", e );
+			}
+
+			// Do they contain target definitions?
+			// This is only to display a warning candidate, in case where the imported artifact
+			// would contain target properties. Indeed, such properties may result in conflicts
+			// when imported by several application templates. They should instead be packaged separately.
+			File temporaryDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-temp" );
+			try {
+				Utils.extractZipArchive( file, temporaryDirectory );
+				ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( temporaryDirectory );
+				if( alr.getApplicationTemplate().getGraphs() != null ) {
+					for( net.roboconf.core.model.beans.Component comp : ComponentHelpers.findAllComponents( alr.getApplicationTemplate())) {
+						if( ! ComponentHelpers.isTarget( comp ))
+							continue;
+
+						File dir = ResourceUtils.findInstanceResourcesDirectory( temporaryDirectory, comp );
+						if( ! dir.isDirectory() || Utils.listAllFiles( dir ).isEmpty())
+							continue;
+
+						getLog().warn( "Artifact " + artifactId + " contains target properties. Reusable target properties should be packaged separately." );
+					}
+				}
+
+			} catch( IOException e ) {
+				getLog().debug( "The presence of target properties in the " + artifactId + " artifact could not be verified." );
 
 			} finally {
 				Utils.deleteFilesRecursivelyAndQuietly( temporaryDirectory );

@@ -32,12 +32,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.utils.Utils;
-import net.roboconf.doc.generator.DocConstants;
-
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.doc.generator.DocConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -106,11 +106,11 @@ public class GenerateDocumentationMojoTest extends AbstractTest {
 	public void testSeveralRenderersAndLocalesWithOptions() throws Exception {
 
 		List<String> locales = Arrays.asList( "fr_FR", "en_US" );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_IMG_BACKGROUND_COLOR, "#dddddd" );
 		options.put( "foreground.color", "#000000" );
 
-		File dir = findAndExecuteMojo( Arrays.asList( "html", "markdown", "unknown" ), locales, null );
+		File dir = findAndExecuteMojo( Arrays.asList( "html", "markdown", "unknown" ), locales, options );
 		Assert.assertEquals( 5, dir.listFiles().length );
 		Assert.assertTrue( new File( dir, "png" ).isDirectory());
 
@@ -132,7 +132,7 @@ public class GenerateDocumentationMojoTest extends AbstractTest {
 	}
 
 
-	private File findAndExecuteMojo( List<String> renderers, List<String> locales, List<String> options ) throws Exception {
+	private File findAndExecuteMojo( List<String> renderers, List<String> locales, Map<String,String> options ) throws Exception {
 
 		// Find the mojo.
 		GenerateDocumentationMojo docMojo = (GenerateDocumentationMojo) super.findMojo( "project--valid", "documentation" );

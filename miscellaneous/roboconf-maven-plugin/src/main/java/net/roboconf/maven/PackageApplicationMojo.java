@@ -27,7 +27,6 @@ package net.roboconf.maven;
 
 import java.io.File;
 
-import org.apache.maven.archiver.MavenArchiveConfiguration;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -68,11 +67,6 @@ public class PackageApplicationMojo extends AbstractMojo {
 		// Add the application directories
 		try {
 			this.zipArchiver.addDirectory( modelDir );
-
-			MavenArchiveConfiguration conf = new MavenArchiveConfiguration();
-			conf.setCompress( true );
-			conf.setAddMavenDescriptor( false );
-
 			this.zipArchiver.setCompress( true );
 			this.zipArchiver.setDestFile( archiveFile );
 			this.zipArchiver.createArchive();
