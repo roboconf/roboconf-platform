@@ -116,7 +116,7 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 		// Associate a default target for this application
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler: in-memory" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), null );
 
 		// Change the instances states
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );

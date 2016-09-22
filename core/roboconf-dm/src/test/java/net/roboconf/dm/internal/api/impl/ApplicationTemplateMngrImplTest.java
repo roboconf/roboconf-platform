@@ -395,11 +395,7 @@ public class ApplicationTemplateMngrImplTest {
 		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
 		Assert.assertEquals( 3, scopedInstances.size());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, null );
-		for( Instance scopedInstance : scopedInstances ) {
-			String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
-		}
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWith( "the_id", tpl, "@VM" );
 	}
 
 
@@ -437,11 +433,7 @@ public class ApplicationTemplateMngrImplTest {
 		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
 		Assert.assertEquals( 3, scopedInstances.size());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, null );
-		for( Instance scopedInstance : scopedInstances ) {
-			String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
-		}
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWith( "the_id", tpl, "@VM" );
 	}
 
 
@@ -487,10 +479,10 @@ public class ApplicationTemplateMngrImplTest {
 
 		for( int i=1; i<=targetCpt; i++ ) {
 			String tid = "the_id_" + i;
-			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, null );
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith( tid, tpl, null );
 			for( Instance scopedInstance : scopedInstances ) {
 				String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, instancePath );
+				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith( tid, tpl, instancePath );
 			}
 		}
 	}
@@ -543,13 +535,8 @@ public class ApplicationTemplateMngrImplTest {
 
 		for( int i=1; i<=targetCpt; i++ ) {
 			String tid = "the_id_" + i;
-			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, null );
-			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, null );
-			for( Instance scopedInstance : scopedInstances ) {
-				String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, instancePath );
-				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
-			}
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith( tid, tpl, null );
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWith( "the_id", tpl, "@VM" );
 		}
 	}
 
@@ -616,17 +603,17 @@ public class ApplicationTemplateMngrImplTest {
 
 		for( int i=1; i<=targetCpt; i++ ) {
 			String tid = "the_id_" + i;
-			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance(
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith(
 					Mockito.eq( tid ),
 					Mockito.any( ApplicationTemplate.class ),
 					Mockito.anyString());
 		}
 
 		ArgumentCaptor<String> targetId = ArgumentCaptor.forClass( String.class );
-		Mockito.verify( this.targetsMngr, Mockito.times( 3 )).associateTargetWithScopedInstance(
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWith(
 				targetId.capture(),
 				Mockito.any( ApplicationTemplate.class ),
-				Mockito.anyString());
+				Mockito.eq( "@VM" ));
 
 		// 3 scoped instances => 3 registrations.
 		// This is because there are several root components with targets => no default target for the app.
@@ -657,7 +644,7 @@ public class ApplicationTemplateMngrImplTest {
 		// Throw an exception when we try an association.
 		Mockito.doThrow( new UnauthorizedActionException( "for test" ))
 				.when( this.targetsMngr )
-				.associateTargetWithScopedInstance(
+				.associateTargetWith(
 						Mockito.anyString(),
 						Mockito.any( ApplicationTemplate.class ),
 						Mockito.anyString());

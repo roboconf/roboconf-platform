@@ -40,11 +40,8 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
@@ -303,32 +300,15 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 			throw conflictException;
 		}
 
-		// Associate them with instances.
-		Application app = new Application( tpl );
+		// Associate them with components.
 		try {
-			// If there is only one root component,
-			// and only one target for it, register it by default for the application template.
-			Set<String> targetIds;
-			if( componentToTargetIds.size() == 1
-					&& (targetIds = componentToTargetIds.values().iterator().next()).size() == 1 ) {
-				this.targetsMngr.associateTargetWithScopedInstance( targetIds.iterator().next(), tpl, null );
-			}
+			for( Map.Entry<Component,Set<String>> entry : componentToTargetIds.entrySet()) {
+				String key = "@" + entry.getKey().getName();
 
-			// Otherwise, make the associations per instances.
-			else for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app )) {
-				targetIds = componentToTargetIds.get( scopedInstance.getComponent());
-
-				// No target for the component? Skip.
-				if( targetIds == null )
-					continue;
-
-				// Only one target? Register it for the instance.
-				if( targetIds.size() == 1 ) {
-					String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-					this.targetsMngr.associateTargetWithScopedInstance( targetIds.iterator().next(), tpl, instancePath );
-				}
-
-				// Otherwise, do not register anything.
+				// More than one target for a component?
+				// => Do not register anything.
+				if( entry.getValue().size() == 1 )
+					this.targetsMngr.associateTargetWith( entry.getValue().iterator().next(), tpl, key );
 			}
 
 		} catch( UnauthorizedActionException e ) {

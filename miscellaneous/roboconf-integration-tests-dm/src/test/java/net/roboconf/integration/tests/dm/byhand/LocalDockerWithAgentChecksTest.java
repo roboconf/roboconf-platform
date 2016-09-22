@@ -229,7 +229,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		sb.append( agentLocation );
 
 		String targetId = this.manager.targetsMngr().createTarget( sb.toString());
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), null );
 
 		// Try deployments
 		Logger logger = Logger.getLogger( getClass().getName());

@@ -753,7 +753,7 @@ public class ManagerBasicsTest {
 
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
 
 		// Try a first deployment
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
