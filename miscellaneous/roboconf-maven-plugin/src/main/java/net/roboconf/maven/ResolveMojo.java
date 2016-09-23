@@ -51,7 +51,6 @@ import org.eclipse.aether.resolution.ArtifactResult;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 
@@ -143,12 +142,9 @@ public class ResolveMojo extends AbstractMojo {
 				Utils.extractZipArchive( file, temporaryDirectory );
 				ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( temporaryDirectory );
 				if( alr.getApplicationTemplate().getGraphs() != null ) {
-					for( net.roboconf.core.model.beans.Component comp : ComponentHelpers.findAllComponents( alr.getApplicationTemplate())) {
-						if( ! ComponentHelpers.isTarget( comp ))
-							continue;
+					for( File dir : ResourceUtils.findScopedInstancesDirectories( alr.getApplicationTemplate()).values()) {
 
-						File dir = ResourceUtils.findInstanceResourcesDirectory( temporaryDirectory, comp );
-						if( ! dir.isDirectory() || Utils.listAllFiles( dir ).isEmpty())
+						if( Utils.listAllFiles( dir ).isEmpty())
 							continue;
 
 						getLog().warn( "Artifact " + artifactId + " contains target properties. Reusable target properties should be packaged separately." );
