@@ -28,6 +28,11 @@ package net.roboconf.dm.internal.commands;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -41,11 +46,6 @@ import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -94,9 +94,9 @@ public class ReplicateCommandExecutionTest {
 		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, null );
-		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance(
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath, true );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).findTargetId( this.app, null );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith(
 				Mockito.anyString(),
 				Mockito.any( Application.class ),
 				Mockito.anyString());
@@ -123,9 +123,9 @@ public class ReplicateCommandExecutionTest {
 		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, null );
-		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance(
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath, true );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).findTargetId( this.app, null );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith(
 				Mockito.anyString(),
 				Mockito.any( Application.class ),
 				Mockito.anyString());
@@ -158,7 +158,7 @@ public class ReplicateCommandExecutionTest {
 		// Simulate a non-default target ID
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		Mockito.when( this.targetsMngr.findTargetId( this.app, null )).thenReturn( null );
-		Mockito.when( this.targetsMngr.findTargetId( this.app, instancePath )).thenReturn( "my-target-id" );
+		Mockito.when( this.targetsMngr.findTargetId( this.app, instancePath, true )).thenReturn( "my-target-id" );
 
 		// Replicate it
 		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
@@ -170,9 +170,9 @@ public class ReplicateCommandExecutionTest {
 		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, null );
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "my-target-id", this.app, "/toto" );
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath, true );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).findTargetId( this.app, null );
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWith( "my-target-id", this.app, "/toto" );
 	}
 
 
@@ -182,7 +182,7 @@ public class ReplicateCommandExecutionTest {
 		// Simulate a default target ID
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		Mockito.when( this.targetsMngr.findTargetId( this.app, null )).thenReturn( "my-target-id" );
-		Mockito.when( this.targetsMngr.findTargetId( this.app, instancePath )).thenReturn( "my-target-id" );
+		Mockito.when( this.targetsMngr.findTargetId( this.app, instancePath, true )).thenReturn( null );
 
 		// Replicate it
 		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
@@ -194,9 +194,9 @@ public class ReplicateCommandExecutionTest {
 		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, null );
-		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance(
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath, true );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).findTargetId( this.app, null );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWith(
 				Mockito.anyString(),
 				Mockito.any( Application.class ),
 				Mockito.anyString());

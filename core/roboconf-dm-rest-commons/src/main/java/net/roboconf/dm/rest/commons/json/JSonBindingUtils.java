@@ -311,8 +311,8 @@ public final class JSonBindingUtils {
 						throws IOException {
 
 			generator.writeStartObject();
-			if( item.getInstancePath() != null )
-				generator.writeStringField( PATH, item.getInstancePath());
+			if( item.getInstancePathOrComponentName() != null )
+				generator.writeStringField( PATH, item.getInstancePathOrComponentName());
 
 			if( item.getTargetDescriptor() != null )
 				generator.writeObjectField( DESC, item.getTargetDescriptor());

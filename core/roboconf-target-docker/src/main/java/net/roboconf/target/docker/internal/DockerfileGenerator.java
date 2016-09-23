@@ -25,20 +25,19 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.core.utils.Utils;
@@ -66,8 +65,8 @@ public class DockerfileGenerator {
 	private String baseImageName = "ubuntu:14.04";
 
 	final List<String> deployList;
-	final List<String> fileUrlsToCopyInDockerFile = new ArrayList<> ();
 	final List<String> bundleUrls = new ArrayList<> ();
+	MavenResolver mavenResolver;
 
 
 
@@ -86,7 +85,12 @@ public class DockerfileGenerator {
 	 * base image name (<code>FROM ubuntu</code>).
 	 * </p>
 	 */
-	public DockerfileGenerator( String agentPackURL, String packages, List<String> deployList, String baseImageName ) {
+	public DockerfileGenerator(
+			String agentPackURL,
+			String packages,
+			List<String> deployList,
+			String baseImageName ) {
+
 		File test = new File(agentPackURL);
 		this.agentPackURL = (test.exists() ? "file://" : "") + agentPackURL;
 
@@ -104,42 +108,43 @@ public class DockerfileGenerator {
 
 
 	/**
+	 * @param mavenResolver the mavenResolver to set
+	 */
+	public void setMavenResolver( MavenResolver mavenResolver ) {
+		this.mavenResolver = mavenResolver;
+	}
+
+
+	/**
 	 * Generates a dockerfile.
 	 * @return path to a full-fledged temporary Dockerfile directory
 	 * @throws IOException
+	 * @throws URISyntaxException
 	 */
-	public File generateDockerfile() throws IOException {
+	public File generateDockerfile() throws IOException, URISyntaxException {
 
 		// Create temporary dockerfile directory
 		Path dockerfile = Files.createTempDirectory("roboconf_");
 
 		// Copy agent package in temporary dockerfile directory
 		String agentFilename = findAgentFileName( this.agentPackURL, this.isTar );
-		File tmpPack = new File(dockerfile.toFile(), agentFilename);
-		tmpPack.setReadable(true);
+		File tmpPack = new File( dockerfile.toFile(), agentFilename );
+		tmpPack.setReadable( true );
 
-		URL u = new URL( this.agentPackURL );
-		URLConnection uc = u.openConnection();
-		InputStream in = null;
 		try {
 			this.logger.fine( "Downloading the agent package from " + this.agentPackURL );
-			in = new BufferedInputStream( uc.getInputStream());
-			Utils.copyStream(in, tmpPack);
+			DockerUtils.downloadRemotePackage( this.agentPackURL, tmpPack, this.mavenResolver );
 			this.logger.fine( "The agent package was successfully downloaded." );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			this.logger.fine( "The agent package could not be downloaded." );
 			Utils.logException( this.logger, e );
-			throw e;
-
-		} finally {
-			Utils.closeQuietly(in);
+			throw e instanceof IOException ? (IOException) e : new IOException( e );
 		}
 
 		// Generate the Docker instructions
 		this.logger.fine( "Generating a Dockerfile." );
-
-		File generated = new File(dockerfile.toFile(), "Dockerfile");
+		File generated = new File( dockerfile.toFile(), "Dockerfile" );
 		PrintWriter out = null;
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
@@ -170,7 +175,7 @@ public class DockerfileGenerator {
 			// Additional agent extensions?
 			if( this.deployList != null ) {
 				out.println( "RUN mkdir -p " + RBCF_DIR + BACKUP );
-				out.println( this.handleAdditionalDeployments());
+				out.println( this.handleAdditionalDeployments( dockerfile.toFile()));
 			}
 
 			// Generated feature?
@@ -185,8 +190,11 @@ public class DockerfileGenerator {
 
 		// Copy essential resources in the Dockerfile
 		for( final String s : RESOURCES_TO_COPY ) {
+
 			this.logger.fine( "Copying " + s + "..." );
 			generated = new File( dockerfile.toFile(), s );
+			InputStream in = null;
+
 			try {
 				in = this.getClass().getResourceAsStream( "/" + s );
 				Utils.copyStream( in, generated );
@@ -206,25 +214,6 @@ public class DockerfileGenerator {
 			File target = new File( dockerfile.toFile(), GENERATED_FEATURE_XML );
 			Utils.writeStringInto( karafFeature, target );
 			this.logger.fine( GENERATED_FEATURE_XML + " was copied within the Dockerfile's directory. (" + target + ")" );
-		}
-
-		// Copy additional deploy resources in the Docker context directory.
-		for( String s : this.fileUrlsToCopyInDockerFile ) {
-
-			this.logger.fine( "Copying " + s + "..." );
-			final File target = new File(dockerfile.toFile(), getFileNameFromFileUrl( s ));
-			try {
-				in = UriUtils.urlToUri( s ).toURL().openStream();
-				Utils.copyStream(in, target);
-				this.logger.fine( s + " was copied within the Dockerfile's directory. (" + target + ")" );
-
-			} catch( URISyntaxException e ) {
-				this.logger.severe( "Agent extension " + s + " could not be copied." );
-				throw new IOException( e );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
 		}
 
 		return dockerfile.toFile();
@@ -270,7 +259,8 @@ public class DockerfileGenerator {
 	static String findAgentFileName( String url, boolean isTar ) {
 
 		String agentFilename = url.substring( url.lastIndexOf('/') + 1 );
-		if( agentFilename.contains( "?" )
+		if( url.toLowerCase().startsWith( "mvn:" )
+				|| agentFilename.contains( "?" )
 				|| agentFilename.contains( "&" ))
 			agentFilename = "roboconf-agent" + (isTar ? ".tar.gz" : ".zip");
 
@@ -327,38 +317,53 @@ public class DockerfileGenerator {
 	/**
 	 * This methods prepares the actions to perform for agent extensions.
 	 * @return a string to append to the dockerfile (never null)
+	 * @throws IOException
+	 * @throws URISyntaxException
 	 */
-	String handleAdditionalDeployments() {
+	String handleAdditionalDeployments( File dockerFileLocation ) throws IOException, URISyntaxException {
 		StringBuilder sb = new StringBuilder();
 
 		// Run through the list...
 		for( final String deployUrl : this.deployList ) {
 
-			String dir = RBCF_DIR;
-			dir += deployUrl.toLowerCase().endsWith( ".jar" ) ? BACKUP : DEPLOY;
-
-			String name = getFileNameFromFileUrl( deployUrl );
-
-			// Local or remote URL?
-			// "ADD" allows remote URLs.
+			// Local, Maven or remote URL?
+			// "ADD" supports remotes URLs. So, we must copy other kinds.
+			File fileToCopy = null;
 			if( deployUrl.toLowerCase().startsWith( "file:/" )) {
+				fileToCopy = new File( UriUtils.urlToUri( deployUrl ));
 
-				// Update the Docker file
-				sb.append( "ADD " + name + " " + dir );
+			} else if( deployUrl.toLowerCase().startsWith( "mvn:" )) {
+				this.logger.fine( "Resolving a Maven URL: " + deployUrl );
+				fileToCopy = this.mavenResolver.resolve( deployUrl );
+			}
 
-				// If it is a bundle, remember it to generate a Karaf feature
-				if( deployUrl.toLowerCase().endsWith( ".jar" ))
-					this.bundleUrls.add( "file://" + dir + name );
+			// Where to place the file in the image?
+			// JAR file? We will generate a feature.xml file, so put it in "backup".
+			// Otherwise, directly put it in Karaf's deploy directory
+			boolean isJar = fileToCopy != null && fileToCopy.getName().toLowerCase().endsWith( ".jar" );
+			isJar |= deployUrl.toLowerCase().endsWith( ".jar" );
 
-				// Copy it in the Dockerfile resources
-				this.fileUrlsToCopyInDockerFile.add( deployUrl );
+			String dir = RBCF_DIR + (isJar ? BACKUP : DEPLOY);
+
+			// Add whatever is necessary in the dockerfile
+			String name;
+			if( fileToCopy != null ) {
+				this.logger.fine( "Copying " + deployUrl + "..." );
+				Utils.copyStream( fileToCopy, new File( dockerFileLocation, fileToCopy.getName()));
+				sb.append( "ADD " + fileToCopy.getName() + " " + dir );
+				name = fileToCopy.getName();
 
 			} else {
-				// Update the Docker file
 				sb.append( "ADD " + deployUrl + " " + dir );
+				name = getFileNameFromFileUrl( deployUrl );
+			}
 
-				// If it is a bundle, remember it to generate a Karaf feature
-				if( deployUrl.toLowerCase().endsWith( ".jar" ))
+			// What should be added to the generated feature?
+			// Well, we keep the JAR files.
+			if( isJar ) {
+				if( fileToCopy != null )
+					this.bundleUrls.add( "file://" + dir + name );
+				else
 					this.bundleUrls.add( deployUrl );
 			}
 		}

@@ -142,8 +142,8 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 
 		// Associate a target with it
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler = in-memory" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.importing.getApplication(), null );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.exporting.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.importing.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.exporting.getApplication(), null );
 	}
 
 

@@ -241,12 +241,17 @@ public class TargetResource implements ITargetResource {
 
 
 	@Override
-	public Response associateTarget( String name, String qualifier, String instancePath, String targetId, boolean bind ) {
+	public Response associateTarget(
+			String name,
+			String qualifier,
+			String instancePathOrComponentName,
+			String targetId,
+			boolean bind ) {
 
 		if( bind )
-			this.logger.fine( "Request: associate instance " + instancePath + " with target " + targetId + "." );
+			this.logger.fine( "Request: associate " + instancePathOrComponentName + " with target " + targetId + "." );
 		else
-			this.logger.fine( "Request: dissociate instance " + instancePath + " with target " + targetId + "." );
+			this.logger.fine( "Request: dissociate " + instancePathOrComponentName + " with target " + targetId + "." );
 
 		Response response = Response.ok().build();
 		AbstractApplication app = findAbstractApplication( name, qualifier );
@@ -254,9 +259,9 @@ public class TargetResource implements ITargetResource {
 			if( app == null )
 				response = Response.status( Status.BAD_REQUEST ).build();
 			else if( bind )
-				this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, instancePath );
+				this.manager.targetsMngr().associateTargetWith( targetId, app, instancePathOrComponentName );
 			else
-				this.manager.targetsMngr().dissociateTargetFromScopedInstance( app, instancePath );
+				this.manager.targetsMngr().dissociateTargetFrom( app, instancePathOrComponentName );
 
 		} catch( IOException | UnauthorizedActionException e ) {
 			Status status = this.exceptionclassToErrorCode.get( e.getClass());

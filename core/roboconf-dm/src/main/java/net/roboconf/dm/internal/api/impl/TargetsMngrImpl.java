@@ -45,8 +45,10 @@ import net.roboconf.core.model.TargetValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
@@ -191,30 +193,46 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	}
 
 
-	// Associating targets and application instances
+	// Associating targets and application instances / components
 
 
 	@Override
-	public void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath )
+	public void associateTargetWith( String targetId, AbstractApplication app, String instancePathOrComponentName )
 	throws IOException, UnauthorizedActionException {
 
-		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
-		if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-			throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePath + " should be not deployed." );
+		boolean valid = false;
+		if( instancePathOrComponentName == null ) {
+			valid = true;
 
-		saveAssociation( app, targetId, instancePath, true );
+		} else if( instancePathOrComponentName.startsWith( "@" )) {
+			Component comp = ComponentHelpers.findComponent( app, instancePathOrComponentName.substring( 1 ));
+			valid = comp != null;
+
+		} else {
+			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
+			valid = instance != null;
+			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+		}
+
+		if( valid )
+			saveAssociation( app, targetId, instancePathOrComponentName, true );
 	}
 
 
 	@Override
-	public void dissociateTargetFromScopedInstance( AbstractApplication app, String instancePath )
+	public void dissociateTargetFrom( AbstractApplication app, String instancePathOrComponentName )
 	throws IOException, UnauthorizedActionException {
 
-		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
-		if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-			throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePath + " should be not deployed." );
+		if( instancePathOrComponentName != null
+				&& ! instancePathOrComponentName.startsWith( "@" )) {
 
-		saveAssociation( app, null, instancePath, false );
+			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
+			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+		}
+
+		saveAssociation( app, null, instancePathOrComponentName, false );
 	}
 
 
@@ -235,7 +253,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			String targetId = this.instanceToCachedId.get( key );
 			try {
 				if( targetId != null )
-					associateTargetWithScopedInstance( targetId, app, key.getInstancePath());
+					associateTargetWith( targetId, app, key.getInstancePathOrComponentName());
 
 			} catch( UnauthorizedActionException e ) {
 
@@ -334,12 +352,25 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public String findTargetId( AbstractApplication app, String instancePath, boolean strict ) {
 
+		// Specific association for this instance
 		InstanceContext key = new InstanceContext( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
-		if( targetId == null && ! strict )
-			key = new InstanceContext( app, (String) null );
 
-		targetId = this.instanceToCachedId.get( key );
+		// Association inherited from the component
+		if( targetId == null && ! strict ) {
+			Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
+			if( inst != null ) {
+				key = new InstanceContext( app, "@" + inst.getComponent().getName());
+				targetId = this.instanceToCachedId.get( key );
+			}
+		}
+
+		// Default target for this application
+		if( targetId == null && ! strict ) {
+			key = new InstanceContext( app, (String) null );
+			targetId = this.instanceToCachedId.get( key );
+		}
+
 		return targetId;
 	}
 
@@ -543,15 +574,15 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	// Private methods
 
 
-	private void saveAssociation( AbstractApplication app, String targetId, String instancePath, boolean add )
+	private void saveAssociation( AbstractApplication app, String targetId, String instancePathOrComponentName, boolean add )
 	throws IOException {
 
 		// Association means an exact mapping between an application instance
 		// and a target ID.
-		InstanceContext key = new InstanceContext( app, instancePath );
+		InstanceContext key = new InstanceContext( app, instancePathOrComponentName );
 
 		// Remove the old association, always.
-		if( instancePath != null ) {
+		if( instancePathOrComponentName != null ) {
 			String oldTargetId = this.instanceToCachedId.remove( key );
 			if( oldTargetId != null ) {
 				File associationFile = findTargetFile( oldTargetId, TARGETS_ASSOC_FILE );

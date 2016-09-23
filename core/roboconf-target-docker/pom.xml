@@ -58,26 +58,17 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java</artifactId>
-			
-			<!-- 
-				Note about logging...
-				Docker Java relies on SLF4j for logging. When running the
-				default build commands (mvn clean install, mvn clean test...),
-				no specific log appear.
-				
-				However, when running "mvn clean cobertura:cobertura", a SLF4j
-				configuration is generated and used by both Cobertura and Docker-Java.
-				In this case (only), additional DEBUG messages appear. They mention REST
-				client details. You should not worry about them as they only appear when
-				Cobertura is used.
-			 -->
-			 
-			 <exclusions>
-			 	<exclusion>
-			 		<groupId>org.slf4j</groupId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-api</artifactId>
-			 	</exclusion>
-			 </exclusions>
+				</exclusion>
+
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- Normal dependencies -->
@@ -88,7 +79,6 @@
 			<version>2.2.2</version>
 		</dependency>
 
-		<!-- Use the one in Karaf -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -122,6 +112,14 @@
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- Resolve Maven URLs -->
+		<dependency>
+			<groupId>org.ops4j.pax.url</groupId>
+			<artifactId>pax-url-aether</artifactId>
+			<version>2.4.7</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -140,7 +138,9 @@
 							javax.*,
 							org.xml.*,
 							org.w3c.*,
-							org.slf4j.*
+							org.slf4j.*,
+							org.apache.log4.*,
+							org.ops4j.pax.url.*
 						</Import-Package>
 						<Embed-Dependency>
 							*;scope=compile|runtime;inline=true;groupId=!net.roboconf
@@ -232,6 +232,21 @@
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-core</artifactId>
 				<version>2.6.4</version>
+			</dependency>
+			
+			<!-- Use the one in Karaf -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jcl-over-slf4j</artifactId>
+				<version>${slf4j.version}</version>
+				<scope>provided</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

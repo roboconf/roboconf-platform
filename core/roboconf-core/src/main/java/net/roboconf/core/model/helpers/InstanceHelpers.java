@@ -39,7 +39,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.Constants;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
@@ -530,7 +529,7 @@ public final class InstanceHelpers {
 	 */
 	public static boolean isTarget( Instance instance ) {
 		return instance.getComponent() != null
-				&& Constants.TARGET_INSTALLER.equalsIgnoreCase( instance.getComponent().getInstallerName());
+				&& ComponentHelpers.isTarget( instance.getComponent());
 	}
 
 

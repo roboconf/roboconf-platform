@@ -466,6 +466,21 @@ public class ApplicationResource implements IApplicationResource {
 
 				result.add( new TargetAssociation( instancePath, twd ));
 			}
+
+			// Deal with components.
+			for( Component comp : ComponentHelpers.findAllComponents( app )) {
+				if( ! ComponentHelpers.isTarget( comp ))
+					continue;
+
+				String key = "@" + comp.getName();
+				String targetId = this.manager.targetsMngr().findTargetId( app, key, true );
+
+				twd = null;
+				if( targetId != null )
+					twd = this.manager.targetsMngr().findTargetById( targetId );
+
+				result.add( new TargetAssociation( key, twd ));
+			}
 		}
 
 		return result;

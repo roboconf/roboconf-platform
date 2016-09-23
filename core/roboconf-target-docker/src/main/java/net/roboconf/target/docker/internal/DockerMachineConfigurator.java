@@ -48,6 +48,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.ops4j.pax.url.mvn.MavenResolver;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -79,6 +81,8 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	private final Map<String,String> messagingConfiguration;
 	private final String machineId, scopedInstancePath, applicationName;
 
+	private MavenResolver mavenResolver;
+
 
 
 	/**
@@ -104,6 +108,14 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		this.scopedInstancePath = scopedInstancePath;
 		this.machineId = machineId;
 		this.scopedInstance = scopedInstance;
+	}
+
+
+	/**
+	 * @param mavenResolver the mavenResolver to set
+	 */
+	public void setMavenResolver( MavenResolver mavenResolver ) {
+		this.mavenResolver = mavenResolver;
 	}
 
 
@@ -335,8 +347,12 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @param agentPackageUrl
 	 * @return a new Docker image generator (externalized for tests)
 	 */
-	DockerfileGenerator dockerfileGenerator(String agentPackageUrl , String packages , List<String> deployList , String baseImageRef ) {
-		return new DockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
+	DockerfileGenerator dockerfileGenerator(String agentPackageUrl , String packages , List<String> deployList, String baseImageRef ) {
+
+		DockerfileGenerator gen = new DockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
+		gen.setMavenResolver( this.mavenResolver );
+
+		return gen;
 	}
 
 

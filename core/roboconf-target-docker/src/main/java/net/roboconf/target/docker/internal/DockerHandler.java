@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.ops4j.pax.url.mvn.MavenResolver;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Container;
@@ -47,6 +49,10 @@ import net.roboconf.target.api.TargetHandlerParameters;
  */
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
+	// Injected by iPojo
+	private MavenResolver mavenResolver;
+
+	// Other properties
 	public static final String TARGET_ID = "docker";
 	static final String MESSAGING_TYPE = "net.roboconf.messaging.type";
 	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
@@ -132,13 +138,16 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 		// machineId does not match a real container ID.
 		// It is the name of the container we will create.
-		return new DockerMachineConfigurator(
+		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
 				parameters.getTargetProperties(),
 				parameters.getMessagingProperties(),
 				machineId,
 				parameters.getScopedInstancePath(),
 				parameters.getApplicationName(),
 				scopedInstance );
+
+		configurator.setMavenResolver( this.mavenResolver );
+		return configurator;
 	}
 
 

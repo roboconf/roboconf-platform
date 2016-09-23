@@ -1,6 +1,17 @@
 import java.io.*;
+import net.roboconf.core.utils.*;
 
 File zipFile = new File( basedir, "target/single-valid-module-1.0.zip" );
 if( ! zipFile.isFile()) {
-    throw new FileNotFoundException( "No ZIP file was not found." );
+	throw new FileNotFoundException( "No ZIP file was not found." );
+}
+
+File buildFile = new File( basedir, "build.log" );
+if( ! buildFile.isFile()) {
+	throw new FileNotFoundException( "No build log was found." );
+}
+
+String buildLogContent = Utils.readFileContent( buildFile );
+if( buildLogContent.contains( "Reusable target properties should be packaged separately." )) {
+	throw new IOException( "No warning about target properties was expected." );
 }

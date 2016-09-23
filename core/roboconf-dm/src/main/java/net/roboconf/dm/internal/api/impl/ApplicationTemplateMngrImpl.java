@@ -40,12 +40,8 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.ComponentHelpers;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
@@ -76,7 +72,14 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 	// A set would be enough, but we need to handle concurrent operations.
 	// It is thus more simple to use a concurrent hash map.
-	final Map<ApplicationTemplate,Boolean> templates = new ConcurrentHashMap<ApplicationTemplate,Boolean> ();
+	final Map<ApplicationTemplate,Boolean> templates = new ConcurrentHashMap<> ();
+
+	// Loading a new application template involves several other APIs.
+	// To prevent conflicts when several clients load templates, we use a lock.
+	// We also store the created target IDs when we install a new template, just in case we would
+	// have to revert / unregister them.
+	private static final Object INSTALL_LOCK = new Object();
+	final Set<String> currenTplTargets = new HashSet<> ();
 
 
 	/**
@@ -125,44 +128,69 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 	public ApplicationTemplate loadApplicationTemplate( File applicationFilesDirectory )
 	throws AlreadyExistingException, InvalidApplicationException, IOException {
 
-		this.logger.info( "Loading an application template from " + applicationFilesDirectory + "..." );
-		ApplicationLoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
+		// This is a critical section.
+		synchronized( INSTALL_LOCK ) {
+			this.currenTplTargets.clear();
 
-		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
-			throw new InvalidApplicationException( lr.getLoadErrors());
+			// Load the template
+			this.logger.info( "Loading an application template from " + applicationFilesDirectory + "..." );
+			ApplicationLoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
 
-		for( String warning : RoboconfErrorHelpers.extractAndFormatWarnings( lr.getLoadErrors()))
-			this.logger.warning( warning );
+			if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
+				throw new InvalidApplicationException( lr.getLoadErrors());
 
-		ApplicationTemplate tpl = lr.getApplicationTemplate();
-		if( this.templates.containsKey( tpl ))
-			throw new AlreadyExistingException( tpl.getName());
+			for( String warning : RoboconfErrorHelpers.extractAndFormatWarnings( lr.getLoadErrors()))
+				this.logger.warning( warning );
 
-		Set<String> externExportPrefixes = new HashSet<> ();
-		for( ApplicationTemplate otherTpl : this.templates.keySet()) {
-			if( otherTpl.getExternalExportsPrefix() != null )
-				externExportPrefixes.add( otherTpl.getExternalExportsPrefix());
+			ApplicationTemplate tpl = lr.getApplicationTemplate();
+			if( this.templates.containsKey( tpl ))
+				throw new AlreadyExistingException( tpl.getName());
+
+			// Verify external export prefixes (no conflict)
+			Set<String> externExportPrefixes = new HashSet<> ();
+			for( ApplicationTemplate otherTpl : this.templates.keySet()) {
+				if( otherTpl.getExternalExportsPrefix() != null )
+					externExportPrefixes.add( otherTpl.getExternalExportsPrefix());
+			}
+
+			if( externExportPrefixes.contains( tpl.getExternalExportsPrefix()))
+				throw new IOException( "The external exports prefix is already used by another template." );
+
+			// Deal with the targets.
+			// If a conflict is found, we just skip it.
+			Set<String> newTargetIds = registerTargets( tpl );
+
+			// Copy the template's resources
+			File targetDirectory = ConfigurationUtils.findTemplateDirectory( tpl, this.configurationMngr.getWorkingDirectory());
+			try {
+				if( ! applicationFilesDirectory.equals( targetDirectory )) {
+					if( Utils.isAncestorFile( targetDirectory, applicationFilesDirectory ))
+						throw new IOException( "Cannot move " + applicationFilesDirectory + " in Roboconf's work directory. Already a child directory." );
+					else
+						Utils.copyDirectory( applicationFilesDirectory, targetDirectory );
+				}
+
+			} catch( IOException e ) {
+				// In case of error, unregister the targets that were saved
+				unregisterTargets( newTargetIds );
+				throw e;
+			}
+
+			// Change the template's directory
+			tpl.setDirectory( targetDirectory );
+
+			// In the copy (the new template's directory), delete the resources for scoped instances.
+			// No need to keep target.properties there.
+			for( File targetDir : ResourceUtils.findScopedInstancesDirectories( tpl ).values())
+				Utils.deleteFilesRecursivelyAndQuietly( targetDir );
+
+			// Complete the model
+			this.templates.put( tpl, Boolean.TRUE );
+			this.logger.info( "Application template " + tpl.getName() + " was successfully loaded." );
+
+			this.notificationMngr.applicationTemplate( tpl, EventType.CREATED );
+			return tpl;
 		}
-
-		if( externExportPrefixes.contains( tpl.getExternalExportsPrefix()))
-			throw new IOException( "The external exports prefix is already used by another template." );
-
-		File targetDirectory = ConfigurationUtils.findTemplateDirectory( tpl, this.configurationMngr.getWorkingDirectory());
-		if( ! applicationFilesDirectory.equals( targetDirectory )) {
-			if( Utils.isAncestorFile( targetDirectory, applicationFilesDirectory ))
-				throw new IOException( "Cannot move " + applicationFilesDirectory + " in Roboconf's work directory. Already a child directory." );
-			else
-				Utils.copyDirectory( applicationFilesDirectory, targetDirectory );
-		}
-
-		tpl.setDirectory( targetDirectory );
-		this.templates.put( tpl, Boolean.TRUE );
-		this.logger.info( "Application template " + tpl.getName() + " was successfully loaded." );
-
-		registerTargets( tpl );
-
-		this.notificationMngr.applicationTemplate( tpl, EventType.CREATED );
-		return tpl;
 	}
 
 
@@ -214,43 +242,45 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 
 	/**
-	 * Finds and registers the targets available in this template.
+	 * Registers the targets available in this template.
 	 * @param tpl a template
+	 * @return a set of target IDs, created from this template
 	 * @throws IOException
 	 * @throws InvalidApplicationException
 	 */
-	private void registerTargets( ApplicationTemplate tpl )
+	private Set<String> registerTargets( ApplicationTemplate tpl )
 	throws IOException, InvalidApplicationException {
 
 		// Find all the properties files and register them
+		IOException conflictException = null;
+		Set<String> newTargetIds = new HashSet<> ();
 		Map<Component,Set<String>> componentToTargetIds = new HashMap<> ();
-		for( Component c : ComponentHelpers.findAllComponents( tpl )) {
 
-			// Target?
-			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( c.getInstallerName()))
-				continue;
-
-			// Is there a resources directory?
-			File dir = ResourceUtils.findInstanceResourcesDirectory( tpl.getDirectory(), c );
-			if( ! dir.exists())
-				continue;
+		componentLoop: for( Map.Entry<Component,File> entry : ResourceUtils.findScopedInstancesDirectories( tpl ).entrySet()) {
 
 			// Register the targets
 			String defaultTargetId = null;
 			Set<String> targetIds = new HashSet<> ();
-			componentToTargetIds.put( c, targetIds );
+			componentToTargetIds.put( entry.getKey(), targetIds );
 
-			for( File f : Utils.listAllFiles( dir )) {
+			for( File f : Utils.listAllFiles( entry.getValue())) {
 				if( ! f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
 					continue;
 
-				// FIXME: with this mechanism, we may create the same target over and over again
-				// when we deploy a test application more than once. #520 would avoid it.
-				this.logger.fine( "Registering target " + f.getName() + " from component " + c + " in application template " + tpl );
-				String targetId = this.targetsMngr.createTarget( f );
+				this.logger.fine( "Registering target " + f.getName() + " from component " + entry.getKey() + " in application template " + tpl );
+				String targetId;
+				try {
+					targetId = this.targetsMngr.createTarget( f );
+
+				} catch( IOException e ) {
+					conflictException = e;
+					break componentLoop;
+				}
+
 				this.targetsMngr.addHint( targetId, tpl );
 
 				targetIds.add( targetId );
+				newTargetIds.add( targetId );
 				if( Constants.TARGET_PROPERTIES_FILE_NAME.equalsIgnoreCase( f.getName()))
 					defaultTargetId = targetId;
 			}
@@ -261,41 +291,48 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 				targetIds.clear();
 				targetIds.add( defaultTargetId );
 			}
-
-			// Delete them
-			Utils.deleteFilesRecursivelyAndQuietly( dir );
 		}
 
-		// Associate them with instances.
-		Application app = new Application( tpl );
+		// Handle conflicts during registration
+		if( conflictException != null ) {
+			this.logger.fine( "A conflict was found while registering " );
+			unregisterTargets( newTargetIds );
+			throw conflictException;
+		}
+
+		// Associate them with components.
 		try {
-			// If there is only one root component,
-			// and only one target for it, register it by default for the application template.
-			Set<String> targetIds;
-			if( componentToTargetIds.size() == 1
-					&& (targetIds = componentToTargetIds.values().iterator().next()).size() == 1 ) {
-				this.targetsMngr.associateTargetWithScopedInstance( targetIds.iterator().next(), tpl, null );
-			}
+			for( Map.Entry<Component,Set<String>> entry : componentToTargetIds.entrySet()) {
+				String key = "@" + entry.getKey().getName();
 
-			// Otherwise, make the associations per instances.
-			else for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app )) {
-				targetIds = componentToTargetIds.get( scopedInstance.getComponent());
-
-				// No target for the component? Skip.
-				if( targetIds == null )
-					continue;
-
-				// Only one target? Register it for the instance.
-				if( targetIds.size() == 1 ) {
-					String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-					this.targetsMngr.associateTargetWithScopedInstance( targetIds.iterator().next(), tpl, instancePath );
-				}
-
-				// Otherwise, do not register anything.
+				// More than one target for a component?
+				// => Do not register anything.
+				if( entry.getValue().size() == 1 )
+					this.targetsMngr.associateTargetWith( entry.getValue().iterator().next(), tpl, key );
 			}
 
 		} catch( UnauthorizedActionException e ) {
 			throw new InvalidApplicationException( e );
+		}
+
+		return newTargetIds;
+	}
+
+
+	/**
+	 * Unregisters targets.
+	 * @param newTargetIds a non-null set of target IDs
+	 */
+	private void unregisterTargets( Set<String> newTargetIds ) {
+
+		for( String targetId : newTargetIds ) {
+			try {
+				this.targetsMngr.deleteTarget( targetId );
+
+			} catch( Exception e ) {
+				this.logger.severe( "A target ID that has just been registered could not be created. That's weird." );
+				Utils.logException( this.logger, e );
+			}
 		}
 	}
 }

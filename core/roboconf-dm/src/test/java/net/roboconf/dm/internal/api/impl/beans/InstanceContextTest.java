@@ -26,11 +26,11 @@
 package net.roboconf.dm.internal.api.impl.beans;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -45,40 +45,40 @@ public class InstanceContextTest {
 		InstanceContext key = new InstanceContext( tpl );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertNull( key.getInstancePath());
+		Assert.assertNull( key.getInstancePathOrComponentName());
 
 		key = new InstanceContext( tpl, "oops" );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertEquals( "oops", key.getInstancePath());
+		Assert.assertEquals( "oops", key.getInstancePathOrComponentName());
 
 		tpl.setQualifier( "v1" );
 		key = new InstanceContext( tpl, "oops" );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertEquals( "v1", key.getQualifier());
-		Assert.assertEquals( "oops", key.getInstancePath());
+		Assert.assertEquals( "oops", key.getInstancePathOrComponentName());
 
 		Application app = new Application( tpl );
 		key = new InstanceContext( app );
 		Assert.assertNull( key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertNull( key.getInstancePath());
+		Assert.assertNull( key.getInstancePathOrComponentName());
 
 		app.setName( "ok" );
 		key = new InstanceContext( app );
 		Assert.assertEquals( "ok", key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertNull( key.getInstancePath());
+		Assert.assertNull( key.getInstancePathOrComponentName());
 
 		key = new InstanceContext( app, new Instance( "inst" ));
 		Assert.assertEquals( "ok", key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertEquals( "/inst", key.getInstancePath());
+		Assert.assertEquals( "/inst", key.getInstancePathOrComponentName());
 
 		key = new InstanceContext( "1", "2", "3" );
 		Assert.assertEquals( "1", key.getName());
 		Assert.assertEquals( "2", key.getQualifier());
-		Assert.assertEquals( "3", key.getInstancePath());
+		Assert.assertEquals( "3", key.getInstancePathOrComponentName());
 	}
 
 
@@ -88,18 +88,18 @@ public class InstanceContextTest {
 		InstanceContext key = InstanceContext.parse( "" );
 		Assert.assertNull( key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertNull( key.getInstancePath());
+		Assert.assertNull( key.getInstancePathOrComponentName());
 
 		key = InstanceContext.parse( null );
 		Assert.assertNull( key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertNull( key.getInstancePath());
+		Assert.assertNull( key.getInstancePathOrComponentName());
 
 		InstanceContext newKey = new InstanceContext( "name", "qualifier", "inst" );
 		key = InstanceContext.parse( newKey.toString());
 		Assert.assertEquals( "name", key.getName());
 		Assert.assertEquals( "qualifier", key.getQualifier());
-		Assert.assertEquals( "inst", key.getInstancePath());
+		Assert.assertEquals( "inst", key.getInstancePathOrComponentName());
 		Assert.assertEquals( newKey, key );
 		Assert.assertEquals( newKey.hashCode(), key.hashCode());
 
@@ -107,7 +107,7 @@ public class InstanceContextTest {
 		key = InstanceContext.parse( newKey.toString());
 		Assert.assertEquals( "name2", key.getName());
 		Assert.assertNull( key.getQualifier());
-		Assert.assertNull( key.getInstancePath());
+		Assert.assertNull( key.getInstancePathOrComponentName());
 		Assert.assertEquals( newKey, key );
 		Assert.assertEquals( newKey.hashCode(), key.hashCode());
 	}

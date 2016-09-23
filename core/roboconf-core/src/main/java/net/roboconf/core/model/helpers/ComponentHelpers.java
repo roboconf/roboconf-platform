@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
@@ -120,6 +121,16 @@ public final class ComponentHelpers {
 			result.add( t.getName());
 
 		return result;
+	}
+
+
+	/**
+	 * Determines whether a component is associated with the "target" installer or not.
+	 * @param component a component (not null)
+	 * @return true if it is associated with the "target" installer, false otherwise
+	 */
+	public static boolean isTarget( Component component ) {
+		return Constants.TARGET_INSTALLER.equalsIgnoreCase( component.getInstallerName());
 	}
 
 

@@ -61,7 +61,7 @@ class AssociateTargetCommandExecution extends AbstractCommandExecution {
 
 		// Execute the command
 		try {
-			this.manager.targetsMngr().associateTargetWithScopedInstance(
+			this.manager.targetsMngr().associateTargetWith(
 					this.instr.getTargetId(),
 					ma.getApplication(),
 					InstanceHelpers.computeInstancePath( scopedInstance ));

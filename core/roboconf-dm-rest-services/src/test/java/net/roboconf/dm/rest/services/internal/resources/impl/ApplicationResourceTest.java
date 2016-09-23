@@ -173,7 +173,7 @@ public class ApplicationResourceTest {
 		this.manager.setTargetResolver( iaasResolver );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
 		Response resp = this.resource.changeInstanceState(
@@ -620,76 +620,149 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void testFindTargetAssociations() throws Exception {
+	public void testFindTargetAssociations_noTarget_noAssociation() throws Exception {
 
-		// No association
+		// Setup
 		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( this.app );
 		Assert.assertEquals( 2, scopedInstances.size());
 
-		List<TargetAssociation> associations = this.resource.findTargetAssociations( this.app.getName());
-		Assert.assertEquals( scopedInstances.size() + 1, associations.size());
-		for( int i=0; i<scopedInstances.size(); i++ ) {
+		List<Component> scopedComponents = new ArrayList<> ();
+		for( Instance inst : scopedInstances ) {
+			if( ! scopedComponents.contains( inst.getComponent()))
+				scopedComponents.add( inst.getComponent());
+		}
 
+		List<TargetAssociation> associations = this.resource.findTargetAssociations( this.app.getName());
+		Assert.assertEquals( scopedInstances.size() + scopedComponents.size() + 1, associations.size());
+
+		// Verify target associations
+		for( int i=0; i<scopedInstances.size(); i++ ) {
 			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
 
-			Assert.assertEquals( path, ta.getInstancePath());
+			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
+			Assert.assertNull( ta.getTargetDescriptor());
+		}
+
+		for( int i=0; i<scopedComponents.size(); i++ ) {
+			TargetAssociation ta = associations.get( i + 1 + scopedInstances.size());
+			Assert.assertEquals( "@" + scopedComponents.get( i ).getName(), ta.getInstancePathOrComponentName());
 			Assert.assertNull( ta.getTargetDescriptor());
 		}
 
 		TargetAssociation ta = associations.get( 0 );
-		Assert.assertEquals( "", ta.getInstancePath());
+		Assert.assertEquals( "", ta.getInstancePathOrComponentName());
 		Assert.assertNull( ta.getTargetDescriptor());
+	}
+
+
+	@Test
+	public void testFindTargetAssociations_withTarget_noAssociation() throws Exception {
+
+		// Setup
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( this.app );
+		Assert.assertEquals( 2, scopedInstances.size());
+
+		List<Component> scopedComponents = new ArrayList<> ();
+		for( Instance inst : scopedInstances ) {
+			if( ! scopedComponents.contains( inst.getComponent()))
+				scopedComponents.add( inst.getComponent());
+		}
 
 		// Create a target but no association
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
+		this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
+		List<TargetAssociation> associations = this.resource.findTargetAssociations( this.app.getName());
+		Assert.assertEquals( scopedInstances.size() + scopedComponents.size() + 1, associations.size());
 
-		associations = this.resource.findTargetAssociations( this.app.getName());
-		Assert.assertEquals( scopedInstances.size() + 1, associations.size());
 		for( int i=0; i<scopedInstances.size(); i++ ) {
-
-			ta = associations.get( i + 1 );
+			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
 
-			Assert.assertEquals( path, ta.getInstancePath());
+			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 			Assert.assertNull( ta.getTargetDescriptor());
 		}
 
-		ta = associations.get( 0 );
-		Assert.assertEquals( "", ta.getInstancePath());
+		for( int i=0; i<scopedComponents.size(); i++ ) {
+			TargetAssociation ta = associations.get( i + 1 + scopedInstances.size());
+			Assert.assertEquals( "@" + scopedComponents.get( i ).getName(), ta.getInstancePathOrComponentName());
+			Assert.assertNull( ta.getTargetDescriptor());
+		}
+
+		TargetAssociation ta = associations.get( 0 );
+		Assert.assertEquals( "", ta.getInstancePathOrComponentName());
 		Assert.assertNull( ta.getTargetDescriptor());
+	}
+
+
+	@Test
+	public void testFindTargetAssociations_withTarget_defaultAssociation() throws Exception {
+
+		// Setup
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( this.app );
+		Assert.assertEquals( 2, scopedInstances.size());
+
+		List<Component> scopedComponents = new ArrayList<> ();
+		for( Instance inst : scopedInstances ) {
+			if( ! scopedComponents.contains( inst.getComponent()))
+				scopedComponents.add( inst.getComponent());
+		}
 
 		// Create a default target for the application
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
-		associations = this.resource.findTargetAssociations( this.app.getName());
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
+		List<TargetAssociation> associations = this.resource.findTargetAssociations( this.app.getName());
+		Assert.assertEquals( scopedInstances.size() + scopedComponents.size() + 1, associations.size());
 
-		Assert.assertEquals( scopedInstances.size() + 1, associations.size());
 		for( int i=0; i<scopedInstances.size(); i++ ) {
-
-			ta = associations.get( i + 1 );
+			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
 
-			Assert.assertEquals( path, ta.getInstancePath());
+			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 			Assert.assertNull( ta.getTargetDescriptor());
 		}
 
-		ta = associations.get( 0 );
-		Assert.assertEquals( "", ta.getInstancePath());
+		for( int i=0; i<scopedComponents.size(); i++ ) {
+			TargetAssociation ta = associations.get( i + 1 + scopedInstances.size());
+			Assert.assertEquals( "@" + scopedComponents.get( i ).getName(), ta.getInstancePathOrComponentName());
+			Assert.assertNull( ta.getTargetDescriptor());
+		}
+
+		TargetAssociation ta = associations.get( 0 );
+		Assert.assertEquals( "", ta.getInstancePathOrComponentName());
 		Assert.assertEquals( targetId, ta.getTargetDescriptor().getId());
+	}
+
+
+	@Test
+	public void testFindTargetAssociations_withTarget_withAssociations() throws Exception {
+
+		// Setup
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( this.app );
+		Assert.assertEquals( 2, scopedInstances.size());
+
+		List<Component> scopedComponents = new ArrayList<> ();
+		for( Instance inst : scopedInstances ) {
+			if( ! scopedComponents.contains( inst.getComponent()))
+				scopedComponents.add( inst.getComponent());
+		}
+
+		// Default target
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		// Add a custom target for a given instance
 		String newTargetId = this.manager.targetsMngr().createTarget( "id: new-tid\nhandler: h" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
-		this.manager.targetsMngr().associateTargetWithScopedInstance( newTargetId, this.app, instancePath );
+		this.manager.targetsMngr().associateTargetWith( newTargetId, this.app, instancePath );
 
-		associations = this.resource.findTargetAssociations( this.app.getName());
+		List<TargetAssociation> associations = this.resource.findTargetAssociations( this.app.getName());
+		Assert.assertEquals( scopedInstances.size() + scopedComponents.size() + 1, associations.size());
 
-		Assert.assertEquals( scopedInstances.size() + 1, associations.size());
 		boolean foundCustomInstance = false;
 		for( int i=0; i<scopedInstances.size(); i++ ) {
-			ta = associations.get( i + 1 );
+			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
-			Assert.assertEquals( path, ta.getInstancePath());
+			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 
 			if( instancePath.equals( path )) {
 				Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());
@@ -699,20 +772,26 @@ public class ApplicationResourceTest {
 			}
 		}
 
+		for( int i=0; i<scopedComponents.size(); i++ ) {
+			TargetAssociation ta = associations.get( i + 1 + scopedInstances.size());
+			Assert.assertEquals( "@" + scopedComponents.get( i ).getName(), ta.getInstancePathOrComponentName());
+			Assert.assertNull( ta.getTargetDescriptor());
+		}
+
 		Assert.assertTrue( foundCustomInstance );
-		ta = associations.get( 0 );
-		Assert.assertEquals( "", ta.getInstancePath());
+		TargetAssociation ta = associations.get( 0 );
+		Assert.assertEquals( "", ta.getInstancePathOrComponentName());
 		Assert.assertEquals( targetId, ta.getTargetDescriptor().getId());
 
 		// Change the default target
-		this.manager.targetsMngr().associateTargetWithScopedInstance( newTargetId, this.app, null );
+		this.manager.targetsMngr().associateTargetWith( newTargetId, this.app, null );
 		associations = this.resource.findTargetAssociations( this.app.getName());
 
 		foundCustomInstance = false;
 		for( int i=0; i<scopedInstances.size(); i++ ) {
 			ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
-			Assert.assertEquals( path, ta.getInstancePath());
+			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 
 			if( instancePath.equals( path )) {
 				Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());
@@ -722,9 +801,15 @@ public class ApplicationResourceTest {
 			}
 		}
 
+		for( int i=0; i<scopedComponents.size(); i++ ) {
+			ta = associations.get( i + 1 + scopedInstances.size());
+			Assert.assertEquals( "@" + scopedComponents.get( i ).getName(), ta.getInstancePathOrComponentName());
+			Assert.assertNull( ta.getTargetDescriptor());
+		}
+
 		Assert.assertTrue( foundCustomInstance );
 		ta = associations.get( 0 );
-		Assert.assertEquals( "", ta.getInstancePath());
+		Assert.assertEquals( "", ta.getInstancePathOrComponentName());
 		Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());
 	}
 

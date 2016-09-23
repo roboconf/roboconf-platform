@@ -162,7 +162,7 @@ public interface ITargetResource {
 	 * Associates a target with an instance application.
 	 * @param name an application name
 	 * @param qualifier a qualifier if the association implies an application template
-	 * @param instancePath an instance path (can be null)
+	 * @param instancePathOrComponentName an instance path or a component name (can be null)
 	 * @param targetId a target ID (useless when <code>bind</code> is false)
 	 * @param bind true if we should create the association, false to delete it
 	 * @return a response
@@ -176,7 +176,7 @@ public interface ITargetResource {
 	Response associateTarget(
 			@QueryParam("name") String name,
 			@QueryParam("qualifier") String qualifier,
-			@QueryParam("instance-path") String instancePath,
+			@QueryParam("elt") String instancePathOrComponentName,
 			@PathParam( "target-id" ) String targetId,
 			@QueryParam("bind") boolean bind );
 

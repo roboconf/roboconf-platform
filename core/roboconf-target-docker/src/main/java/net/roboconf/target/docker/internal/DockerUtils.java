@@ -25,7 +25,14 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +41,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.WordUtils;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -48,6 +56,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import net.roboconf.core.utils.UriUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
@@ -525,5 +534,44 @@ public final class DockerUtils {
 	 */
 	public static  boolean extractBoolean( Boolean bool ) {
 		return bool != null ? bool.booleanValue() : false;
+	}
+
+
+	/**
+	 * Downloads a remote file (supports Maven URLs).
+	 * <p>
+	 * Please, refer to Pax URL's guide for more details about Maven URLs.
+	 * https://ops4j1.jira.com/wiki/display/paxurl/Mvn+Protocol
+	 * </p>
+	 *
+	 * @param url an URL
+	 * @param targetFile the file where it should be saved
+	 * @param mavenResolver the Maven resolver
+	 *
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	public static void downloadRemotePackage( String url, File targetFile, MavenResolver mavenResolver )
+	throws IOException, URISyntaxException {
+
+		if( url.toLowerCase().startsWith( "mvn:" )) {
+			if( mavenResolver == null )
+				throw new IOException( "Maven URLs are only resolved in Karaf at the moment." );
+
+			File sourceFile = mavenResolver.resolve( url );
+			Utils.copyStream( sourceFile, targetFile );
+
+		} else {
+			URL u = UriUtils.urlToUri( url ).toURL();
+			URLConnection uc = u.openConnection();
+			InputStream in = null;
+			try {
+				in = new BufferedInputStream( uc.getInputStream());
+				Utils.copyStream( in, targetFile );
+
+			} finally {
+				Utils.closeQuietly( in );
+			}
+		}
 	}
 }
