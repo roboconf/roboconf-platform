@@ -248,6 +248,12 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app ))
 			keys.add( new InstanceContext( app.getTemplate(), scopedInstance ));
 
+		// Copy mappings for the components
+		for( Component comp : ComponentHelpers.findAllComponents( app )) {
+			if( ComponentHelpers.isTarget( comp ))
+				keys.add( new InstanceContext( app.getTemplate(), "@" + comp.getName()));
+		}
+
 		// Copy the associations when they exist for the template
 		for( InstanceContext key : keys ) {
 			String targetId = this.instanceToCachedId.get( key );

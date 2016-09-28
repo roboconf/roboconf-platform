@@ -816,6 +816,47 @@ public class TargetsMngrImplTest {
 
 
 	@Test
+	public void testCopyOriginalMapping_withComponents() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		String t1 = this.mngr.createTarget( "prop: ok\nid: t1\nhandler: h" );
+		String t2 = this.mngr.createTarget( "prop: ok\nid: t2\nhandler: h" );
+
+		// Association is on the template and BY DEFAULT
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
+		this.mngr.associateTargetWith( t1, app.getTemplate(), null );
+
+		Assert.assertNull( this.mngr.findTargetId( app.getTemplate(), instancePath, true ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app.getTemplate(), instancePath, false ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, false ));
+
+		this.mngr.associateTargetWith( t2, app.getTemplate(), "@" + app.getMySqlVm().getComponent().getName());
+
+		Assert.assertNull( this.mngr.findTargetId( app.getTemplate(), instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app.getTemplate(), instancePath, false ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, false ));
+
+		// Copy the mapping
+		this.mngr.copyOriginalMapping( app );
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, false ));
+
+		// Remove the component association
+		this.mngr.dissociateTargetFrom( app, "@" + app.getMySqlVm().getComponent().getName());
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app, instancePath, false ));
+
+		// We can override the association
+		this.mngr.associateTargetWith( t2, app, instancePath );
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, false ));
+	}
+
+
+	@Test
 	public void testCopyOriginalMapping_withException() throws Exception {
 
 		// Check that when the association fails for one instance,
