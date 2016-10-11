@@ -368,7 +368,13 @@ public class ApplicationWsDelegateTest {
 		Assert.assertEquals( 2, this.app.getRootInstances().size());
 		Instance newInstance = new Instance( "vm-mail" ).component( this.app.getMySqlVm().getComponent());
 		this.client.getApplicationDelegate().addInstance( this.app.getName(), null, newInstance );
-		Assert.assertEquals( 3, this.app.getRootInstances().size());
+
+		Collection<Instance> rootInstances = this.app.getRootInstances();
+		Assert.assertEquals( 3, rootInstances.size());
+		for( Instance rootInstance : rootInstances ) {
+			Assert.assertNotNull( rootInstance.getName(), rootInstance.getComponent());
+			Assert.assertEquals( rootInstance.getName(), Constants.TARGET_INSTALLER, rootInstance.getComponent().getInstallerName());
+		}
 	}
 
 
@@ -396,8 +402,10 @@ public class ApplicationWsDelegateTest {
 		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
 
 		List<String> paths = new ArrayList<> ();
-		for( Instance inst : this.app.getTomcatVm().getChildren())
+		for( Instance inst : this.app.getTomcatVm().getChildren()) {
+			Assert.assertEquals( inst.getName(), "puppet", inst.getComponent().getInstallerName());
 			paths.add( InstanceHelpers.computeInstancePath( inst ));
+		}
 
 		String rootPath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		Assert.assertTrue( paths.contains( rootPath + "/" + newMysql.getName()));

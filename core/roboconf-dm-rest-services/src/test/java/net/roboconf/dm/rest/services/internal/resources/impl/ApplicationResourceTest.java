@@ -45,6 +45,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
@@ -499,6 +500,23 @@ public class ApplicationResourceTest {
 
 
 	@Test
+	public void testAddInstance_root_byComponentName_success() throws Exception {
+
+		Assert.assertEquals( 2, this.app.getRootInstances().size());
+		String componentName = this.app.getMySqlVm().getComponent().getName();
+		Instance newInstance = new Instance( "vm-mail" ).component( new Component( componentName ));
+		Response resp = this.resource.addInstance( this.app.getName(), null, newInstance );
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		Collection<Instance> rootInstances = this.app.getRootInstances();
+		Assert.assertEquals( 3, rootInstances.size());
+		for( Instance rootInstance : rootInstances ) {
+			Assert.assertEquals( rootInstance.getName(), Constants.TARGET_INSTALLER, rootInstance.getComponent().getInstallerName());
+		}
+	}
+
+
+	@Test
 	public void testAddInstance_IOException() throws Exception {
 
 		this.msgClient.connected.set( false );
@@ -556,6 +574,31 @@ public class ApplicationResourceTest {
 		List<String> paths = new ArrayList<> ();
 		for( Instance inst : this.app.getTomcatVm().getChildren())
 			paths.add( InstanceHelpers.computeInstancePath( inst ));
+
+		String rootPath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		Assert.assertTrue( paths.contains( rootPath + "/" + newMysql.getName()));
+		Assert.assertTrue( paths.contains( rootPath + "/" + this.app.getTomcat().getName()));
+	}
+
+
+	@Test
+	public void testAddInstance_child_byComponentName_success() throws Exception {
+
+		String componentName = this.app.getMySql().getComponent().getName();
+		Instance newMysql = new Instance( "mysql-2" ).component( new Component( componentName ));
+
+		Assert.assertEquals( 1, this.app.getTomcatVm().getChildren().size());
+		Assert.assertFalse( this.app.getTomcatVm().getChildren().contains( newMysql ));
+
+		Response resp = this.resource.addInstance( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), newMysql );
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
+
+		List<String> paths = new ArrayList<> ();
+		for( Instance inst : this.app.getTomcatVm().getChildren()) {
+			Assert.assertEquals( inst.getName(), "puppet", inst.getComponent().getInstallerName());
+			paths.add( InstanceHelpers.computeInstancePath( inst ));
+		}
 
 		String rootPath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		Assert.assertTrue( paths.contains( rootPath + "/" + newMysql.getName()));
