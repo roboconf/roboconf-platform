@@ -25,9 +25,18 @@
 
 package net.roboconf.integration.tests.dm.with.agents.in.memory.messaging;
 
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 
+import net.roboconf.integration.tests.commons.internal.ItUtils;
 import net.roboconf.integration.tests.commons.internal.parameterized.HttpConfiguration;
 import net.roboconf.integration.tests.commons.internal.runners.RoboconfITConfiguration;
 
@@ -42,6 +51,22 @@ public class AgentInMemoryWithHttpTest extends AbstractAgentInMemoryTest {
 	 */
 	public AgentInMemoryWithHttpTest() {
 		super( new HttpConfiguration(), "HTTP" );
+	}
+
+
+	@Override
+	@Configuration
+	public Option[] config() throws Exception {
+
+		// Since the DM's port is dynamically changed during the test, we
+		// need to update the HTTP messaging configuration too.
+		List<Option> options = new ArrayList<>( Arrays.asList( super.config()));
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.http.cfg",
+				"net.roboconf.messaging.http.server.port",
+				String.valueOf( getCurrentPort())));
+
+		return ItUtils.asArray( options );
 	}
 
 

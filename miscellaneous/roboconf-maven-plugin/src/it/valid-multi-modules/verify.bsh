@@ -1,4 +1,5 @@
 import java.io.*;
+import net.roboconf.core.utils.*;
 
 File zipFile = new File( basedir, "module-a/target/module-a-1.0.zip" );
 if( ! zipFile.isFile()) {
@@ -8,4 +9,14 @@ if( ! zipFile.isFile()) {
 zipFile = new File( basedir, "module-b/target/module-b-1.0.zip" );
 if( ! zipFile.isFile()) {
     throw new FileNotFoundException( "Module B's ZIP file was not found." );
+}
+
+File buildFile = new File( basedir, "build.log" );
+if( ! buildFile.isFile()) {
+	throw new FileNotFoundException( "No build log was found." );
+}
+
+String buildLogContent = Utils.readFileContent( buildFile );
+if( ! buildLogContent.contains( "[WARNING] Artifact module-a contains target properties. Reusable target properties should be packaged separately." )) {
+	throw new IOException( "A warning about target properties was expected." );
 }

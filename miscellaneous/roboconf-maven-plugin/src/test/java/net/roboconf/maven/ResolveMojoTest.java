@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import net.roboconf.core.Constants;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
@@ -50,6 +48,8 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.Constants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -72,7 +72,7 @@ public class ResolveMojoTest extends AbstractTest {
 		Assert.assertFalse( targetDir.isDirectory());
 		findMojo( projectName, "resolve" ).execute();
 
-		// The mojo does not create the directory is there is no dependency
+		// The mojo does not create the directory if there is no dependency
 		Assert.assertFalse( targetDir.isDirectory());
 	}
 

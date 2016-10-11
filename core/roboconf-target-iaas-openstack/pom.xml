@@ -80,6 +80,12 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.apache.jclouds.api</groupId>
+			<artifactId>openstack-swift</artifactId>
+			<version>${jclouds.version}</version>
+		</dependency>
+		
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>

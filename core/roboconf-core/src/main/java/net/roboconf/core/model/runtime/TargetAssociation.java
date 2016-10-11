@@ -31,25 +31,25 @@ package net.roboconf.core.model.runtime;
  */
 public class TargetAssociation {
 
-	private final String instancePath;
+	private final String instancePathOrComponentName;
 	private final TargetWrapperDescriptor targetDescriptor;
 
 
 	/**
 	 * Constructor.
-	 * @param instancePath
+	 * @param instancePathOrComponentName
 	 * @param targetDescriptor
 	 */
-	public TargetAssociation( String instancePath, TargetWrapperDescriptor targetDescriptor ) {
-		this.instancePath = instancePath;
+	public TargetAssociation( String instancePathOrComponentName, TargetWrapperDescriptor targetDescriptor ) {
+		this.instancePathOrComponentName = instancePathOrComponentName;
 		this.targetDescriptor = targetDescriptor;
 	}
 
 	/**
 	 * @return the instancePath
 	 */
-	public String getInstancePath() {
-		return this.instancePath;
+	public String getInstancePathOrComponentName() {
+		return this.instancePathOrComponentName;
 	}
 
 	/**

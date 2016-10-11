@@ -92,34 +92,37 @@ public interface ITargetsMngr {
 	/**
 	 * Associates a target and a scoped instance within an application or application template.
 	 * <p>
-	 * If the instance path is null, then the target is considered to be the default one for this application.
+	 * If the instance path/component name is null, then the target is considered to be the default one for this application.
 	 * </p>
 	 * <p>
-	 * If the instance was already associated with another target, this association is removed.
+	 * If the instance/component was already associated with another target, this association is removed.
+	 * </p>
+	 * <p>
+	 * If the instance path/component name does not match anything in the application, then nothing is saved.
 	 * </p>
 	 *
 	 * @param targetId a target ID
 	 * @param app an application or an application template
-	 * @param instancePath an instance path (null to set the default for the application)
+	 * @param instancePathOrComponentName an instance path (null to set the default for the application) or a component name (starts with '@')
 	 * @throws IOException if something went wrong
 	 * @throws UnauthorizedActionException if the instance is already deployed with another target
 	 */
-	void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath )
+	void associateTargetWith( String targetId, AbstractApplication app, String instancePathOrComponentName )
 	throws IOException, UnauthorizedActionException;
 
 	/**
 	 * Dissociates a target and a scoped instance within an application or application template.
 	 * <p>
-	 * If the instance path is null, no action is undertaken. To override the default target for a given
+	 * If the instance path/component name is null, no action is undertaken. To override the default target for a given
 	 * application, just invoke {@link #associateTargetWithScopedInstance(String, AbstractApplication, String)}.
 	 * </p>
 	 *
 	 * @param app an application or application template
-	 * @param instancePath an instance path
+	 * @param instancePathOrComponentName an instance path or a component name (starts with '@')
 	 * @throws IOException if something went wrong
 	 * @throws UnauthorizedActionException if the instance is already deployed with another target
 	 */
-	void dissociateTargetFromScopedInstance( AbstractApplication app, String instancePath )
+	void dissociateTargetFrom( AbstractApplication app, String instancePathOrComponentName )
 	throws IOException, UnauthorizedActionException;
 
 	/**
@@ -204,7 +207,7 @@ public interface ITargetsMngr {
 	TargetWrapperDescriptor findTargetById( String targetId );
 
 
-	// Defining and in relation with hints (contextual help to reduce the number of choices when associating
+	// Definitions and relations with hints (contextual help to reduce the number of choices when associating
 	// a target and an application instance). Indeed, some targets may be very specific
 	// and we thus do not need to list them for some applications as it would not make sense.
 

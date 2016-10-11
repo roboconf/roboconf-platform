@@ -126,10 +126,10 @@ public class SchedulerWsDelegateTest {
 		this.manager.commandsMngr().createOrUpdateCommand( this.app, "write 2", "Write this into " + this.targetFile.getAbsolutePath());
 
 		// Initialize the scheduler
-		RoboconfScheduler scheduler = new RoboconfScheduler();
-		scheduler.setManager( this.manager );
-		scheduler.start();
-		restApp.setScheduler( scheduler );
+		this.scheduler = new RoboconfScheduler();
+		this.scheduler.setManager( this.manager );
+		this.scheduler.start();
+		restApp.setScheduler( this.scheduler );
 
 		this.client = new WsClient( REST_URI );
 	}

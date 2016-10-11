@@ -25,8 +25,6 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.util.Objects;
-
 import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -71,11 +69,9 @@ class ReplicateCommandExecution extends AbstractCommandExecution {
 			this.manager.instancesMngr().addInstance( ma, null, copy );
 
 			// Associate this new instance with the same target, if it has one
-			String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/" + rootInstance.getName());
-			String defaultTargetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), null );
-			if( targetId != null
-					&& ! Objects.equals( targetId, defaultTargetId ))
-				this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/" + copy.getName());
+			String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/" + rootInstance.getName(), true );
+			if( targetId != null )
+				this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), "/" + copy.getName());
 
 			// Register meta-data
 			CreateInstanceCommandExecution.update( this.executionContext, copy );

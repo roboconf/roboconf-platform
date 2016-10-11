@@ -32,15 +32,15 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
+
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.client.exceptions.TargetWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
-
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
 
 /**
  * FIXME: we only defined operations used in integration tests.
@@ -121,25 +121,25 @@ public class TargetWsDelegate {
 	 * Associates or dissociates an application and a target.
 	 * @param app an application or application template
 	 * @param targetId a target ID
-	 * @param instancePath an instance path, or null for default mapping
+	 * @param instancePathOrComponentName an instance path or a component name (can be null)
 	 * @param bind true to create a binding, false to delete one
 	 * @throws TargetWsException
 	 */
-	public void associateTarget( AbstractApplication app, String instancePath, String targetId, boolean bind )
+	public void associateTarget( AbstractApplication app, String instancePathOrComponentName, String targetId, boolean bind )
 	throws TargetWsException {
 
 		if( bind )
-			this.logger.finer( "Associating " + app + " :: " + instancePath + " with " + targetId );
+			this.logger.finer( "Associating " + app + " :: " + instancePathOrComponentName + " with " + targetId );
 		else
-			this.logger.finer( "Dissociating " + app + " :: " + instancePath + " from " + targetId );
+			this.logger.finer( "Dissociating " + app + " :: " + instancePathOrComponentName + " from " + targetId );
 
 		WebResource path = this.resource.path( UrlConstants.TARGETS )
 				.path( targetId ).path( "associations" )
 				.queryParam( "bind", Boolean.toString( bind ))
 				.queryParam( "name", app.getName());
 
-		if( instancePath != null )
-			path = path.queryParam( "instance-path", instancePath );
+		if( instancePathOrComponentName != null )
+			path = path.queryParam( "elt", instancePathOrComponentName );
 
 		if( app instanceof ApplicationTemplate )
 			path = path.queryParam( "qualifier", ((ApplicationTemplate) app).getQualifier());

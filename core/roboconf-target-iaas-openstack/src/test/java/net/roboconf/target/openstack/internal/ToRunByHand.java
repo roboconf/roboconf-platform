@@ -43,7 +43,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
  */
 public class ToRunByHand {
 
-	private static final String PROPS_LOCATION = "/data1/targets/openstack.ow2.with.block.storage.properties";
+	private static final String PROPS_LOCATION = "/data1/targets/openstack.ovh.with.object.storage.properties";
 
 	/**
 	 * A test that starts a new VM, passes user data, waits 5 minutes and terminates the VM.

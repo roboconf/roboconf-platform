@@ -35,13 +35,14 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 /**
- * A class to ease searching when dealing when instances and several applications or templates.
+ * A class to ease searching when dealing when instances / components and several applications or templates.
  * @author Vincent Zurczak - Linagora
  */
 public class InstanceContext {
 
+	// Components names start with '@'.
+	private String instancePathOrComponentName;
 	private final String name, qualifier;
-	private String instancePath;
 
 
 	/**
@@ -51,7 +52,7 @@ public class InstanceContext {
 	 */
 	public InstanceContext( AbstractApplication app, Instance inst ) {
 		this( app );
-		this.instancePath = inst == null ? null : InstanceHelpers.computeInstancePath( inst );
+		this.instancePathOrComponentName = inst == null ? null : InstanceHelpers.computeInstancePath( inst );
 	}
 
 
@@ -59,12 +60,12 @@ public class InstanceContext {
 	 * Constructor.
 	 * @param name
 	 * @param qualifier
-	 * @param instancePath
+	 * @param instancePathOrComponentName
 	 */
-	public InstanceContext( String name, String qualifier, String instancePath ) {
+	public InstanceContext( String name, String qualifier, String instancePathOrComponentName ) {
 		this.name = name;
 		this.qualifier = qualifier;
-		this.instancePath = instancePath;
+		this.instancePathOrComponentName = instancePathOrComponentName;
 	}
 
 
@@ -81,17 +82,17 @@ public class InstanceContext {
 	/**
 	 * Constructor.
 	 * @param app
-	 * @param instancePath
+	 * @param instancePathOrComponentName
 	 */
-	public InstanceContext( AbstractApplication app, String instancePath ) {
+	public InstanceContext( AbstractApplication app, String instancePathOrComponentName ) {
 		this( app );
-		this.instancePath = instancePath;
+		this.instancePathOrComponentName = instancePathOrComponentName;
 	}
 
 
 	@Override
 	public String toString() {
-		return this.name + "::" + this.qualifier + "::" + this.instancePath;
+		return this.name + "::" + this.qualifier + "::" + this.instancePathOrComponentName;
 	}
 
 
@@ -102,17 +103,17 @@ public class InstanceContext {
 	 */
 	public static InstanceContext parse( String s ) {
 
-		String name = null, qualifier = null, instancePath = null;
+		String name = null, qualifier = null, instancePathOrComponentName = null;
 		if( s != null ) {
 			Matcher m = Pattern.compile( "(.*)::(.*)::(.*)" ).matcher( s );
 			if( m.matches()) {
 				name = m.group( 1 ).equals( "null" ) ? null : m.group( 1 );
 				qualifier = m.group( 2 ).equals( "null" ) ? null : m.group( 2 );
-				instancePath = m.group( 3 ).equals( "null" ) ? null : m.group( 3 );
+				instancePathOrComponentName = m.group( 3 ).equals( "null" ) ? null : m.group( 3 );
 			}
 		}
 
-		return new InstanceContext( name, qualifier, instancePath );
+		return new InstanceContext( name, qualifier, instancePathOrComponentName );
 	}
 
 
@@ -129,7 +130,7 @@ public class InstanceContext {
 		return obj instanceof InstanceContext
 				&& Objects.equals( this.name, ((InstanceContext) obj).name )
 				&& Objects.equals( this.qualifier, ((InstanceContext) obj).qualifier )
-				&& Objects.equals( this.instancePath, ((InstanceContext) obj).instancePath );
+				&& Objects.equals( this.instancePathOrComponentName, ((InstanceContext) obj).instancePathOrComponentName );
 	}
 
 
@@ -150,9 +151,9 @@ public class InstanceContext {
 
 
 	/**
-	 * @return the instancePath
+	 * @return the instancePathOrComponentName
 	 */
-	public String getInstancePath() {
-		return this.instancePath;
+	public String getInstancePathOrComponentName() {
+		return this.instancePathOrComponentName;
 	}
 }

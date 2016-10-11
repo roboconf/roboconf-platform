@@ -42,6 +42,7 @@ import org.mockito.Mockito;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.ApplicationTemplateDescriptor;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -98,7 +99,7 @@ public class ManagerBasicsTest {
 		this.manager = new Manager();
 		this.manager.setTargetResolver( this.targetResolver );
 		this.manager.configurationMngr().setWorkingDirectory( directory );
-		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		this.manager.start();
 
 		// Register mocked listeners - mainly for code coverage reasons
@@ -409,6 +410,91 @@ public class ManagerBasicsTest {
 
 
 	@Test
+	public void testLoadNewApplication_targetConflict() throws Exception {
+
+		// Copy an application and add it a target.properties
+		File firstDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( firstDirectory.exists());
+
+		File directory = this.folder.newFolder();
+		Utils.copyDirectory( firstDirectory, directory );
+
+		File targetDir = new File( directory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( targetDir.mkdir());
+
+		String content = "id = test-target-conflict\nhandler: whatever";
+		Utils.writeStringInto( content, new File( targetDir, "target.properties" ));
+
+		// Load the template once
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+		ApplicationTemplate tpl1 = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
+
+		Assert.assertNotNull( tpl1 );
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Update the source directory (change the application name, but keep the target properties)
+		File f = new File( directory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
+		desc.setName( "abcdefghijklmnopqrstuvwxyz" );
+		ApplicationTemplateDescriptor.save( f, desc );
+
+		// Load the new application: it should fail
+		try {
+			this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
+			Assert.fail( "An exception was expected here." );
+
+		} catch( Exception e ) {
+			// nothing
+		}
+
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+	}
+
+
+	@Test
+	public void testLoadNewApplication_withTargets_invalidAppLocation() throws Exception {
+
+		// Copy an application and add it a target.properties
+		File firstDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( firstDirectory.exists());
+
+		File normalTplDirectory = ConfigurationUtils.findTemplateDirectory(
+				new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" ),
+				this.manager.configurationMngr().getWorkingDirectory());
+
+		File directory = new File( normalTplDirectory, "intermediate/subdir" );
+		Assert.assertTrue( directory.mkdirs());
+		Utils.copyDirectory( firstDirectory, directory );
+
+		File targetDir = new File( directory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( targetDir.mkdir());
+
+		String content = "id = test-target-conflict\nhandler: whatever";
+		Utils.writeStringInto( content, new File( targetDir, "target.properties" ));
+
+		// Load the template.
+		// It should fail, since it is located under the directory where the DM would save it.
+		// We want to verify that the targets loaded from this template are correctly unregistered.
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+		try {
+			this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
+			Assert.fail( "An exception was expected here." );
+
+		} catch( Exception e ) {
+			// nothing
+		}
+
+		// No target and template were registered
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+	}
+
+
+	@Test
 	public void testLoadApplicationTemplate_invalidConfiguration() throws Exception {
 
 		this.manager = new Manager();
@@ -667,7 +753,7 @@ public class ManagerBasicsTest {
 
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
 
 		// Try a first deployment
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());

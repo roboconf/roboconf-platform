@@ -48,12 +48,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.ManifestUtils;
-import net.roboconf.core.utils.MavenUtils;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -62,6 +57,13 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.ManifestUtils;
+import net.roboconf.core.utils.MavenUtils;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -78,6 +80,8 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	private final Map<String,String> targetProperties;
 	private final Map<String,String> messagingConfiguration;
 	private final String machineId, scopedInstancePath, applicationName;
+
+	private MavenResolver mavenResolver;
 
 
 
@@ -104,6 +108,14 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		this.scopedInstancePath = scopedInstancePath;
 		this.machineId = machineId;
 		this.scopedInstance = scopedInstance;
+	}
+
+
+	/**
+	 * @param mavenResolver the mavenResolver to set
+	 */
+	public void setMavenResolver( MavenResolver mavenResolver ) {
+		this.mavenResolver = mavenResolver;
 	}
 
 
@@ -234,9 +246,8 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			}
 
 			if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
-				throw new TargetException(
-						"No Maven package was found for the agent distribution "
-								+ mavenVersion + " (guessing the agent package URL failed).", exception );
+				String s = "No Maven package was found for the agent distribution " + mavenVersion + " (guessing the agent package URL failed).";
+				throw new TargetException( s, exception );
 			}
 		}
 
@@ -336,8 +347,12 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @param agentPackageUrl
 	 * @return a new Docker image generator (externalized for tests)
 	 */
-	DockerfileGenerator dockerfileGenerator(String agentPackageUrl , String packages , List<String> deployList , String baseImageRef ) {
-		return new DockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
+	DockerfileGenerator dockerfileGenerator(String agentPackageUrl , String packages , List<String> deployList, String baseImageRef ) {
+
+		DockerfileGenerator gen = new DockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
+		gen.setMavenResolver( this.mavenResolver );
+
+		return gen;
 	}
 
 

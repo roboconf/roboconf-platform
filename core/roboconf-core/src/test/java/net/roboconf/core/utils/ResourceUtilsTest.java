@@ -28,14 +28,15 @@ package net.roboconf.core.utils;
 import java.io.File;
 import java.util.Map;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Instance;
-
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -164,5 +165,23 @@ public class ResourceUtilsTest {
 
 		map = ResourceUtils.storeInstanceResources( appDir, instance );
 		Assert.assertEquals( 2, map.size());
+	}
+
+
+	@Test
+	public void testFindScopedInstancesDirectories() throws Exception {
+
+		final File appDir = this.folder.newFolder();
+		TestApplication app = new TestApplication();
+		app.setDirectory( appDir );
+
+		Assert.assertEquals( 0, ResourceUtils.findScopedInstancesDirectories( app ).size());
+
+		File vmDir = new File( appDir, Constants.PROJECT_DIR_GRAPH + "/" + app.getMySqlVm().getComponent().getName());
+		Assert.assertTrue( vmDir.mkdirs());
+
+		Map<Component,File> map = ResourceUtils.findScopedInstancesDirectories( app );
+		Assert.assertEquals( 1, map.size());
+		Assert.assertEquals( vmDir, map.get( app.getMySqlVm().getComponent()));
 	}
 }

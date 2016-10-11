@@ -45,9 +45,9 @@ import org.junit.Test;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -240,14 +240,14 @@ public class DockerHandlerWithContainerTest {
 	private void prepareDockerTest() throws Exception {
 		final String tag = "roboconf-test";
 
-		DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
-		config.withUri( "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
+		Builder config = DefaultDockerClientConfig.createDefaultConfigBuilder();
+		config.withDockerHost( "tcp://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 
 		this.docker = DockerClientBuilder.getInstance( config.build()).build();
 		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("./image").getFile());
 
 		String builtImageId = this.docker.buildImageCmd(baseDir)
-				.withNoCache().withTag( tag )
+				.withNoCache( true ).withTag( tag )
 				.exec( new RoboconfBuildImageResultCallback())
 				.awaitImageId();
 
@@ -295,7 +295,8 @@ public class DockerHandlerWithContainerTest {
 					containerId,
 					scopedInstance.data,
 					DockerTestUtils.DOCKER_CONFIGURE_TIMEOUT);
-			Assert.assertNotNull(containerId );
+
+			Assert.assertNotNull( containerId );
 
 			// Check the machine is running
 			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));

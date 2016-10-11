@@ -113,7 +113,7 @@ public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmWithAgent
 
 		// Associate a target with it
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler = in-memory" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/vm1" );
+		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), "/vm1" );
 
 		// Instantiate a new scoped instance
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/vm1" );

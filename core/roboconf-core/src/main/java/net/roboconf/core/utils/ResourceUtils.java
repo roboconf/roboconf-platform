@@ -34,8 +34,10 @@ import java.util.Map;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -60,7 +62,7 @@ public final class ResourceUtils {
 	public static Map<String,byte[]> storeInstanceResources( File applicationFilesDirectory, Instance instance ) throws IOException {
 
 		// Recipes
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<> ();
 		File instanceResourcesDirectory = findInstanceResourcesDirectory( applicationFilesDirectory, instance );
 		if( instanceResourcesDirectory.exists()
 				&& instanceResourcesDirectory.isDirectory())
@@ -89,7 +91,7 @@ public final class ResourceUtils {
 				Constants.FILE_EXT_MEASURES + ".properties"
 		};
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<> ();
 		for( String ext : exts ) {
 			String fileName = instance.getComponent().getName() + ext;
 			File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_PROBES + "/" + fileName );
@@ -134,7 +136,7 @@ public final class ResourceUtils {
 
 		File root = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
 		File result = new File( "No recipe directory." );
-		Set<Component> alreadyChecked = new HashSet<Component> ();
+		Set<Component> alreadyChecked = new HashSet<> ();
 		for( Component c = component; c != null; c = c.getExtendedComponent()) {
 			// Prevent infinite loops for exotic cases
 			if( alreadyChecked.contains( c ))
@@ -143,6 +145,33 @@ public final class ResourceUtils {
 			alreadyChecked.add( c );
 			if(( result = new File( root, c.getName())).exists())
 				break;
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds the resource directories for scoped instances.
+	 * @param applicationFilesDirectory the application's directory
+	 * @param graph the graph
+	 * @return a non-null map (key = component, value = directory)
+	 */
+	public static Map<Component,File> findScopedInstancesDirectories( AbstractApplication absApp ) {
+
+		Map<Component,File> result = new HashMap<> ();
+		for( Component c : ComponentHelpers.findAllComponents( absApp.getGraphs())) {
+
+			// Target?
+			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( c.getInstallerName()))
+				continue;
+
+			// Is there a resources directory?
+			File dir = ResourceUtils.findInstanceResourcesDirectory( absApp.getDirectory(), c );
+			if( ! dir.exists())
+				continue;
+
+			result.put( c, dir );
 		}
 
 		return result;

@@ -7,6 +7,8 @@
 	<component classname="net.roboconf.target.docker.internal.DockerHandler" name="roboconf-target-docker">
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
+
+		<requires field="mavenResolver" optional="false" />
 		<provides />
 	</component>
 	

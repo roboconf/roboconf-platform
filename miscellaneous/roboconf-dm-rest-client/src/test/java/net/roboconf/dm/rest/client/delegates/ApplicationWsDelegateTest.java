@@ -167,7 +167,7 @@ public class ApplicationWsDelegateTest {
 		this.manager.setTargetResolver( iaasResolver );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
 		this.client.getApplicationDelegate().changeInstanceState(

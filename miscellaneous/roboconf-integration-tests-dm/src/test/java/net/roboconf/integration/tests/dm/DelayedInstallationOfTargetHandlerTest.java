@@ -204,7 +204,7 @@ public class DelayedInstallationOfTargetHandlerTest extends DmTest {
 
 		// Associate a default target for this application
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler: in-memory" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), null );
 
 		// Instantiate a new root instance
 		Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );

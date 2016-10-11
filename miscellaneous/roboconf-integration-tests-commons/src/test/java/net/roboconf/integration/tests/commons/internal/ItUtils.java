@@ -140,13 +140,13 @@ public final class ItUtils {
 	 * Waits for the DM's REST services to be online.
 	 * @throws Exception
 	 */
-	public static void waitForDmRestServices() throws Exception {
+	public static void waitForDmRestServices( int serverPort ) throws Exception {
 
 		// By default, PAX (runner) tests only wait for the manager to be available.
 		// For some tests however, we must also be sure that the REST services are online.
 		// The most simple solution is to wait for the applications listing to work.
 
-		URI targetUri = UriUtils.urlToUri( "http://localhost:8181/applications" );
+		URI targetUri = UriUtils.urlToUri( "http://localhost:" + serverPort + "/applications" );
 		for( int i=0; i<20; i++ ) {
 			Thread.sleep( 1000 );
 			String s = "";

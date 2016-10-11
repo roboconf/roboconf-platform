@@ -117,5 +117,16 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<!-- To solve issues with dependency convergence -->	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>xml-apis</groupId>
+				<artifactId>xml-apis</artifactId>
+				<version>1.4.01</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 </project>

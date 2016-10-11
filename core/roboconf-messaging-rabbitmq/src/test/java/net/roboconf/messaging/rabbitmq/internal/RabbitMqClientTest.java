@@ -34,6 +34,8 @@ import org.junit.Test;
 
 import com.rabbitmq.client.Channel;
 
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
@@ -75,6 +77,9 @@ public class RabbitMqClientTest {
 		client.openConnection();
 		Assert.assertEquals( oldChannel, client.channel );
 
+		// Delete server artifacts
+		client.deleteMessagingServerArtifacts( new Application( "app", new ApplicationTemplate()));
+
 		client.closeConnection();
 		Assert.assertNull( client.channel );
 		Assert.assertNull( client.consumerTag );
@@ -86,7 +91,7 @@ public class RabbitMqClientTest {
 
 
 	@Test
-	public void testGetQueueName() {
+	public void testGetQueueName() throws Exception {
 
 		RabbitMqClient client = new RabbitMqClient( null, "localhost", "guest", "guest", RecipientKind.DM );
 		client.setOwnerProperties( RecipientKind.DM, "domain", "app", "/root" );

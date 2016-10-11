@@ -25,9 +25,13 @@
 
 package net.roboconf.target.docker.internal;
 
+import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
+
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
@@ -45,6 +49,10 @@ import net.roboconf.target.api.TargetHandlerParameters;
  */
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
+	// Injected by iPojo
+	private MavenResolver mavenResolver;
+
+	// Other properties
 	public static final String TARGET_ID = "docker";
 	static final String MESSAGING_TYPE = "net.roboconf.messaging.type";
 	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
@@ -130,13 +138,16 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 		// machineId does not match a real container ID.
 		// It is the name of the container we will create.
-		return new DockerMachineConfigurator(
+		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
 				parameters.getTargetProperties(),
 				parameters.getMessagingProperties(),
 				machineId,
 				parameters.getScopedInstancePath(),
 				parameters.getApplicationName(),
 				scopedInstance );
+
+		configurator.setMavenResolver( this.mavenResolver );
+		return configurator;
 	}
 
 
@@ -153,7 +164,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		try {
 			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
 			ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
-			result = state != null && state.isRunning();
+			result = state != null && extractBoolean( state.getRunning());
 
 		} catch( Exception e ) {
 			// nothing, we consider it is not running
@@ -183,7 +194,8 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			// just mark the Roboconf instance as "not deployed" without throwing an exception.
 			if( container != null ) {
 				ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
-				if( state.isRunning() || state.isPaused())
+				if( state != null
+						&& ( extractBoolean( state.getRunning()) || extractBoolean( state.getPaused())))
 					dockerClient.killContainerCmd( container.getId()).exec();
 
 				dockerClient.removeContainerCmd( container.getId()).withForce( true ).exec();

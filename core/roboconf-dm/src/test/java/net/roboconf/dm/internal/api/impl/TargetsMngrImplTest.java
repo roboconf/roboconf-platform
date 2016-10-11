@@ -172,7 +172,7 @@ public class TargetsMngrImplTest {
 
 		// Only MySQL has an associated target
 		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
-		this.mngr.associateTargetWithScopedInstance( targetId, app, mySqlPath );
+		this.mngr.associateTargetWith( targetId, app, mySqlPath );
 
 		String associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( targetId, associatedId );
@@ -182,7 +182,7 @@ public class TargetsMngrImplTest {
 
 		// Let's define a default target for the whole application
 		String defaultTargetId = this.mngr.createTarget( "prop: ok\nid: def\nhandler: h" );
-		this.mngr.associateTargetWithScopedInstance( defaultTargetId, app, null );
+		this.mngr.associateTargetWith( defaultTargetId, app, null );
 
 		associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( targetId, associatedId );
@@ -195,18 +195,18 @@ public class TargetsMngrImplTest {
 		Assert.assertNull( this.mngr.findTargetId( app, tomcatPath, true ));
 
 		// Remove the custom association for MySQL
-		this.mngr.dissociateTargetFromScopedInstance( app, mySqlPath );
+		this.mngr.dissociateTargetFrom( app, mySqlPath );
 		associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( defaultTargetId, associatedId );
 		Assert.assertNull( this.mngr.findTargetId( app, mySqlPath, true ));
 
 		// Make sure we cannot delete a default target
-		this.mngr.dissociateTargetFromScopedInstance( app, null );
+		this.mngr.dissociateTargetFrom( app, null );
 		associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( defaultTargetId, associatedId );
 
 		// Make sure we can override a default target
-		this.mngr.associateTargetWithScopedInstance( targetId, app, null );
+		this.mngr.associateTargetWith( targetId, app, null );
 		associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( targetId, associatedId );
 
@@ -220,7 +220,93 @@ public class TargetsMngrImplTest {
 
 		TestApplication app = new TestApplication();
 		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		this.mngr.associateTargetWithScopedInstance( "invalid", app, mySqlPath );
+		this.mngr.associateTargetWith( "invalid", app, mySqlPath );
+	}
+
+
+	@Test
+	public void testAssociationWithComponentName() throws Exception {
+
+		// Setup
+		TestApplication app = new TestApplication();
+		String componentName = "@" + app.getMySqlVm().getComponent().getName();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		String tomcatPath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
+
+		// Create only an association with a component
+		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
+		this.mngr.associateTargetWith( targetId, app, componentName );
+
+		Assert.assertNull( this.mngr.findTargetId( app, null, true ));
+		Assert.assertEquals( targetId, this.mngr.findTargetId( app, componentName, true ));
+
+		Assert.assertEquals( targetId, this.mngr.findTargetId( app, tomcatPath ));
+		Assert.assertNull( targetId, this.mngr.findTargetId( app, tomcatPath, true ));
+
+		Assert.assertEquals( targetId, this.mngr.findTargetId( app, mySqlPath ));
+		Assert.assertNull( targetId, this.mngr.findTargetId( app, mySqlPath, true ));
+
+		// Now, set a default target for the application and another one for a specific instance
+		String tid1 = this.mngr.createTarget( "prop: ok\nid: tid1\nhandler: h" );
+		String tid2 = this.mngr.createTarget( "prop: ok\nid: tid2\nhandler: h" );
+
+		this.mngr.associateTargetWith( tid1, app, null );
+		this.mngr.associateTargetWith( tid2, app, mySqlPath );
+
+		Assert.assertEquals( tid1, this.mngr.findTargetId( app, null ));
+		Assert.assertEquals( tid1, this.mngr.findTargetId( app, null, true ));
+
+		Assert.assertEquals( tid2, this.mngr.findTargetId( app, mySqlPath ));
+		Assert.assertEquals( tid2, this.mngr.findTargetId( app, mySqlPath, true ));
+
+		Assert.assertEquals( targetId, this.mngr.findTargetId( app, tomcatPath ));
+		Assert.assertNull( targetId, this.mngr.findTargetId( app, tomcatPath, true ));
+
+		Assert.assertEquals( targetId, this.mngr.findTargetId( app, componentName ));
+		Assert.assertEquals( targetId, this.mngr.findTargetId( app, componentName, true ));
+
+		// Dissociate the component and the target
+		this.mngr.dissociateTargetFrom( app, componentName );
+
+		Assert.assertEquals( tid1, this.mngr.findTargetId( app, null ));
+		Assert.assertEquals( tid1, this.mngr.findTargetId( app, null, true ));
+
+		Assert.assertEquals( tid2, this.mngr.findTargetId( app, mySqlPath ));
+		Assert.assertEquals( tid2, this.mngr.findTargetId( app, mySqlPath, true ));
+
+		// We inherit the default target
+		Assert.assertEquals( tid1, this.mngr.findTargetId( app, tomcatPath ));
+		Assert.assertNull( tid1, this.mngr.findTargetId( app, tomcatPath, true ));
+
+		// And no more binding for the component...
+		Assert.assertNull( targetId, this.mngr.findTargetId( app, componentName, true ));
+
+		// ... except it inherits the default application target.
+		Assert.assertEquals( tid1, this.mngr.findTargetId( app, componentName ));
+	}
+
+
+	@Test
+	public void testAssociationWithInvalidComponentName() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
+		this.mngr.associateTargetWith( targetId, app, "@invalid" );
+
+		Assert.assertNull( this.mngr.findTargetId( app, null ));
+		Assert.assertNull( this.mngr.findTargetId( app, "@invalid", true ));
+	}
+
+
+	@Test
+	public void testAssociationWithInvalidInstancePath() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
+		this.mngr.associateTargetWith( targetId, app, "/vm/invalid" );
+
+		Assert.assertNull( this.mngr.findTargetId( app, null ));
+		Assert.assertNull( this.mngr.findTargetId( app, "/vm/invalid" ));
 	}
 
 
@@ -231,7 +317,18 @@ public class TargetsMngrImplTest {
 		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 
 		// No association
-		this.mngr.dissociateTargetFromScopedInstance( app, mySqlPath );
+		this.mngr.dissociateTargetFrom( app, mySqlPath );
+		// No exception
+	}
+
+
+	@Test
+	public void testDisssociationWithInvalidInstancePath() throws Exception {
+
+		TestApplication app = new TestApplication();
+
+		// No association
+		this.mngr.dissociateTargetFrom( app, "/vm/invalid" );
 		// No exception
 	}
 
@@ -244,7 +341,7 @@ public class TargetsMngrImplTest {
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		String targetId = this.mngr.createTarget( "prop: ok\nid: tid\nhandler: h" );
-		this.mngr.associateTargetWithScopedInstance( targetId, app, instancePath );
+		this.mngr.associateTargetWith( targetId, app, instancePath );
 	}
 
 
@@ -255,7 +352,7 @@ public class TargetsMngrImplTest {
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		this.mngr.dissociateTargetFromScopedInstance( app, instancePath );
+		this.mngr.dissociateTargetFrom( app, instancePath );
 	}
 
 
@@ -451,7 +548,7 @@ public class TargetsMngrImplTest {
 		TestApplication app = new TestApplication();
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		String targetId = this.mngr.createTarget( "prop: ok\nid: tid\nhandler: h" );
-		this.mngr.associateTargetWithScopedInstance( targetId, app, instancePath );
+		this.mngr.associateTargetWith( targetId, app, instancePath );
 
 		Map<String,String> props = this.mngr.findRawTargetProperties( app, instancePath );
 		Assert.assertEquals( 2, props.size());
@@ -484,7 +581,7 @@ public class TargetsMngrImplTest {
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 
 		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
-		this.mngr.associateTargetWithScopedInstance( "4", app, instancePath );
+		this.mngr.associateTargetWith( "4", app, instancePath );
 		Assert.assertEquals( "4", this.mngr.findTargetId( app, instancePath ));
 
 		// Create another manager
@@ -510,16 +607,16 @@ public class TargetsMngrImplTest {
 		String path = InstanceHelpers.computeInstancePath( app1.getTomcatVm());
 
 		// Create hints and associations
-		this.mngr.associateTargetWithScopedInstance( t1, app1.getTemplate(), null );
-		this.mngr.associateTargetWithScopedInstance( t1, app1, null );
-		this.mngr.associateTargetWithScopedInstance( t2, app1, path );
-		this.mngr.associateTargetWithScopedInstance( t2, app2, null );
+		this.mngr.associateTargetWith( t1, app1.getTemplate(), null );
+		this.mngr.associateTargetWith( t1, app1, null );
+		this.mngr.associateTargetWith( t2, app1, path );
+		this.mngr.associateTargetWith( t2, app2, null );
 
 		this.mngr.addHint( t1, app1 );
 		this.mngr.addHint( t2, app1 );
 		this.mngr.addHint( t2, app2 );
 
-		// Verify pre-conditions
+		// Verify preconditions
 		Assert.assertEquals( t1, this.mngr.findTargetId( app1, null ));
 		Assert.assertEquals( t2, this.mngr.findTargetId( app1, path ));
 		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1 ).size());
@@ -594,7 +691,7 @@ public class TargetsMngrImplTest {
 		Assert.assertEquals( 0, this.mngr.listAllTargets().size());
 
 		String targetId = this.mngr.createTarget( "prop: ok\nid=tid\nhandler: h" );
-		this.mngr.associateTargetWithScopedInstance( targetId, app, instancePath );
+		this.mngr.associateTargetWith( targetId, app, instancePath );
 
 		Map<String,String> props = this.mngr.lockAndGetTarget( app, app.getMySqlVm());
 		Assert.assertEquals( 2, props.size());
@@ -626,8 +723,8 @@ public class TargetsMngrImplTest {
 		Assert.assertEquals( 0, this.mngr.listAllTargets().size());
 
 		String targetId = this.mngr.createTarget( "prop: ok\nid: tid\nhandler: h" );
-		this.mngr.associateTargetWithScopedInstance( targetId, app, instancePath );
-		this.mngr.associateTargetWithScopedInstance( targetId, app, null );
+		this.mngr.associateTargetWith( targetId, app, instancePath );
+		this.mngr.associateTargetWith( targetId, app, null );
 
 		Map<String,String> props = this.mngr.lockAndGetTarget( app, app.getMySqlVm());
 		Assert.assertEquals( 2, props.size());
@@ -684,14 +781,14 @@ public class TargetsMngrImplTest {
 
 		// Association is on the template AND the instance
 		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
-		this.mngr.associateTargetWithScopedInstance( t1, app.getTemplate(), instancePath );
+		this.mngr.associateTargetWith( t1, app.getTemplate(), instancePath );
 		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
 
 		this.mngr.copyOriginalMapping( app );
 		Assert.assertEquals( t1, this.mngr.findTargetId( app, instancePath ));
 
 		// We can override the association
-		this.mngr.associateTargetWithScopedInstance( t2, app, instancePath );
+		this.mngr.associateTargetWith( t2, app, instancePath );
 		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath ));
 	}
 
@@ -706,14 +803,14 @@ public class TargetsMngrImplTest {
 
 		// Association is on the template and BY DEFAULT
 		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
-		this.mngr.associateTargetWithScopedInstance( t1, app.getTemplate(), null );
+		this.mngr.associateTargetWith( t1, app.getTemplate(), null );
 		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
 
 		this.mngr.copyOriginalMapping( app );
 		Assert.assertEquals( t1, this.mngr.findTargetId( app, instancePath ));
 
 		// We can override the association
-		this.mngr.associateTargetWithScopedInstance( t2, app, instancePath );
+		this.mngr.associateTargetWith( t2, app, instancePath );
 		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath ));
 	}
 
@@ -733,11 +830,11 @@ public class TargetsMngrImplTest {
 
 		// Association is on the template
 		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
-		this.mngr.associateTargetWithScopedInstance( t1, app.getTemplate(), instancePath );
-		this.mngr.associateTargetWithScopedInstance( t1, app.getTemplate(), tomcatPath );
+		this.mngr.associateTargetWith( t1, app.getTemplate(), instancePath );
+		this.mngr.associateTargetWith( t1, app.getTemplate(), tomcatPath );
 
 		// Set a new default for the application
-		this.mngr.associateTargetWithScopedInstance( t2, app, null );
+		this.mngr.associateTargetWith( t2, app, null );
 		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath ));
 		Assert.assertEquals( t2, this.mngr.findTargetId( app, tomcatPath ));
 
@@ -807,9 +904,9 @@ public class TargetsMngrImplTest {
 		String t2 = this.mngr.createTarget( "prop: ok\nid: t2\nhandler: h" );
 		String t3 = this.mngr.createTarget( "prop: ok\nid: t3\nhandler: h" );
 
-		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
-		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( newRootInstance ));
-		this.mngr.associateTargetWithScopedInstance( t2, app, null );
+		this.mngr.associateTargetWith( t1, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		this.mngr.associateTargetWith( t1, app, InstanceHelpers.computeInstancePath( newRootInstance ));
+		this.mngr.associateTargetWith( t2, app, null );
 
 		// Checks
 		List<TargetUsageItem> items = this.mngr.findUsageStatistics( t1 );
@@ -884,11 +981,11 @@ public class TargetsMngrImplTest {
 		Assert.assertEquals( 0, items.size());
 
 		// Remove the association for the named instance
-		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		this.mngr.dissociateTargetFrom( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
 		items = this.mngr.findUsageStatistics( t1 );
 		Assert.assertEquals( 1, items.size());
 
-		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( newRootInstance ));
+		this.mngr.dissociateTargetFrom( app, InstanceHelpers.computeInstancePath( newRootInstance ));
 		items = this.mngr.findUsageStatistics( t1 );
 		Assert.assertEquals( 0, items.size());
 
@@ -916,8 +1013,8 @@ public class TargetsMngrImplTest {
 		TestApplication app = new TestApplication();
 		String path = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 
-		this.mngr.associateTargetWithScopedInstance( targetId_1, app, null );
-		this.mngr.associateTargetWithScopedInstance( targetId_2, app, path );
+		this.mngr.associateTargetWith( targetId_1, app, null );
+		this.mngr.associateTargetWith( targetId_2, app, path );
 
 		Assert.assertEquals( targetId_1, this.mngr.findTargetId( app, null, true ));
 		Assert.assertEquals( targetId_2, this.mngr.findTargetId( app, path, true ));
@@ -928,7 +1025,7 @@ public class TargetsMngrImplTest {
 		Assert.assertEquals( targetId_2, newMngr.findTargetId( app, path, true ));
 
 		// Now, dissociate target_2 and the root instance
-		this.mngr.dissociateTargetFromScopedInstance( app, path );
+		this.mngr.dissociateTargetFrom( app, path );
 		Assert.assertEquals( targetId_1, this.mngr.findTargetId( app, null, true ));
 		Assert.assertNull( this.mngr.findTargetId( app, path, true ));
 

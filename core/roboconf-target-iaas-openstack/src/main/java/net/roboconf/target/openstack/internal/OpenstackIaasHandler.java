@@ -44,6 +44,7 @@ import org.jclouds.openstack.nova.v2_0.domain.VolumeAttachment;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeAttachmentApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
+import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.v2_0.domain.Resource;
 
 import net.roboconf.core.agents.DataHelpers;
@@ -68,6 +69,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	private static final String PROVIDER_NOVA = "openstack-nova";
 	private static final String PROVIDER_NEUTRON = "openstack-neutron";
+	private static final String PROVIDER_SWIFT = "openstack-swift";
 
 	// "Basic" options
 	static final String IMAGE_NAME = "openstack.image-name";
@@ -91,6 +93,9 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	static final String VOLUME_SIZE_GB_PREFIX = "openstack.volume-size.";
 	static final String VOLUME_DELETE_OT_PREFIX = "openstack.delete-volume-on-termination.";
 	static final String VOLUME_TYPE_PREFIX = "openstack.volume-type.";
+
+	// Object storage
+	static final String OBJ_STORAGE_DOMAINS = "openstack.obj-storage";
 
 	static final Map<String,String> DEFAULTS = new HashMap<> ();
 	static {
@@ -290,6 +295,23 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 				.endpoint( targetProperties.get( API_URL ))
 				.credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
 				.buildApi( NovaApi.class );
+	}
+
+
+	/**
+	 * Creates a JCloud context for Swift.
+	 * @param targetProperties the target properties
+	 * @return a non-null object
+	 * @throws TargetException if the target properties are invalid
+	 */
+	static SwiftApi swiftApi( Map<String,String> targetProperties ) throws TargetException {
+
+		validate( targetProperties );
+		return ContextBuilder
+				.newBuilder( PROVIDER_SWIFT )
+				.endpoint( targetProperties.get( API_URL ))
+				.credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
+				.buildApi( SwiftApi.class );
 	}
 
 

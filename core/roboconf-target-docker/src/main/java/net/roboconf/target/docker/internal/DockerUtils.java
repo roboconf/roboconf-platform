@@ -25,7 +25,14 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +41,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.WordUtils;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -42,13 +50,13 @@ import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import net.roboconf.core.utils.UriUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
@@ -94,22 +102,19 @@ public final class DockerUtils {
 
 		String edpt = targetProperties.get( DockerHandler.ENDPOINT );
 		if( Utils.isEmptyOrWhitespaces( edpt ))
-			edpt = "http://localhost:4243";
+			edpt = "tcp://localhost:4243";
 
 		// The configuration is straight-forward.
-		DockerClientConfigBuilder config =
-				DockerClientConfig.createDefaultConfigBuilder()
-				.withUri( edpt )
-				.withUsername( targetProperties.get( DockerHandler.USER ))
-				.withPassword( targetProperties.get( DockerHandler.PASSWORD ))
-				.withEmail( targetProperties.get( DockerHandler.EMAIL ))
-				.withVersion( targetProperties.get( DockerHandler.VERSION ));
+		Builder config =
+				DefaultDockerClientConfig.createDefaultConfigBuilder()
+				.withDockerHost( edpt )
+				.withRegistryUsername( targetProperties.get( DockerHandler.USER ))
+				.withRegistryPassword( targetProperties.get( DockerHandler.PASSWORD ))
+				.withRegistryEmail( targetProperties.get( DockerHandler.EMAIL ))
+				.withApiVersion( targetProperties.get( DockerHandler.VERSION ));
 
-		// We must force the factory because otherwise, its finding relies on services loaders.
-		// And this Java mechanism does not work in OSGi.
-		DockerClientBuilder clientBuilder = DockerClientBuilder
-				.getInstance( config.build())
-				.withDockerCmdExecFactory( new DockerCmdExecFactoryImpl());
+		// Build the client.
+		DockerClientBuilder clientBuilder = DockerClientBuilder.getInstance( config.build());
 
 		return clientBuilder.build();
 	}
@@ -250,7 +255,9 @@ public final class DockerUtils {
 	 * @throws TargetException
 	 */
 	public static void configureOptions( Map<String,String> options, CreateContainerCmd cmd )
-			throws TargetException {
+	throws TargetException {
+
+		Logger logger = Logger.getLogger( DockerUtils.class.getName());
 
 		// Basically, we had two choices:
 		// 1. Map our properties to the Java REST API.
@@ -260,8 +267,25 @@ public final class DockerUtils {
 		// So, we use Java reflection and some hacks to match Docker properties
 		// with the setter methods available in the API. The API remains in charge
 		// of generating the right JSon objects.
-		Map<String,String> hackedSetterNames = new HashMap<> ();
-		hackedSetterNames.put( "withMemory", "withMemoryLimit" );
+		Map<String,List<String>> hackedSetterNames = new HashMap<> ();
+
+// Remains from Docker-Java 2.x (the mechanism still works)
+//
+//		List<String> list = new ArrayList<> ();
+//		list.add( "withMemoryLimit" );
+//		hackedSetterNames.put( "withMemory", list );
+
+		// List known types
+		List<Class<?>> types = new ArrayList<> ();
+		types.add( String.class );
+		types.add( String[].class );
+		types.add( long.class );
+		types.add( Long.class );
+		types.add( int.class );
+		types.add( Integer.class );
+		types.add( boolean.class );
+		types.add( Boolean.class );
+		types.add( Capability[].class );
 
 		// Deal with the options
 		for( Map.Entry<String,String> entry : options.entrySet()) {
@@ -273,33 +297,42 @@ public final class DockerUtils {
 			methodName = methodName.replace( " ", "" );
 			methodName = "with" + methodName;
 
-			String alternativeName = hackedSetterNames.get( methodName );
-			if( alternativeName != null )
-				methodName = alternativeName;
-
 			Method _m = null;
 			for( Method m : cmd.getClass().getMethods()) {
-				if( methodName.equalsIgnoreCase( m.getName())) {
+
+				boolean sameMethod = methodName.equalsIgnoreCase( m.getName());
+				boolean methodWithAlias = hackedSetterNames.containsKey( methodName )
+						&& hackedSetterNames.get( methodName ).contains( m.getName());
+
+				if( sameMethod || methodWithAlias ) {
+
+					// Only one parameter?
+					if( m.getParameterTypes().length != 1 ) {
+						logger.warning( "A method was found for " + entry.getKey() + " but it does not have the right number of parameters." );
+						continue;
+					}
+
+					// The right type?
+					if( ! types.contains( m.getParameterTypes()[ 0 ])) {
+
+						// Since Docker-java 3.x, there are two methods to set cap-add and cap-drop.
+						// One takes an array as parameter, the other takes a list.
+						logger.warning(
+								"A method was found for " + entry.getKey() + " but it does not have the right parameter type. "
+								+ "Skipping it. You may want to add a feature request." );
+
+						continue;
+					}
+
+					// That's probably the right one.
 					_m = m;
 					break;
 				}
 			}
 
 			// Handle errors
-			List<Class<?>> types = new ArrayList<> ();
-			types.add( String.class );
-			types.add( String[].class );
-			types.add( long.class );
-			types.add( int.class );
-			types.add( boolean.class );
-			types.add( Capability[].class );
-
 			if( _m == null )
 				throw new TargetException( "Nothing matched the " + entry.getKey() + " option in the REST API. Please, report it." );
-			else if( _m.getParameterTypes().length != 1 )
-				throw new TargetException( "No method matched the " + entry.getKey() + " option in the REST API. Please, report it." );
-			else if( ! types.contains( _m.getParameterTypes()[ 0 ]))
-				throw new TargetException( "The " + entry.getKey() + " option is not supported by Roboconf. Please, add a feature request." );
 
 			// Try to set the option in the REST client
 			try {
@@ -324,11 +357,11 @@ public final class DockerUtils {
 
 		// Simple types
 		Object result;
-		if( clazz == int.class )
+		if( clazz == int.class || clazz == Integer.class )
 			result = Integer.parseInt( rawValue );
-		else if( clazz == long.class )
+		else if( clazz == long.class || clazz == Long.class )
 			result = Long.parseLong( rawValue );
-		else if( clazz == boolean.class )
+		else if( clazz == boolean.class || clazz == Boolean.class )
 			result = Boolean.parseBoolean( rawValue );
 
 		// Arrays of string
@@ -486,5 +519,59 @@ public final class DockerUtils {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Handles Boolean values.
+	 * <p>
+	 * Docker-java 3.x annotates state methods with "@CheckNotNull".
+	 * So, we must verify the state attributes are not null (why Boolean instead of boolean?!).
+	 * </p>
+	 *
+	 * @param bool a Boolean value
+	 * @return the boolean value, or <code>false</code> if it was null
+	 */
+	public static  boolean extractBoolean( Boolean bool ) {
+		return bool != null ? bool.booleanValue() : false;
+	}
+
+
+	/**
+	 * Downloads a remote file (supports Maven URLs).
+	 * <p>
+	 * Please, refer to Pax URL's guide for more details about Maven URLs.
+	 * https://ops4j1.jira.com/wiki/display/paxurl/Mvn+Protocol
+	 * </p>
+	 *
+	 * @param url an URL
+	 * @param targetFile the file where it should be saved
+	 * @param mavenResolver the Maven resolver
+	 *
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	public static void downloadRemotePackage( String url, File targetFile, MavenResolver mavenResolver )
+	throws IOException, URISyntaxException {
+
+		if( url.toLowerCase().startsWith( "mvn:" )) {
+			if( mavenResolver == null )
+				throw new IOException( "Maven URLs are only resolved in Karaf at the moment." );
+
+			File sourceFile = mavenResolver.resolve( url );
+			Utils.copyStream( sourceFile, targetFile );
+
+		} else {
+			URL u = UriUtils.urlToUri( url ).toURL();
+			URLConnection uc = u.openConnection();
+			InputStream in = null;
+			try {
+				in = new BufferedInputStream( uc.getInputStream());
+				Utils.copyStream( in, targetFile );
+
+			} finally {
+				Utils.closeQuietly( in );
+			}
+		}
 	}
 }

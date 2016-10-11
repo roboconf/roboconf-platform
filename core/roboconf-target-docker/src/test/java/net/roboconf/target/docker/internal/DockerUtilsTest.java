@@ -25,6 +25,7 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -32,18 +33,27 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
-import net.roboconf.target.api.TargetException;
-
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Capability;
 
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class DockerUtilsTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test( expected = TargetException.class )
 	public void testInvalidConfiguration_noImage_noGeneration() throws Exception {
@@ -137,7 +147,6 @@ public class DockerUtilsTest {
 
 		DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
 		CreateContainerCmd cmd = dockerClient.createContainerCmd( "whatever, we won't execute it" );
-		Assert.assertFalse( cmd.isAttachStdin());
 
 		DockerUtils.configureOptions( options, cmd );
 
@@ -151,9 +160,9 @@ public class DockerUtilsTest {
 				new Capability[] { Capability.AUDIT_CONTROL },
 				cmd.getCapDrop()));
 
-		Assert.assertEquals( 50L, cmd.getMemorySwap());
-		Assert.assertEquals( 1024, cmd.getMemoryLimit());
-		Assert.assertEquals( 2, cmd.getCpuShares());
+		Assert.assertEquals( Long.valueOf( 50L ), cmd.getMemorySwap());
+		Assert.assertEquals( Long.valueOf( 1024L ), cmd.getMemory());
+		Assert.assertEquals( Integer.valueOf( 2 ), cmd.getCpuShares());
 		Assert.assertTrue( Arrays.deepEquals(
 				new String[] { "env1", "env2", "env3" },
 				cmd.getEnv()));
@@ -350,5 +359,43 @@ public class DockerUtilsTest {
 		Assert.assertEquals( "msg.pen=to write the answer", args.get( 1 ));
 		Assert.assertEquals( "start.sh", args.get( 2 ));
 		Assert.assertEquals( "etc/net.roboconf.messaging.bird.cfg", args.get( 3 ));
+	}
+
+
+	@Test
+	public void testExtractBoolean() {
+
+		Assert.assertEquals( true, DockerUtils.extractBoolean( Boolean.TRUE ));
+		Assert.assertEquals( false, DockerUtils.extractBoolean( Boolean.FALSE ));
+		Assert.assertEquals( false, DockerUtils.extractBoolean( null ));
+	}
+
+
+	@Test
+	public void testDownloadRemotePackage() throws Exception {
+
+		// Copy a usual URL
+		File toCopy = this.folder.newFile();
+		Utils.writeStringInto( "this", toCopy );
+
+		File targetFile = this.folder.newFile();
+		DockerUtils.downloadRemotePackage( toCopy.toURI().toString(), targetFile, null );
+		Assert.assertEquals( "this", Utils.readFileContent( targetFile ));
+
+		// Maven resolver
+		MavenResolver mavenResolver = Mockito.mock( MavenResolver.class );
+		Mockito.when( mavenResolver.resolve( Mockito.anyString())).thenReturn( targetFile );
+
+		DockerUtils.downloadRemotePackage( "mvn://something", targetFile, mavenResolver );
+		Mockito.verify( mavenResolver, Mockito.only()).resolve( "mvn://something" );
+
+		// Null resolver
+		try {
+			DockerUtils.downloadRemotePackage( "mvn://something", targetFile, null );
+			Assert.fail( "An exception was expected." );
+
+		} catch( Exception e ) {
+			// nothing
+		}
 	}
 }
