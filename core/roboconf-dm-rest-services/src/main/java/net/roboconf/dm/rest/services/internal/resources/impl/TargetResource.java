@@ -160,7 +160,7 @@ public class TargetResource implements ITargetResource {
 			else {
 				response = Response.ok().build();
 				for( File f : Utils.listAllFiles( dir, Constants.FILE_EXT_PROPERTIES )) {
-					String id = this.manager.targetsMngr().createTarget( f );
+					String id = this.manager.targetsMngr().createTarget( f, null );
 					newTargetIds.add( id );
 				}
 			}

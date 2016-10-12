@@ -266,7 +266,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 				this.logger.fine( "Registering target " + f.getName() + " from component " + entry.getKey() + " in application template " + tpl );
 				String targetId;
 				try {
-					targetId = this.targetsMngr.createTarget( f );
+					targetId = this.targetsMngr.createTarget( f, tpl );
 
 				} catch( IOException e ) {
 					conflictException = e;

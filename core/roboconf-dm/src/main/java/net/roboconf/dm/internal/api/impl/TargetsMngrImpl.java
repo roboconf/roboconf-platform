@@ -38,6 +38,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
@@ -81,9 +82,12 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
  */
 public class TargetsMngrImpl implements ITargetsMngr {
 
+	private static final String TARGET_PROPERTY_CREATED_BY = "created.by";
+
 	private static final String TARGETS_ASSOC_FILE = "associations.properties";
 	private static final String TARGETS_HINTS_FILE = "hints.properties";
 	private static final String TARGETS_USAGE_FILE = "usage.properties";
+	private static final String CREATED_BY = "created.by";
 
 	private static final Object LOCK = new Object();
 
@@ -119,11 +123,28 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( RoboconfErrorHelpers.containsCriticalErrors( tv.getErrors()))
 			throw new IOException( "There are errors in the target definition." );
 
-		// Critical section.
+		// Critical section to insert a target.
 		// Store the ID, it cannot be reused.
 		String targetId = tv.getProperties().getProperty( Constants.TARGET_PROPERTY_ID );
-		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null )
-			throw new IOException( "ID " + targetId + " is already used." );
+		String creator = tv.getProperties().getProperty( TARGET_PROPERTY_CREATED_BY );
+		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null ) {
+
+			// No creator? Then there is a conflict.
+			if( creator == null )
+				throw new IOException( "ID " + targetId + " is already used." );
+
+			// It cannot be reused, unless they were created by the same template.
+			File createdByFile = new File( findTargetDirectory( targetId ), CREATED_BY );
+			String storedCreator = null;
+			if( createdByFile.exists())
+				storedCreator = Utils.readFileContent( createdByFile );
+
+			// If they do not match, throw an exception
+			if( ! Objects.equals( creator, storedCreator ))
+				throw new IOException( "ID " + targetId + " is already used." );
+
+			// Otherwise, we can override the properties
+		}
 
 		// Rewrite the properties without the ID.
 		// We do not want it to be modified later.
@@ -131,20 +152,42 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		// a time stamp, removes user comments and looses the properties order.
 		targetContent = targetContent.replaceAll( Constants.TARGET_PROPERTY_ID + "\\s*(:|=)[^\n]*(\n|$)", "" );
 
+		// For the same reason, we remove the "created.by" property
+		targetContent = targetContent.replaceAll( "\n\n" + Pattern.quote( CREATED_BY ) + "\\s*(:|=)[^\n]*(\n|$)", "" );
+
 		// Write the properties
 		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
 		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( targetContent, targetFile );
+
+		// Write the creator, if any
+		if( creator != null ) {
+			File createdByFile = new File( findTargetDirectory( targetId ), CREATED_BY );
+			Utils.writeStringInto( creator, createdByFile );
+		}
 
 		return targetId;
 	}
 
 
 	@Override
-	public String createTarget( File targetPropertiesFile ) throws IOException {
+	public String createTarget( File targetPropertiesFile, ApplicationTemplate creator ) throws IOException {
 
 		String fileContent = Utils.readFileContent( targetPropertiesFile );
-		return createTarget( fileContent );
+
+		// So that application templates can redefine some targets (when they are redeployed),
+		// we insert a custom property when
+		StringBuilder sb = new StringBuilder( fileContent );
+		if( creator != null ) {
+			sb.append( "\n\n" );
+			sb.append( TargetsMngrImpl.TARGET_PROPERTY_CREATED_BY );
+			sb.append( ": " );
+			sb.append( creator.getName());
+			sb.append( " - " );
+			sb.append( creator.getQualifier());
+		}
+
+		return createTarget( sb.toString());
 	}
 
 
