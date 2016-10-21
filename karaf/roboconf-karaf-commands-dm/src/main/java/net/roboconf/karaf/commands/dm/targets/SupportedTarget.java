@@ -33,7 +33,7 @@ import java.util.List;
  */
 public enum SupportedTarget {
 
-	DOCKER, IN_MEMORY, OPENSTACK, VMWARE, JCLOUDS, EC2, AZURE, EMBEDDED;
+	DOCKER, IN_MEMORY, OCCI, OPENSTACK, VMWARE, JCLOUDS, EC2, AZURE, EMBEDDED;
 
 
 	/**
@@ -146,6 +146,10 @@ public enum SupportedTarget {
 
 		case VMWARE:
 			result.add( "bundle:install --start mvn:net.roboconf/roboconf-target-iaas-vmware/" + roboconfVersion );
+			break;
+
+		case OCCI:
+			result.add( "bundle:install --start mvn:net.roboconf/roboconf-target-iaas-occi/" + roboconfVersion );
 			break;
 		}
 
