@@ -133,7 +133,7 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	throws TargetException {
 
 		boolean result = false;
-
+		//TODO implement method
 		return result;
 	}
 

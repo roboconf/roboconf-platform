@@ -10,5 +10,5 @@
 		<provides />
 	</component>
 	
-	<instance component="roboconf-target-iaas-occi" name="Roboconf Target - OCCI IaaS" />
+	<instance component="roboconf-target-iaas-occi" name="Roboconf Target - OCCI Infrastructure" />
 </ipojo>

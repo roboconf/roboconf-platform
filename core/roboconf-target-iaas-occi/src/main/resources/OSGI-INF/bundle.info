@@ -2,4 +2,4 @@
     This bundle is part of the Roboconf project.
 
 \u001B[1mDESCRIPTION\u001B[0m
-    This bundle defines a Roboconf handler to interact with OCCI.
+    This bundle defines a Roboconf handler to interact with OCCI Infrastructure APIs.

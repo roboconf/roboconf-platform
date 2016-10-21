@@ -25,6 +25,7 @@
 
 package net.roboconf.target.occi.internal;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -34,6 +35,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import net.roboconf.target.api.TargetException;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -50,16 +52,15 @@ public class OcciVMUtils {
 	 * @param summary VM summary
 	 * @return The VM ID
 	 */
-	public static String createVM(String hostIpPort, String id, String template, String title, String summary) {
+	public static String createVM(String hostIpPort, String id, String template, String title, String summary) throws TargetException {
 
 		String ret = null;
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
-			//System.setProperty("http.maxRedirects", "100");
 			url = new URL("http://" + hostIpPort + "/compute/" + id);
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			throw new TargetException(e);
 		}
 
 		if(Utils.isEmptyOrWhitespaces(title)) title = "Roboconf";
@@ -100,22 +101,18 @@ public class OcciVMUtils {
 			}
 
 			in = new DataInputStream(httpURLConnection.getInputStream());
-			byte buf[] = new byte[in.available()];
-			in.readFully(buf);
-			ret = new String(buf);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			Utils.copyStreamSafely(in, out);
+			ret = out.toString();
 
-		} catch (IOException exception) {
-			exception.printStackTrace();
+		} catch (IOException e) {
+			throw new TargetException(e);
 		}  finally {
-
-			if(in != null) {
-				try { in.close(); } catch (IOException e) { /* ignore */ }
-			}
+			Utils.closeQuietly(in);
 			if (httpURLConnection != null) {
 				httpURLConnection.disconnect();
 			}
 		}
-		System.out.println(ret);
 		return ("OK".equalsIgnoreCase(ret.trim()) ? id : null);
 	}
 
@@ -126,15 +123,14 @@ public class OcciVMUtils {
 	 * @param id Unique VM ID
 	 * @return true if deletion OK, false otherwise
 	 */
-	public static boolean deleteVM(String hostIpPort, String id) {
+	public static boolean deleteVM(String hostIpPort, String id) throws TargetException {
 		String ret = null;
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
-			//System.setProperty("http.maxRedirects", "100");
 			url = new URL("http://" + hostIpPort + "/compute/" + id);
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			throw new TargetException(e);
 		}
 
 		HttpURLConnection httpURLConnection = null;
@@ -146,17 +142,14 @@ public class OcciVMUtils {
 			httpURLConnection.setRequestProperty("Accept", "*/*");
 
 			in = new DataInputStream(httpURLConnection.getInputStream());
-			byte buf[] = new byte[in.available()];
-			in.readFully(buf);
-			ret = new String(buf);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			Utils.copyStreamSafely(in, out);
+			ret = out.toString();
 
-		} catch (IOException exception) {
-			exception.printStackTrace();
+		} catch (IOException e) {
+			throw new TargetException(e);
 		}  finally {
-
-			if(in != null) {
-				try { in.close(); } catch (IOException e) { /* ignore */ }
-			}
+			Utils.closeQuietly(in);
 			if (httpURLConnection != null) {
 				httpURLConnection.disconnect();
 			}
@@ -170,13 +163,15 @@ public class OcciVMUtils {
 	 * @param args
 	 * @throws InterruptedException
 	 */
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws Exception {
 		System.out.println("Create VM: " +
-			createVM("172.16.225.91:8080",
+				createVM("81.200.35.151:8080",
+						"6157c4d2-08b3-4204-be85-d1828df74c22", null, "javaTest", "Java Test"));
+			//createVM("172.16.225.91:8080",
 			//createVM("localhost:8888",
-				"6157c4d2-08b3-4204-be85-d1828df74c22", null, "javaTest", "Java Test"));
-		Thread.sleep(40000);
-		System.out.println("Delete VM: " + deleteVM("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
+				//"6157c4d2-08b3-4204-be85-d1828df74c22", "RoboconfAgent180116", "javaTest", "Java Test"));
+		/*Thread.sleep(40000);
+		System.out.println("Delete VM: " + deleteVM("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));*/
 	}
 
 }

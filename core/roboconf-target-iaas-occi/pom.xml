@@ -37,7 +37,7 @@
 	
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-target-iaas-occi</artifactId>
-	<name>Roboconf :: Target :: OCCI IaaS</name>
+	<name>Roboconf :: Target :: OCCI Infrastructure</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>
