@@ -163,7 +163,7 @@ public final class ResourceUtils {
 		for( Component c : ComponentHelpers.findAllComponents( absApp.getGraphs())) {
 
 			// Target?
-			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( c.getInstallerName()))
+			if( ! ComponentHelpers.isTarget( c ))
 				continue;
 
 			// Is there a resources directory?

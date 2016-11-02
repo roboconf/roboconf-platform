@@ -376,7 +376,9 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertTrue( targetPropertiesFile.getParentFile().mkdirs());
 		Utils.writeStringInto( "id: ti\nhandler: h", targetPropertiesFile );
 
-		Mockito.when( this.targetsMngr.createTarget( Mockito.any( File.class ))).thenReturn( "the_id" );
+		Mockito.when( this.targetsMngr.createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id" );
 
 		// Load the template
 		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
@@ -388,7 +390,10 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ));
+
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
 
 		Application app = new Application( tpl );
@@ -414,7 +419,9 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertTrue( targetPropertiesFile.getParentFile().mkdirs());
 		Utils.writeStringInto( "id: ti\nhandler: h", targetPropertiesFile );
 
-		Mockito.when( this.targetsMngr.createTarget( Mockito.any( File.class ))).thenReturn( "the_id" );
+		Mockito.when( this.targetsMngr.createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id" );
 
 		// Load the template
 		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
@@ -426,7 +433,10 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ));
+
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
 
 		Application app = new Application( tpl );
@@ -455,7 +465,9 @@ public class ApplicationTemplateMngrImplTest {
 		for( int i=1; i<=targetCpt; i++ ) {
 			File targetPropertiesFile = new File( dir, "target" + i + ".properties" );
 			Utils.writeStringInto( "id: ti" + i + "\nhandler: h", targetPropertiesFile );
-			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
+			Mockito.when( this.targetsMngr.createTarget(
+					Mockito.eq( targetPropertiesFile ),
+					Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id_" + i );
 		}
 
 		// Load the template
@@ -468,7 +480,10 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt )).createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ));
+
 		for( int i=1; i<=targetCpt; i++ )
 			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_" + i, tpl );
 
@@ -506,12 +521,16 @@ public class ApplicationTemplateMngrImplTest {
 		for( int i=1; i<=targetCpt; i++ ) {
 			File targetPropertiesFile = new File( dir, "target" + i + ".properties" );
 			Utils.writeStringInto( "id: ti" + i + "\nhandler: h", targetPropertiesFile );
-			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
+			Mockito.when( this.targetsMngr.createTarget(
+					Mockito.eq( targetPropertiesFile ),
+					Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id_" + i );
 		}
 
 		File targetPropertiesFile = new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Utils.writeStringInto( "id: ti\nhandler: h", targetPropertiesFile );
-		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id" );
+		Mockito.when( this.targetsMngr.createTarget(
+				Mockito.eq( targetPropertiesFile ),
+				Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id" );
 
 		// Load the template
 		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
@@ -523,7 +542,10 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt + 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt + 1 )).createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ));
+
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
 		for( int i=1; i<=targetCpt; i++ )
 			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_" + i, tpl );
@@ -557,7 +579,9 @@ public class ApplicationTemplateMngrImplTest {
 		// A single target for the original root component
 		File targetPropertiesFile = new File( dir, "test.properties" );
 		Utils.writeStringInto( "id: op\nhandler: h", targetPropertiesFile );
-		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_original" );
+		Mockito.when( this.targetsMngr.createTarget(
+				Mockito.eq( targetPropertiesFile ),
+				Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id_original" );
 
 		// Create a new root component
 		dir = new File( tplDir, "graph/VM-bis" );
@@ -567,7 +591,9 @@ public class ApplicationTemplateMngrImplTest {
 		for( int i=1; i<=targetCpt; i++ ) {
 			targetPropertiesFile = new File( dir, "target" + i + ".properties" );
 			Utils.writeStringInto( "id: ti " + i + "\nhandler: h", targetPropertiesFile );
-			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
+			Mockito.when( this.targetsMngr.createTarget(
+					Mockito.eq( targetPropertiesFile ),
+					Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id_" + i );
 		}
 
 		// Create a sibling file with the wrong extension, it should not be picked up.
@@ -590,7 +616,10 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
-		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt + 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt + 1 )).createTarget(
+				Mockito.any( File.class ),
+				Mockito.any( ApplicationTemplate.class ));
+
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_original", tpl );
 		for( int i=1; i<=targetCpt; i++ )
 			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_" + i, tpl );
@@ -638,7 +667,9 @@ public class ApplicationTemplateMngrImplTest {
 
 		File targetPropertiesFile = new File( dir, "test.properties" );
 		Utils.writeStringInto( "", targetPropertiesFile );
-		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_original" );
+		Mockito.when( this.targetsMngr.createTarget(
+				Mockito.eq( targetPropertiesFile ),
+				Mockito.any( ApplicationTemplate.class ))).thenReturn( "the_id_original" );
 
 		// All the conditions are met to register this target with the root instances.
 		// Throw an exception when we try an association.

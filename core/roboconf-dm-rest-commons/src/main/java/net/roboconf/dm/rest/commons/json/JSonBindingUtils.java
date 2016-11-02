@@ -52,6 +52,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Preference;
@@ -1002,8 +1003,9 @@ public final class JSonBindingUtils {
 			if( component.getName() != null )
 				generator.writeStringField( NAME, component.getName());
 
-			if( component.getInstallerName() != null )
-				generator.writeStringField( COMP_INSTALLER, component.getInstallerName());
+			String installerName = ComponentHelpers.findComponentInstaller( component );
+			if( installerName != null )
+				generator.writeStringField( COMP_INSTALLER, installerName );
 
 			generator.writeEndObject();
 		}

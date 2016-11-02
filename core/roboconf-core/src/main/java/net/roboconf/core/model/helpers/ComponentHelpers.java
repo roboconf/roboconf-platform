@@ -39,7 +39,6 @@ import java.util.TreeSet;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.AbstractType;
-import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
@@ -496,25 +495,6 @@ public final class ComponentHelpers {
 		List<Component> result = new ArrayList<> ();
 		if( app.getGraphs() != null )
 			result.addAll( findAllComponents( app.getGraphs()));
-
-		return result;
-	}
-
-
-	/**
-	 * Finds all the components of an application.
-	 * <p>
-	 * Inheritance cycles are ignored.
-	 * </p>
-	 *
-	 * @param app an application (not null)
-	 * @return a non-null list of components
-	 */
-	public static List<Component> findAllComponents( Application app ) {
-
-		List<Component> result = new ArrayList<> ();
-		if( app.getTemplate() != null )
-			result.addAll( findAllComponents( app.getTemplate()));
 
 		return result;
 	}

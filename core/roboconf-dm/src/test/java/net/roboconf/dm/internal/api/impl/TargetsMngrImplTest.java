@@ -40,6 +40,7 @@ import org.mockito.Mockito;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
@@ -145,14 +146,152 @@ public class TargetsMngrImplTest {
 		File f = this.folder.newFile();
 		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
 
-		String targetId = this.mngr.createTarget( f );
+		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+		Assert.assertFalse( targetDir.exists());
+
+		String targetId = this.mngr.createTarget( f, null );
 		Assert.assertEquals( "tid", targetId );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertEquals( 1, targetDir.listFiles().length);
 
 		String props = this.mngr.findRawTargetProperties( targetId );
 		Assert.assertEquals( "prop: value\nhandler: h", props );
 
 		this.mngr.deleteTarget( targetId );
+		Assert.assertFalse( targetDir.exists());
+
 		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+		Assert.assertFalse( targetDir.exists());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateTargetFromFile_noApplicationTemplate_conflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile();
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, null );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 1, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Recreate it => conflict
+		this.mngr.createTarget( f, null );
+	}
+
+
+	@Test
+	public void testCreateTargetFromFile_withApplicationTemplate_noConflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile();
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, tpl );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 2, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Create it with the same template => no conflict
+		this.mngr.createTarget( f, tpl );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateTargetFromFile_withApplicationTemplate_conflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile();
+		TestApplicationTemplate tpl1 = new TestApplicationTemplate();
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, tpl1 );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 2, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Create it from another template => conflict
+		TestApplicationTemplate tpl2 = new TestApplicationTemplate();
+		tpl2.setName( "whatever" );
+		this.mngr.createTarget( f, tpl2 );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateTargetFromFile_mix_conflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile();
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, null );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 1, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Create it from another template => conflict
+		TestApplicationTemplate tpl2 = new TestApplicationTemplate();
+		this.mngr.createTarget( f, tpl2 );
+	}
+
+
+	@Test
+	public void testCreateTargetFromFileAndApplicationTemplate() throws Exception {
+
+		File f = this.folder.newFile();
+		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+		Assert.assertFalse( targetDir.exists());
+
+		String targetId = this.mngr.createTarget( f, new TestApplicationTemplate());
+		Assert.assertEquals( "tid", targetId );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertEquals( 2, targetDir.listFiles().length);
+
+		String props = this.mngr.findRawTargetProperties( targetId );
+		Assert.assertEquals( "prop: value\nhandler: h", props );
+
+		this.mngr.deleteTarget( targetId );
+		Assert.assertFalse( targetDir.exists());
+
+		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+		Assert.assertFalse( targetDir.exists());
 	}
 
 
@@ -812,6 +951,47 @@ public class TargetsMngrImplTest {
 		// We can override the association
 		this.mngr.associateTargetWith( t2, app, instancePath );
 		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath ));
+	}
+
+
+	@Test
+	public void testCopyOriginalMapping_withComponents() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		String t1 = this.mngr.createTarget( "prop: ok\nid: t1\nhandler: h" );
+		String t2 = this.mngr.createTarget( "prop: ok\nid: t2\nhandler: h" );
+
+		// Association is on the template and BY DEFAULT
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
+		this.mngr.associateTargetWith( t1, app.getTemplate(), null );
+
+		Assert.assertNull( this.mngr.findTargetId( app.getTemplate(), instancePath, true ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app.getTemplate(), instancePath, false ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, false ));
+
+		this.mngr.associateTargetWith( t2, app.getTemplate(), "@" + app.getMySqlVm().getComponent().getName());
+
+		Assert.assertNull( this.mngr.findTargetId( app.getTemplate(), instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app.getTemplate(), instancePath, false ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, false ));
+
+		// Copy the mapping
+		this.mngr.copyOriginalMapping( app );
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, false ));
+
+		// Remove the component association
+		this.mngr.dissociateTargetFrom( app, "@" + app.getMySqlVm().getComponent().getName());
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app, instancePath, false ));
+
+		// We can override the association
+		this.mngr.associateTargetWith( t2, app, instancePath );
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, false ));
 	}
 
 

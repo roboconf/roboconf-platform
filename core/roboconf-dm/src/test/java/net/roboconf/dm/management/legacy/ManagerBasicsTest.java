@@ -434,7 +434,8 @@ public class ManagerBasicsTest {
 		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
 
-		// Update the source directory (change the application name, but keep the target properties)
+		// Update the source directory (change the application name, but keep the target properties).
+		// So, we have two templates that share a same target properties => conflict.
 		File f = new File( directory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
 		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
 		desc.setName( "abcdefghijklmnopqrstuvwxyz" );
@@ -451,6 +452,65 @@ public class ManagerBasicsTest {
 
 		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+	}
+
+
+	@Test
+	public void testLoadNewApplication_deleteIt_redeployIt_success() throws Exception {
+
+		// Copy an application and add it a target.properties
+		File firstDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( firstDirectory.exists());
+
+		File directory = this.folder.newFolder();
+		Utils.copyDirectory( firstDirectory, directory );
+
+		File targetDir = new File( directory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( targetDir.mkdir());
+
+		String content = "id = test-target\nhandler: whatever";
+		Utils.writeStringInto( content, new File( targetDir, "target.properties" ));
+
+		// Deploy the template
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
+		Assert.assertNotNull( tpl );
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Undeploy it
+		this.manager.applicationTemplateMngr().deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Update a little bit the target properties
+		content = "id = test-target\nhandler: whatever2";
+		Utils.writeStringInto( content, new File( targetDir, "target.properties" ));
+
+		// Deploy it again.
+		// We should not have any conflict related to the target.
+		tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
+		Assert.assertNotNull( tpl );
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Undeploy it, again
+		this.manager.applicationTemplateMngr().deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Change the target ID
+		content = "id = test-other-target\nhandler: whatever2";
+		Utils.writeStringInto( content, new File( targetDir, "target.properties" ));
+
+		// Deploy it again.
+		// We should not have any conflict (different targt ID).
+		tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
+		Assert.assertNotNull( tpl );
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 2, this.manager.targetsMngr().listAllTargets().size());
 	}
 
 

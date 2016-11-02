@@ -32,6 +32,7 @@ import java.util.Map;
 
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
@@ -57,10 +58,11 @@ public interface ITargetsMngr {
 	/**
 	 * Creates a new target.
 	 * @param targetPropertiesFile a target.properties file
+	 * @param the application template that loads this target (can be null)
 	 * @return the ID of the newly created target
 	 * @throws IOException if something went wrong
 	 */
-	String createTarget( File targetPropertiesFile ) throws IOException;
+	String createTarget( File targetPropertiesFile, ApplicationTemplate creator ) throws IOException;
 
 	/**
 	 * Updates an existing target.

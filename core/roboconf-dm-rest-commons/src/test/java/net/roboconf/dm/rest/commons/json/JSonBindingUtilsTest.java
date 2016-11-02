@@ -511,6 +511,24 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testComponentBinding_3() throws Exception {
+
+		Component c1 = new Component( "component 1" ).installerName( "target" );
+		Component c2 = new Component( "component 2" );
+		c2.extendComponent( c1 );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, c1 );
+		Assert.assertEquals( "{\"name\":\"component 1\",\"installer\":\"target\"}", writer.toString());
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, c2 );
+		Assert.assertEquals( "{\"name\":\"component 2\",\"installer\":\"target\"}", writer.toString());
+	}
+
+
+	@Test
 	public void testInstanceBinding_1() throws Exception {
 
 		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\"}";

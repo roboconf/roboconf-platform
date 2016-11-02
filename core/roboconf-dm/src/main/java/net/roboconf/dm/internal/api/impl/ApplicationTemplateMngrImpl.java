@@ -76,10 +76,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 	// Loading a new application template involves several other APIs.
 	// To prevent conflicts when several clients load templates, we use a lock.
-	// We also store the created target IDs when we install a new template, just in case we would
-	// have to revert / unregister them.
 	private static final Object INSTALL_LOCK = new Object();
-	final Set<String> currenTplTargets = new HashSet<> ();
 
 
 	/**
@@ -130,7 +127,6 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 		// This is a critical section.
 		synchronized( INSTALL_LOCK ) {
-			this.currenTplTargets.clear();
 
 			// Load the template
 			this.logger.info( "Loading an application template from " + applicationFilesDirectory + "..." );
@@ -270,7 +266,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 				this.logger.fine( "Registering target " + f.getName() + " from component " + entry.getKey() + " in application template " + tpl );
 				String targetId;
 				try {
-					targetId = this.targetsMngr.createTarget( f );
+					targetId = this.targetsMngr.createTarget( f, tpl );
 
 				} catch( IOException e ) {
 					conflictException = e;
