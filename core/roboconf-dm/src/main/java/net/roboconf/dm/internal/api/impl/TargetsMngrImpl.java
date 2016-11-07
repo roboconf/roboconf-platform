@@ -87,7 +87,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	private static final String TARGETS_ASSOC_FILE = "associations.properties";
 	private static final String TARGETS_HINTS_FILE = "hints.properties";
 	private static final String TARGETS_USAGE_FILE = "usage.properties";
-	private static final String CREATED_BY = "created.by";
+	private static final String CREATED_BY = "created.from";
 
 	private static final Object LOCK = new Object();
 

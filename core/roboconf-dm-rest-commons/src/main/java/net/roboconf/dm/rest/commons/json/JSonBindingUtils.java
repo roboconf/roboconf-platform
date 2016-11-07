@@ -27,8 +27,10 @@ package net.roboconf.dm.rest.commons.json;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -55,6 +57,8 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.model.runtime.ApplicationBindings;
+import net.roboconf.core.model.runtime.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetAssociation;
@@ -72,10 +76,11 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 public final class JSonBindingUtils {
 
 	// We use global maps to verify some little things in tests.
-	public static final Map<Class<?>,? super JsonSerializer<?>> SERIALIZERS = new HashMap<> ();
-	public static final Map<Class<?>,? super JsonDeserializer<?>> DESERIALIZERS = new HashMap<> ();
+	static final Map<Class<?>,JsonSerializer<?>> SERIALIZERS = new HashMap<> ();
+	static final Map<Class<?>,JsonDeserializer<?>> DESERIALIZERS = new HashMap<> ();
 
 	static {
+		// Read - Write
 		SERIALIZERS.put( Instance.class, new InstanceSerializer());
 		DESERIALIZERS.put( Instance.class, new InstanceDeserializer());
 
@@ -106,10 +111,20 @@ public final class JSonBindingUtils {
 		SERIALIZERS.put( ScheduledJob.class, new ScheduledJobSerializer());
 		DESERIALIZERS.put( ScheduledJob.class, new ScheduledJobDeserializer());
 
+		// Write ONLY
 		SERIALIZERS.put( MappedCollectionWrapper.class, new MappedCollectionWrapperSerializer());
 		SERIALIZERS.put( TargetUsageItem.class, new TargetUsageItemSerializer());
 		SERIALIZERS.put( TargetAssociation.class, new TargetAssociationSerializer());
 		SERIALIZERS.put( Preference.class, new PreferenceSerializer());
+		SERIALIZERS.put( ApplicationBindings.class, new ApplicationBindingsSerializer());
+	}
+
+
+	/**
+	 * @return the serializers as an unmodifiable map
+	 */
+	public static Map<Class<?>,? super JsonSerializer<?>> getSerializers() {
+		return Collections.unmodifiableMap( SERIALIZERS );
 	}
 
 
@@ -752,6 +767,37 @@ public final class JSonBindingUtils {
 				info.setResolved( Boolean.valueOf( n.textValue()));
 
 			return info;
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for application bindings.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ApplicationBindingsSerializer extends JsonSerializer<ApplicationBindings> {
+
+		@Override
+		public void serialize(
+				ApplicationBindings bindings,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			for( Map.Entry<String,List<ApplicationBindingItem>> entry : bindings.prefixToItems.entrySet()) {
+				generator.writeArrayFieldStart( entry.getKey());
+
+				for( ApplicationBindingItem item : entry.getValue()) {
+					generator.writeStartObject();
+					generator.writeBooleanField( item.getApplicationName(), item.isBound());
+					generator.writeEndObject();
+				}
+
+				generator.writeEndArray();
+			}
+
+			generator.writeEndObject();
 		}
 	}
 

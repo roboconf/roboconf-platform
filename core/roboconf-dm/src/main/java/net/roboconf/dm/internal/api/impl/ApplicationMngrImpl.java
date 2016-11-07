@@ -100,6 +100,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 			IMessagingMngr messagingMngr,
 			IRandomMngr randomMngr,
 			IAutonomicMngr autonomicMngr ) {
+
 		this.nameToManagedApplication = new ConcurrentHashMap<> ();
 
 		this.notificationMngr = notificationMngr;

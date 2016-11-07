@@ -23,40 +23,52 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.swagger;
+package net.roboconf.core.model.runtime;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-import net.roboconf.dm.rest.commons.json.MapWrapper;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
-import net.roboconf.dm.rest.commons.json.StringWrapper;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
+ * A "bean" that wraps all the information related to application bindings.
  * @author Vincent Zurczak - Linagora
  */
-public class UpdateSwaggerJsonTest {
+public class ApplicationBindings {
 
-	@Test
-	public void verifyProcessedClasses() throws Exception {
+	public final Map<String,List<ApplicationBindingItem>> prefixToItems = new TreeMap<> ();
 
-		UpdateSwaggerJson updater = new UpdateSwaggerJson();
-		updater.prepareNewDefinitions();
 
-		Set<Class<?>> classes = new HashSet<> ();
-		classes.addAll( JSonBindingUtils.getSerializers().keySet());
-		classes.removeAll( updater.processedClasses );
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ApplicationBindingItem {
 
-		// These classes are used within other ones.
-		// No need to add them directly in the swagger.json file.
-		classes.removeAll( Arrays.asList( StringWrapper.class, MapWrapper.class, MappedCollectionWrapper.class ));
+		private final String applicationName;
+		private final boolean bound;
 
-		Assert.assertEquals( Collections.emptySet(), classes );
+
+		/**
+		 * Constructor.
+		 * @param applicationName
+		 * @param bound
+		 */
+		public ApplicationBindingItem( String applicationName, boolean bound ) {
+			this.applicationName = applicationName;
+			this.bound = bound;
+		}
+
+		/**
+		 * @return the applicationName
+		 */
+		public String getApplicationName() {
+			return this.applicationName;
+		}
+
+		/**
+		 * @return the bound
+		 */
+		public boolean isBound() {
+			return this.bound;
+		}
 	}
 }

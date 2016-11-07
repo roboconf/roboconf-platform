@@ -49,6 +49,8 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.ApplicationBindings;
+import net.roboconf.core.model.runtime.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
@@ -247,6 +249,44 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationBindingsBinding() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		// Empty object
+		ApplicationBindings bindings = new ApplicationBindings();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals( "{}", writer.toString());
+
+		// Single key
+		List<ApplicationBindingItem> list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app1", true ));
+		bindings.prefixToItems.put( "prefix1", list );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals( "{\"prefix1\":[{\"app1\":true}]}", writer.toString());
+
+		// Complex object
+		list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app2", false ));
+		list.add( new ApplicationBindingItem( "app3", true ));
+		bindings.prefixToItems.put( "prefix2", list );
+
+		list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app4", false ));
+		bindings.prefixToItems.put( "prefix0", list );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals(
+				"{\"prefix0\":[{\"app4\":false}],\"prefix1\":[{\"app1\":true}],\"prefix2\":[{\"app2\":false},{\"app3\":true}]}",
+				writer.toString());
 	}
 
 

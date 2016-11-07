@@ -29,9 +29,7 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -49,6 +47,8 @@ import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.model.runtime.ApplicationBindings;
+import net.roboconf.core.model.runtime.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.management.ManagedApplication;
@@ -56,7 +56,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.target.api.TargetException;
@@ -324,21 +323,37 @@ public class ApplicationResource implements IApplicationResource {
 			response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 		} else {
+			ApplicationBindings bindings = new ApplicationBindings();
+
 			// Find all the external prefixes to resolve
-			Map<String,Set<String>> map = new HashMap<> ();
 			for( Component c : ComponentHelpers.findAllComponents( ma.getApplication())) {
 				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( c ).values()) {
 					if( ! var.isExternal())
 						continue;
 
 					String prefix = VariableHelpers.parseVariableName( var.getName()).getKey();
-					map.put( prefix, null );
+					bindings.prefixToItems.put( prefix, new ArrayList<ApplicationBindingItem> ());
 				}
 			}
 
-			// Override with the effective bindings
-			map.putAll( ma.getApplication().getApplicationBindings());
-			response = Response.ok().entity( new MappedCollectionWrapper( map )).build();
+			// Find all the applications that match a given prefix
+			for( ManagedApplication managedApp : this.manager.applicationMngr().getManagedApplications()) {
+
+				// Any potential bindings with this application?
+				// There should be AT MOST 1 matching template for a given prefix.
+				// One template means there can be several applications.
+				String prefix = managedApp.getApplication().getTemplate().getExternalExportsPrefix();
+				if( prefix == null || ! bindings.prefixToItems.containsKey( prefix ))
+					continue;
+
+				// There is a potential match. Is there an effective bound?
+				Set<String> boundApps = ma.getApplication().getApplicationBindings().get( prefix );
+				boolean bound = boundApps != null && boundApps.contains( managedApp.getName());
+				ApplicationBindingItem item = new ApplicationBindingItem( managedApp.getName(), bound );
+				bindings.prefixToItems.get( prefix ).add( item );
+			}
+
+			response = Response.ok().entity( bindings ).build();
 		}
 
 		return response;

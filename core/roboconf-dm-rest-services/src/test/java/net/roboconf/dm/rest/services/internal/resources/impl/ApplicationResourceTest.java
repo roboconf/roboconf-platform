@@ -30,7 +30,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -55,12 +56,13 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.ApplicationBindings;
+import net.roboconf.core.model.runtime.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
@@ -961,7 +963,7 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void testBindApplication_iinexistingApplication() throws Exception {
+	public void testBindApplication_inexistingApplication() throws Exception {
 
 		Response resp = this.resource.bindApplication( "invalid", this.ma.getApplication().getTemplate().getName(), this.ma.getName());
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
@@ -1041,7 +1043,7 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void testGetApplicationBindings_success() throws Exception {
+	public void testGetApplicationBindings_success_noExternalImports() throws Exception {
 
 		this.app.bindWithApplication( "some", "value" );
 		this.app.bindWithApplication( "another", "value" );
@@ -1049,30 +1051,73 @@ public class ApplicationResourceTest {
 		Response resp = this.resource.getApplicationBindings( this.app.getName());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
-		MappedCollectionWrapper wrapper = (MappedCollectionWrapper) resp.getEntity();
-		Assert.assertEquals( 2, wrapper.getMap().size());
-		Assert.assertEquals( new HashSet<>( Arrays.asList( "value" )), wrapper.getMap().get( "some" ));
-		Assert.assertEquals( new HashSet<>( Arrays.asList( "value" )), wrapper.getMap().get( "another" ));
+		ApplicationBindings bindings = (ApplicationBindings) resp.getEntity();
+		Assert.assertEquals( 0, bindings.prefixToItems.size());
 	}
 
 
 	@Test
-	public void testGetApplicationBindings_success_withUnresolvedMapping() throws Exception {
+	public void testGetApplicationBindings_success_withExternalImports() throws Exception {
 
-		// This is to verify application bindings are picked up from application bindings only
-		// and not deduced or completed by graph imports.
-		ImportedVariable var = new ImportedVariable( "ext.ip", false, true );
-		this.app.getWar().getComponent().importedVariables.put( var.getName(), var );
-		this.app.bindWithApplication( "some", "value" );
+		// Add external imports
+		ImportedVariable newVar = new ImportedVariable( "prefix1.ip", false, true );
+		this.app.getWar().getComponent().importedVariables.put( newVar.getName(), newVar );
 
+		newVar = new ImportedVariable( "prefix2.something", false, true );
+		this.app.getWar().getComponent().importedVariables.put( newVar.getName(), newVar );
+
+		newVar = new ImportedVariable( "prefix3.else", false, true );
+		this.app.getWar().getComponent().importedVariables.put( newVar.getName(), newVar );
+
+		// Create some fake applications
+		Map<String,String> nameToExternalExportPrefix = new LinkedHashMap<>( 4 );
+		nameToExternalExportPrefix.put( "app1", "prefix1" );
+		nameToExternalExportPrefix.put( "this_app", "prefix2" );
+		nameToExternalExportPrefix.put( "app2", "prefix1" );
+		nameToExternalExportPrefix.put( "app", null );
+
+		for( Map.Entry<String,String> entry : nameToExternalExportPrefix.entrySet()) {
+
+			// Register
+			TestApplication ta = new TestApplication();
+			ta.setName( entry.getKey());
+			ta.getTemplate().setExternalExportsPrefix( entry.getValue());
+			this.managerWrapper.getNameToManagedApplication().put( ta.getName(), new ManagedApplication( ta ));
+
+			// Bind
+			if( entry.getValue() != null )
+				this.app.bindWithApplication( entry.getValue(), ta.getName());
+		}
+
+		// Add an invalid binding.
+		// It should not be listed farther.
+		this.app.bindWithApplication( "invalid", "app" );
+
+		// Verify the bindings
 		Response resp = this.resource.getApplicationBindings( this.app.getName());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
-		MappedCollectionWrapper wrapper = (MappedCollectionWrapper) resp.getEntity();
-		Assert.assertEquals( 2, wrapper.getMap().size());
-		Assert.assertEquals( new HashSet<>( Arrays.asList( "value" )), wrapper.getMap().get( "some" ));
-		Assert.assertNull( wrapper.getMap().get( "ext" ));
-		Assert.assertTrue( wrapper.getMap().containsKey( "ext" ));
+		ApplicationBindings bindings = (ApplicationBindings) resp.getEntity();
+		Assert.assertEquals( 3, bindings.prefixToItems.size());
+
+		List<ApplicationBindingItem> items = bindings.prefixToItems.get( "prefix1" );
+		Assert.assertEquals( 2, items.size());
+		Assert.assertTrue( items.get( 0 ).isBound());
+		Assert.assertTrue( items.get( 1 ).isBound());
+
+		List<String> boundAppNames = new ArrayList<> ();
+		boundAppNames.add( items.get( 0 ).getApplicationName());
+		boundAppNames.add( items.get( 1 ).getApplicationName());
+		Collections.sort( boundAppNames );
+		Assert.assertEquals( Arrays.asList( "app1", "app2" ), boundAppNames );
+
+		items = bindings.prefixToItems.get( "prefix2" );
+		Assert.assertEquals( 1, items.size());
+		Assert.assertTrue( items.get( 0 ).isBound());
+		Assert.assertEquals( "this_app", items.get( 0 ).getApplicationName());
+
+		items = bindings.prefixToItems.get( "prefix3" );
+		Assert.assertEquals( 0, items.size());
 	}
 
 
