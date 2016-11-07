@@ -41,8 +41,8 @@ import javax.ws.rs.core.Response;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.dm.rest.commons.UrlConstants;
+import net.roboconf.dm.rest.commons.beans.TargetAssociation;
 
 /**
  * The REST API to manipulate instances on the DM.

@@ -23,46 +23,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.swagger;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
-import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-import net.roboconf.dm.rest.commons.json.MapWrapper;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
-import net.roboconf.dm.rest.commons.json.StringWrapper;
-
 /**
+ * A package with beans which are only used in the REST API.
+ * <p>
+ * They are used as a means to build specific JSon messages.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public class UpdateSwaggerJsonTest {
-
-	@Test
-	public void verifyProcessedClasses() throws Exception {
-
-		UpdateSwaggerJson updater = new UpdateSwaggerJson();
-		updater.prepareNewDefinitions();
-
-		Set<Class<?>> classes = new HashSet<> ();
-		classes.addAll( JSonBindingUtils.getSerializers().keySet());
-		classes.removeAll( updater.processedClasses );
-
-		// These classes are used within other ones.
-		// No need to add them directly in the swagger.json file.
-		classes.removeAll( Arrays.asList(
-				StringWrapper.class,
-				MapWrapper.class,
-				MappedCollectionWrapper.class,
-				ApplicationBindings.class
-		));
-
-		Assert.assertEquals( Collections.emptySet(), classes );
-	}
-}
+package net.roboconf.dm.rest.commons.beans;

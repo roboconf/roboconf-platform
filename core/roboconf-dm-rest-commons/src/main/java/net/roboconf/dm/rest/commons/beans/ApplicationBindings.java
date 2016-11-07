@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime;
+package net.roboconf.dm.rest.commons.beans;
 
 import java.util.List;
 import java.util.Map;
