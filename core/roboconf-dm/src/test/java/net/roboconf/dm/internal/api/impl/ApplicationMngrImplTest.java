@@ -419,7 +419,7 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
 
-		this.mngr.bindApplication( ma, ma.getApplication().getTemplate().getName(), "invalid" );
+		this.mngr.bindOrUnbindApplication( ma, ma.getApplication().getTemplate().getName(), "invalid", true );
 	}
 
 
@@ -440,7 +440,7 @@ public class ApplicationMngrImplTest {
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
 		// ma1 and ma2 do not have the same template name
-		this.mngr.bindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName());
+		this.mngr.bindOrUnbindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName(), true );
 	}
 
 
@@ -461,7 +461,7 @@ public class ApplicationMngrImplTest {
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
 		// ma1 and ma2 do not have the same template name
-		this.mngr.bindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName());
+		this.mngr.bindOrUnbindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName(), true );
 	}
 
 
@@ -494,7 +494,7 @@ public class ApplicationMngrImplTest {
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
 
 		Mockito.verifyZeroInteractions( this.messagingMngr );
-		this.mngr.bindApplication( ma1, eep, ma2.getName());
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), true );
 
 		Assert.assertEquals( 1, ma1.getApplication().getApplicationBindings().size());
 		Assert.assertTrue( ma1.getApplication().getApplicationBindings().get( eep ).contains( ma2.getName()));
@@ -522,5 +522,108 @@ public class ApplicationMngrImplTest {
 		List<Instance> instances = arg1.getAllValues();
 		Assert.assertTrue( instances.contains( app1.getMySqlVm()));
 		Assert.assertTrue( instances.contains( app1.getTomcatVm()));
+	}
+
+
+	@Test
+	public void testUnbindApplication_success_withNotification() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		TestApplication app2 = new TestApplication();
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.getTemplate().setExternalExportsPrefix( "prefix2" );
+		app2.setName( "app-other" );
+
+		// Rename root instances in the second application.
+		// This is to make sure messages are sent to the right instances in the right application.
+		app2.getMySqlVm().setName( "other-mysql" );
+		app2.getTomcatVm().setName( "other-tomcat" );
+
+		app2.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app2 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), true );
+		Assert.assertEquals( 1, ma1.getApplication().getApplicationBindings().size());
+		Assert.assertTrue( ma1.getApplication().getApplicationBindings().get( eep ).contains( ma2.getName()));
+
+		Mockito.reset( this.messagingMngr );
+
+		// Unbind
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), false );
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+
+		// Verify sent messages
+		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
+		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
+		ArgumentCaptor<Message> arg2 = ArgumentCaptor.forClass( Message.class );
+		Mockito.verify( this.messagingMngr, Mockito.times( 2 )).sendMessageSafely( arg0.capture(), arg1.capture(), arg2.capture());
+
+		for( ManagedApplication s : arg0.getAllValues()) {
+			Assert.assertEquals( ma1, s );
+		}
+
+		for( Message m : arg2.getAllValues()) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNull( msg.getAppNames());
+		}
+
+		// Messages must be sent to ma1!
+		List<Instance> instances = arg1.getAllValues();
+		Assert.assertTrue( instances.contains( app1.getMySqlVm()));
+		Assert.assertTrue( instances.contains( app1.getTomcatVm()));
+	}
+
+
+	@Test
+	public void testUnbindApplication_success_withoutNotification() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		TestApplication app2 = new TestApplication();
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.getTemplate().setExternalExportsPrefix( "prefix2" );
+		app2.setName( "app-other" );
+
+		// Rename root instances in the second application.
+		// This is to make sure messages are sent to the right instances in the right application.
+		app2.getMySqlVm().setName( "other-mysql" );
+		app2.getTomcatVm().setName( "other-tomcat" );
+
+		app2.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app2 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
+		// Unbind an application that is not bound
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), false );
+
+		// Nothing changed
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+
+		// No message should have been sent when we tried to unbind
+		Mockito.verifyZeroInteractions( this.messagingMngr );
 	}
 }

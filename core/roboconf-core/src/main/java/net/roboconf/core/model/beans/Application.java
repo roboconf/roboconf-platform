@@ -160,22 +160,26 @@ public class Application extends AbstractApplication implements Serializable {
 
 
 	/**
-	 * Binds an external export prefix with an application name.
+	 * Unbinds an external export prefix from an application name.
 	 * <p>
-	 * No error is thrown if the bound already existed.
+	 * No error is thrown if the bound did not exist.
 	 * </p>
 	 *
 	 * @param externalExportPrefix an external export prefix (not null)
 	 * @param applicationName an application name (not null)
+	 * @return true if bindings were modified, false if no binding existed
 	 */
-	public void unbindFromApplication( String externalExportPrefix, String applicationName ) {
+	public boolean unbindFromApplication( String externalExportPrefix, String applicationName ) {
 
+		boolean result = false;
 		Set<String> bounds = this.applicationBindings.get( externalExportPrefix );
 		if( bounds != null ) {
-			bounds.remove( applicationName );
+			result = bounds.remove( applicationName );
 			if( bounds.isEmpty())
 				this.applicationBindings.remove( externalExportPrefix );
 		}
+
+		return result;
 	}
 
 

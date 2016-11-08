@@ -979,6 +979,14 @@ public class ApplicationResourceTest {
 
 
 	@Test
+	public void testUnbindApplication_inexistingApplication() throws Exception {
+
+		Response resp = this.resource.unbindApplication( "invalid", this.ma.getApplication().getTemplate().getName(), this.ma.getName());
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
 	public void testBindApplication_invalidBoundTemplate() throws Exception {
 
 		TestApplication app2 = new TestApplication();
@@ -996,7 +1004,24 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void testBindApplication_success() throws Exception {
+	public void testUnbindApplication_invalidBoundTemplate() throws Exception {
+
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// ma and app2 do not have the same template name
+		Response resp = this.resource.unbindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), app2.getName());
+		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+	}
+
+
+	@Test
+	public void testBindAndUnbindApplication_success() throws Exception {
 
 		// Create a second application with a different template
 		TestApplication app2 = new TestApplication();
@@ -1030,6 +1055,24 @@ public class ApplicationResourceTest {
 			Assert.assertNotNull( msg.getAppNames());
 			Assert.assertEquals( 1, msg.getAppNames().size());
 			Assert.assertTrue( msg.getAppNames().contains( app2.getName()));
+		}
+
+		// Unbind
+		resp = this.resource.unbindApplication( this.ma.getName(), app2.getTemplate().getExternalExportsPrefix(), app2.getName());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+
+		messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
+		Assert.assertEquals( 1, messages.size());
+		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
+		Assert.assertEquals( 2, messages.size());
+
+		for( Message m : this.msgClient.allSentMessages ) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNull( msg.getAppNames());
 		}
 	}
 
@@ -1110,6 +1153,35 @@ public class ApplicationResourceTest {
 		boundAppNames.add( items.get( 1 ).getApplicationName());
 		Collections.sort( boundAppNames );
 		Assert.assertEquals( Arrays.asList( "app1", "app2" ), boundAppNames );
+
+		items = bindings.prefixToItems.get( "prefix2" );
+		Assert.assertEquals( 1, items.size());
+		Assert.assertTrue( items.get( 0 ).isBound());
+		Assert.assertEquals( "this_app", items.get( 0 ).getApplicationName());
+
+		items = bindings.prefixToItems.get( "prefix3" );
+		Assert.assertEquals( 0, items.size());
+
+		// Unbind
+		Assert.assertTrue( this.app.unbindFromApplication( "prefix1", "app2" ));
+		resp = this.resource.getApplicationBindings( this.app.getName());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		bindings = (ApplicationBindings) resp.getEntity();
+		Assert.assertEquals( 3, bindings.prefixToItems.size());
+
+		items = bindings.prefixToItems.get( "prefix1" );
+		Assert.assertEquals( 2, items.size());
+
+		if( "app1".equals( items.get( 1 ).getApplicationName())) {
+			ApplicationBindingItem itemToMove = items.remove( 1 );
+			items.add( 0, itemToMove );
+		}
+
+		Assert.assertEquals( "app1", items.get( 0 ).getApplicationName());
+		Assert.assertTrue( items.get( 0 ).isBound());
+		Assert.assertEquals( "app2", items.get( 1 ).getApplicationName());
+		Assert.assertFalse( items.get( 1 ).isBound());
 
 		items = bindings.prefixToItems.get( "prefix2" );
 		Assert.assertEquals( 1, items.size());

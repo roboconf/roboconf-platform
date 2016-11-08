@@ -197,7 +197,7 @@ public interface IApplicationResource {
 	 * Binds an application for external exports.
 	 * @param applicationName the application name
 	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
-	 * @param boundApp the name of the application (instance of <code>tplName</code>)
+	 * @param boundApp the name of the application (instance of <code>boundTplName</code>)
 	 * @return a response
 	 *
 	 * @HTTP 200 Everything went fine.
@@ -207,6 +207,24 @@ public interface IApplicationResource {
 	@POST
 	@Path( "/bind" )
 	Response bindApplication(
+			@PathParam("name") String applicationName,
+			@QueryParam("bound-tpl") String boundTplName,
+			@QueryParam("bound-app") String boundApp );
+
+
+	/**
+	 * Unbinds an application for external exports.
+	 * @param applicationName the application name
+	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
+	 * @param boundApp the name of the application (instance of <code>boundTplName</code>)
+	 * @return a response
+	 *
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 */
+	@POST
+	@Path( "/unbind" )
+	Response unbindApplication(
 			@PathParam("name") String applicationName,
 			@QueryParam("bound-tpl") String boundTplName,
 			@QueryParam("bound-app") String boundApp );

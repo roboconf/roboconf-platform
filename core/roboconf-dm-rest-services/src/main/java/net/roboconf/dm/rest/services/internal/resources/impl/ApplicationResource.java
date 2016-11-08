@@ -297,7 +297,34 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			} else {
-				this.manager.applicationMngr().bindApplication( ma, boundTplName, boundApp );
+				this.manager.applicationMngr().bindOrUnbindApplication( ma, boundTplName, boundApp, true );
+				response = Response.ok().build();
+			}
+
+		} catch( UnauthorizedActionException | IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #unbindApplication(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response unbindApplication( String applicationName, String boundTplName, String boundApp ) {
+
+		Response response;
+		try {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else {
+				this.manager.applicationMngr().bindOrUnbindApplication( ma, boundTplName, boundApp, false );
 				response = Response.ok().build();
 			}
 

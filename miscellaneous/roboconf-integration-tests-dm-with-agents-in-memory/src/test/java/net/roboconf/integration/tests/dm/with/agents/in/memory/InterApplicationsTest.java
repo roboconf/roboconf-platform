@@ -152,7 +152,12 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 	 * @throws Exception
 	 */
 	private void bind() throws Exception {
-		this.manager.applicationMngr().bindApplication( this.importing, this.tplExporting.getExternalExportsPrefix(), this.exporting.getName());
+
+		this.manager.applicationMngr().bindOrUnbindApplication(
+				this.importing,
+				this.tplExporting.getExternalExportsPrefix(),
+				this.exporting.getName(),
+				true );
 	}
 
 

@@ -206,21 +206,23 @@ public class ApplicationTest {
 		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "p1", "app1" );
+		Assert.assertTrue( app.unbindFromApplication( "p1", "app1" ));
 		Assert.assertEquals( 2, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
 		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "p1", "app2" );
+		Assert.assertFalse( app.unbindFromApplication( "p1", "app1" ));
+
+		Assert.assertTrue( app.unbindFromApplication( "p1", "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "inexisting", "app2" );
+		Assert.assertFalse( app.unbindFromApplication( "inexisting", "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "p2", "inexisting" );
+		Assert.assertFalse( app.unbindFromApplication( "p2", "inexisting" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 	}
