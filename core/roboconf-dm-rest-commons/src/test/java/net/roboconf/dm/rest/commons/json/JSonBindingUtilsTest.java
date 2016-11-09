@@ -270,7 +270,7 @@ public class JSonBindingUtilsTest {
 
 		writer = new StringWriter();
 		mapper.writeValue( writer, bindings );
-		Assert.assertEquals( "{\"prefix1\":[{\"app1\":true}]}", writer.toString());
+		Assert.assertEquals( "{\"prefix1\":[{\"name\":\"app1\",\"bound\":true}]}", writer.toString());
 
 		// Complex object
 		list = new ArrayList<> ();
@@ -285,7 +285,9 @@ public class JSonBindingUtilsTest {
 		writer = new StringWriter();
 		mapper.writeValue( writer, bindings );
 		Assert.assertEquals(
-				"{\"prefix0\":[{\"app4\":false}],\"prefix1\":[{\"app1\":true}],\"prefix2\":[{\"app2\":false},{\"app3\":true}]}",
+				"{\"prefix0\":[{\"name\":\"app4\",\"bound\":false}],"
+				+ "\"prefix1\":[{\"name\":\"app1\",\"bound\":true}],\"prefix2\":[{\"name\":\"app2\",\"bound\":false},"
+				+ "{\"name\":\"app3\",\"bound\":true}]}",
 				writer.toString());
 	}
 

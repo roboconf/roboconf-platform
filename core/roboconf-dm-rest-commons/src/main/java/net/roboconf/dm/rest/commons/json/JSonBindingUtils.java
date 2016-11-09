@@ -139,6 +139,7 @@ public final class JSonBindingUtils {
 	private static final String PATH = "path";
 	private static final String CRON = "cron";
 	private static final String ID = "id";
+	private static final String BOUND = "bound";
 
 	private static final String APP_ICON = "icon";
 	private static final String APP_INFO = "info";
@@ -790,7 +791,8 @@ public final class JSonBindingUtils {
 
 				for( ApplicationBindingItem item : entry.getValue()) {
 					generator.writeStartObject();
-					generator.writeBooleanField( item.getApplicationName(), item.isBound());
+					generator.writeStringField( NAME, item.getApplicationName());
+					generator.writeBooleanField( BOUND, item.isBound());
 					generator.writeEndObject();
 				}
 
