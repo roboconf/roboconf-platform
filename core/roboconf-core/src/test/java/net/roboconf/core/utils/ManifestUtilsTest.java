@@ -25,10 +25,11 @@
 
 package net.roboconf.core.utils;
 
+import static net.roboconf.core.utils.ManifestUtils.BUNDLE_VERSION;
+
 import java.util.Properties;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
 /**
@@ -37,19 +38,23 @@ import org.junit.Test;
 public class ManifestUtilsTest {
 
 	@Test
-	public void testFindBundleVersion() {
+	public void testFindManifestProperty() {
 
-		// findBundleVersion only works in an OSGi container.
-		// We keep the test for code coverage...
-		Assert.assertNull( ManifestUtils.findBundleVersion());
-
-		// Try differently
 		Properties props = new Properties();
-		Assert.assertNull( ManifestUtils.findBundleVersion( props ));
+		Assert.assertNull( ManifestUtils.findManifestProperty( props, BUNDLE_VERSION ));
 
 		String version = "1.2";
-		props.put( ManifestUtils.BUNDLE_VERSION, version );
-		Assert.assertEquals( version, ManifestUtils.findBundleVersion( props ));
+		props.put( BUNDLE_VERSION, version );
+		Assert.assertEquals( version, ManifestUtils.findManifestProperty( props, BUNDLE_VERSION ));
+	}
+
+
+	@Test
+	public void testStuffThatOnlyWorksInMavenOrOsgi() {
+
+		// We keep this test method for code coverage...
+		Assert.assertNull( ManifestUtils.findBundleVersion());
+		Assert.assertNull( ManifestUtils.findManifestProperty( BUNDLE_VERSION ));
 	}
 
 

@@ -80,5 +80,4 @@ public class AgentStatusCommandTest {
 		Assert.assertNull( cmd.execute());
 		Mockito.verify( am1, Mockito.only()).agentStatus();
 	}
-
 }
