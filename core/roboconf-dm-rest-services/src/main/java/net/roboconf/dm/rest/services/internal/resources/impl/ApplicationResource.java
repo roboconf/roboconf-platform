@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -288,7 +289,7 @@ public class ApplicationResource implements IApplicationResource {
 	 * #bindApplication(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response bindApplication( String applicationName, String boundTplName, String boundApp ) {
+	public Response bindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
 
 		Response response;
 		try {
@@ -297,7 +298,7 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			} else {
-				this.manager.applicationMngr().bindOrUnbindApplication( ma, boundTplName, boundApp, true );
+				this.manager.applicationMngr().bindOrUnbindApplication( ma, externalExportPrefix, boundApp, true );
 				response = Response.ok().build();
 			}
 
@@ -315,7 +316,7 @@ public class ApplicationResource implements IApplicationResource {
 	 * #unbindApplication(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response unbindApplication( String applicationName, String boundTplName, String boundApp ) {
+	public Response unbindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
 
 		Response response;
 		try {
@@ -324,7 +325,38 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			} else {
-				this.manager.applicationMngr().bindOrUnbindApplication( ma, boundTplName, boundApp, false );
+				this.manager.applicationMngr().bindOrUnbindApplication( ma, externalExportPrefix, boundApp, false );
+				response = Response.ok().build();
+			}
+
+		} catch( UnauthorizedActionException | IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #replaceApplicationBindings(java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Response replaceApplicationBindings( String applicationName, String externalExportPrefix, List<String> boundApps ) {
+
+		Response response;
+		try {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else {
+				Set<String> apps = new TreeSet<> ();
+				if( boundApps != null )
+					apps.addAll( boundApps );
+
+				this.manager.applicationMngr().replaceApplicationBindings( ma, externalExportPrefix, apps );
 				response = Response.ok().build();
 			}
 

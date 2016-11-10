@@ -27,6 +27,7 @@ package net.roboconf.dm.management.api;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -118,5 +119,16 @@ public interface IApplicationMngr {
 	 * @throws IOException if an error occurred while creating the binding
 	 */
 	void bindOrUnbindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName, boolean bind )
+	throws UnauthorizedActionException, IOException;
+
+	/**
+	 * Replaces application bindings for a given prefix.
+	 * @param ma the application into which a binding must be created
+	 * @param externalExportPrefix the name of the prefix for external variables
+	 * @param applicationNames a non-null set of application names (must be associated with the template)
+	 * @throws UnauthorizedActionException if the application does not exist, or if it is not associated with the right template
+	 * @throws IOException if an error occurred while creating the binding
+	 */
+	void replaceApplicationBindings( ManagedApplication ma, String externalExportPrefix, Set<String> applicationNames )
 	throws UnauthorizedActionException, IOException;
 }

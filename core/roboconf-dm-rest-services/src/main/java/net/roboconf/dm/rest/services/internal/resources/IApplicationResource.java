@@ -196,7 +196,7 @@ public interface IApplicationResource {
 	/**
 	 * Binds an application for external exports.
 	 * @param applicationName the application name
-	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
+	 * @param externalExportPrefix the name of the prefix for external variables
 	 * @param boundApp the name of the application (instance of <code>boundTplName</code>)
 	 * @return a response
 	 *
@@ -208,14 +208,14 @@ public interface IApplicationResource {
 	@Path( "/bind" )
 	Response bindApplication(
 			@PathParam("name") String applicationName,
-			@QueryParam("bound-tpl") String boundTplName,
+			@QueryParam("bound-tpl") String externalExportPrefix,
 			@QueryParam("bound-app") String boundApp );
 
 
 	/**
 	 * Unbinds an application for external exports.
 	 * @param applicationName the application name
-	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
+	 * @param externalExportPrefix the name of the prefix for external variables
 	 * @param boundApp the name of the application (instance of <code>boundTplName</code>)
 	 * @return a response
 	 *
@@ -226,8 +226,27 @@ public interface IApplicationResource {
 	@Path( "/unbind" )
 	Response unbindApplication(
 			@PathParam("name") String applicationName,
-			@QueryParam("bound-tpl") String boundTplName,
+			@QueryParam("bound-tpl") String externalExportPrefix,
 			@QueryParam("bound-app") String boundApp );
+
+
+	/**
+	 * Replaces application bindings for external exports.
+	 * @param applicationName the application name
+	 * @param externalExportPrefix the name of the prefix for external variables
+	 * @param boundApps the application names (instance of <code>boundTplName</code>)
+	 * @return a response
+	 *
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 403 Such a binding is not allowed.
+	 */
+	@POST
+	@Path( "/bind-x" )
+	Response replaceApplicationBindings(
+			@PathParam("name") String applicationName,
+			@QueryParam("bound-tpl") String externalExportPrefix,
+			@QueryParam("app") List<String> boundApps );
 
 
 	/**

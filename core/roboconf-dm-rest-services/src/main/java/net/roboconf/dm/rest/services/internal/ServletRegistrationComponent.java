@@ -192,4 +192,12 @@ public class ServletRegistrationComponent {
 			Utils.logException( this.logger, e );
 		}
 	}
+
+
+	/**
+	 * @param scheduler the scheduler to set
+	 */
+	public void setScheduler( IScheduler scheduler ) {
+		this.scheduler = scheduler;
+	}
 }

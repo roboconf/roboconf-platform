@@ -184,6 +184,38 @@ public class Application extends AbstractApplication implements Serializable {
 
 
 	/**
+	 * Replaces application bindings for a given prefix.
+	 * @param externalExportPrefix an external export prefix (not null)
+	 * @param applicationNames a non-null set of application names
+	 * @return true if bindings were modified, false otherwise
+	 */
+	public boolean replaceApplicationBindings( String externalExportPrefix, Set<String> applicationNames ) {
+
+		// There is a change if the set do not have the same size or if they do not contain the same
+		// number of element. If no binding had been registered previously, then we only check whether
+		// the new set contains something.
+		boolean changed = false;
+		Set<String> oldApplicationNames = this.applicationBindings.remove( externalExportPrefix );
+		if( oldApplicationNames == null ) {
+			changed = ! applicationNames.isEmpty();
+
+		} else if( oldApplicationNames.size() != applicationNames.size()) {
+			changed = true;
+
+		} else {
+			oldApplicationNames.removeAll( applicationNames );
+			changed = ! oldApplicationNames.isEmpty();
+		}
+
+		// Do not register keys when there is no binding
+		if( ! applicationNames.isEmpty())
+			this.applicationBindings.put( externalExportPrefix, applicationNames );
+
+		return changed;
+	}
+
+
+	/**
 	 * @return the applicationBindings
 	 */
 	public Map<String,Set<String>> getApplicationBindings() {

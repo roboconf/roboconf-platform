@@ -1078,6 +1078,117 @@ public class ApplicationResourceTest {
 
 
 	@Test
+	public void testReplaceApplicationBindings_success() throws Exception {
+
+		// Create a second application with a different template
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "eep" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// Bind and check
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
+		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getMySqlVm()).size());
+
+		Response resp = this.resource.replaceApplicationBindings(
+				this.ma.getName(),
+				app2.getTemplate().getExternalExportsPrefix(),
+				Arrays.asList( app2.getName()));
+
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+
+		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
+		Assert.assertEquals( 1, messages.size());
+		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
+		Assert.assertEquals( 2, messages.size());
+
+		for( Message m : this.msgClient.allSentMessages ) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNotNull( msg.getAppNames());
+			Assert.assertEquals( 1, msg.getAppNames().size());
+			Assert.assertTrue( msg.getAppNames().contains( app2.getName()));
+		}
+
+		// Unbind
+		resp = this.resource.replaceApplicationBindings(
+				this.ma.getName(),
+				app2.getTemplate().getExternalExportsPrefix(),
+				new ArrayList<String>( 0 ));
+
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+
+		messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
+		Assert.assertEquals( 1, messages.size());
+		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
+		Assert.assertEquals( 2, messages.size());
+
+		for( Message m : this.msgClient.allSentMessages ) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNull( msg.getAppNames());
+		}
+
+		// Unbind with something null
+		resp = this.resource.replaceApplicationBindings(
+				this.ma.getName(),
+				app2.getTemplate().getExternalExportsPrefix(),
+				null );
+
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+
+		messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
+		Assert.assertEquals( 0, messages.size());
+		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
+		Assert.assertEquals( 0, messages.size());
+	}
+
+
+	@Test
+	public void testReplaceApplicationBindings_inexistingApplication() throws Exception {
+
+		Response resp = this.resource.replaceApplicationBindings(
+				"invalid",
+				this.ma.getApplication().getTemplate().getName(),
+				Arrays.asList( this.ma.getName()));
+
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testReplaceApplicationBindings_invalidBoundTemplate() throws Exception {
+
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// ma and app2 do not have the same template name
+		Response resp = this.resource.replaceApplicationBindings(
+				this.ma.getName(),
+				this.ma.getApplication().getTemplate().getName(),
+				Arrays.asList( app2.getName()));
+
+		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+	}
+
+
+	@Test
 	public void testGetApplicationBindings_inexistingApplication() throws Exception {
 
 		Response resp = this.resource.getApplicationBindings( "inexisting" );

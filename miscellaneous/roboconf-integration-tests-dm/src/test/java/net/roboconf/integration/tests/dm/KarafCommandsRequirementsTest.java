@@ -25,11 +25,19 @@
 
 package net.roboconf.integration.tests.dm;
 
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.inject.Inject;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -43,7 +51,7 @@ import net.roboconf.core.utils.ManifestUtils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.tests.commons.AbstractIntegrationTest;
 import net.roboconf.integration.tests.commons.ItConfigurationBean;
-import net.roboconf.integration.tests.commons.internal.parameterized.IMessagingConfiguration;
+import net.roboconf.integration.tests.commons.internal.ItUtils;
 import net.roboconf.integration.tests.commons.internal.runners.RoboconfPaxRunner;
 import net.roboconf.integration.tests.dm.probes.DmTest;
 
@@ -68,10 +76,37 @@ public class KarafCommandsRequirementsTest extends DmTest {
 		probe.addTest( TestUtils.class );
 
 		probe.addTest( AbstractIntegrationTest.class );
-		probe.addTest( IMessagingConfiguration.class );
 		probe.addTest( ItConfigurationBean.class );
 
 		return probe;
+	}
+
+
+	@Override
+	@Configuration
+	public Option[] config() throws Exception {
+
+		List<Option> options = new ArrayList<> ();
+		options.addAll( Arrays.asList( super.config()));
+
+		// Deploy the agent's bundles (we need them because of this stupid probe).
+		// If we'd run this test alone (e.g. "mvn clean test -Dtest=*Requi*"), then
+		// we would not need these bundles. But when we run ALL the tests here,
+		// we need them. Stupid PAX probe.
+		String roboconfVersion = ItUtils.findRoboconfVersion();
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-plugin-api" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-agent" )
+				.version( roboconfVersion )
+				.start());
+
+		return options.toArray( new Option[ options.size()]);
 	}
 
 
