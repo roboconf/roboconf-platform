@@ -324,4 +324,14 @@ public interface ITargetsMngr {
 	 * @return a non-null list of usage item
 	 */
 	List<TargetUsageItem> findUsageStatistics( String targetId );
+
+
+	/**
+	 * Finds the script that will be executed once the VM is created.
+	 * @param targetId a target ID
+	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
+	 * @throws IOException if something went wrong while reading a file
+	 */
+	Map<String,byte[]> findScriptResources( String targetId ) throws IOException;
+
 }

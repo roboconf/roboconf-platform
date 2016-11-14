@@ -42,6 +42,7 @@ public class MsgCmdSetScopedInstance extends Message {
 	private final Instance scopedInstance;
 	private final Map<String,String> externalExports;
 	private final Map<String,Set<String>> applicationBindings;
+	private final Map<String,byte[]> scriptResources;
 
 
 	/**
@@ -49,11 +50,13 @@ public class MsgCmdSetScopedInstance extends Message {
 	 * @param scopedInstance
 	 * @param externalExports
 	 * @param applicationBindings
+	 * @param scriptResouces
 	 */
 	public MsgCmdSetScopedInstance(
 			Instance scopedInstance,
 			Map<String,String> externalExports,
-			Map<String,Set<String>> applicationBindings ) {
+			Map<String,Set<String>> applicationBindings,
+			Map<String,byte[]> scriptResources ) {
 
 		this.scopedInstance = scopedInstance;
 
@@ -64,6 +67,10 @@ public class MsgCmdSetScopedInstance extends Message {
 		this.applicationBindings = new HashMap<> ();
 		if( applicationBindings != null )
 			this.applicationBindings.putAll( applicationBindings );
+
+		this.scriptResources = new HashMap<String,byte[]> ();
+		if( scriptResources != null )
+			this.scriptResources.putAll( scriptResources );
 	}
 
 	/**
@@ -71,7 +78,7 @@ public class MsgCmdSetScopedInstance extends Message {
 	 * @param scopedInstance
 	 */
 	public MsgCmdSetScopedInstance( Instance scopedInstance ) {
-		this( scopedInstance, null, null );
+		this( scopedInstance, null, null, null );
 	}
 
 	/**
@@ -93,5 +100,12 @@ public class MsgCmdSetScopedInstance extends Message {
 	 */
 	public Map<String,Set<String>> getApplicationBindings() {
 		return this.applicationBindings;
+	}
+
+	/**
+	 * @return the scriptResources (never null)
+	 * */
+	public Map<String,byte[]> getscriptResources() {
+		return this.scriptResources;
 	}
 }

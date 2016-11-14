@@ -61,6 +61,15 @@ public interface Constants {
 	 */
 	String FILE_EXT_RULE = ".drl";
 
+	/**
+	 * The <strong>shell</strong> file extension.
+	 * */
+	String FILE_EXT_SHELL = ".sh";
+
+	/**
+	 * The <strong>script</strong> file to be executed.
+	 * */
+	String SCRIPT = "script";
 
 	/**
 	 * The wild card symbol (can be used in a component to reference any variable for a given group).
@@ -127,6 +136,11 @@ public interface Constants {
 	 * The <strong>probes</strong> directory.
 	 */
 	String PROJECT_DIR_PROBES = "probes";
+
+	/**
+	 * The <strong>scripts</strong> directory.
+	 * */
+	String PROJECT_DIR_SCRIPTS = "scripts";
 
 	/**
 	 * The <strong>commands</strong> directory.

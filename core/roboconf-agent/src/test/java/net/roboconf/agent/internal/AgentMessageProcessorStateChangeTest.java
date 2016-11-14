@@ -203,7 +203,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateChangeWithUnknownInstance() {
+	public void testStateChangeWithUnknownInstance() throws InterruptedException {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -220,7 +220,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateChangeWithUnknownPlugin() {
+	public void testStateChangeWithUnknownPlugin() throws InterruptedException {
 
 		this.agent.stop();
 		this.agent = new Agent() {
@@ -250,7 +250,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateChangeWithTransitiveState() {
+	public void testStateChangeWithTransitiveState() throws InterruptedException {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplicationTemplate app = new TestApplicationTemplate();
@@ -269,7 +269,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_startFails() {
+	public void testStateAdvancedChange_startFails() throws InterruptedException {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
@@ -315,7 +315,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_deployFails() {
+	public void testStateAdvancedChange_deployFails() throws InterruptedException {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
@@ -361,7 +361,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_stopFails() {
+	public void testStateAdvancedChange_stopFails() throws InterruptedException {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
@@ -410,7 +410,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_undeployFails() {
+	public void testStateAdvancedChange_undeployFails() throws InterruptedException {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".

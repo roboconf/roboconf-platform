@@ -136,7 +136,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
-	protected void processMessage( Message message ) {
+	protected void processMessage( Message message ) throws InterruptedException {
 
 		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
 		try {
@@ -387,8 +387,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @param msg the message to process
 	 * @throws IOException if an error occurred with the messaging
 	 * @throws PluginException if an error occurred while initializing the plug-in
+	 * @throws InterruptedException if the script execution failed
 	 */
-	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException {
+	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException, InterruptedException {
 
 		Instance newScopedInstance = msg.getScopedInstance();
 		List<Instance> instancesToProcess = new ArrayList<> ();
@@ -410,6 +411,10 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// Initialize the application bindings
 			this.applicationBindings.putAll( msg.getApplicationBindings());
+
+			// Executes the script
+			AgentUtils.copyInstanceResources( this.scopedInstance, msg.getscriptResources());
+			AgentUtils.excuteScriptResource( this.scopedInstance, this.agent.getApplicationName(), this.scopedInstance.getName());
 
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {

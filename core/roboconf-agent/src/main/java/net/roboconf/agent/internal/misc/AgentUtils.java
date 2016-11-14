@@ -37,8 +37,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -110,6 +112,25 @@ public final class AgentUtils {
 		}
 	}
 
+
+	/**
+	 * Executes a script resource on a given instance.
+	 * @param instance an instance
+	 * @throws InterruptedException
+	 * @throws IOException
+	 */
+	public static void excuteScriptResource( Instance instance, String applicationName, String scopedInstanceName ) throws IOException, InterruptedException {
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
+		File script = new File(dir,Constants.SCRIPT);
+		if(! script.canExecute())
+			script.setExecutable(true);
+
+		Logger logger = Logger.getLogger( AgentUtils.class.getName());
+		String[] command = { script.getAbsolutePath() };
+		int exitCode = ProgramUtils.executeCommand(logger, command, script.getParentFile(), null, applicationName, scopedInstanceName);
+		if( exitCode != 0 )
+			throw new IOException( "Script execution failed. Exit code: " + exitCode );
+	}
 
 	/**
 	 * Deletes the resources for a given instance.

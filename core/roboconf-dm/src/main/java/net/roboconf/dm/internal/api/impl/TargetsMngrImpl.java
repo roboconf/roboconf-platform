@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -430,6 +431,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	}
 
 
+	// Finding script resources
+	@Override
+	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+
+		File scriptFile = new File( findTargetDirectory( targetId ), Constants.SCRIPT );
+		if( scriptFile.exists()) {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStream( scriptFile, os );
+			result.put( scriptFile.getName(), os.toByteArray());
+		}
+		return result;
+	}
+
+
 	@Override
 	public List<TargetWrapperDescriptor> listAllTargets() {
 
@@ -766,4 +782,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		return result;
 	}
+
+
+
 }
