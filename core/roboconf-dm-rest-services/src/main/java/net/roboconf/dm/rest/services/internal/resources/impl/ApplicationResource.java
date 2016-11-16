@@ -28,10 +28,12 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -253,7 +255,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		// Log
 		if( instancePath == null )
-			this.logger.finer( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
+			this.logger.fine( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
 		else
 			this.logger.fine( "Request: list " + (allChildren ? "all" : "direct") + " children instances for " + instancePath + " in " + applicationName + "." );
 
@@ -291,6 +293,7 @@ public class ApplicationResource implements IApplicationResource {
 	@Override
 	public Response bindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
 
+		this.logger.fine( "Binding " + boundApp  + " to the " + externalExportPrefix + " prefix in application " + applicationName + "." );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
@@ -318,6 +321,7 @@ public class ApplicationResource implements IApplicationResource {
 	@Override
 	public Response unbindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
 
+		this.logger.fine( "Unbinding " + boundApp  + " from the " + externalExportPrefix + " prefix in application " + applicationName + "." );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
@@ -344,6 +348,19 @@ public class ApplicationResource implements IApplicationResource {
 	 */
 	@Override
 	public Response replaceApplicationBindings( String applicationName, String externalExportPrefix, List<String> boundApps ) {
+
+		if( this.logger.isLoggable( Level.FINE )) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "Replacing the bindings for the " );
+			sb.append( externalExportPrefix );
+			sb.append( " prefix with " );
+			sb.append( Arrays.toString( boundApps.toArray()));
+			sb.append( " in application " );
+			sb.append( applicationName );
+			sb.append( "." );
+
+			this.logger.fine( sb.toString());
+		}
 
 		Response response;
 		try {
