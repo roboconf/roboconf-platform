@@ -86,6 +86,16 @@ public final class ManifestUtils {
 	 * @return a string, that can be null
 	 */
 	public static String findBundleVersion() {
+		return findManifestProperty( BUNDLE_VERSION );
+	}
+
+
+	/**
+	 * Finds a property in the MANIFEST file.
+	 * @param propertyName the property's name
+	 * @return the property's value, or null if it was not found
+	 */
+	public static String findManifestProperty( String propertyName ) {
 
 		String result = null;
 		InputStream is = null;
@@ -93,11 +103,11 @@ public final class ManifestUtils {
 			is = ManifestUtils.class.getResourceAsStream( "/META-INF/MANIFEST.MF" );
 			Properties props = new Properties();
 			props.load( is );
-			result = findBundleVersion( props );
+			result = findManifestProperty( props, propertyName );
 
 		} catch( IOException e ) {
 			Logger logger = Logger.getLogger( ManifestUtils.class.getName());
-			logger.warning( "Could not read the bundle info. " + e.getMessage());
+			logger.warning( "Could not read the bundle manifest. " + e.getMessage());
 
 		} finally {
 			Utils.closeQuietly( is );
@@ -108,15 +118,16 @@ public final class ManifestUtils {
 
 
 	/**
-	 * Finds the bundle version by reading the manifest file.
-	 * @param props the properties to look for the bundle version
-	 * @return a string, that can be null
+	 * Finds a property in the MANIFEST properties.
+	 * @param props the properties
+	 * @param propertyName the property's name
+	 * @return the property's value, or null if it was not found
 	 */
-	static String findBundleVersion( Properties props ) {
+	public static String findManifestProperty( Properties props, String propertyName ) {
 
 		String result = null;
 		for( Map.Entry<Object,Object> entry : props.entrySet()) {
-			if( BUNDLE_VERSION.equalsIgnoreCase( String.valueOf( entry.getKey()))) {
+			if( propertyName.equalsIgnoreCase( String.valueOf( entry.getKey()))) {
 				result = String.valueOf( entry.getValue());
 				break;
 			}

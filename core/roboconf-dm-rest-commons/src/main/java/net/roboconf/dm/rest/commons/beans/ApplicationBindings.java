@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,27 +23,52 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.agent.plugins;
+package net.roboconf.dm.rest.commons.beans;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
- * @author Pierre-Yves Gibello - Linagora
+ * A "bean" that wraps all the information related to application bindings.
+ * @author Vincent Zurczak - Linagora
  */
-public class CancelRecipeCommandTest {
+public class ApplicationBindings {
 
-	@Test
-	public void testExecute_noAgent() throws Exception {
+	public final Map<String,List<ApplicationBindingItem>> prefixToItems = new TreeMap<> ();
 
-		CancelRecipeCommand cmd = new CancelRecipeCommand();
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		cmd.out = new PrintStream( os, true, "UTF-8" );
 
-		cmd.execute();
-		Assert.assertTrue( os.toString( "UTF-8" ).contains( "No agent found" ));
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ApplicationBindingItem {
+
+		private final String applicationName;
+		private final boolean bound;
+
+
+		/**
+		 * Constructor.
+		 * @param applicationName
+		 * @param bound
+		 */
+		public ApplicationBindingItem( String applicationName, boolean bound ) {
+			this.applicationName = applicationName;
+			this.bound = bound;
+		}
+
+		/**
+		 * @return the applicationName
+		 */
+		public String getApplicationName() {
+			return this.applicationName;
+		}
+
+		/**
+		 * @return the bound
+		 */
+		public boolean isBound() {
+			return this.bound;
+		}
 	}
 }

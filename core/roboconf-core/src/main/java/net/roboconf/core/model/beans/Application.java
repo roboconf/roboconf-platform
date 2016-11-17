@@ -160,22 +160,58 @@ public class Application extends AbstractApplication implements Serializable {
 
 
 	/**
-	 * Binds an external export prefix with an application name.
+	 * Unbinds an external export prefix from an application name.
 	 * <p>
-	 * No error is thrown if the bound already existed.
+	 * No error is thrown if the bound did not exist.
 	 * </p>
 	 *
 	 * @param externalExportPrefix an external export prefix (not null)
 	 * @param applicationName an application name (not null)
+	 * @return true if bindings were modified, false if no binding existed
 	 */
-	public void unbindFromApplication( String externalExportPrefix, String applicationName ) {
+	public boolean unbindFromApplication( String externalExportPrefix, String applicationName ) {
 
+		boolean result = false;
 		Set<String> bounds = this.applicationBindings.get( externalExportPrefix );
 		if( bounds != null ) {
-			bounds.remove( applicationName );
+			result = bounds.remove( applicationName );
 			if( bounds.isEmpty())
 				this.applicationBindings.remove( externalExportPrefix );
 		}
+
+		return result;
+	}
+
+
+	/**
+	 * Replaces application bindings for a given prefix.
+	 * @param externalExportPrefix an external export prefix (not null)
+	 * @param applicationNames a non-null set of application names
+	 * @return true if bindings were modified, false otherwise
+	 */
+	public boolean replaceApplicationBindings( String externalExportPrefix, Set<String> applicationNames ) {
+
+		// There is a change if the set do not have the same size or if they do not contain the same
+		// number of element. If no binding had been registered previously, then we only check whether
+		// the new set contains something.
+		boolean changed = false;
+		Set<String> oldApplicationNames = this.applicationBindings.remove( externalExportPrefix );
+		if( oldApplicationNames == null ) {
+			changed = ! applicationNames.isEmpty();
+
+		} else if( oldApplicationNames.size() != applicationNames.size()) {
+			changed = true;
+
+		} else {
+			oldApplicationNames.removeAll( applicationNames );
+			changed = ! oldApplicationNames.isEmpty();
+		}
+
+		// Do not register keys when there is no binding
+		if( ! applicationNames.isEmpty())
+			this.applicationBindings.put( externalExportPrefix, applicationNames );
+
+		return changed;
 	}
 
 

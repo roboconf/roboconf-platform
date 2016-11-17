@@ -82,12 +82,10 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
  */
 public class TargetsMngrImpl implements ITargetsMngr {
 
-	private static final String TARGET_PROPERTY_CREATED_BY = "created.by";
-
 	private static final String TARGETS_ASSOC_FILE = "associations.properties";
 	private static final String TARGETS_HINTS_FILE = "hints.properties";
 	private static final String TARGETS_USAGE_FILE = "usage.properties";
-	private static final String CREATED_BY = "created.by";
+	private static final String CREATED_BY = "created.from";
 
 	private static final Object LOCK = new Object();
 
@@ -126,7 +124,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		// Critical section to insert a target.
 		// Store the ID, it cannot be reused.
 		String targetId = tv.getProperties().getProperty( Constants.TARGET_PROPERTY_ID );
-		String creator = tv.getProperties().getProperty( TARGET_PROPERTY_CREATED_BY );
+		String creator = tv.getProperties().getProperty( CREATED_BY );
 		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null ) {
 
 			// No creator? Then there is a conflict.
@@ -180,7 +178,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		StringBuilder sb = new StringBuilder( fileContent );
 		if( creator != null ) {
 			sb.append( "\n\n" );
-			sb.append( TargetsMngrImpl.TARGET_PROPERTY_CREATED_BY );
+			sb.append( CREATED_BY );
 			sb.append( ": " );
 			sb.append( creator.getName());
 			sb.append( " - " );

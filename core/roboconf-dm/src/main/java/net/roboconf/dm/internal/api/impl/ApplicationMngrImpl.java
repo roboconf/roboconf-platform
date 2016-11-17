@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -100,6 +101,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 			IMessagingMngr messagingMngr,
 			IRandomMngr randomMngr,
 			IAutonomicMngr autonomicMngr ) {
+
 		this.nameToManagedApplication = new ConcurrentHashMap<> ();
 
 		this.notificationMngr = notificationMngr;
@@ -412,9 +414,10 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 
 
 	@Override
-	public void bindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName )
+	public void bindOrUnbindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName, boolean bind )
 	throws UnauthorizedActionException, IOException {
 
+		// Checks
 		Application app = findApplicationByName( applicationName );
 		if( app == null )
 			throw new UnauthorizedActionException( "Application " + applicationName + " does not exist." );
@@ -422,16 +425,66 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( ! externalExportPrefix.equals( app.getTemplate().getExternalExportsPrefix()))
 			throw new UnauthorizedActionException( "Application " + applicationName + "'s template does not have " + externalExportPrefix + " as external exports prefix." );
 
-		ma.getApplication().bindWithApplication( externalExportPrefix, applicationName );
-		ConfigurationUtils.saveApplicationBindings( ma.getApplication());
-		this.logger.fine( "External prefix " + externalExportPrefix + " is now bound to application " + applicationName + " in " + ma.getName() + "." );
+		// Update the model
+		boolean notify = true;
+		if( bind )
+			ma.getApplication().bindWithApplication( externalExportPrefix, applicationName );
+		else
+			notify = ma.getApplication().unbindFromApplication( externalExportPrefix, applicationName );
 
-		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
-			MsgCmdChangeBinding msg = new MsgCmdChangeBinding(
-					app.getTemplate().getExternalExportsPrefix(),
-					ma.getApplication().getApplicationBindings().get( externalExportPrefix ));
+		// Update and propagate the modification
+		if( notify ) {
 
-			this.messagingMngr.sendMessageSafely( ma, inst, msg );
+			// Save the configuration
+			ConfigurationUtils.saveApplicationBindings( ma.getApplication());
+			this.logger.fine( "External prefix " + externalExportPrefix + " is now bound to application " + applicationName + " in " + ma.getName() + "." );
+
+			// Notify the agents
+			for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
+				MsgCmdChangeBinding msg = new MsgCmdChangeBinding(
+						externalExportPrefix,
+						ma.getApplication().getApplicationBindings().get( externalExportPrefix ));
+
+				this.messagingMngr.sendMessageSafely( ma, inst, msg );
+			}
+		}
+	}
+
+
+	@Override
+	public void replaceApplicationBindings( ManagedApplication ma, String externalExportPrefix, Set<String> applicationNames )
+	throws UnauthorizedActionException, IOException {
+
+		// Checks
+		for( String applicationName : applicationNames ) {
+			Application app = findApplicationByName( applicationName );
+			if( app == null )
+				throw new UnauthorizedActionException( "Application " + applicationName + " does not exist." );
+
+			if( ! externalExportPrefix.equals( app.getTemplate().getExternalExportsPrefix()))
+				throw new UnauthorizedActionException( "Application " + applicationName + "'s template does not have " + externalExportPrefix + " as external exports prefix." );
+		}
+
+		// Update the model
+		boolean notify = ma.getApplication().replaceApplicationBindings( externalExportPrefix, applicationNames );
+
+		// Update and propagate the modification
+		if( notify ) {
+
+			// Save the configuration
+			ConfigurationUtils.saveApplicationBindings( ma.getApplication());
+			for( String applicationName : applicationNames ) {
+				this.logger.fine( "External prefix " + externalExportPrefix + " is now bound to application " + applicationName + " in " + ma.getName() + "." );
+			}
+
+			// Notify the agents
+			for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
+				MsgCmdChangeBinding msg = new MsgCmdChangeBinding(
+						externalExportPrefix,
+						ma.getApplication().getApplicationBindings().get( externalExportPrefix ));
+
+				this.messagingMngr.sendMessageSafely( ma, inst, msg );
+			}
 		}
 	}
 }

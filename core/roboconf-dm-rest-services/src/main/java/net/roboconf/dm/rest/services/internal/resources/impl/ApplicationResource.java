@@ -28,11 +28,12 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -49,14 +50,15 @@ import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
+import net.roboconf.dm.rest.commons.beans.TargetAssociation;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.target.api.TargetException;
@@ -253,7 +255,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		// Log
 		if( instancePath == null )
-			this.logger.finer( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
+			this.logger.fine( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
 		else
 			this.logger.fine( "Request: list " + (allChildren ? "all" : "direct") + " children instances for " + instancePath + " in " + applicationName + "." );
 
@@ -289,7 +291,76 @@ public class ApplicationResource implements IApplicationResource {
 	 * #bindApplication(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response bindApplication( String applicationName, String boundTplName, String boundApp ) {
+	public Response bindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
+
+		this.logger.fine( "Binding " + boundApp  + " to the " + externalExportPrefix + " prefix in application " + applicationName + "." );
+		Response response;
+		try {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else {
+				this.manager.applicationMngr().bindOrUnbindApplication( ma, externalExportPrefix, boundApp, true );
+				response = Response.ok().build();
+			}
+
+		} catch( UnauthorizedActionException | IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #unbindApplication(java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response unbindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
+
+		this.logger.fine( "Unbinding " + boundApp  + " from the " + externalExportPrefix + " prefix in application " + applicationName + "." );
+		Response response;
+		try {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else {
+				this.manager.applicationMngr().bindOrUnbindApplication( ma, externalExportPrefix, boundApp, false );
+				response = Response.ok().build();
+			}
+
+		} catch( UnauthorizedActionException | IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #replaceApplicationBindings(java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Response replaceApplicationBindings( String applicationName, String externalExportPrefix, List<String> boundApps ) {
+
+		if( this.logger.isLoggable( Level.FINE )) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "Replacing the bindings for the " );
+			sb.append( externalExportPrefix );
+			sb.append( " prefix with " );
+			sb.append( Arrays.toString( boundApps.toArray()));
+			sb.append( " in application " );
+			sb.append( applicationName );
+			sb.append( "." );
+
+			this.logger.fine( sb.toString());
+		}
 
 		Response response;
 		try {
@@ -298,7 +369,11 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			} else {
-				this.manager.applicationMngr().bindApplication( ma, boundTplName, boundApp );
+				Set<String> apps = new TreeSet<> ();
+				if( boundApps != null )
+					apps.addAll( boundApps );
+
+				this.manager.applicationMngr().replaceApplicationBindings( ma, externalExportPrefix, apps );
 				response = Response.ok().build();
 			}
 
@@ -324,21 +399,37 @@ public class ApplicationResource implements IApplicationResource {
 			response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 		} else {
+			ApplicationBindings bindings = new ApplicationBindings();
+
 			// Find all the external prefixes to resolve
-			Map<String,Set<String>> map = new HashMap<> ();
 			for( Component c : ComponentHelpers.findAllComponents( ma.getApplication())) {
 				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( c ).values()) {
 					if( ! var.isExternal())
 						continue;
 
 					String prefix = VariableHelpers.parseVariableName( var.getName()).getKey();
-					map.put( prefix, null );
+					bindings.prefixToItems.put( prefix, new ArrayList<ApplicationBindingItem> ());
 				}
 			}
 
-			// Override with the effective bindings
-			map.putAll( ma.getApplication().getApplicationBindings());
-			response = Response.ok().entity( new MappedCollectionWrapper( map )).build();
+			// Find all the applications that match a given prefix
+			for( ManagedApplication managedApp : this.manager.applicationMngr().getManagedApplications()) {
+
+				// Any potential bindings with this application?
+				// There should be AT MOST 1 matching template for a given prefix.
+				// One template means there can be several applications.
+				String prefix = managedApp.getApplication().getTemplate().getExternalExportsPrefix();
+				if( prefix == null || ! bindings.prefixToItems.containsKey( prefix ))
+					continue;
+
+				// There is a potential match. Is there an effective bound?
+				Set<String> boundApps = ma.getApplication().getApplicationBindings().get( prefix );
+				boolean bound = boundApps != null && boundApps.contains( managedApp.getName());
+				ApplicationBindingItem item = new ApplicationBindingItem( managedApp.getName(), bound );
+				bindings.prefixToItems.get( prefix ).add( item );
+			}
+
+			response = Response.ok().entity( bindings ).build();
 		}
 
 		return response;

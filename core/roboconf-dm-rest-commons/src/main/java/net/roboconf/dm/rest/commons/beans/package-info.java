@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,27 +23,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.agent.plugins;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 /**
- * @author Pierre-Yves Gibello - Linagora
+ * A package with beans which are only used in the REST API.
+ * <p>
+ * They are used as a means to build specific JSon messages.
+ * </p>
+ *
+ * @author Vincent Zurczak - Linagora
  */
-public class CancelRecipeCommandTest {
-
-	@Test
-	public void testExecute_noAgent() throws Exception {
-
-		CancelRecipeCommand cmd = new CancelRecipeCommand();
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		cmd.out = new PrintStream( os, true, "UTF-8" );
-
-		cmd.execute();
-		Assert.assertTrue( os.toString( "UTF-8" ).contains( "No agent found" ));
-	}
-}
+package net.roboconf.dm.rest.commons.beans;

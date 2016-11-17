@@ -52,11 +52,13 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
-import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
+import net.roboconf.dm.rest.commons.beans.TargetAssociation;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -247,6 +249,46 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationBindingsBinding() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		// Empty object
+		ApplicationBindings bindings = new ApplicationBindings();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals( "{}", writer.toString());
+
+		// Single key
+		List<ApplicationBindingItem> list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app1", true ));
+		bindings.prefixToItems.put( "prefix1", list );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals( "{\"prefix1\":[{\"name\":\"app1\",\"bound\":true}]}", writer.toString());
+
+		// Complex object
+		list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app2", false ));
+		list.add( new ApplicationBindingItem( "app3", true ));
+		bindings.prefixToItems.put( "prefix2", list );
+
+		list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app4", false ));
+		bindings.prefixToItems.put( "prefix0", list );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals(
+				"{\"prefix0\":[{\"name\":\"app4\",\"bound\":false}],"
+				+ "\"prefix1\":[{\"name\":\"app1\",\"bound\":true}],\"prefix2\":[{\"name\":\"app2\",\"bound\":false},"
+				+ "{\"name\":\"app3\",\"bound\":true}]}",
+				writer.toString());
 	}
 
 

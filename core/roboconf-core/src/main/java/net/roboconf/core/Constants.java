@@ -159,6 +159,11 @@ public interface Constants {
 	 */
 	String MAVEN_SRC_MAIN_MODEL = "src/main/model/";
 
+	/**
+	 * The symbolic name of the "roboconf-core" bundle.
+	 */
+	String RBCF_CORE_SYMBOLIC_NAME = "net.roboconf.core";
+
 
 	/**
 	 * The property to define the messaging type in the DM and agent configuration files.

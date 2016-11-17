@@ -23,7 +23,9 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime;
+package net.roboconf.dm.rest.commons.beans;
+
+import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 
 /**
  * A bean that describes associations between instances and targets.
