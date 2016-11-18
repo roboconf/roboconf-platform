@@ -26,8 +26,10 @@
 package net.roboconf.core.dsl.converters;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -58,6 +60,28 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 		Assert.assertEquals( "my-own-installer", graphs.getRootComponents().iterator().next().getInstallerName());
+	}
+
+
+	@Test
+	public void test_WithSpecialNames() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/special-names.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 4, graphs.getRootComponents().size());
+
+		List<String> componentNames = new ArrayList<> ();
+		for( Component component : graphs.getRootComponents() ) {
+			componentNames.add( component.getName());
+		}
+
+		Assert.assertTrue( componentNames.contains( "ImportingComponent" ));
+		Assert.assertTrue( componentNames.contains( "ExportingComponent" ));
+		Assert.assertTrue( componentNames.contains( "FacetComponent" ));
+		Assert.assertTrue( componentNames.contains( "InstanceOfComponent" ));
 	}
 
 

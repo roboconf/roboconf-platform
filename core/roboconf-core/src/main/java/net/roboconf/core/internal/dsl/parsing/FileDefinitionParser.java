@@ -158,9 +158,9 @@ public class FileDefinitionParser {
 		String alteredLine = line.trim().toLowerCase();
 		if( ! alteredLine.isEmpty()
 				&& ! alteredLine.startsWith( String.valueOf( ParsingConstants.COMMENT_DELIMITER ))
-				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )
-				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )
-				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_IMPORT ))
+				&& ! startsWith( alteredLine, ParsingConstants.KEYWORD_FACET )
+				&& ! startsWith( alteredLine, ParsingConstants.KEYWORD_INSTANCE_OF )
+				&& ! startsWith( alteredLine, ParsingConstants.KEYWORD_IMPORT ))
 			result = recognizePropertiesHolder( line, br, new BlockComponent( this.definitionFile ));
 
 		return result;
@@ -174,7 +174,7 @@ public class FileDefinitionParser {
 	int recognizeFacet( String line, BufferedReader br ) throws IOException {
 
 		int result = P_CODE_NO;
-		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )) {
+		if( startsWith( line, ParsingConstants.KEYWORD_FACET )) {
 			String newLine = line.replaceFirst( "(?i)\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
 			result = recognizePropertiesHolder( newLine, br, new BlockFacet( this.definitionFile ));
 		}
@@ -191,7 +191,7 @@ public class FileDefinitionParser {
 	int recognizeInstanceOf( String line, BufferedReader br, AbstractBlockHolder holderInstance ) throws IOException {
 
 		int result = P_CODE_NO;
-		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )) {
+		if( startsWith( line, ParsingConstants.KEYWORD_INSTANCE_OF )) {
 			String newLine = line.replaceFirst( "(?i)\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
 			BlockInstanceOf newInstance = new BlockInstanceOf( this.definitionFile );
 			result = recognizePropertiesHolder( newLine, br, newInstance );
@@ -647,5 +647,16 @@ public class FileDefinitionParser {
 	private void addModelError( ErrorCode errorCode, int line, String details ) {
 		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), line, details );
 		this.definitionFile.getParsingErrors().add( me );
+	}
+
+
+	/**
+	 * Verifies whether starts with a keyword or is made up of this single keyword.
+	 * @param line the line
+	 * @param keyword the keyword
+	 * @return true if the keyword was found, false otherwise
+	 */
+	private boolean startsWith( String line, String keyword ) {
+		return line.trim().matches( "(?i)^" + keyword + "((\\s.*)|$)" );
 	}
 }
