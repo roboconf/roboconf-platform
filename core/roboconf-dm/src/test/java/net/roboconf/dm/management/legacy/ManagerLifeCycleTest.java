@@ -48,6 +48,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.IDmListener;
@@ -63,6 +64,7 @@ import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
 public class ManagerLifeCycleTest {
 
@@ -99,6 +101,7 @@ public class ManagerLifeCycleTest {
 
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class ).cancel();
+
 	}
 
 
@@ -117,6 +120,11 @@ public class ManagerLifeCycleTest {
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
@@ -186,6 +194,11 @@ public class ManagerLifeCycleTest {
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
@@ -355,6 +368,11 @@ public class ManagerLifeCycleTest {
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
 
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
+
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
@@ -382,6 +400,11 @@ public class ManagerLifeCycleTest {
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
 
 		final Instance instance = app.getMySqlVm();
 
@@ -436,6 +459,11 @@ public class ManagerLifeCycleTest {
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
@@ -634,6 +662,11 @@ public class ManagerLifeCycleTest {
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
 
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
+
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
@@ -681,6 +714,11 @@ public class ManagerLifeCycleTest {
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());

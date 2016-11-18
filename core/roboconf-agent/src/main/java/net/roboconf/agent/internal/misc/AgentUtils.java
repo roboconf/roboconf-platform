@@ -46,6 +46,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora
+ * @author Amadou Diarra - UGA
  */
 public final class AgentUtils {
 
@@ -121,15 +122,19 @@ public final class AgentUtils {
 	 */
 	public static void excuteScriptResource( Instance instance, String applicationName, String scopedInstanceName ) throws IOException, InterruptedException {
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-		File script = new File(dir,Constants.SCRIPT);
-		if(! script.canExecute())
-			script.setExecutable(true);
-
+		File script = new File(dir,Constants.TARGET_SCRIPT_FILE_NAME);
 		Logger logger = Logger.getLogger( AgentUtils.class.getName());
-		String[] command = { script.getAbsolutePath() };
-		int exitCode = ProgramUtils.executeCommand(logger, command, script.getParentFile(), null, applicationName, scopedInstanceName);
-		if( exitCode != 0 )
-			throw new IOException( "Script execution failed. Exit code: " + exitCode );
+		if( script.exists()) {
+			if(! script.canExecute())
+				script.setExecutable(true);
+
+			String[] command = { script.getAbsolutePath() };
+			int exitCode = ProgramUtils.executeCommand(logger, command, script.getParentFile(), null, applicationName, scopedInstanceName);
+			if( exitCode != 0 )
+				throw new IOException( "Script execution failed. Exit code: " + exitCode );
+		} else {
+			logger.severe("There is no script to execute");
+		}
 	}
 
 	/**

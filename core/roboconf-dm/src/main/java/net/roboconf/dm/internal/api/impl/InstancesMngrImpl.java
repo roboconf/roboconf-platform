@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +69,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
  * @author Pierre-Yves Gibello - Linagora
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
+ * @author Amadou Diarra - UGA
  */
 public class InstancesMngrImpl implements IInstancesMngr {
 
@@ -402,14 +404,20 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			// Send the model
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
 			String targetId = this.targetsMngr.findTargetId(ma.getApplication(), InstanceHelpers.computeInstancePath( scopedInstance ));
-			Map<String,byte[]> scriptResources = this.targetsMngr.findScriptResources(targetId);
-			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
-					scopedInstance,
-					ma.getApplication().getExternalExports(),
-					ma.getApplication().getApplicationBindings(),
-					scriptResources );
+			Map<String,byte[]> scriptResources = new HashMap<> ();
 
-			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
+			if( targetId!=null )
+				scriptResources = this.targetsMngr.findScriptResources(targetId);
+
+			if( ! scriptResources.isEmpty()) {
+				MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
+						scopedInstance,
+						ma.getApplication().getExternalExports(),
+						ma.getApplication().getApplicationBindings(),
+						scriptResources );
+
+				this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
+			}
 
 			// Send the probe files (if any)
 			Map<String,byte[]> probeResources = ResourceUtils.storeInstanceProbeResources( ma.getDirectory(), scopedInstance );

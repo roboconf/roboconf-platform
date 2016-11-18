@@ -72,6 +72,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
 /**
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
+ * @author Amadou Diarra - UGA
  */
 public class ManagerBasicsTest {
 
@@ -713,6 +714,13 @@ public class ManagerBasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid1\nhandler: h" );
+		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
+
 		this.msgClient.allSentMessages.clear();
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
@@ -737,6 +745,13 @@ public class ManagerBasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
+		String targetId = this.manager.targetsMngr().createTarget( "id: tid2\nhandler: h" );
+		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir, Constants.TARGET_SCRIPT_FILE_NAME ));
+		Assert.assertNotNull( this.manager.targetsMngr().findScriptResources(targetId) );
+
 		this.msgClient.allSentMessages.clear();
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
@@ -750,6 +765,8 @@ public class ManagerBasicsTest {
 
 		// Let's try again, but we change the WAR installer
 		app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
+
+
 
 		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );

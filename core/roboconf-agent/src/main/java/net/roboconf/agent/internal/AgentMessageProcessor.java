@@ -89,6 +89,7 @@ import net.roboconf.plugin.api.PluginInterface;
  * </p>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
 public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient> {
 

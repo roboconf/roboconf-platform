@@ -177,7 +177,11 @@ public class SerializationUtilsTest {
 		appNames.add( "app2" );
 		map2.put( "app_prefix", appNames );
 
-		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map1, map2, null ); //TODO
+		Map<String,byte[]> map3 = new HashMap<> ();
+		byte[] script = {0,1};
+		map3.put("script", script);
+
+		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map1, map2, map3 );
 		checkBasics( msg, MsgCmdSetScopedInstance.class );
 	}
 

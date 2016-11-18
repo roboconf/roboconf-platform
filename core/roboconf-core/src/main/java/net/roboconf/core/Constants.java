@@ -62,14 +62,9 @@ public interface Constants {
 	String FILE_EXT_RULE = ".drl";
 
 	/**
-	 * The <strong>shell</strong> file extension.
+	 * The <strong>script</strong> file extension.
 	 * */
-	String FILE_EXT_SHELL = ".sh";
-
-	/**
-	 * The <strong>script</strong> file to be executed.
-	 * */
-	String SCRIPT = "script";
+	String FILE_EXT_SCRIPT = ".script";
 
 	/**
 	 * The wild card symbol (can be used in a component to reference any variable for a given group).
@@ -85,6 +80,11 @@ public interface Constants {
 	 * The name of the file that contain the target properties.
 	 */
 	String TARGET_PROPERTIES_FILE_NAME = "target" + FILE_EXT_PROPERTIES;
+
+	/**
+	 * The name of the file that will be executed.
+	 */
+	String TARGET_SCRIPT_FILE_NAME = "target" + FILE_EXT_SCRIPT;
 
 	/**
 	 * The {@value #TARGET_PROPERTY_HANDLER} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.

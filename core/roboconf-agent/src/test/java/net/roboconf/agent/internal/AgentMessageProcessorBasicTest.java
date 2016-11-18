@@ -231,7 +231,10 @@ public class AgentMessageProcessorBasicTest {
 		applicationBindings.put( "Tpl2", new HashSet<>( Arrays.asList( "app2" )));
 
 		Map<String,byte[]> scriptResources = new HashMap<> ();
-		//TODO fill scriptResources
+		String scriptShell = "#!/bin/bash\necho Bonjour le monde cruel > toto.txt";
+		byte[] script1 = scriptShell.getBytes();
+		scriptResources.put("script", script1);
+
 		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings, scriptResources );
 
 		// Send the message
@@ -244,6 +247,7 @@ public class AgentMessageProcessorBasicTest {
 		Assert.assertEquals( 2, processor.applicationBindings.size());
 		Assert.assertEquals( new HashSet<>( Arrays.asList( "app2" )), processor.applicationBindings.get( "Tpl2" ));
 		Assert.assertEquals( new HashSet<>( Arrays.asList( "app1", "app3" )), processor.applicationBindings.get( "Tpl1" ));
+
 	}
 
 

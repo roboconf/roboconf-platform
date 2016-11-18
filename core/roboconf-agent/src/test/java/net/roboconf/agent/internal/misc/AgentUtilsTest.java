@@ -271,4 +271,15 @@ public class AgentUtilsTest {
 		String expectedIp = InetAddress.getLocalHost().getHostAddress();
 		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( AgentConstants.DEFAULT_NETWORK_INTERFACE ));
 	}
+
+	/*@Test
+	public void testExecuteScriptResource() {
+
+		//prepare our resources
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		Instance inst = app.getTomcatVm();
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+
+
+	}*/
 }

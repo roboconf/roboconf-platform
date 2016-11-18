@@ -80,6 +80,7 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
  * </ul>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra   - UGA
  */
 public class TargetsMngrImpl implements ITargetsMngr {
 
@@ -436,11 +437,14 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
 		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 
-		File scriptFile = new File( findTargetDirectory( targetId ), Constants.SCRIPT );
-		if( scriptFile.exists()) {
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( scriptFile, os );
-			result.put( scriptFile.getName(), os.toByteArray());
+		File targetDir = findTargetDirectory( targetId );
+		if( targetDir.isDirectory()){
+			File scriptFile = new File( targetDir, Constants.TARGET_SCRIPT_FILE_NAME );
+			if( scriptFile.exists()) {
+				ByteArrayOutputStream os = new ByteArrayOutputStream();
+				Utils.copyStream( scriptFile, os );
+				result.put( scriptFile.getName(), os.toByteArray());
+			}
 		}
 		return result;
 	}

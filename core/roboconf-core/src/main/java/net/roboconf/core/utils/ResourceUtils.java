@@ -28,7 +28,6 @@ package net.roboconf.core.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -179,25 +178,6 @@ public final class ResourceUtils {
 		}
 
 		return result;
-	}
-
-
-	/**
-	 * Finds the script that will be ran by an agent.
-	 * @param karafData karaf data directory
-	 * @return the content of script in bytes
-	 * @throws IOException
-	 * @throws UnsupportedEncodingException
-	 * */
-	public static byte[] findScript(String karafData) throws IOException {
-
-		String result = "";
-		if( ! Utils.isEmptyOrWhitespaces( karafData )) {
-				File script = new File( karafData, "script.sh" );
-				result = Utils.readFileContent( script );
-		}
-
-		return result.getBytes( "UTF-8" );
 	}
 
 
