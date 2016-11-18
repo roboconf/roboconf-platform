@@ -23,61 +23,62 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.swagger;
+package net.roboconf.karaf.dist.dm;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
-import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-import net.roboconf.dm.rest.commons.json.MapWrapper;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
-import net.roboconf.dm.rest.commons.json.StringWrapper;
-import net.roboconf.karaf.dist.dm.GeneratePreferencesFile;
+import net.roboconf.core.utils.Utils;
 
 /**
+ * A stand-alone class used to generate the preferences file for the DM's distribution.
  * @author Vincent Zurczak - Linagora
  */
-public class UpdateSwaggerJsonTest {
+public class GeneratePreferencesFileTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
-	public void verifyProcessedClasses() throws Exception {
+	public void testGeneratedFile_success() throws Exception {
 
-		UpdateSwaggerJson updater = new UpdateSwaggerJson();
-		updater.prepareNewDefinitions();
+		File targetFile = this.folder.newFile();
+		Assert.assertEquals( 0, targetFile.length());
+		new GeneratePreferencesFile().run( new String[] { targetFile.getAbsolutePath()});
+		Assert.assertNotEquals( 0, targetFile.length());
 
-		Set<Class<?>> classes = new HashSet<> ();
-		classes.addAll( JSonBindingUtils.getSerializers().keySet());
-		classes.removeAll( updater.processedClasses );
+		String content = Utils.readFileContent( targetFile );
+		for( String line : content.split( "\n" )) {
 
-		// These classes are used within other ones.
-		// No need to add them directly in the swagger.json file.
-		classes.removeAll( Arrays.asList(
-				StringWrapper.class,
-				MapWrapper.class,
-				MappedCollectionWrapper.class,
-				ApplicationBindings.class
-		));
+			if( Utils.isEmptyOrWhitespaces( line ))
+				continue;
 
-		Assert.assertEquals( Collections.emptySet(), classes );
+			if( ! line.startsWith( "##" )
+					&& ! line.startsWith( "# " )
+					&& ! line.matches( "\\w[\\w.]+\\w = .*" ))
+				throw new Exception( "Invalid line: " + line );
+		}
 	}
 
 
 	@Test( expected = RuntimeException.class )
 	public void testGeneratedFile_invalidNumberOfArguments() throws Exception {
 
-		new GeneratePreferencesFile().run( new String[] { "a", "b", "c" });
+		File targetFile = this.folder.newFile();
+		Assert.assertEquals( 0, targetFile.length());
+		new GeneratePreferencesFile().run( new String[] { "a", "b", targetFile.getAbsolutePath()});
 	}
 
 
 	@Test( expected = RuntimeException.class )
 	public void testGeneratedFile_invalidArguments() throws Exception {
 
-		new GeneratePreferencesFile().run( new String[] { "invalid path" });
+		File targetFile = this.folder.newFolder();
+		new GeneratePreferencesFile().run( new String[] { targetFile.getAbsolutePath()});
 	}
 }

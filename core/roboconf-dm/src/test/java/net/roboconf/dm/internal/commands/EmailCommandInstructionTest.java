@@ -32,19 +32,20 @@ import java.util.List;
 import javax.mail.Address;
 import javax.mail.Message;
 
-import net.roboconf.core.commands.CommandsParser;
-import net.roboconf.core.commands.EmailCommandInstruction;
-import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.dm.internal.commands.EmailCommandExecution.MailAuthenticator;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.api.IPreferencesMngr;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.commands.EmailCommandInstruction;
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.dm.internal.api.impl.PreferencesMngrImpl;
+import net.roboconf.dm.internal.commands.EmailCommandExecution.MailAuthenticator;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -59,8 +60,8 @@ public class EmailCommandInstructionTest {
 	@Before
 	public void initialize() throws Exception {
 		this.manager = new Manager();
+		this.manager.setPreferencesMngr( new PreferencesMngrImpl());
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.preferencesMngr().loadProperties();
 	}
 
 

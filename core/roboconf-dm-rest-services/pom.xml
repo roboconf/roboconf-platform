@@ -308,6 +308,7 @@
 				<version>${enunciate.version}</version>
 				<executions>
 					<execution>
+						<phase>process-sources</phase>
 						<goals>
 							<goal>docs</goal>
 						</goals>
@@ -326,9 +327,13 @@
 					<execution>
 						<phase>test-compile</phase>
 						<configuration>
+							<failOnError>true</failOnError>
 							<target>
-								<property name="test_classpath" refid="maven.test.classpath"/>
-								<java classname="net.roboconf.dm.rest.services.swagger.UpdateSwaggerJson" classpath="${test_classpath}" />
+								<property name="test_classpath" refid="maven.test.classpath" />
+								<property name="project_location" value="${project.basedir}" />
+								<java classname="net.roboconf.dm.rest.services.swagger.UpdateSwaggerJson" classpath="${test_classpath}" failonerror="true">
+									<arg value="${project_location}" />
+								</java>
 							</target>	
 						</configuration>
 						<goals>

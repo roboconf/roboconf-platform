@@ -23,62 +23,29 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime;
+package net.roboconf.dm.management.api;
+
+import java.lang.reflect.Field;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import net.roboconf.dm.management.api.IPreferencesMngr.Defaults;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class Preference {
+public class IPreferencesMngrTest {
 
-	private final String name, value;
-	private final PreferenceKeyCategory category;
+	@Test
+	public void verifyAllTheDeclaredKeysAreInCategories() throws Exception {
 
-
-	/**
-	 * Constructor.
-	 * @param name the key name (not null)
-	 * @param category the category (can be null)
-	 */
-	public Preference( String name, String value, PreferenceKeyCategory category ) {
-		this.name = name;
-		this.value = value;
-		this.category = category;
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public String getValue() {
-		return this.value;
-	}
-
-	public PreferenceKeyCategory getCategory() {
-		return this.category;
-	}
-
-	@Override
-	public String toString() {
-		return this.name;
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public enum PreferenceKeyCategory {
-		LANGUAGE( "Language settings" ),
-		EMAIL( "Email settings (when Roboconf has to send e-mails)" ),
-		AUTONOMIC( "Autonomic" ),
-		MISCELLANEOUS( "Miscellaneous properties" );
-
-		private String description;
-		private PreferenceKeyCategory( String description ) {
-			this.description = description;
-		}
-
-		public String getDescription() {
-			return this.description;
+		Defaults defaults = new Defaults();
+		Field[] fields = IPreferencesMngr.class.getDeclaredFields();
+		for( Field field : fields ) {
+			String constantName = (String) field.get( null );
+			Assert.assertNotNull( field.getName(), constantName );
+			Assert.assertNotNull( constantName, defaults.keyToCategory.get( constantName ));
 		}
 	}
 }

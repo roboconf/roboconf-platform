@@ -28,18 +28,18 @@ package net.roboconf.dm.internal.api.impl;
 import java.util.Map;
 import java.util.Properties;
 
-import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.dm.management.api.IPreferencesMngr;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -60,7 +60,8 @@ public class RandomMngrTest {
 		Mockito.when( this.preferencesMngr.get( Mockito.anyString())).thenReturn( "" );
 		Mockito.when( this.preferencesMngr.getJavaxMailProperties()).thenReturn( new Properties());
 
-		this.mngr = new RandomMngrImpl( this.preferencesMngr );
+		this.mngr = new RandomMngrImpl();
+		this.mngr.setPreferencesMngr( this.preferencesMngr );
 	}
 
 

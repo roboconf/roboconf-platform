@@ -6,6 +6,8 @@
 
 	<!-- A component for the DM -->
 	<component classname="net.roboconf.dm.management.Manager" name="roboconf-dm" public="false">
+
+		<requires optional="false" field="preferencesMngr" />
 		<requires aggregate="true" optional="true">
 			<callback type="bind" method="targetAppears" />
 			<callback type="unbind" method="targetDisappears" />
@@ -27,7 +29,19 @@
 			<property name="domain" method="setDomain" />
 		</properties>
 	</component>
+	
+	<!-- A component for the preferences -->
+	<!-- Preferences can be updated through files but might also be updated from the web console -->
+	<component classname="net.roboconf.dm.internal.api.impl.PreferencesMngrImpl" name="roboconf-dm-preferences" public="false">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 
-	<!-- And the instance... -->
+		<provides specifications="net.roboconf.dm.management.api.IPreferencesMngr" />
+		<properties pid="net.roboconf.dm.preferences" updated="updateProperties" propagation="true" />
+		<requires field="configAdmin" optional="true" />
+	</component>
+
+	<!-- And the instances... -->
 	<instance component="roboconf-dm" name="Roboconf - DM" />
+	<instance component="roboconf-dm-preferences" name="Roboconf - DM Preferences" />
 </ipojo>

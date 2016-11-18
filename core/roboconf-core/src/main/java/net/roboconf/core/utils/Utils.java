@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Serializable;
@@ -350,13 +351,33 @@ public final class Utils {
 	/**
 	 * Writes a string into a file.
 	 *
-	 * @param s the string to write
+	 * @param s the string to write (not null)
 	 * @param outputFile the file to write into
 	 * @throws IOException if something went wrong
 	 */
 	public static void writeStringInto( String s, File outputFile ) throws IOException {
 		InputStream in = new ByteArrayInputStream( s.getBytes( "UTF-8" ));
 		copyStream( in, outputFile );
+	}
+
+
+	/**
+	 * Appends a string into a file.
+	 *
+	 * @param s the string to write (not null)
+	 * @param outputFile the file to write into
+	 * @throws IOException if something went wrong
+	 */
+	public static void appendStringInto( String s, File outputFile ) throws IOException {
+
+		OutputStreamWriter fw = null;
+		try {
+			fw = new OutputStreamWriter( new FileOutputStream( outputFile, true ), "UTF-8" );
+			fw.append( s );
+
+		} finally {
+			Utils.closeQuietly( fw );
+		}
 	}
 
 

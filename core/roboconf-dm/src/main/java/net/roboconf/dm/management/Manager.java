@@ -102,6 +102,7 @@ public class Manager implements IReconfigurable {
 	// Injected by iPojo or Admin Config
 	protected String messagingType;
 	protected String domain = Constants.DEFAULT_DOMAIN;
+	protected IPreferencesMngr preferencesMngr;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
@@ -116,7 +117,6 @@ public class Manager implements IReconfigurable {
 	private final InstancesMngrImpl instancesMngr;
 
 	private final IRandomMngr randomMngr;
-	private final IPreferencesMngr preferencesMngr;
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
 	private final ITargetsMngr targetsMngr;
@@ -137,8 +137,7 @@ public class Manager implements IReconfigurable {
 		// We do not want to mix N frameworks.
 		this.notificationMngr = new NotificationMngrImpl();
 		this.configurationMngr = new ConfigurationMngrImpl();
-		this.preferencesMngr = new PreferencesMngrImpl( this.configurationMngr );
-		this.randomMngr = new RandomMngrImpl( this.preferencesMngr );
+		this.randomMngr = new RandomMngrImpl();
 
 		this.messagingMngr = new MessagingMngrImpl();
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
@@ -146,7 +145,7 @@ public class Manager implements IReconfigurable {
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
 		this.commandsMngr = new CommandsMngrImpl( this );
 
-		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr, this.preferencesMngr );
+		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr );
 		this.applicationMngr = new ApplicationMngrImpl(
 				this.notificationMngr, this.configurationMngr,
 				this.targetsMngr, this.messagingMngr,
@@ -158,6 +157,11 @@ public class Manager implements IReconfigurable {
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 		this.instancesMngr.setRuleBasedHandler( this.autonomicMngr );
+
+		// The manager is supposed to be an API.
+		// To make it simple to use in non-OSGi environments, we instantiate a default set of preferences.
+		// This will prevent NPEs. In OSGi environments, iPojo will override it.
+		setPreferencesMngr( new PreferencesMngrImpl());
 	}
 
 
@@ -172,9 +176,6 @@ public class Manager implements IReconfigurable {
 	 */
 	public void start() {
 		this.logger.info( "The DM is about to be launched." );
-
-		// Load the preferences
-		this.preferencesMngr.loadProperties();
 
 		// Start the messaging
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
@@ -358,6 +359,16 @@ public class Manager implements IReconfigurable {
 		this.logger.fine( "Domain set to " + domain );
 		if( this.messagingClient != null )
 			this.messagingClient.setDomain( domain );
+	}
+
+
+	/**
+	 * @param preferencesMngr the preferencesMngr to set
+	 */
+	public void setPreferencesMngr( IPreferencesMngr preferencesMngr ) {
+		this.preferencesMngr = preferencesMngr;
+		((RandomMngrImpl) this.randomMngr).setPreferencesMngr( preferencesMngr );
+		((AutonomicMngrImpl) this.autonomicMngr).setPreferencesMngr( preferencesMngr );
 	}
 
 

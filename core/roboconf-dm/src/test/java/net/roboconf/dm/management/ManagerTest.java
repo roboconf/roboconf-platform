@@ -38,11 +38,13 @@ import org.mockito.Mockito;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.dm.internal.api.impl.PreferencesMngrImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.api.IInstancesMngr;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -143,7 +145,17 @@ public class ManagerTest {
 		Assert.assertNotNull( this.manager.notificationMngr());
 		Assert.assertNotNull( this.manager.targetsMngr());
 		Assert.assertNotNull( this.manager.commandsMngr());
+
+		// The preferences are injected by iPojo
+		IPreferencesMngr impl1 = this.manager.preferencesMngr();
+		Assert.assertNotNull( impl1 );
+
+		IPreferencesMngr impl2 = new PreferencesMngrImpl();
+		this.manager.setPreferencesMngr( impl2 );
 		Assert.assertNotNull( this.manager.preferencesMngr());
+
+		Assert.assertSame( impl2, this.manager.preferencesMngr());
+		Assert.assertNotSame( impl1, this.manager.preferencesMngr());
 	}
 
 
