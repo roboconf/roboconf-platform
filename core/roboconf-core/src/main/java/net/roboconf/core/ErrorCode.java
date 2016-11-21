@@ -51,7 +51,6 @@ public enum ErrorCode {
 	P_INVALID_PROPERTY_OR_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Syntax error: a property or an instance was expected." ),
 	P_INVALID_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid file type. It mixes facet, component and instance definitions." ),
 	P_EMPTY_FILE( ErrorLevel.WARNING, ErrorCategory.PARSING, "The file is empty." ),
-	P_ONLY_EXPORTS_CAN_USE_QUOTES( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Only graph exports can use quotes." ),
 
 	// Parsing Model Errors
 	PM_INVALID_BLOCK_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Validation failed. Unknown block type." ),

@@ -683,4 +683,31 @@ public class FromGraphDefinitionTest {
 		Assert.assertNotNull( comp2 );
 		Assert.assertNull( fromDef.getTypeAnnotations().get( comp2.getName()));
 	}
+
+
+	@Test
+	public void testQuotedProperties() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/component-with-quoted-values.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile(), false );
+		fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 4, fromDef.getErrors().size());
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
+
+		ParsingError error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTALLER_NAME, error.getErrorCode());
+
+		error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_CHILD_NAME, error.getErrorCode());
+		Assert.assertEquals( "Child name: \"toto\"", error.getDetails());
+
+		error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, error.getErrorCode());
+		Assert.assertEquals( "Invalid name: \"A\"", error.getDetails());
+
+		error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, error.getErrorCode());
+		Assert.assertEquals( "Invalid name: \"component\"", error.getDetails());
+	}
 }

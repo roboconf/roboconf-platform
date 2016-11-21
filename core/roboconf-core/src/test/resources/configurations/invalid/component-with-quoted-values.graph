@@ -1,0 +1,16 @@
+
+facet A {
+	# nothing
+}
+
+component  {
+	installer: "target";
+	children: "toto";
+	exports: ip, path = "this is a valid property value!";
+	facets: "A";
+}
+
+toto {
+	installer : whatver;
+	extends: "component";
+}

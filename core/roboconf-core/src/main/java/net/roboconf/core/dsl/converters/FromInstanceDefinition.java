@@ -295,6 +295,8 @@ public class FromInstanceDefinition {
 					String pValue = ((BlockProperty) innerBlock).getValue();
 					if( pName.toLowerCase().startsWith( ParsingConstants.PROPERTY_INSTANCE_DATA_PREFIX ))
 						instance.data.put( pName.substring( 5 ), pValue );
+					else if( pValue.matches( "\\s*\".*\"\\s*" ))
+						instance.overriddenExports.put( pName, pValue.trim().substring( 1, pValue.trim().length() -1 ));
 					else
 						instance.overriddenExports.put( pName, pValue );
 

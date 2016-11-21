@@ -276,9 +276,6 @@ public class FileDefinitionParser {
 			// Only exception: exported variables, that can contain semicolons in their quoted values.
 			String escapedLine = block.getValue();
 			if( realLine.contains( "\"" )) {
-				if( ! ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( block.getName()))
-					addModelError( ErrorCode.P_ONLY_EXPORTS_CAN_USE_QUOTES );
-
 				escapedLine = escapedLine.replaceAll( "\"[^\"]*\"", "" );
 			}
 

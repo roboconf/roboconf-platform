@@ -295,7 +295,8 @@ public class FileDefinitionParserTest {
 			"   property : value  ;",
 			"PROPERTY: value; # with an inline comment",
 			"property: value1, value2  ,  value3;",
-			"property:;"
+			"property:;",
+			"property : key6 = \" key; 6 \";"
 		};
 
 		// Comments do not matter here
@@ -383,7 +384,6 @@ public class FileDefinitionParserTest {
 		invalidLineToErrorCode.put( "property: value", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "property:", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "property: value;;", ErrorCode.P_ONE_BLOCK_PER_LINE );
-		invalidLineToErrorCode.put( "imports : key6 = \" key; 6 \";", ErrorCode.P_ONLY_EXPORTS_CAN_USE_QUOTES );
 		invalidLineToErrorCode.put( "exports : key6 = key; 6 \";", ErrorCode.P_ONE_BLOCK_PER_LINE );
 
 		for( Map.Entry<String,ErrorCode> entry : invalidLineToErrorCode.entrySet()) {
