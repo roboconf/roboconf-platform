@@ -40,6 +40,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -82,6 +83,46 @@ public class FromGraphDefinitionTest {
 		Assert.assertTrue( componentNames.contains( "ExportingComponent" ));
 		Assert.assertTrue( componentNames.contains( "FacetComponent" ));
 		Assert.assertTrue( componentNames.contains( "InstanceOfComponent" ));
+	}
+
+
+	@Test
+	public void test_complexVariablesValues() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/component-with-complex-variables-values.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 1, graphs.getRootComponents().size());
+		Component comp = graphs.getRootComponents().iterator().next();
+		Assert.assertEquals( 6, comp.exportedVariables.size());
+
+		ExportedVariable var = comp.exportedVariables.get( "key1" );
+		Assert.assertEquals( "value1", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key2" );
+		Assert.assertEquals( "value2", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key3" );
+		Assert.assertEquals( "this is key number 3", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key4" );
+		Assert.assertEquals( "key4", var.getValue());
+		Assert.assertTrue( var.isRandom());
+		Assert.assertEquals( RandomKind.PORT, var.getRandomKind());
+
+		var = comp.exportedVariables.get( "key5" );
+		Assert.assertEquals( "key5", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key6" );
+		Assert.assertEquals( " key; 6 ", var.getValue());
+		Assert.assertTrue( var.isRandom());
+		Assert.assertEquals( RandomKind.PORT, var.getRandomKind());
 	}
 
 

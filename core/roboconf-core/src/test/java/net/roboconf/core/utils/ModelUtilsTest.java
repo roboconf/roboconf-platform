@@ -29,14 +29,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
 import net.roboconf.core.dsl.parsing.BlockFacet;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.model.beans.ExportedVariable;
-
-import org.junit.Test;
+import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -153,5 +154,21 @@ public class ModelUtilsTest {
 		Assert.assertEquals( "abc", map.get( varName1 ).getValue());
 		Assert.assertEquals( "587", map.get( varName2 ).getValue());
 
+		// With random ports
+		prop.setValue( "random[port] var1" );
+		map = ModelUtils.getExportedVariables( holder );
+		Assert.assertEquals( 1, map.size());
+		Assert.assertTrue( map.containsKey( varName1 ));
+		Assert.assertNull( map.get( varName1 ).getValue());
+		Assert.assertEquals( RandomKind.PORT, map.get( varName1 ).getRandomKind());
+		Assert.assertTrue( map.get( varName1 ).isRandom());
+
+		prop.setValue( "raNdom[pOrt] var1" );
+		map = ModelUtils.getExportedVariables( holder );
+		Assert.assertEquals( 1, map.size());
+		Assert.assertTrue( map.containsKey( varName1 ));
+		Assert.assertNull( map.get( varName1 ).getValue());
+		Assert.assertEquals( RandomKind.PORT, map.get( varName1 ).getRandomKind());
+		Assert.assertTrue( map.get( varName1 ).isRandom());
 	}
 }

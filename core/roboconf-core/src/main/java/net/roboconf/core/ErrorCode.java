@@ -51,6 +51,7 @@ public enum ErrorCode {
 	P_INVALID_PROPERTY_OR_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Syntax error: a property or an instance was expected." ),
 	P_INVALID_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid file type. It mixes facet, component and instance definitions." ),
 	P_EMPTY_FILE( ErrorLevel.WARNING, ErrorCategory.PARSING, "The file is empty." ),
+	P_ONLY_EXPORTS_CAN_USE_QUOTES( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Only graph exports can use quotes." ),
 
 	// Parsing Model Errors
 	PM_INVALID_BLOCK_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Validation failed. Unknown block type." ),
@@ -65,6 +66,7 @@ public enum ErrorCode {
 
 	PM_INVALID_CHILD_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid child name. As a reminder, children names must be separated by a comma. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	PM_INVALID_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An invalid name was found. Expected pattern: " + ParsingConstants.PATTERN_ID ),
+	PM_INVALID_EXPORT_COMPLEX_VALUE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An exported variable's value is incorrectly spelled. A quote is missing." ),
 	PM_INVALID_EXPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Exported variable names must be separated by a comma." ),
 	PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " is a keyword reserved for imports." ),
 	PM_INVALID_IMPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Imported variable names must be separated by a comma." ),

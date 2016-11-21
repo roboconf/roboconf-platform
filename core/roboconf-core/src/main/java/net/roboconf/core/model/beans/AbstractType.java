@@ -28,10 +28,10 @@ package net.roboconf.core.model.beans;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -40,7 +40,10 @@ public abstract class AbstractType implements Serializable {
 
 	private static final long serialVersionUID = 6426303830149882558L;
 
-	public final Map<String,ExportedVariable> exportedVariables = new HashMap<>( 0 );
+	/**
+	 * Variables, accessible by their names and sorted alphabetically in this map.
+	 */
+	public final Map<String,ExportedVariable> exportedVariables = new TreeMap<> ();
 
 	protected String name;
 	protected final Collection<AbstractType> children = new HashSet<>( 0 );

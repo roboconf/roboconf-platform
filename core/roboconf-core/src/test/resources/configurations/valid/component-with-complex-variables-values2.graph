@@ -1,0 +1,8 @@
+
+# The difference here is that we use a single space to separate properties.
+# This is only to verify we serialize as expected.
+component {
+	exports: key1 = value1, key2 = value2;
+	exports: key3 = "this is key number 3";
+	exports: random[port] key4="key4", key5= key5, random[port] key6 = " key; 6 ";
+}

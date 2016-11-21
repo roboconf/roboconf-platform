@@ -27,15 +27,21 @@ package net.roboconf.core.model.helpers;
 
 import java.util.AbstractMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
 
 /**
  * Helpers related to variables.
@@ -97,6 +103,54 @@ public final class VariableHelpers {
 		}
 
 		return new AbstractMap.SimpleEntry<>( varName, defaultValue );
+	}
+
+
+	/**
+	 * Parse a list of exported variables.
+	 * @param line a non-null line
+	 * @return a non-null map of exported variables
+	 */
+	public static Map<String,ExportedVariable> parseExportedVariables( String line ) {
+
+		Pattern randomPattern = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_RANDOM_PATTERN, Pattern.CASE_INSENSITIVE );
+		Pattern varPattern = Pattern.compile( "([^,=]+)(\\s*=\\s*(\"([^\",]+)\"|([^,]+)))?" );
+
+		Map<String,ExportedVariable> result = new LinkedHashMap<> ();
+		Matcher varMatcher = varPattern.matcher( line );
+		while( varMatcher.find()) {
+
+			String key = varMatcher.group( 1 ).trim();
+			if( Utils.isEmptyOrWhitespaces( key ))
+				continue;
+
+			String value = null;
+			if( varMatcher.group( 3 ) != null ) {
+
+				// We do not always trim!
+				// Surrounding white spaces are kept when defined between quotes.
+				if( varMatcher.group( 5 ) != null )
+					value = varMatcher.group( 5 ).trim();
+				else
+					value = varMatcher.group( 4 );
+			}
+
+			ExportedVariable var = new ExportedVariable();
+			Matcher m = randomPattern.matcher( key );
+			if( m.matches()) {
+				var.setRandom( true );
+				var.setRawKind( m.group( 1 ));
+				key = m.group( 2 ).trim();
+			}
+
+			var.setName( key.trim());
+			if( value != null )
+				var.setValue( value );
+
+			result.put( var.getName(), var );
+		}
+
+		return result;
 	}
 
 

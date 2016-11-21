@@ -25,6 +25,7 @@
 
 package net.roboconf.core.utils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.regex.Pattern;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
 import net.roboconf.core.dsl.parsing.BlockProperty;
+import net.roboconf.core.internal.dsl.parsing.ExportedVariablesParser;
 import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.helpers.VariableHelpers;
 
@@ -88,7 +90,7 @@ public final class ModelUtils {
 	public static Map<String,String> getData( AbstractBlockHolder holder ) {
 
 		BlockProperty p = holder.findPropertyBlockByName( ParsingConstants.PROPERTY_INSTANCE_DATA );
-		Map<String,String> result = new HashMap<String,String> ();
+		Map<String,String> result = new HashMap<> ();
 
 		String propertyValue = p == null ? null : p.getValue();
 		for( String s : Utils.splitNicely( propertyValue, ParsingConstants.PROPERTY_SEPARATOR )) {
@@ -103,7 +105,8 @@ public final class ModelUtils {
 	/**
 	 * Gets and splits exported variables separated by a comma.
 	 * <p>
-	 * Variable names are not prefixed by the type's name.
+	 * Variable names are not prefixed by the type's name.<br />
+	 * Variable values may also be surrounded by quotes.
 	 * </p>
 	 *
 	 * @param holder a property holder (not null)
@@ -111,28 +114,48 @@ public final class ModelUtils {
 	 */
 	public static Map<String,ExportedVariable> getExportedVariables( AbstractBlockHolder holder ) {
 
-		Pattern pattern = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_RANDOM_PATTERN, Pattern.CASE_INSENSITIVE );
 		Map<String,ExportedVariable> result = new HashMap<> ();
 		for( BlockProperty p : holder.findPropertiesBlockByName( ParsingConstants.PROPERTY_GRAPH_EXPORTS )) {
+			result.putAll( findExportedVariables( p.getValue(), p.getFile(), p.getLine()));
+		}
 
-			for( String s : Utils.splitNicely( p.getValue(), ParsingConstants.PROPERTY_SEPARATOR )) {
+		return result;
+	}
 
-				String variableDecl = s;
-				ExportedVariable var = new ExportedVariable();
 
-				Matcher m = pattern.matcher( s );
-				if( m.matches()) {
-					var.setRandom( true );
-					var.setRawKind( m.group( 1 ));
-					variableDecl = m.group( 2 ).trim();
-				}
+	/**
+	 * Gets and splits exported variables separated by a comma.
+	 * <p>
+	 * Variable names are not prefixed by the type's name.<br />
+	 * Variable values may also be surrounded by quotes.
+	 * </p>
+	 *
+	 * @param exportedVariablesDecl the declaration to parse
+	 * @param sourceFile the source file
+	 * @param lineNumber the line number
+	 * @return a non-null map (key = exported variable name, value = the exported variable)
+	 */
+	public static Map<String,ExportedVariable> findExportedVariables( String exportedVariablesDecl, File sourceFile, int lineNumber ) {
 
-				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( variableDecl );
-				var.setName( entry.getKey());
-				var.setValue( entry.getValue());
+		Map<String,ExportedVariable> result = new HashMap<> ();
+		Pattern pattern = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_RANDOM_PATTERN, Pattern.CASE_INSENSITIVE );
+		ExportedVariablesParser exportsParser = new ExportedVariablesParser();
+		exportsParser.parse( exportedVariablesDecl, sourceFile, lineNumber );
 
-				result.put( var.getName(), var );
+		for( Map.Entry<String,String> entry : exportsParser.rawNameToVariables.entrySet()) {
+			ExportedVariable var = new ExportedVariable();
+			String variableName = entry.getKey();
+
+			Matcher m = pattern.matcher( variableName );
+			if( m.matches()) {
+				var.setRandom( true );
+				var.setRawKind( m.group( 1 ));
+				variableName = m.group( 2 ).trim();
 			}
+
+			var.setName( variableName );
+			var.setValue( entry.getValue());
+			result.put( var.getName(), var );
 		}
 
 		return result;

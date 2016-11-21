@@ -35,6 +35,7 @@ import org.junit.Test;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
+import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -212,5 +213,125 @@ public class VariableHelpersTest {
 		Assert.assertEquals( 2, prefixes.size());
 		Assert.assertTrue( prefixes.contains( "other" ));
 		Assert.assertTrue( prefixes.contains( "something" ));
+	}
+
+
+	@Test
+	public void testParseExportedVariables_simpleVariables() {
+
+		Map<String,ExportedVariable> variables = VariableHelpers.parseExportedVariables( "key = value" );
+		Assert.assertEquals( 1, variables.size());
+
+		ExportedVariable var = variables.get( "key" );
+		Assert.assertEquals( "value", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		variables = VariableHelpers.parseExportedVariables( "key=value" );
+		Assert.assertEquals( 1, variables.size());
+
+		var = variables.get( "key" );
+		Assert.assertEquals( "value", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		variables = VariableHelpers.parseExportedVariables( "" );
+		Assert.assertEquals( 0, variables.size());
+
+		variables = VariableHelpers.parseExportedVariables( "    " );
+		Assert.assertEquals( 0, variables.size());
+
+		variables = VariableHelpers.parseExportedVariables( "ip" );
+		Assert.assertEquals( 1, variables.size());
+
+		var = variables.get( "ip" );
+		Assert.assertNull( var.getValue());
+		Assert.assertFalse( var.isRandom());
+	}
+
+
+	@Test
+	public void testParseExportedVariables_simpleListOfVariables() {
+
+		Map<String,ExportedVariable> variables = VariableHelpers.parseExportedVariables( "key1 = value1, key2=value2 , key3   =  value3  " );
+		Assert.assertEquals( 3, variables.size());
+
+		ExportedVariable var = variables.get( "key1" );
+		Assert.assertEquals( "value1", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key2" );
+		Assert.assertEquals( "value2", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key3" );
+		Assert.assertEquals( "value3", var.getValue());
+		Assert.assertFalse( var.isRandom());
+	}
+
+
+	@Test
+	public void testParseExportedVariables_variableWithComplexValue() {
+
+		Map<String,ExportedVariable> variables = VariableHelpers.parseExportedVariables( "key1 = \"value1\"" );
+		Assert.assertEquals( 1, variables.size());
+
+		ExportedVariable var = variables.get( "key1" );
+		Assert.assertEquals( "value1", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		variables = VariableHelpers.parseExportedVariables( "  key1=\"  value1  \" " );
+		Assert.assertEquals( 1, variables.size());
+
+		var = variables.get( "key1" );
+		Assert.assertEquals( "  value1  ", var.getValue());
+		Assert.assertFalse( var.isRandom());
+	}
+
+
+	@Test
+	public void testParseExportedVariables_listWithMixedValues() {
+
+		Map<String,ExportedVariable> variables = VariableHelpers.parseExportedVariables( "key1 = \"value1 is here\" , key2= value2, key3 = \"key33\", key4 = oops " );
+		Assert.assertEquals( 4, variables.size());
+
+		ExportedVariable var = variables.get( "key1" );
+		Assert.assertEquals( "value1 is here", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key2" );
+		Assert.assertEquals( "value2", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key3" );
+		Assert.assertEquals( "key33", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key4" );
+		Assert.assertEquals( "oops", var.getValue());
+		Assert.assertFalse( var.isRandom());
+	}
+
+
+	@Test
+	public void testParseExportedVariables_listWithMixedValuesAndRandom() {
+
+		Map<String,ExportedVariable> variables = VariableHelpers.parseExportedVariables( "key1 = \"value1 is here\" , random[port] key2= value2, key3 = \"key33\", key4 = oops " );
+		Assert.assertEquals( 4, variables.size());
+
+		ExportedVariable var = variables.get( "key1" );
+		Assert.assertEquals( "value1 is here", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key2" );
+		Assert.assertEquals( "value2", var.getValue());
+		Assert.assertTrue( var.isRandom());
+		Assert.assertEquals( RandomKind.PORT, var.getRandomKind());
+
+		var = variables.get( "key3" );
+		Assert.assertEquals( "key33", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = variables.get( "key4" );
+		Assert.assertEquals( "oops", var.getValue());
+		Assert.assertFalse( var.isRandom());
 	}
 }

@@ -30,10 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -46,8 +43,10 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.internal.dsl.parsing.ExportedVariablesParser;
 import net.roboconf.core.model.ParsingError;
-import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.model.beans.ExportedVariable;
+import net.roboconf.core.utils.ModelUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -70,7 +69,7 @@ public final class ParsingModelValidator {
 	 */
 	public static Collection<ParsingError> validate( FileDefinition definitionFile ) {
 
-		Collection<ParsingError> result = new ArrayList<ParsingError> ();
+		Collection<ParsingError> result = new ArrayList<> ();
 		result.addAll( definitionFile.getParsingErrors());
 		for( AbstractBlock block : definitionFile.getBlocks())
 			result.addAll( validate( block ));
@@ -116,7 +115,7 @@ public final class ParsingModelValidator {
 			break;
 
 		default:
-			result = new ArrayList<ParsingError>( 1 );
+			result = new ArrayList<>( 1 );
 			ParsingError error = parsingError( ErrorCode.PM_INVALID_BLOCK_TYPE, block );
 			error.setDetails( "Instruction type: " + block.getInstructionType());
 			result.add( error );
@@ -134,7 +133,7 @@ public final class ParsingModelValidator {
 	public static Collection<ParsingError> validate( BlockImport block ) {
 
 		String uri = block.getUri();
-		Collection<ParsingError> result = new ArrayList<ParsingError> ();
+		Collection<ParsingError> result = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( uri ))
 			result.add( parsingError( ErrorCode.PM_EMPTY_IMPORT_LOCATION, block ));
 
@@ -198,7 +197,7 @@ public final class ParsingModelValidator {
 	 */
 	public static Collection<ParsingError> validate( BlockProperty block ) {
 
-		Collection<ParsingError> result = new ArrayList<ParsingError> ();
+		Collection<ParsingError> result = new ArrayList<> ();
 		String value = block.getValue();
 		String name = block.getName();
 		int line = block.getLine();
@@ -253,24 +252,22 @@ public final class ParsingModelValidator {
 			}
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( name )) {
-			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 
-				String variableDecl = s;
-				Matcher m = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_RANDOM_PATTERN, Pattern.CASE_INSENSITIVE ).matcher( s );
-				if( m.find())
-					variableDecl = m.group( 2 ).trim();
+			ExportedVariablesParser exportsParser = new ExportedVariablesParser();
+			exportsParser.parse( value, block.getFile(), line );
+			result.addAll( exportsParser.errors );
+			for( ExportedVariable var : ModelUtils.findExportedVariables( value, block.getFile(), line ).values()) {
 
-				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( variableDecl );
-				if( Utils.isEmptyOrWhitespaces( entry.getKey()))
+				String exportKey = var.getName();
+				if( Utils.isEmptyOrWhitespaces( exportKey ))
 					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
-				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID )) {
-					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, variableDecl ));
+				else if( ! exportKey.matches( ParsingConstants.PATTERN_ID )) {
+					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, "Variable name: " + exportKey ));
 
-					if( entry.getKey().toLowerCase().startsWith( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " " ))
-						result.add( new ParsingError( ErrorCode.PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS, block.getFile(), line, variableDecl ));
+					if( exportKey.toLowerCase().startsWith( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " " ))
+						result.add( new ParsingError( ErrorCode.PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS, block.getFile(), line, "Variable name: " + exportKey ));
 				}
 			}
-
 
 		} else if( ParsingConstants.PROPERTY_COMPONENT_INSTALLER.equals( name )) {
 			if( ! value.matches( ParsingConstants.PATTERN_FLEX_ID ))
@@ -319,7 +316,7 @@ public final class ParsingModelValidator {
 	public static Collection<ParsingError> validate( BlockComment block ) {
 
 		// Only makes sense when a comment section was created programmatically.
-		Collection<ParsingError> result = new ArrayList<ParsingError> ();
+		Collection<ParsingError> result = new ArrayList<> ();
 		int cpt = 0;
 		for( String s : block.getContent().split( "\n" )) {
 			if( ! s.trim().startsWith( ParsingConstants.COMMENT_DELIMITER ))
@@ -339,7 +336,7 @@ public final class ParsingModelValidator {
 	public static Collection<ParsingError> validate( BlockBlank block ) {
 
 		// Only makes sense when a BlockBlank section was created programmatically.
-		Collection<ParsingError> result = new ArrayList<ParsingError> ();
+		Collection<ParsingError> result = new ArrayList<> ();
 		if( ! Utils.isEmptyOrWhitespaces( block.getContent()))
 			result.add( parsingError( ErrorCode.PM_MALFORMED_BLANK, block ));
 
@@ -355,7 +352,7 @@ public final class ParsingModelValidator {
 	private static Collection<ParsingError> validatePropertiesHolder( AbstractBlockHolder holder, boolean strict ) {
 
 		// Check the name
-		Collection<ParsingError> result = new ArrayList<ParsingError> ();
+		Collection<ParsingError> result = new ArrayList<> ();
 		String name = holder.getName();
 		if( Utils.isEmptyOrWhitespaces( name ))
 			result.add( parsingError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder ));
@@ -366,7 +363,7 @@ public final class ParsingModelValidator {
 
 		// Check all the properties have a value
 		List<String> supportedProperties = Arrays.asList( holder.getSupportedPropertyNames());
-		Set<String> foundProperties = new HashSet<String> ();
+		Set<String> foundProperties = new HashSet<> ();
 		for( AbstractBlock region : holder.getInnerBlocks()) {
 
 			if( region.getInstructionType() == AbstractBlock.PROPERTY ) {

@@ -859,8 +859,8 @@ public class ManagerBasicsTest {
 		Assert.assertNotNull( instance1 );
 
 		// Random values are set in applications
-		Assert.assertEquals( "10000", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
-		Assert.assertEquals( "10001", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.ajpPort" ));
+		Assert.assertEquals( "10000", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.ajpPort" ));
+		Assert.assertEquals( "10001", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
 
 		// Verify the 2nd container
 		Instance instance2 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container2" );
@@ -890,8 +890,8 @@ public class ManagerBasicsTest {
 
 		Instance instance1 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container1" );
 		Assert.assertNotNull( instance1 );
-		Assert.assertEquals( "10000", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
-		Assert.assertEquals( "10001", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.ajpPort" ));
+		Assert.assertEquals( "10000", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.ajpPort" ));
+		Assert.assertEquals( "10001", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
 
 		Instance instance2 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container2" );
 		Assert.assertNotNull( instance2 );

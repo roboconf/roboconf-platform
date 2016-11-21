@@ -245,7 +245,7 @@ public class FileDefinitionParser {
 
 	/**
 	 * @param line the raw line
-	 * @param holder
+	 * @param holder the properties holder
 	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
 	int recognizeProperty( String line, AbstractBlockHolder holder ) {
@@ -254,21 +254,35 @@ public class FileDefinitionParser {
 		String[] parts = splitFromInlineComment( line );
 		String realLine = parts[ 0 ].trim();
 
-		String regex = "([^:\\s]+)\\s*:\\s*([^;]*)";
+		String regex = "([^:\\s]+)\\s*:\\s*(.*)$";
 		Matcher m = Pattern.compile( regex ).matcher( realLine );
 		if( m.find()) {
+
+			// A property was identified
 			result = P_CODE_YES;
 			BlockProperty block = new BlockProperty( this.definitionFile );
 			block.setLine( this.currentLineNumber );
 			block.setName( m.group( 1 ));
-			block.setValue( m.group( 2 ));
+
+			// Properties end with a semicolon
+			if( ! m.group( 2 ).endsWith( ";" ))
+				addModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
+
+			block.setValue( m.group( 2 ).replaceFirst( ";$", "" ));
 			block.setInlineComment( parts[ 1 ]);
 			holder.getInnerBlocks().add( block );
 
-			realLine = realLine.substring( m.end());
-			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
-				addModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
-			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
+			// A property block should only contain one semicolon.
+			// Only exception: exported variables, that can contain semicolons in their quoted values.
+			String escapedLine = block.getValue();
+			if( realLine.contains( "\"" )) {
+				if( ! ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( block.getName()))
+					addModelError( ErrorCode.P_ONLY_EXPORTS_CAN_USE_QUOTES );
+
+				escapedLine = escapedLine.replaceAll( "\"[^\"]*\"", "" );
+			}
+
+			if( escapedLine.contains( ";" ))
 				addModelError( ErrorCode.P_ONE_BLOCK_PER_LINE );
 		}
 
