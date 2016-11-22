@@ -28,6 +28,7 @@ package net.roboconf.dm.internal.environment.messaging;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -230,16 +231,17 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
 					String targetId = this.manager.targetsMngr().findTargetId(ma.getApplication(), scopedInstancePath);
-					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResources(targetId);
-					if( ! scriptResources.isEmpty()) {
-						Message msg = new MsgCmdSetScopedInstance(
-								scopedInstance,
-								app.getExternalExports(),
-								app.getApplicationBindings(),
-								scriptResources);
+					Map<String,byte[]> scriptResources = new HashMap<> ();
+					if( targetId!=null )
+						scriptResources = this.manager.targetsMngr().findScriptResources(targetId);
 
-						this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
-					}
+					Message msg = new MsgCmdSetScopedInstance(
+							scopedInstance,
+							app.getExternalExports(),
+							app.getApplicationBindings(),
+							scriptResources);
+
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
 				}
 
 				// Send stored messages after an acknowledgement

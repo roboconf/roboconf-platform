@@ -49,6 +49,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.business.IAgentClient;
@@ -415,8 +416,14 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// Executes the script
 			AgentUtils.copyInstanceResources( this.scopedInstance, msg.getscriptResources());
-			AgentUtils.excuteScriptResource( this.scopedInstance, this.agent.getApplicationName(), this.scopedInstance.getName());
+			List<ExecutionResult> results = AgentUtils.executeScriptResources( this.scopedInstance, this.agent.getApplicationName(), this.scopedInstance.getName());
+			for( ExecutionResult result : results ){
+				if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
+					this.logger.fine( result.getNormalOutput());
 
+				if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
+					this.logger.warning( result.getErrorOutput());
+			}
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );

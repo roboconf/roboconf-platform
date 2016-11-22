@@ -82,11 +82,6 @@ public interface Constants {
 	String TARGET_PROPERTIES_FILE_NAME = "target" + FILE_EXT_PROPERTIES;
 
 	/**
-	 * The name of the file that will be executed.
-	 */
-	String TARGET_SCRIPT_FILE_NAME = "target" + FILE_EXT_SCRIPT;
-
-	/**
 	 * The {@value #TARGET_PROPERTY_HANDLER} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
 	 */
 	String TARGET_PROPERTY_HANDLER = "handler";

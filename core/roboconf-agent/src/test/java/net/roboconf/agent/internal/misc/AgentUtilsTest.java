@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -40,11 +41,14 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
 public class AgentUtilsTest {
 
@@ -272,14 +276,29 @@ public class AgentUtilsTest {
 		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( AgentConstants.DEFAULT_NETWORK_INTERFACE ));
 	}
 
-	/*@Test
-	public void testExecuteScriptResource() {
+	@Test
+	public void testExecuteScriptResources() throws IOException, InterruptedException {
 
 		//prepare our resources
 		TestApplicationTemplate app = new TestApplicationTemplate();
-		Instance inst = app.getTomcatVm();
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+		Instance instance = app.getTomcatVm();
 
+		List<ExecutionResult> result1 = AgentUtils.executeScriptResources(instance, app.getName(), instance.getName());
+		Assert.assertEquals(0,result1.size());
 
-	}*/
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
+		Utils.createDirectory( dir );
+		File script1 = new File( dir, "toto.script" );
+		File script2 = new File( dir, "titi.script" );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel", script1);
+		Utils.writeStringInto( "#!/bin/bash\necho titiiii > titi.txt", script2);
+
+		List<ExecutionResult> result2 = AgentUtils.executeScriptResources(instance, app.getName(), instance.getName());
+		Assert.assertEquals(2,result2.size());
+		Assert.assertEquals(0, result2.get(0).getExitValue());
+		Assert.assertEquals(0, result2.get(1).getExitValue());
+
+		String s = Utils.readFileContent(new File( dir, "titi.txt"));
+		Assert.assertEquals("titiiii",s.trim());
+	}
 }

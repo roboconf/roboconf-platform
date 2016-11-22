@@ -56,6 +56,7 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarraa - UGA
  */
 public class TargetsMngrImplTest {
 
@@ -1213,5 +1214,27 @@ public class TargetsMngrImplTest {
 		newMngr = new TargetsMngrImpl( this.configurationMngr );
 		Assert.assertEquals( targetId_1, newMngr.findTargetId( app, null, true ));
 		Assert.assertNull( newMngr.findTargetId( app, path, true ));
+	}
+
+	@Test
+	public void testFindScriptResources() throws Exception {
+
+		//Prepare our resources
+		TestApplication app = new TestApplication();
+		String targetId1 = this.mngr.createTarget( "id: tid1\nhandler: h" );
+		String targetId2 = this.mngr.createTarget( "id: tid2\nhandler: h" );
+
+		this.mngr.associateTargetWith( targetId1, app, null );
+		this.mngr.associateTargetWith( targetId2, app, null );
+
+		File dir1 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId1 );
+		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
+		Utils.createDirectory( dir1 );
+		Utils.createDirectory( dir2 );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "tott.script" ));
+		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "titi.script" ));
+
+		Assert.assertNotNull( this.mngr.findScriptResources(targetId1) );
+		Assert.assertNotNull( this.mngr.findScriptResources(targetId2) );
 	}
 }

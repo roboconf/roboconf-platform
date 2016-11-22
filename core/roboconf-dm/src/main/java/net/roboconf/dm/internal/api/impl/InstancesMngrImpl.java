@@ -405,19 +405,16 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
 			String targetId = this.targetsMngr.findTargetId(ma.getApplication(), InstanceHelpers.computeInstancePath( scopedInstance ));
 			Map<String,byte[]> scriptResources = new HashMap<> ();
-
 			if( targetId!=null )
 				scriptResources = this.targetsMngr.findScriptResources(targetId);
 
-			if( ! scriptResources.isEmpty()) {
-				MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
-						scopedInstance,
-						ma.getApplication().getExternalExports(),
-						ma.getApplication().getApplicationBindings(),
-						scriptResources );
+			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
+					scopedInstance,
+					ma.getApplication().getExternalExports(),
+					ma.getApplication().getApplicationBindings(),
+					scriptResources );
 
-				this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
-			}
+			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
 
 			// Send the probe files (if any)
 			Map<String,byte[]> probeResources = ResourceUtils.storeInstanceProbeResources( ma.getDirectory(), scopedInstance );

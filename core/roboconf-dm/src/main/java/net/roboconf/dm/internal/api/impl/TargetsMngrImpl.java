@@ -439,11 +439,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		File targetDir = findTargetDirectory( targetId );
 		if( targetDir.isDirectory()){
-			File scriptFile = new File( targetDir, Constants.TARGET_SCRIPT_FILE_NAME );
-			if( scriptFile.exists()) {
-				ByteArrayOutputStream os = new ByteArrayOutputStream();
-				Utils.copyStream( scriptFile, os );
-				result.put( scriptFile.getName(), os.toByteArray());
+			List<File> scriptFiles = Utils.listAllFiles(targetDir, Constants.FILE_EXT_SCRIPT);
+			for( File scriptFile : scriptFiles) {
+				if( scriptFile.exists()) {
+					ByteArrayOutputStream os = new ByteArrayOutputStream();
+					Utils.copyStream( scriptFile, os );
+					result.put( scriptFile.getName(), os.toByteArray());
+				}
 			}
 		}
 		return result;

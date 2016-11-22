@@ -31,8 +31,10 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -42,6 +44,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 
 /**
  * @author Noël - LIG
@@ -120,21 +123,31 @@ public final class AgentUtils {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static void excuteScriptResource( Instance instance, String applicationName, String scopedInstanceName ) throws IOException, InterruptedException {
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-		File script = new File(dir,Constants.TARGET_SCRIPT_FILE_NAME);
-		Logger logger = Logger.getLogger( AgentUtils.class.getName());
-		if( script.exists()) {
-			if(! script.canExecute())
-				script.setExecutable(true);
+	public static List<ExecutionResult> executeScriptResources( Instance instance, String applicationName, String scopedInstanceName ) throws IOException, InterruptedException {
 
-			String[] command = { script.getAbsolutePath() };
-			int exitCode = ProgramUtils.executeCommand(logger, command, script.getParentFile(), null, applicationName, scopedInstanceName);
-			if( exitCode != 0 )
-				throw new IOException( "Script execution failed. Exit code: " + exitCode );
-		} else {
-			logger.severe("There is no script to execute");
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
+		Utils.createDirectory(dir);
+		List<File> scriptFiles = Utils.listAllFiles( dir, Constants.FILE_EXT_SCRIPT);
+		List<ExecutionResult> results = new ArrayList<ExecutionResult> ();
+		Logger logger = Logger.getLogger( AgentUtils.class.getName());
+
+		for( File script : scriptFiles) {
+			StringBuilder normalOutput = new StringBuilder();
+			StringBuilder errorOutput = new StringBuilder();
+			ExecutionResult result = new ExecutionResult(normalOutput.toString(),errorOutput.toString(), -1);
+			if( script.exists()) {
+				if(! script.canExecute())
+					script.setExecutable(true);
+
+				String[] command = { script.getAbsolutePath() };
+				result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, applicationName, scopedInstanceName);
+			} else {
+				logger.severe("There is no script to execute");
+			}
+			results.add(result);
 		}
+
+		return results;
 	}
 
 	/**
