@@ -28,18 +28,25 @@ package net.roboconf.core.model.runtime;
 import org.junit.Assert;
 import org.junit.Test;
 
+import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class PreferenceTest {
 
 	@Test
-	public void verifyTosString() {
+	public void verifyToString() {
 
 		Preference pref = new Preference( null, null, null );
 		Assert.assertNull( pref.toString());
 
 		pref = new Preference( "key", "value", null );
 		Assert.assertEquals( "key", pref.toString());
+
+		for( PreferenceKeyCategory cat : PreferenceKeyCategory.values()) {
+			Assert.assertNotNull( cat.toString());
+			Assert.assertNotNull( cat.getDescription());
+		}
 	}
 }

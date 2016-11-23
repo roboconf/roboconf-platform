@@ -69,13 +69,32 @@ public class UpdateSwaggerJson {
 	public static void main( String[] args ) {
 
 		try {
-			UpdateSwaggerJson updater = new UpdateSwaggerJson();
-			JsonObject newDef = updater.prepareNewDefinitions();
-			updater.updateSwaggerJson( newDef );
+			new UpdateSwaggerJson().run( args );
 
 		} catch( Exception e ) {
 			e.printStackTrace();
+			System.exit( 3 );
 		}
+	}
+
+
+	/**
+	 * The method that does the job.
+	 * @param args
+	 * @throws Exception
+	 */
+	public void run( String[] args ) throws Exception {
+
+		// Check
+		File baseDirectory = null;
+		if( args.length != 1
+				|| ! (baseDirectory = new File( args[ 0 ])).exists())
+			throw new RuntimeException( "The path of the module's directory was expected as an argument." );
+
+		// Update
+		UpdateSwaggerJson updater = new UpdateSwaggerJson();
+		JsonObject newDef = updater.prepareNewDefinitions();
+		updater.updateSwaggerJson( baseDirectory, newDef );
 	}
 
 
@@ -203,9 +222,9 @@ public class UpdateSwaggerJson {
 	 * @param newDef the new "definitions" object
 	 * @throws IOException if something went wrong
 	 */
-	private void updateSwaggerJson( JsonObject newDef ) throws IOException {
+	private void updateSwaggerJson( File baseDirectory, JsonObject newDef ) throws IOException {
 
-		File f = new File( "target/docs/apidocs/ui/swagger.json" );
+		File f = new File( baseDirectory, "target/docs/apidocs/ui/swagger.json" );
 		if( ! f.exists())
 			throw new RuntimeException( "The swagger.json file was not found." );
 

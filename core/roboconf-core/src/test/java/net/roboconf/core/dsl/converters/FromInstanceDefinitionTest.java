@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -42,8 +44,6 @@ import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -366,5 +366,37 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( "127.0.0.1", instance.data.get( "ip" ));
 		Assert.assertEquals( "mach-ID", instance.data.get( "machine-id" ));
 		Assert.assertEquals( "something different", instance.data.get( "whatever" ));
+	}
+
+
+	@Test
+	public void testInstanceWithComplexQuotedVariables() throws Exception {
+
+		// The graph
+		Graphs graphs = new Graphs();
+		Component vmComponent = new Component( "vm" ).installerName( Constants.TARGET_INSTALLER );
+		graphs.getRootComponents().add( vmComponent );
+
+		// The file to read
+		File f = TestUtils.findTestFile( "/configurations/valid/instance-with-complex-quoted-values.instances" );
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs, f );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		// The assertions
+		Assert.assertEquals( 1, rootInstances.size());
+		Instance instance = rootInstances.iterator().next();
+
+		Assert.assertEquals( "vm 1", instance.getName());
+		Assert.assertEquals( vmComponent, instance.getComponent());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, instance.getStatus());
+
+		Assert.assertEquals( "38.195.27.7", instance.overriddenExports.get( "ip" ));
+		Assert.assertEquals( "this is ;a; complex value with semicolons", instance.overriddenExports.get( "message" ));
+		Assert.assertEquals( "", instance.overriddenExports.get( "bad3" ));
+		Assert.assertEquals( "a long sentence for test", instance.overriddenExports.get( "bad4" ));
+
+		Assert.assertEquals( 1, instance.channels.size());
+		Assert.assertEquals( "demo", instance.channels.iterator().next());
 	}
 }

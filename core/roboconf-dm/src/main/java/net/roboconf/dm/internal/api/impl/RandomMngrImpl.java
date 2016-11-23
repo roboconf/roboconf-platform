@@ -57,14 +57,13 @@ public class RandomMngrImpl implements IRandomMngr {
 	final Map<InstanceContext,List<Integer>> agentToRandomPorts = new HashMap<> ();
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final IPreferencesMngr preferencesMngr;
+	private IPreferencesMngr preferencesMngr;
 
 
 	/**
-	 * Constructor.
-	 * @param preferencesMngr
+	 * @param preferencesMngr the preferencesMngr to set
 	 */
-	public RandomMngrImpl( IPreferencesMngr preferencesMngr ) {
+	public void setPreferencesMngr( IPreferencesMngr preferencesMngr ) {
 		this.preferencesMngr = preferencesMngr;
 	}
 
@@ -185,8 +184,8 @@ public class RandomMngrImpl implements IRandomMngr {
 
 	// Port Management
 
-	private static final int PORT_MIN = 10000;
-	private static final int PORT_MAX = 65500;
+	public static final int PORT_MIN = 10000;
+	public static final int PORT_MAX = 65500;
 
 
 	/**
@@ -236,7 +235,7 @@ public class RandomMngrImpl implements IRandomMngr {
 		InstanceContext newCtx = findAgentContext( application, instance );
 		List<Integer> associatedPorts = this.agentToRandomPorts.get( newCtx );
 		if( associatedPorts == null ) {
-			associatedPorts = new ArrayList<Integer> ();
+			associatedPorts = new ArrayList<> ();
 			this.agentToRandomPorts.put( newCtx, associatedPorts );
 		}
 
@@ -275,7 +274,7 @@ public class RandomMngrImpl implements IRandomMngr {
 
 			List<Integer> associatedPorts = this.agentToRandomPorts.get( ctx );
 			if( associatedPorts == null ) {
-				associatedPorts = new ArrayList<Integer> ();
+				associatedPorts = new ArrayList<> ();
 				this.agentToRandomPorts.put( ctx, associatedPorts );
 			}
 

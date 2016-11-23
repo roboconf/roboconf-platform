@@ -26,42 +26,43 @@
 package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
-
-import net.roboconf.core.model.runtime.Preference;
-import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
-import net.roboconf.dm.management.api.IConfigurationMngr;
-import net.roboconf.dm.management.api.IPreferencesMngr;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
+
+import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class PreferencesMngrImplTest {
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
-	private IConfigurationMngr configurationMngr;
 	private IPreferencesMngr mngr;
 
 
 	@Before
 	public void prepareManager() throws IOException {
-
-		this.configurationMngr = new ConfigurationMngrImpl();
-		this.configurationMngr.setWorkingDirectory( this.folder.newFolder());
-		this.mngr = new PreferencesMngrImpl( this.configurationMngr );
-		this.mngr.loadProperties();
+		this.mngr = new PreferencesMngrImpl();
 	}
 
 
 	@Test
-	public void testFromInexistingCache() throws Exception {
+	public void testForCoverage() {
+		((PreferencesMngrImpl) this.mngr).start();
+		((PreferencesMngrImpl) this.mngr).stop();
+	}
+
+
+	@Test
+	public void testStorage() throws Exception {
 
 		int expectedSize = PreferencesMngrImpl.DEFAULTS.keyToDefaultValue.size();
 		Assert.assertEquals( expectedSize, this.mngr.getAllPreferences().size());
@@ -77,22 +78,52 @@ public class PreferencesMngrImplTest {
 		Assert.assertEquals( expectedSize, this.mngr.getAllPreferences().size());
 		Assert.assertNull( this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS ));
 		Assert.assertEquals( "def", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "def" ));
+
+		this.mngr.save( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, null );
+		Assert.assertEquals( "", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS ));
 	}
 
 
 	@Test
-	public void testFromExistingCache() throws Exception {
+	@SuppressWarnings( "rawtypes" )
+	public void testSaveWithConfigAdmin() throws Exception {
+
+		Dictionary properties = new Hashtable<> ();
+		ConfigurationAdmin configAdmin = Mockito.mock( ConfigurationAdmin.class );
+		Configuration config = Mockito.mock( Configuration.class );
+		Mockito.when( configAdmin.getConfiguration( PreferencesMngrImpl.PID )).thenReturn( config );
+		Mockito.when( config.getProperties()).thenReturn( properties );
+
+		((PreferencesMngrImpl) this.mngr).setConfigAdmin( configAdmin );
+		Mockito.verifyZeroInteractions( configAdmin );
+		Mockito.verifyZeroInteractions( config );
+
+		this.mngr.save( "my key", "my value" );
+		Mockito.verify( configAdmin, Mockito.only()).getConfiguration( PreferencesMngrImpl.PID );
+		Mockito.verify( config, Mockito.times( 1 )).getProperties();
+		Mockito.verify( config, Mockito.times( 1 )).update();
+		Mockito.verifyNoMoreInteractions( config );
+		Assert.assertEquals( 1, properties.size());
+		Assert.assertEquals( "my value", properties.get( "my key" ));
+	}
+
+
+	@Test
+	@SuppressWarnings( { "rawtypes", "unchecked" } )
+	public void testCacheUpdate() throws Exception {
 
 		int expectedSize = PreferencesMngrImpl.DEFAULTS.keyToDefaultValue.size();
 		Assert.assertEquals( expectedSize, this.mngr.getAllPreferences().size());
-		this.mngr.save( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "8154" );
 
-		IPreferencesMngr newMngr = new PreferencesMngrImpl( this.configurationMngr );
-		newMngr.loadProperties();
+		Dictionary properties = new Hashtable();
+		properties.put( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "8154" );
+		properties.put( "something", "" );
+		this.mngr.updateProperties( properties );
 
-		Assert.assertEquals( expectedSize + 1, newMngr.getAllPreferences().size());
-		Assert.assertEquals( "8154", newMngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS ));
-		Assert.assertEquals( "8154", newMngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "def" ));
+		Assert.assertEquals( expectedSize + 2, this.mngr.getAllPreferences().size());
+		Assert.assertEquals( "8154", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS ));
+		Assert.assertEquals( "8154", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "def" ));
+		Assert.assertEquals( "", this.mngr.get( "something" ));
 	}
 
 

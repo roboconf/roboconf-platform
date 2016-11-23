@@ -1,0 +1,16 @@
+
+ImportingComponent {
+	installer: target;
+}
+
+ExportingComponent {
+	installer: target;
+}
+
+FacetComponent {
+	installer: target;
+}
+
+InstanceOfComponent {
+	installer: target;
+}

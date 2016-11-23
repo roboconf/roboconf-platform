@@ -349,6 +349,9 @@ public class ParsingModelValidatorTest {
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "_var1" );
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var1,var2" );
+		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
+
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var1 , var2" );
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
@@ -362,6 +365,12 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var1, var2 = value2 , var3" );
+		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
+
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var1, var2 = \"value2\" , var3" );
+		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
+
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "random[port] var1 , var2 = \"value2\" , var3" );
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "-var1" );
@@ -403,6 +412,18 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_EMPTY_VARIABLE_NAME, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var2, var1 = \"value1" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( "Variable name: var1", errors.iterator().next().getDetails());
+
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var2, var1 =value1\"" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( "Variable name: var1", errors.iterator().next().getDetails());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var#, var2;" );
 		errors = ParsingModelValidator.validate( block );

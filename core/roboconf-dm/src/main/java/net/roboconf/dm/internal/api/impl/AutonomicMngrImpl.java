@@ -59,18 +59,25 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 	final AtomicInteger autonomicVmCount = new AtomicInteger( 0 );
 
 	private final ICommandsMngr commandsMngr;
-	private final IPreferencesMngr preferencesMngr;
+	private IPreferencesMngr preferencesMngr;
 
 
 	/**
 	 * Constructor.
 	 * @param commandsMngr the commands manager
 	 */
-	public AutonomicMngrImpl( ICommandsMngr commandsMngr, IPreferencesMngr preferencesMngr ) {
+	public AutonomicMngrImpl( ICommandsMngr commandsMngr ) {
 		this.commandsMngr = commandsMngr;
-		this.preferencesMngr = preferencesMngr;
 
 		// FIXME: how to restore the number of "autonomic" VM when the DM restarts?
+	}
+
+
+	/**
+	 * @param preferencesMngr the preferencesMngr to set
+	 */
+	public void setPreferencesMngr( IPreferencesMngr preferencesMngr ) {
+		this.preferencesMngr = preferencesMngr;
 	}
 
 

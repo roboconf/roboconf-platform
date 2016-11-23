@@ -59,7 +59,6 @@ public class AssociateTargetCommandInstructionTest {
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 
-
 		this.app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( this.app );
 

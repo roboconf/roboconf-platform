@@ -36,9 +36,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 
 /**
@@ -60,7 +62,6 @@ public class PreferencesResourceTest {
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.resource = new PreferencesResource( this.manager );
-		this.manager.preferencesMngr().loadProperties();
 	}
 
 
@@ -113,7 +114,10 @@ public class PreferencesResourceTest {
 	@Test
 	public void testSaveException() throws Exception {
 
-		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFile());
+		IPreferencesMngr mock = Mockito.mock( IPreferencesMngr.class );
+		Mockito.doThrow( new IOException( "For test" )).when( mock ).save( Mockito.anyString(), Mockito.anyString());
+		this.manager.setPreferencesMngr( mock );
+
 		Response resp = this.resource.savePreference( "my-key", "my-value" );
 		Assert.assertEquals( Status.INTERNAL_SERVER_ERROR.getStatusCode(), resp.getStatus());
 	}

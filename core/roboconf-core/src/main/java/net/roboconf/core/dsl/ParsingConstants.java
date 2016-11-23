@@ -43,7 +43,7 @@ public interface ParsingConstants {
 	String COMMENT_DELIMITER = "#";
 
 	/**
-	 * The symbols that indicates the beginning of a comment.
+	 * The symbols that separates properties.
 	 */
 	String PROPERTY_SEPARATOR = ",";
 

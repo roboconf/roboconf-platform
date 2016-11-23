@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +83,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeComment( line, blocks );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, blocks.size());
 			Assert.assertEquals( "Expected ONE comment block for '" + line + "'",
 					AbstractBlock.COMMENT,
@@ -96,7 +97,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeComment( line, blocks );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ZERO block to be registered for '" + line + "'", 0, blocks.size());
 		}
 
@@ -114,7 +115,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeComment( line, blocks );
 
 			Assert.assertEquals( "Expected a NO code for '" + line + "'", FileDefinitionParser.P_CODE_NO, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ZERO block to be registered for '" + line + "'", 0, blocks.size());
 		}
 	}
@@ -131,7 +132,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeBlankLine( line, blocks );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, blocks.size());
 			Assert.assertEquals( "Expected ONE blank block for '" + line + "'",
 					AbstractBlock.BLANK,
@@ -145,7 +146,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeBlankLine( line, blocks );
 
 			Assert.assertEquals( "Expected a NO code for '" + line + "'", FileDefinitionParser.P_CODE_NO, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ZERO block to be registered for '" + line + "'", 0, blocks.size());
 		}
 	}
@@ -205,7 +206,7 @@ public class FileDefinitionParserTest {
 			FileDefinition def = parser.getFileRelations();
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, def.getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, def.getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, def.getBlocks().size());
 
 			BlockImport imp = (BlockImport) def.getBlocks().iterator().next();
@@ -232,7 +233,7 @@ public class FileDefinitionParserTest {
 			FileDefinition def  = parser.getFileRelations();
 
 			Assert.assertEquals( "Expected a YES code for '" + theLine + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + theLine + "'", 0, def.getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + theLine + "'", 0, def.getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + theLine + "'", 1, def.getBlocks().size());
 
 			BlockImport imp = (BlockImport) def.getBlocks().iterator().next();
@@ -272,7 +273,7 @@ public class FileDefinitionParserTest {
 			FileDefinition def = parser.getFileRelations();
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "A pasing error was expected for '" + line + "'", 1, def.getParsingErrors().size());
+			Assert.assertEquals( "A parsing error was expected for '" + line + "'", 1, def.getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, def.getBlocks().size());
 			Assert.assertEquals( "Expected ONE import block for '" + line + "'",
 					AbstractBlock.IMPORT,
@@ -290,11 +291,12 @@ public class FileDefinitionParserTest {
 
 		FileDefinition file = new FileDefinition( new File( "some-file" ));
 		String[] validLines = {
-				"property: value;",
-				"   property : value  ;",
-				"PROPERTY: value; # with an inline comment",
-				"property: value1, value2  ,  value3;",
-				"property:;"
+			"property: value;",
+			"   property : value  ;",
+			"PROPERTY: value; # with an inline comment",
+			"property: value1, value2  ,  value3;",
+			"property:;",
+			"property : key6 = \" key; 6 \";"
 		};
 
 		// Comments do not matter here
@@ -304,7 +306,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeProperty( line, holder );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, holder.getInnerBlocks().size());
 
 			BlockProperty prop = (BlockProperty) holder.getInnerBlocks().iterator().next();
@@ -312,12 +314,35 @@ public class FileDefinitionParserTest {
 			Assert.assertEquals( "Invalid property name for '" + line + "'", "property", prop.getName().toLowerCase());
 		}
 
+
+		// Exports with quotes and semicolons in values
+		validLines = new String[] {
+			"exports : random[port] key6 = \" key; 6 \";",
+			"exports : random[port] key6 = \" key; 6 \", key7=\"value7\";"
+		};
+
+		// Comments do not matter here
+		for( String line : validLines ) {
+			FileDefinitionParser parser = new FileDefinitionParser( null, false );
+			BlockComponent holder = new BlockComponent( file );
+			int code = parser.recognizeProperty( line, holder );
+
+			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
+			Assert.assertEquals( "No parsing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, holder.getInnerBlocks().size());
+
+			BlockProperty prop = (BlockProperty) holder.getInnerBlocks().iterator().next();
+			Assert.assertEquals( "Expected ONE property for '" + line + "'", AbstractBlock.PROPERTY, prop.getInstructionType());
+			Assert.assertEquals( "Invalid property name for '" + line + "'", "exports", prop.getName().toLowerCase());
+		}
+
+
 		// In-line comments
 		String[][] commentedLines = {
-				{ "property: value;", "" },
-				{ "property: value;", "# stuck comment" },
-				{ "property: value;", "#" },
-				{ "property: value1, value2;", "\t# some in-line comment   " }
+			{ "property: value;", "" },
+			{ "property: value;", "# stuck comment" },
+			{ "property: value;", "#" },
+			{ "property: value1, value2;", "\t# some in-line comment   " }
 		};
 
 		for( String[] line : commentedLines ) {
@@ -327,7 +352,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeProperty( theLine, holder );
 
 			Assert.assertEquals( "Expected a YES code for '" + theLine + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "No pasing error was expected for '" + theLine + "'", 0, parser.getFileRelations().getParsingErrors().size());
+			Assert.assertEquals( "No parsing error was expected for '" + theLine + "'", 0, parser.getFileRelations().getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + theLine + "'", 1, holder.getInnerBlocks().size());
 
 			BlockProperty prop = (BlockProperty) holder.getInnerBlocks().iterator().next();
@@ -339,11 +364,11 @@ public class FileDefinitionParserTest {
 
 		// Invalid lines
 		String[] invalidLines = {
-				"property = value;",
-				"property",
-				"facet",
-				"",
-				" #"
+			"property = value;",
+			"property",
+			"facet",
+			"",
+			" #"
 		};
 
 		for( String line : invalidLines ) {
@@ -358,9 +383,8 @@ public class FileDefinitionParserTest {
 		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<> ();
 		invalidLineToErrorCode.put( "property: value", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "property:", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
-		invalidLineToErrorCode.put( "property: value ; facet toto {", ErrorCode.P_ONE_BLOCK_PER_LINE );
-		invalidLineToErrorCode.put( "property: value ; invalid comment", ErrorCode.P_ONE_BLOCK_PER_LINE );
 		invalidLineToErrorCode.put( "property: value;;", ErrorCode.P_ONE_BLOCK_PER_LINE );
+		invalidLineToErrorCode.put( "exports : key6 = key; 6 \";", ErrorCode.P_ONE_BLOCK_PER_LINE );
 
 		for( Map.Entry<String,ErrorCode> entry : invalidLineToErrorCode.entrySet()) {
 			String line = entry.getKey();
@@ -370,7 +394,7 @@ public class FileDefinitionParserTest {
 			int code = parser.recognizeProperty( line, holder );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
-			Assert.assertEquals( "A pasing error was expected for '" + line + "'", 1, def.getParsingErrors().size());
+			Assert.assertEquals( "A parsing error was expected for '" + line + "'", 1, def.getParsingErrors().size());
 			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, holder.getInnerBlocks().size());
 			Assert.assertEquals( "Expected ONE property for '" + line + "'",
 					AbstractBlock.PROPERTY,
@@ -379,6 +403,35 @@ public class FileDefinitionParserTest {
 			ParsingError error = def.getParsingErrors().iterator().next();
 			Assert.assertEquals( "Expecting parsing error for '" + line + "'", entry.getValue().getCategory(), ErrorCategory.PARSING );
 			Assert.assertEquals( "Invalid error code for '" + line + "'", entry.getValue(), error.getErrorCode());
+		}
+
+		// Complex errors
+		invalidLines = new String[] {
+			"property: value ; facet toto {",
+			"property: value ; invalid comment"
+		};
+
+		for( String line : invalidLines ) {
+			FileDefinitionParser parser = new FileDefinitionParser( null, false );
+			BlockComponent holder = new BlockComponent( file );
+			FileDefinition def = parser.getFileRelations();
+			int code = parser.recognizeProperty( line, holder );
+
+			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
+			Assert.assertEquals( "Two parsing errors were expected for '" + line + "'", 2, def.getParsingErrors().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, holder.getInnerBlocks().size());
+			Assert.assertEquals( "Expected ONE property for '" + line + "'",
+					AbstractBlock.PROPERTY,
+					holder.getInnerBlocks().iterator().next().getInstructionType());
+
+			Iterator<ParsingError> iterator = def.getParsingErrors().iterator();
+			ParsingError error = iterator.next();
+			Assert.assertEquals( "Expecting parsing error for '" + line + "'", error.getErrorCode().getCategory(), ErrorCategory.PARSING );
+			Assert.assertEquals( "Invalid error code for '" + line + "'", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON, error.getErrorCode());
+
+			error = iterator.next();
+			Assert.assertEquals( "Expecting parsing error for '" + line + "'", error.getErrorCode().getCategory(), ErrorCategory.PARSING );
+			Assert.assertEquals( "Invalid error code for '" + line + "'", ErrorCode.P_ONE_BLOCK_PER_LINE, error.getErrorCode());
 		}
 	}
 

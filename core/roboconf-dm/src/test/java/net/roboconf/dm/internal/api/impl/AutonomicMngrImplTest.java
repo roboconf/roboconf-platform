@@ -32,6 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.autonomic.Rule;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -47,13 +54,6 @@ import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -74,7 +74,8 @@ public class AutonomicMngrImplTest {
 
 		this.commandsMngr = Mockito.mock( ICommandsMngr.class );
 		this.preferencesMngr = Mockito.mock( IPreferencesMngr.class );
-		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr, this.preferencesMngr );
+		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr );
+		this.autonomicMngr.setPreferencesMngr( this.preferencesMngr );
 	}
 
 

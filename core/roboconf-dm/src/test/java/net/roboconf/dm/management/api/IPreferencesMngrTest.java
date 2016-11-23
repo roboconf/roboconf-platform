@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,35 +23,29 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.beans;
+package net.roboconf.dm.management.api;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.lang.reflect.Field;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import net.roboconf.dm.management.api.IPreferencesMngr.Defaults;
 
 /**
- * This object contains sets of related components.
  * @author Vincent Zurczak - Linagora
  */
-public class Graphs implements Serializable {
+public class IPreferencesMngrTest {
 
-	private static final long serialVersionUID = 2918281424743945139L;
-	private final Collection<Component> rootsComponents = new HashSet<Component> ();
-	private final Map<String,Facet> facetNameToFacet = new HashMap<> ();
+	@Test
+	public void verifyAllTheDeclaredKeysAreInCategories() throws Exception {
 
-	/**
-	 * @return a non-null list of root components
-	 */
-	public Collection<Component> getRootComponents() {
-		return this.rootsComponents;
-	}
-
-	/**
-	 * @return the facetNameToFacet
-	 */
-	public Map<String,Facet> getFacetNameToFacet() {
-		return this.facetNameToFacet;
+		Defaults defaults = new Defaults();
+		Field[] fields = IPreferencesMngr.class.getDeclaredFields();
+		for( Field field : fields ) {
+			String constantName = (String) field.get( null );
+			Assert.assertNotNull( field.getName(), constantName );
+			Assert.assertNotNull( constantName, defaults.keyToCategory.get( constantName ));
+		}
 	}
 }
