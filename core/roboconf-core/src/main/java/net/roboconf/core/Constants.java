@@ -62,14 +62,19 @@ public interface Constants {
 	String FILE_EXT_RULE = ".drl";
 
 	/**
-	 * The <strong>script</strong> file extension.
-	 * */
-	String FILE_EXT_SCRIPT = ".script";
-
-	/**
 	 * The wild card symbol (can be used in a component to reference any variable for a given group).
 	 */
 	String WILDCARD = "*";
+
+	/**
+	 * The default name of a script.
+	 * */
+	String SCRIPT_NAME = "script";
+
+	/**
+	 * The default name of a script.
+	 * */
+	String EXEC_SCRIPT = "script-all";
 
 	/**
 	 * The name of the target installer (which is somehow specific).
@@ -131,11 +136,6 @@ public interface Constants {
 	 * The <strong>probes</strong> directory.
 	 */
 	String PROJECT_DIR_PROBES = "probes";
-
-	/**
-	 * The <strong>scripts</strong> directory.
-	 * */
-	String PROJECT_DIR_SCRIPTS = "scripts";
 
 	/**
 	 * The <strong>commands</strong> directory.

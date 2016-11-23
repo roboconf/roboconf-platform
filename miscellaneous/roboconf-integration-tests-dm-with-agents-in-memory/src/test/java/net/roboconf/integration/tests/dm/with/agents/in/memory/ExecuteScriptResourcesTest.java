@@ -115,6 +115,7 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
+		System.out.println(appLocation);
 		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
 		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
@@ -126,24 +127,26 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 
 		// Create script files
 		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
+		System.out.println("Dirrr = "+dir.isDirectory());
 		System.out.println("target = "+targetId);
-		Utils.createDirectory( dir );
-		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "toto.script"));
-		Utils.writeStringInto( "#!/bin/bash\ntouch titi.txt", new File( dir, "titi.script"));
+		//Utils.createDirectory( dir );
+		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "toto-script-all.sh"));
+		Utils.writeStringInto( "Bonjour le monde cruel", new File( dir, "titi-script.py"));
 
 		// Deploy
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
 		//Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );
 		Assert.assertNotNull( mysql );
 
-		this.manager.instancesMngr().deployAndStartAll(ma, null);
+		//this.manager.instancesMngr().deployAndStartAll(ma, null);
 
 		// The deploy and start messages for 'app' and 'MySQL' were stored in the DM.
 		// Wait for them to be picked up by the message checker thread.
 		// 7s = 6s (Manager#TIMER_PERIOD) + 1s for security
-		Thread.sleep( 7000 );
+		//Thread.sleep( 7000 );
 
 		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 7000 );
 
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
 
@@ -153,7 +156,7 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 			System.out.println("!!!!!!!!!!");
 		File toto = new File( vmDir, "toto.txt" );
 		String s = Utils.readFileContent( toto );
-		List<File> files = Utils.listAllFiles(vmDir, ".txt");
+		List<File> files = Utils.listAllFiles(vmDir);
 
 		Assert.assertEquals( "toto", s.trim() );
 		Assert.assertEquals( 2, files.size() );

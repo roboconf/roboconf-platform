@@ -103,7 +103,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testDmPingResponse() throws IllegalAccessException, InterruptedException {
+	public void testDmPingResponse() throws IllegalAccessException {
 
 		// Simulate a ping message from the DM.
 		MsgEcho ping = new MsgEcho( "PING:TEST" );
@@ -122,7 +122,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testAddInstance() throws InterruptedException {
+	public void testAddInstance() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -175,7 +175,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testSetScopedInstance() throws InterruptedException {
+	public void testSetScopedInstance() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -217,7 +217,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testSetscopedInstance_withAppBindings_andExternalExports() throws InterruptedException {
+	public void testSetscopedInstance_withAppBindings_andExternalExports() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -247,12 +247,11 @@ public class AgentMessageProcessorBasicTest {
 		Assert.assertEquals( 2, processor.applicationBindings.size());
 		Assert.assertEquals( new HashSet<>( Arrays.asList( "app2" )), processor.applicationBindings.get( "Tpl2" ));
 		Assert.assertEquals( new HashSet<>( Arrays.asList( "app1", "app3" )), processor.applicationBindings.get( "Tpl1" ));
-
 	}
 
 
 	@Test
-	public void testSetscopedInstance_nonRoot() throws InterruptedException {
+	public void testSetscopedInstance_nonRoot() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -271,7 +270,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testSetscopedInstance_rootWithTargetChild() throws InterruptedException {
+	public void testSetscopedInstance_rootWithTargetChild() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -294,7 +293,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testSendInstances() throws InterruptedException {
+	public void testSendInstances() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -318,7 +317,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testResynchronize() throws InterruptedException {
+	public void testResynchronize() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -355,7 +354,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testRemoveInstance() throws InterruptedException {
+	public void testRemoveInstance() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -469,7 +468,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testUnknownMessage() throws InterruptedException {
+	public void testUnknownMessage() {
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
 		processor.processMessage( new Message() {
@@ -479,7 +478,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void checkIoExceptionsAreHandled() throws InterruptedException {
+	public void checkIoExceptionsAreHandled() {
 
 		this.client.failMessageSending.set( true );
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -555,7 +554,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testApplicationBinding_noPrevious_noImportAdded() throws IllegalAccessException, InterruptedException {
+	public void testApplicationBinding_noPrevious_noImportAdded() throws IllegalAccessException {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -578,7 +577,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testApplicationBinding_withPrevious_noImportAdded() throws IllegalAccessException, InterruptedException {
+	public void testApplicationBinding_withPrevious_noImportAdded() throws IllegalAccessException {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
@@ -604,7 +603,7 @@ public class AgentMessageProcessorBasicTest {
 
 
 	@Test
-	public void testApplicationBinding_withPrevious_importsAdded() throws IllegalAccessException, InterruptedException {
+	public void testApplicationBinding_withPrevious_importsAdded() throws IllegalAccessException {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();

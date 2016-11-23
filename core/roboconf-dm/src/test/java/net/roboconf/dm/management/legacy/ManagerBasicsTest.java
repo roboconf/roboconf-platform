@@ -751,8 +751,6 @@ public class ManagerBasicsTest {
 		// Let's try again, but we change the WAR installer
 		app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
 
-
-
 		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
 		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());

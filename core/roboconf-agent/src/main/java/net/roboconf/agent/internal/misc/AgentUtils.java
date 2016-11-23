@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -123,31 +122,34 @@ public final class AgentUtils {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static List<ExecutionResult> executeScriptResources( Instance instance, String applicationName, String scopedInstanceName ) throws IOException, InterruptedException {
+	public static void executeScriptResources( File scriptsDir) throws IOException {
 
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-		Utils.createDirectory(dir);
-		List<File> scriptFiles = Utils.listAllFiles( dir, Constants.FILE_EXT_SCRIPT);
-		List<ExecutionResult> results = new ArrayList<ExecutionResult> ();
-		Logger logger = Logger.getLogger( AgentUtils.class.getName());
+		if( scriptsDir.isDirectory()) {
+			List<File> scriptFiles = Utils.listAllFiles( scriptsDir );
+			Logger logger = Logger.getLogger( AgentUtils.class.getName());
 
-		for( File script : scriptFiles) {
-			StringBuilder normalOutput = new StringBuilder();
-			StringBuilder errorOutput = new StringBuilder();
-			ExecutionResult result = new ExecutionResult(normalOutput.toString(),errorOutput.toString(), -1);
-			if( script.exists()) {
-				if(! script.canExecute())
-					script.setExecutable(true);
+			if( ! scriptFiles.isEmpty()) {
+				for( File script : scriptFiles) {
+					if( script.getName().contains(Constants.EXEC_SCRIPT)) {
+						if( ! script.canExecute())
+							script.setExecutable(true);
 
-				String[] command = { script.getAbsolutePath() };
-				result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, applicationName, scopedInstanceName);
-			} else {
-				logger.severe("There is no script to execute");
+						String[] command = { script.getAbsolutePath() };
+						try {
+							ExecutionResult result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, null, null);
+							if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
+								logger.fine( result.getNormalOutput());
+
+							if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
+								logger.warning( result.getErrorOutput());
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+
+				}
 			}
-			results.add(result);
 		}
-
-		return results;
 	}
 
 	/**

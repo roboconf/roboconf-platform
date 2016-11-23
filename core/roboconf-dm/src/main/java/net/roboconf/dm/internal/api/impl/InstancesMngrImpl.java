@@ -403,11 +403,8 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		try {
 			// Send the model
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			String targetId = this.targetsMngr.findTargetId(ma.getApplication(), InstanceHelpers.computeInstancePath( scopedInstance ));
 			Map<String,byte[]> scriptResources = new HashMap<> ();
-			if( targetId!=null )
-				scriptResources = this.targetsMngr.findScriptResources(targetId);
-
+			scriptResources = this.targetsMngr.findScriptResources( ma.getApplication(), scopedInstance );
 			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),

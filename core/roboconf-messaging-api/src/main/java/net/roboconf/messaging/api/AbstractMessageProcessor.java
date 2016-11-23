@@ -138,7 +138,6 @@ public abstract class AbstractMessageProcessor<T extends IClient> extends Thread
 	/**
 	 * Processes a message.
 	 * @param message the message to process
-	 * @throws InterruptedException
 	 */
-	protected abstract void processMessage( Message message ) throws InterruptedException;
+	protected abstract void processMessage( Message message );
 }

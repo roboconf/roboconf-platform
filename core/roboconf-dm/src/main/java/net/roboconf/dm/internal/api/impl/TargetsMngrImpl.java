@@ -435,19 +435,33 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	// Finding script resources
 	@Override
 	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 		File targetDir = findTargetDirectory( targetId );
+
 		if( targetDir.isDirectory()){
-			List<File> scriptFiles = Utils.listAllFiles(targetDir, Constants.FILE_EXT_SCRIPT);
+			List<File> scriptFiles = Utils.listAllFiles(targetDir);
 			for( File scriptFile : scriptFiles) {
-				if( scriptFile.exists()) {
+				if( scriptFile.getName().contains(Constants.SCRIPT_NAME)) {
 					ByteArrayOutputStream os = new ByteArrayOutputStream();
 					Utils.copyStream( scriptFile, os );
 					result.put( scriptFile.getName(), os.toByteArray());
 				}
 			}
 		}
+		return result;
+	}
+
+
+	@Override
+	public Map<String, byte[]> findScriptResources(Application app, Instance scopedInstance) throws IOException {
+
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
+
+		if( targetId != null )
+			result = findScriptResources( targetId );
+
 		return result;
 	}
 
@@ -788,7 +802,4 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		return result;
 	}
-
-
-
 }

@@ -99,7 +99,6 @@ public class ManagerLifeCycleTest {
 
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class ).cancel();
-
 	}
 
 

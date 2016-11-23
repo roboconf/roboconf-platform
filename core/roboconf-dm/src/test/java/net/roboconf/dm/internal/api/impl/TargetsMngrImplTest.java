@@ -1231,10 +1231,10 @@ public class TargetsMngrImplTest {
 		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
 		Utils.createDirectory( dir1 );
 		Utils.createDirectory( dir2 );
-		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "tott.script" ));
-		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "titi.script" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "toto-script-all.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "titi-script.py" ));
 
-		Assert.assertNotNull( this.mngr.findScriptResources(targetId1) );
-		Assert.assertNotNull( this.mngr.findScriptResources(targetId2) );
+		Assert.assertEquals( 1, this.mngr.findScriptResources(targetId1).size() );
+		Assert.assertEquals( 1, this.mngr.findScriptResources( app, app.getMySql()).size());
 	}
 }

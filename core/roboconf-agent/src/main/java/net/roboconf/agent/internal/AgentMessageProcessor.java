@@ -49,7 +49,6 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.business.IAgentClient;
@@ -138,7 +137,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
-	protected void processMessage( Message message ) throws InterruptedException {
+	protected void processMessage( Message message ){
 
 		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
 		try {
@@ -191,7 +190,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.logger.severe( "A problem occurred with the messaging. " + e.getMessage());
 			Utils.logException( this.logger, e );
 
-		}  catch( PluginException e ) {
+		} catch( PluginException e ) {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
@@ -391,7 +390,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @throws PluginException if an error occurred while initializing the plug-in
 	 * @throws InterruptedException if the script execution failed
 	 */
-	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException, InterruptedException {
+	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException {
 
 		Instance newScopedInstance = msg.getScopedInstance();
 		List<Instance> instancesToProcess = new ArrayList<> ();
@@ -416,14 +415,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// Executes the script
 			AgentUtils.copyInstanceResources( this.scopedInstance, msg.getscriptResources());
-			List<ExecutionResult> results = AgentUtils.executeScriptResources( this.scopedInstance, this.agent.getApplicationName(), this.scopedInstance.getName());
-			for( ExecutionResult result : results ){
-				if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
-					this.logger.fine( result.getNormalOutput());
+			AgentUtils.executeScriptResources( InstanceHelpers.findInstanceDirectoryOnAgent( this.scopedInstance ));
 
-				if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
-					this.logger.warning( result.getErrorOutput());
-			}
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );

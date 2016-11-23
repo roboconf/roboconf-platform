@@ -30,20 +30,18 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -61,6 +59,12 @@ public class AgentUtilsTest {
 	public void clearAgentDirectories() throws Exception {
 		File f = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" );
 		Utils.deleteFilesRecursively( f );
+	}
+
+
+	private boolean isUnix() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return (os.contains("nix")  || os.contains("nux") || os.contains("aix") );
 	}
 
 
@@ -280,25 +284,27 @@ public class AgentUtilsTest {
 	public void testExecuteScriptResources() throws IOException, InterruptedException {
 
 		//prepare our resources
-		TestApplicationTemplate app = new TestApplicationTemplate();
-		Instance instance = app.getTomcatVm();
+		File scriptsDir = this.folder.newFolder();
 
-		List<ExecutionResult> result1 = AgentUtils.executeScriptResources(instance, app.getName(), instance.getName());
-		Assert.assertEquals(0,result1.size());
+		AgentUtils.executeScriptResources( scriptsDir );
+		Assert.assertEquals(0, scriptsDir.listFiles().length);
 
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-		Utils.createDirectory( dir );
-		File script1 = new File( dir, "toto.script" );
-		File script2 = new File( dir, "titi.script" );
-		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel", script1);
+		Assume.assumeTrue( isUnix());
+
+		File script1 = new File( scriptsDir, "toto-script-all.sh" );
+		File script2 = new File( scriptsDir, "titi-script.sh" );
+		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script1);
 		Utils.writeStringInto( "#!/bin/bash\necho titiiii > titi.txt", script2);
 
-		List<ExecutionResult> result2 = AgentUtils.executeScriptResources(instance, app.getName(), instance.getName());
-		Assert.assertEquals(2,result2.size());
-		Assert.assertEquals(0, result2.get(0).getExitValue());
-		Assert.assertEquals(0, result2.get(1).getExitValue());
+		AgentUtils.executeScriptResources( scriptsDir );
+		File titi = new File(scriptsDir,"titi.txt");
+		File toto = new File(scriptsDir,"toto.txt");
 
-		String s = Utils.readFileContent(new File( dir, "titi.txt"));
-		Assert.assertEquals("titiiii",s.trim());
+		Assert.assertFalse( titi.exists() );
+		Assert.assertTrue( toto.exists() );
+		Assert.assertEquals( 3,scriptsDir.listFiles().length );
+
+		String s = Utils.readFileContent( toto );
+		Assert.assertEquals("totototototo",s.trim());
 	}
 }

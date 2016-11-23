@@ -71,8 +71,6 @@ public final class ResourceUtils {
 		// Probe files
 		result.putAll( storeInstanceProbeResources( applicationFilesDirectory, instance ));
 
-		// Script files
-		//result.putAll( storeInstanceScriptResources( applicationFilesDirectory, instance ));
 		return result;
 	}
 
@@ -108,34 +106,6 @@ public final class ResourceUtils {
 		return result;
 	}
 
-
-	/**
-	 * Stores the instance's resources related to scripts into a map.
-	 * @param applicationFilesDirectory the application's directory
-	 * @param instance an instance (not null)
-	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
-	 * @throws IOException if something went wrong while reading a file
-	 */
-	/*public static Map<String,byte[]> storeInstanceScriptResources( File applicationFilesDirectory, Instance instance ) throws IOException {
-
-		String[] exts = {
-				Constants.FILE_EXT_SHELL
-		};
-
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
-		for( String ext : exts ) {
-			String fileName = instance.getComponent().getName() + ext;
-			File shellScriptFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_SCRIPTS + "/" + fileName );
-			if( ! shellScriptFile.exists())
-				break;
-
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( shellScriptFile, os );
-			result.put( shellScriptFile.getName(), os.toByteArray());
-		}
-
-		return result;
-	}*/
 
 	/**
 	 * Finds the resource directory for an instance.
