@@ -29,7 +29,6 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
 import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +57,7 @@ import net.roboconf.integration.tests.dm.with.agents.in.memory.internal.MyTarget
 import net.roboconf.integration.tests.dm.with.agents.in.memory.probes.DmWithAgentInMemoryTest;
 
 /**
- * Test bulk actions.
+ * Test a script execution by an agent.
  * <p>
  * Deploy and start all instances, etc.
  * On two agents.
@@ -87,9 +86,6 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
 
-		//probe.addTest( AgentInMemoryWithRabbitMqTest.class );
-		//probe.addTest( AgentInMemoryWithInMemoryTest.class );
-
 		return probe;
 	}
 
@@ -109,56 +105,45 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 	@Test
 	public void run() throws Exception {
 
-		//Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 		// Update the manager
 		configureManagerForInMemoryUsage();
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		System.out.println(appLocation);
 		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
 		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
-		// Associate a default target for this application
-		String targetId = this.manager.targetsMngr().createTarget( "id:tid1\nhandler: in-memory" );
-		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), null );
-
 		// Create script files
-		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId  );
-		System.out.println("Dirrr = "+dir.isDirectory());
-		System.out.println("target = "+targetId);
-		//Utils.createDirectory( dir );
-		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "toto-script-all.sh"));
-		Utils.writeStringInto( "Bonjour le monde cruel", new File( dir, "titi-script.py"));
+		String targetId = this.manager.targetsMngr().findTargetId(ma.getApplication(), "/MySQL VM");
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId );
+		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "totoscript-all.sh"));
+		Utils.writeStringInto( "Bonjour le monde cruel", new File( dir, "titiscript.py"));
 
 		// Deploy
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
-		//Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );
 		Assert.assertNotNull( mysql );
 
-		//this.manager.instancesMngr().deployAndStartAll(ma, null);
+		this.manager.instancesMngr().deployAndStartAll(ma, null);
 
 		// The deploy and start messages for 'app' and 'MySQL' were stored in the DM.
 		// Wait for them to be picked up by the message checker thread.
 		// 7s = 6s (Manager#TIMER_PERIOD) + 1s for security
-		//Thread.sleep( 7000 );
-
-		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 7000 );
 
+		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
 
-		// Verify that all scripts are executed
+		// Verify that the main script is executed
 		File vmDir = InstanceHelpers.findInstanceDirectoryOnAgent( mysql.getParent() );
-		if(vmDir.isDirectory())
-			System.out.println("!!!!!!!!!!");
 		File toto = new File( vmDir, "toto.txt" );
+		Assert.assertTrue( toto.exists() );
+
 		String s = Utils.readFileContent( toto );
 		List<File> files = Utils.listAllFiles(vmDir);
 
 		Assert.assertEquals( "toto", s.trim() );
-		Assert.assertEquals( 2, files.size() );
+		Assert.assertEquals( 3, files.size() );
 	}
 }
