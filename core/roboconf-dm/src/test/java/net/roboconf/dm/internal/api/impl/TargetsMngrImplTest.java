@@ -1231,7 +1231,7 @@ public class TargetsMngrImplTest {
 		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
 		Utils.createDirectory( dir1 );
 		Utils.createDirectory( dir2 );
-		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "toto-script-all.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "toto-script.sh" ));
 		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "titi-script.py" ));
 
 		Assert.assertEquals( 1, this.mngr.findScriptResources(targetId1).size() );

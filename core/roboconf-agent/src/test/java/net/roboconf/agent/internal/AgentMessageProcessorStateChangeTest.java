@@ -203,7 +203,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateChangeWithUnknownInstance() throws InterruptedException {
+	public void testStateChangeWithUnknownInstance() {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 

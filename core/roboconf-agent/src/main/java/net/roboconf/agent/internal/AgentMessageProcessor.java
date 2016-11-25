@@ -137,7 +137,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
-	protected void processMessage( Message message ){
+	protected void processMessage( Message message ) {
 
 		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
 		try {
@@ -388,7 +388,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @param msg the message to process
 	 * @throws IOException if an error occurred with the messaging
 	 * @throws PluginException if an error occurred while initializing the plug-in
-	 * @throws InterruptedException if the script execution failed
 	 */
 	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException {
 

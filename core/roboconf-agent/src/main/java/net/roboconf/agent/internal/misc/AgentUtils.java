@@ -119,7 +119,6 @@ public final class AgentUtils {
 	/**
 	 * Executes a script resource on a given instance.
 	 * @param instance an instance
-	 * @throws InterruptedException
 	 * @throws IOException
 	 */
 	public static void executeScriptResources( File scriptsDir) throws IOException {
@@ -128,29 +127,27 @@ public final class AgentUtils {
 			List<File> scriptFiles = Utils.listAllFiles( scriptsDir );
 			Logger logger = Logger.getLogger( AgentUtils.class.getName());
 
-			if( ! scriptFiles.isEmpty()) {
-				for( File script : scriptFiles) {
-					if( script.getName().contains(Constants.EXEC_SCRIPT)) {
-						if( ! script.canExecute())
-							script.setExecutable(true);
+			for( File script : scriptFiles) {
+				if( script.getName().contains(Constants.SCOPED_SCRIPT_SUFFIX)) {
+					if( ! script.canExecute())
+						script.setExecutable(true);
 
-						String[] command = { script.getAbsolutePath() };
-						try {
-							ExecutionResult result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, null, null);
-							if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
-								logger.fine( result.getNormalOutput());
+					String[] command = { script.getAbsolutePath() };
+					try {
+						ExecutionResult result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, null, null);
+						if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
+							logger.fine( result.getNormalOutput());
 
-							if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
-								logger.warning( result.getErrorOutput());
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
+							logger.warning( result.getErrorOutput());
+					} catch (InterruptedException e) {
+						Utils.logException( logger, e );
 					}
-
 				}
 			}
 		}
 	}
+
 
 	/**
 	 * Deletes the resources for a given instance.

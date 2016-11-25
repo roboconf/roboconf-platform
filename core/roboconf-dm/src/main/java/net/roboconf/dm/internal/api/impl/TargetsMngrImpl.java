@@ -442,7 +442,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( targetDir.isDirectory()){
 			List<File> scriptFiles = Utils.listAllFiles(targetDir);
 			for( File scriptFile : scriptFiles) {
-				if( scriptFile.getName().contains(Constants.SCRIPT_NAME)) {
+				if( scriptFile.getName().contains(Constants.SCOPED_SCRIPT_SUFFIX)) {
 					ByteArrayOutputStream os = new ByteArrayOutputStream();
 					Utils.copyStream( scriptFile, os );
 					result.put( scriptFile.getName(), os.toByteArray());

@@ -61,20 +61,16 @@ public interface Constants {
 	 */
 	String FILE_EXT_RULE = ".drl";
 
+
 	/**
 	 * The wild card symbol (can be used in a component to reference any variable for a given group).
 	 */
 	String WILDCARD = "*";
 
 	/**
-	 * The default name of a script.
+	 * The suffix of a script name.
 	 * */
-	String SCRIPT_NAME = "script";
-
-	/**
-	 * The default name of a script.
-	 * */
-	String EXEC_SCRIPT = "script-all";
+	String SCOPED_SCRIPT_SUFFIX = "-script.";
 
 	/**
 	 * The name of the target installer (which is somehow specific).

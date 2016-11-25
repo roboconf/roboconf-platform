@@ -58,11 +58,6 @@ import net.roboconf.integration.tests.dm.with.agents.in.memory.probes.DmWithAgen
 
 /**
  * Test a script execution by an agent.
- * <p>
- * Deploy and start all instances, etc.
- * On two agents.
- * </p>
- *
  * @author Amadou Diarra - UGA
  */
 @RunWith( RoboconfPaxRunner.class )
@@ -118,8 +113,7 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 		// Create script files
 		String targetId = this.manager.targetsMngr().findTargetId(ma.getApplication(), "/MySQL VM");
 		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId );
-		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "totoscript-all.sh"));
-		Utils.writeStringInto( "Bonjour le monde cruel", new File( dir, "titiscript.py"));
+		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "toto-script.sh"));
 
 		// Deploy
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
@@ -137,13 +131,15 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 
 		// Verify that the main script is executed
 		File vmDir = InstanceHelpers.findInstanceDirectoryOnAgent( mysql.getParent() );
+		List<File> files = Utils.listAllFiles(vmDir);
+		Assert.assertEquals( 2, files.size() );
+
+		File script = new File( vmDir, "toto-script.sh");
 		File toto = new File( vmDir, "toto.txt" );
+		Assert.assertTrue( script.exists() );
 		Assert.assertTrue( toto.exists() );
 
 		String s = Utils.readFileContent( toto );
-		List<File> files = Utils.listAllFiles(vmDir);
-
 		Assert.assertEquals( "toto", s.trim() );
-		Assert.assertEquals( 3, files.size() );
 	}
 }

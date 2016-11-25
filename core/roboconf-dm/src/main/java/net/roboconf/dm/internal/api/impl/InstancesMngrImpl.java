@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -403,8 +402,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		try {
 			// Send the model
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			Map<String,byte[]> scriptResources = new HashMap<> ();
-			scriptResources = this.targetsMngr.findScriptResources( ma.getApplication(), scopedInstance );
+			Map<String,byte[]> scriptResources = this.targetsMngr.findScriptResources( ma.getApplication(), scopedInstance );
 			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),

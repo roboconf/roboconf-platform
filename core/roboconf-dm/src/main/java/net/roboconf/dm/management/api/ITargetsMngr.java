@@ -327,7 +327,7 @@ public interface ITargetsMngr {
 
 
 	/**
-	 * Finds the script that will be executed once the VM created.
+	 * Finds the script that will be executed once the VM is created.
 	 * @param targetId a target ID
 	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
 	 * @throws IOException if something went wrong while reading a file
@@ -336,7 +336,7 @@ public interface ITargetsMngr {
 
 
 	/**
-	 * Finds the script that will be executed once the VM created.
+	 * Finds the script that will be executed once the VM is created.
 	 * @param app an application
 	 * @param scopedInstance a scopedInstance
 	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)

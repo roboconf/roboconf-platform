@@ -231,9 +231,6 @@ public class AgentMessageProcessorBasicTest {
 		applicationBindings.put( "Tpl2", new HashSet<>( Arrays.asList( "app2" )));
 
 		Map<String,byte[]> scriptResources = new HashMap<> ();
-		String scriptShell = "#!/bin/bash\necho Bonjour le monde cruel > toto.txt";
-		byte[] script1 = scriptShell.getBytes();
-		scriptResources.put("script", script1);
 
 		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings, scriptResources );
 

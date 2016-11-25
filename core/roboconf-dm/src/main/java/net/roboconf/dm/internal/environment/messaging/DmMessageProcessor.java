@@ -28,7 +28,6 @@ package net.roboconf.dm.internal.environment.messaging;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -230,8 +229,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				// A heart beat may also say whether the agent receive its model
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
-					Map<String,byte[]> scriptResources = new HashMap<> ();
-					scriptResources = this.manager.targetsMngr().findScriptResources( ma.getApplication(), scopedInstance );
+					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResources( ma.getApplication(), scopedInstance );
 					Message msg = new MsgCmdSetScopedInstance(
 							scopedInstance,
 							app.getExternalExports(),

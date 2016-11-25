@@ -283,26 +283,22 @@ public class AgentUtilsTest {
 	@Test
 	public void testExecuteScriptResources() throws IOException, InterruptedException {
 
+		Assume.assumeTrue( isUnix());
+
 		//prepare our resources
 		File scriptsDir = this.folder.newFolder();
 
 		AgentUtils.executeScriptResources( scriptsDir );
 		Assert.assertEquals(0, scriptsDir.listFiles().length);
 
-		Assume.assumeTrue( isUnix());
-
-		File script1 = new File( scriptsDir, "toto-script-all.sh" );
-		File script2 = new File( scriptsDir, "titi-script.sh" );
-		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script1);
-		Utils.writeStringInto( "#!/bin/bash\necho titiiii > titi.txt", script2);
+		File script = new File( scriptsDir, "toto-script.sh" );
+		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script);
 
 		AgentUtils.executeScriptResources( scriptsDir );
-		File titi = new File(scriptsDir,"titi.txt");
 		File toto = new File(scriptsDir,"toto.txt");
 
-		Assert.assertFalse( titi.exists() );
 		Assert.assertTrue( toto.exists() );
-		Assert.assertEquals( 3,scriptsDir.listFiles().length );
+		Assert.assertEquals( 2,scriptsDir.listFiles().length );
 
 		String s = Utils.readFileContent( toto );
 		Assert.assertEquals("totototototo",s.trim());
