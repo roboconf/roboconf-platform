@@ -1216,6 +1216,7 @@ public class TargetsMngrImplTest {
 		Assert.assertNull( newMngr.findTargetId( app, path, true ));
 	}
 
+
 	@Test
 	public void testFindScriptResources() throws Exception {
 
@@ -1236,5 +1237,30 @@ public class TargetsMngrImplTest {
 
 		Assert.assertEquals( 1, this.mngr.findScriptResources(targetId1).size() );
 		Assert.assertEquals( 1, this.mngr.findScriptResources( app, app.getMySql()).size());
+	}
+
+
+	@Test
+	public void testCopyScriptsInTargetDirectory() throws IOException {
+
+		File f = new File(this.folder.newFolder(), "toto.properties");
+		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+		TestApplicationTemplate appT = new TestApplicationTemplate();
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( f.getParentFile(), "toto.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( f.getParentFile(), "titi-script.py" ));
+
+		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+		Assert.assertFalse( targetDir.exists());
+
+		String targetId = this.mngr.createTarget( f, appT );
+		Assert.assertEquals( "tid", targetId );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertEquals( 4, targetDir.list().length);
+
+		File toto = new File( targetDir, "toto.sh");
+		File titi = new File( targetDir, "titi-script.py");
+		Assert.assertTrue(toto.exists());
+		Assert.assertTrue(titi.exists());
 	}
 }

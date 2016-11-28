@@ -220,7 +220,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateChangeWithUnknownPlugin() throws InterruptedException {
+	public void testStateChangeWithUnknownPlugin() {
 
 		this.agent.stop();
 		this.agent = new Agent() {
@@ -250,7 +250,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateChangeWithTransitiveState() throws InterruptedException {
+	public void testStateChangeWithTransitiveState() {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplicationTemplate app = new TestApplicationTemplate();
@@ -269,7 +269,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_startFails() throws InterruptedException {
+	public void testStateAdvancedChange_startFails() {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
@@ -315,7 +315,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_deployFails() throws InterruptedException {
+	public void testStateAdvancedChange_deployFails() {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
@@ -361,7 +361,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_stopFails() throws InterruptedException {
+	public void testStateAdvancedChange_stopFails() {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
@@ -410,7 +410,7 @@ public class AgentMessageProcessorStateChangeTest {
 
 
 	@Test
-	public void testStateAdvancedChange_undeployFails() throws InterruptedException {
+	public void testStateAdvancedChange_undeployFails() {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".

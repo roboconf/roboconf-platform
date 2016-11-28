@@ -189,7 +189,19 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			sb.append( creator.getQualifier());
 		}
 
-		return createTarget( sb.toString());
+		// Copy script files in target directory
+		String targetId = createTarget( sb.toString());
+		File scriptsInDir = targetPropertiesFile.getParentFile();
+		File scriptsOutDir = findTargetDirectory( targetId );
+		List<File> scripts = Utils.listAllFiles( scriptsInDir );
+		for( File f : scripts) {
+			String name = f.getName();
+			if( !(name.contains(Constants.FILE_EXT_PROPERTIES) || name.contains(".tmp") || name.contains(CREATED_BY)) ) {
+				Utils.copyStream(f, new File(scriptsOutDir, name));
+			}
+		}
+
+		return targetId;
 	}
 
 
@@ -442,7 +454,8 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( targetDir.isDirectory()){
 			List<File> scriptFiles = Utils.listAllFiles(targetDir);
 			for( File scriptFile : scriptFiles) {
-				if( scriptFile.getName().contains(Constants.SCOPED_SCRIPT_SUFFIX)) {
+				String name = scriptFile.getName();
+				if( !(name.contains(Constants.FILE_EXT_PROPERTIES) || name.contains(".tmp") || name.contains(CREATED_BY)) ) {
 					ByteArrayOutputStream os = new ByteArrayOutputStream();
 					Utils.copyStream( scriptFile, os );
 					result.put( scriptFile.getName(), os.toByteArray());
