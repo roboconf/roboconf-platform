@@ -189,16 +189,20 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			sb.append( creator.getQualifier());
 		}
 
-		// Copy script files in target directory
+		// Create a target
 		String targetId = createTarget( sb.toString());
+
+		// Copy script files in target directory
 		File scriptsInDir = targetPropertiesFile.getParentFile();
 		File scriptsOutDir = findTargetDirectory( targetId );
+		String prefix = Utils.removeFileExtension(targetPropertiesFile.getName());
 		List<File> scripts = Utils.listAllFiles( scriptsInDir );
 		for( File f : scripts) {
 			String name = f.getName();
-			if( !(name.contains(Constants.FILE_EXT_PROPERTIES) || name.contains(".tmp") || name.contains(CREATED_BY)) ) {
+			if( ! CREATED_BY.equals(name)
+					&& name.startsWith(prefix)
+					&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES))
 				Utils.copyStream(f, new File(scriptsOutDir, name));
-			}
 		}
 
 		return targetId;
@@ -450,12 +454,15 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 		File targetDir = findTargetDirectory( targetId );
+		String prefix = Utils.removeFileExtension(findTargetFile(targetId, Constants.TARGET_PROPERTIES_FILE_NAME).getName());
 
 		if( targetDir.isDirectory()){
 			List<File> scriptFiles = Utils.listAllFiles(targetDir);
 			for( File scriptFile : scriptFiles) {
 				String name = scriptFile.getName();
-				if( !(name.contains(Constants.FILE_EXT_PROPERTIES) || name.contains(".tmp") || name.contains(CREATED_BY)) ) {
+				if( ! CREATED_BY.equals(name)
+						&& name.startsWith(prefix)
+						&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES)) {
 					ByteArrayOutputStream os = new ByteArrayOutputStream();
 					Utils.copyStream( scriptFile, os );
 					result.put( scriptFile.getName(), os.toByteArray());

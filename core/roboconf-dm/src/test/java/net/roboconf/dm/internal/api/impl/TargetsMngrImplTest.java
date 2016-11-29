@@ -144,7 +144,7 @@ public class TargetsMngrImplTest {
 	@Test
 	public void testCreateTargetFromFile() throws Exception {
 
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
 
 		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
@@ -170,7 +170,7 @@ public class TargetsMngrImplTest {
 	public void testCreateTargetFromFile_noApplicationTemplate_conflict() throws Exception {
 
 		// Create a target
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		try {
 			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
 
@@ -195,7 +195,7 @@ public class TargetsMngrImplTest {
 	public void testCreateTargetFromFile_withApplicationTemplate_noConflict() throws Exception {
 
 		// Create a target
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		try {
 			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
@@ -221,7 +221,7 @@ public class TargetsMngrImplTest {
 	public void testCreateTargetFromFile_withApplicationTemplate_conflict() throws Exception {
 
 		// Create a target
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		TestApplicationTemplate tpl1 = new TestApplicationTemplate();
 		try {
 			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
@@ -249,7 +249,7 @@ public class TargetsMngrImplTest {
 	public void testCreateTargetFromFile_mix_conflict() throws Exception {
 
 		// Create a target
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		try {
 			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
 
@@ -274,7 +274,7 @@ public class TargetsMngrImplTest {
 	@Test
 	public void testCreateTargetFromFileAndApplicationTemplate() throws Exception {
 
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
 
 		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
@@ -1232,8 +1232,8 @@ public class TargetsMngrImplTest {
 		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
 		Utils.createDirectory( dir1 );
 		Utils.createDirectory( dir2 );
-		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "toto-script.sh" ));
-		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "titi-script.py" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "target-script.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "target-script.py" ));
 
 		Assert.assertEquals( 1, this.mngr.findScriptResources(targetId1).size() );
 		Assert.assertEquals( 1, this.mngr.findScriptResources( app, app.getMySql()).size());
@@ -1248,7 +1248,8 @@ public class TargetsMngrImplTest {
 
 		TestApplicationTemplate appT = new TestApplicationTemplate();
 		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( f.getParentFile(), "toto.sh" ));
-		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( f.getParentFile(), "titi-script.py" ));
+		Utils.writeStringInto( "#!/bin/bash\ntouch titi.txt", new File( f.getParentFile(), "titi.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho tototo", new File( f.getParentFile(), "toto-script.sh" ));
 
 		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
 		Assert.assertFalse( targetDir.exists());
@@ -1259,8 +1260,10 @@ public class TargetsMngrImplTest {
 		Assert.assertEquals( 4, targetDir.list().length);
 
 		File toto = new File( targetDir, "toto.sh");
-		File titi = new File( targetDir, "titi-script.py");
+		File titi = new File( targetDir, "titi.sh");
+		File totoMain = new File( targetDir, "toto-script.sh");
 		Assert.assertTrue(toto.exists());
-		Assert.assertTrue(titi.exists());
+		Assert.assertFalse(titi.exists());
+		Assert.assertTrue(totoMain.exists());
 	}
 }
