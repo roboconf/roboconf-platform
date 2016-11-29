@@ -61,6 +61,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
  *
  * @author Noël - LIG
  * @author Pierre Bourret - Université Joseph Fourier
+ * @author Amadou Diarra - UGA
  */
 public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
@@ -228,10 +229,12 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				// A heart beat may also say whether the agent receive its model
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
+					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResources( ma.getApplication(), scopedInstance );
 					Message msg = new MsgCmdSetScopedInstance(
 							scopedInstance,
 							app.getExternalExports(),
-							app.getApplicationBindings());
+							app.getApplicationBindings(),
+							scriptResources);
 
 					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
 				}

@@ -68,6 +68,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
  * @author Pierre-Yves Gibello - Linagora
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
+ * @author Amadou Diarra - UGA
  */
 public class InstancesMngrImpl implements IInstancesMngr {
 
@@ -401,10 +402,12 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		try {
 			// Send the model
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
+			Map<String,byte[]> scriptResources = this.targetsMngr.findScriptResources( ma.getApplication(), scopedInstance );
 			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),
-					ma.getApplication().getApplicationBindings());
+					ma.getApplication().getApplicationBindings(),
+					scriptResources );
 
 			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
 

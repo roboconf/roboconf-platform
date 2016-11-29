@@ -68,6 +68,11 @@ public interface Constants {
 	String WILDCARD = "*";
 
 	/**
+	 * The suffix of a script name.
+	 * */
+	String SCOPED_SCRIPT_SUFFIX = "-script.";
+
+	/**
 	 * The name of the target installer (which is somehow specific).
 	 */
 	String TARGET_INSTALLER = "target";

@@ -255,7 +255,7 @@ public abstract class AbstractMessagingTest {
 		// The DM sends messages
 		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetScopedInstance( app1_root1 ));
 		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdSetScopedInstance( app2_root ));
-		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdSetScopedInstance( app1_root2, null, null ));
+		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdSetScopedInstance( app1_root2, null, null, null ));
 		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdRemoveInstance( app2_root ));
 		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdChangeInstanceState( app2_root, InstanceStatus.DEPLOYED_STOPPED ));
 		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdRemoveInstance( app1_root2 ));

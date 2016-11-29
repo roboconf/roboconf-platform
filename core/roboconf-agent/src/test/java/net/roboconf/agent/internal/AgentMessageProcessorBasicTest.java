@@ -230,7 +230,9 @@ public class AgentMessageProcessorBasicTest {
 		applicationBindings.put( "Tpl1", new HashSet<>( Arrays.asList( "app1", "app3" )));
 		applicationBindings.put( "Tpl2", new HashSet<>( Arrays.asList( "app2" )));
 
-		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings );
+		Map<String,byte[]> scriptResources = new HashMap<> ();
+
+		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings, scriptResources );
 
 		// Send the message
 		Assert.assertNull( processor.scopedInstance );

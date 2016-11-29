@@ -33,17 +33,22 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 
 /**
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora
+ * @author Amadou Diarra - UGA
  */
 public final class AgentUtils {
 
@@ -106,6 +111,39 @@ public final class AgentUtils {
 
 				ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
 				Utils.copyStream( in, f );
+			}
+		}
+	}
+
+
+	/**
+	 * Executes a script resource on a given instance.
+	 * @param instance an instance
+	 * @throws IOException
+	 */
+	public static void executeScriptResources( File scriptsDir) throws IOException {
+
+		if( scriptsDir.isDirectory()) {
+			List<File> scriptFiles = Utils.listAllFiles( scriptsDir );
+			Logger logger = Logger.getLogger( AgentUtils.class.getName());
+
+			for( File script : scriptFiles) {
+				if( script.getName().contains(Constants.SCOPED_SCRIPT_SUFFIX)) {
+					if( ! script.canExecute())
+						script.setExecutable(true);
+
+					String[] command = { script.getAbsolutePath() };
+					try {
+						ExecutionResult result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, null, null);
+						if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
+							logger.fine( result.getNormalOutput());
+
+						if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
+							logger.warning( result.getErrorOutput());
+					} catch (InterruptedException e) {
+						Utils.logException( logger, e );
+					}
+				}
 			}
 		}
 	}

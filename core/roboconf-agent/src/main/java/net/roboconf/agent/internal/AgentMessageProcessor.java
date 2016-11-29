@@ -89,6 +89,7 @@ import net.roboconf.plugin.api.PluginInterface;
  * </p>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
 public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient> {
 
@@ -189,7 +190,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.logger.severe( "A problem occurred with the messaging. " + e.getMessage());
 			Utils.logException( this.logger, e );
 
-		}  catch( PluginException e ) {
+		} catch( PluginException e ) {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
@@ -410,6 +411,10 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// Initialize the application bindings
 			this.applicationBindings.putAll( msg.getApplicationBindings());
+
+			// Executes the script
+			AgentUtils.copyInstanceResources( this.scopedInstance, msg.getscriptResources());
+			AgentUtils.executeScriptResources( InstanceHelpers.findInstanceDirectoryOnAgent( this.scopedInstance ));
 
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {

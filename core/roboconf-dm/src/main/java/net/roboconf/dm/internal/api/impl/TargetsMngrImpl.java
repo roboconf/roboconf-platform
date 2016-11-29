@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,6 +80,7 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
  * </ul>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra   - UGA
  */
 public class TargetsMngrImpl implements ITargetsMngr {
 
@@ -185,7 +187,23 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			sb.append( creator.getQualifier());
 		}
 
-		return createTarget( sb.toString());
+		// Create a target
+		String targetId = createTarget( sb.toString());
+
+		// Copy script files in target directory
+		File scriptsInDir = targetPropertiesFile.getParentFile();
+		File scriptsOutDir = findTargetDirectory( targetId );
+		String prefix = Utils.removeFileExtension(targetPropertiesFile.getName());
+		List<File> scripts = Utils.listAllFiles( scriptsInDir );
+		for( File f : scripts) {
+			String name = f.getName();
+			if( ! CREATED_BY.equals(name)
+					&& name.startsWith(prefix)
+					&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES))
+				Utils.copyStream(f, new File(scriptsOutDir, name));
+		}
+
+		return targetId;
 	}
 
 
@@ -425,6 +443,44 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public String findTargetId( AbstractApplication app, String instancePath ) {
 		return findTargetId( app, instancePath, false );
+	}
+
+
+	// Finding script resources
+	@Override
+	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
+
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		File targetDir = findTargetDirectory( targetId );
+		String prefix = Utils.removeFileExtension(findTargetFile(targetId, Constants.TARGET_PROPERTIES_FILE_NAME).getName());
+
+		if( targetDir.isDirectory()){
+			List<File> scriptFiles = Utils.listAllFiles(targetDir);
+			for( File scriptFile : scriptFiles) {
+				String name = scriptFile.getName();
+				if( ! CREATED_BY.equals(name)
+						&& name.startsWith(prefix)
+						&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES)) {
+					ByteArrayOutputStream os = new ByteArrayOutputStream();
+					Utils.copyStream( scriptFile, os );
+					result.put( scriptFile.getName(), os.toByteArray());
+				}
+			}
+		}
+		return result;
+	}
+
+
+	@Override
+	public Map<String, byte[]> findScriptResources(Application app, Instance scopedInstance) throws IOException {
+
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
+
+		if( targetId != null )
+			result = findScriptResources( targetId );
+
+		return result;
 	}
 
 
