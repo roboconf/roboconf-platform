@@ -30,6 +30,8 @@ import java.util.logging.Logger;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 
+import net.roboconf.core.utils.Utils;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -48,6 +50,7 @@ public class RoboconfWebSocket implements WebSocketListener {
 	@Override
 	public void onWebSocketConnect( Session session ) {
 		this.session = session;
+		session.setIdleTimeout( -1 );
 		this.logger.info( "A web socket connection was established. Session origin: " + session.getRemoteAddress());
 		WebSocketHandler.addSession( session );
 	}
@@ -55,6 +58,7 @@ public class RoboconfWebSocket implements WebSocketListener {
 	@Override
 	public void onWebSocketError( Throwable cause ) {
 		this.logger.severe( "An error related to web sockets occurred. Session origin: " + this.session.getRemoteAddress());
+		Utils.logException( this.logger, new Exception( cause ));
 	}
 
 	@Override

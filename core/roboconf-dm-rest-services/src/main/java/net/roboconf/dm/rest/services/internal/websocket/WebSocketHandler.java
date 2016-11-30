@@ -33,6 +33,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
+import org.eclipse.jetty.websocket.api.Session;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
@@ -40,10 +44,6 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-
-import org.eclipse.jetty.websocket.api.Session;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -129,8 +129,7 @@ public class WebSocketHandler implements IDmListener {
 	}
 
 
-	/**try {
-
+	/**
 	 * Creates a JSon/string representation from an object.
 	 * @param prefix
 	 * @param o
@@ -161,22 +160,27 @@ public class WebSocketHandler implements IDmListener {
 	 */
 	private void send( String message ) {
 
-		if( this.enabled.get() && message != null ) {
-			synchronized( SESSIONS ) {
-				for( Session session : SESSIONS ) {
-					try {
-						session.getRemote().sendString( message );
+		if( ! this.enabled.get()) {
+			this.logger.finest( "Notifications were disabled by the DM." );
 
-					} catch( IOException e ) {
-						StringBuilder sb = new StringBuilder( "A notification could not be propagated for session " );
-						sb.append( session.getRemoteAddress());
-						sb.append( "." );
-						if( ! Utils.isEmptyOrWhitespaces( e.getMessage()))
-							sb.append( " " + e.getMessage());
+		} else if( message == null ) {
+			this.logger.finest( "No message to send to web socket clients." );
 
-						this.logger.severe( sb.toString());
-						Utils.logException( this.logger, e );
-					}
+		} else synchronized( SESSIONS ) {
+			for( Session session : SESSIONS ) {
+				try {
+					this.logger.finest( "Sending a message to a web socket client..." );
+					session.getRemote().sendString( message );
+
+				} catch( IOException e ) {
+					StringBuilder sb = new StringBuilder( "A notification could not be propagated for session " );
+					sb.append( session.getRemoteAddress());
+					sb.append( "." );
+					if( ! Utils.isEmptyOrWhitespaces( e.getMessage()))
+						sb.append( " " + e.getMessage());
+
+					this.logger.severe( sb.toString());
+					Utils.logException( this.logger, e );
 				}
 			}
 		}
