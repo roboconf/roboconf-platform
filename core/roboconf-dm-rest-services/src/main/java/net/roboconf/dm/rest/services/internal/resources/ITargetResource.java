@@ -94,6 +94,7 @@ public interface ITargetResource {
 	 * @HTTP 403 Invalid target ID or target still in use.
 	 */
 	@POST
+	@Produces( MediaType.TEXT_PLAIN )
 	Response createOrUpdateTarget( String rawProperties, @QueryParam("target-id") String targetId );
 
 
