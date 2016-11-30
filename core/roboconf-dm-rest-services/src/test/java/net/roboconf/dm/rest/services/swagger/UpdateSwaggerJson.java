@@ -186,7 +186,7 @@ public class UpdateSwaggerJson {
 		convertToTypes( s, TargetUsageItem.class, newDef );
 
 		// (*) Target associations
-		TargetAssociation ta = new TargetAssociation( "/vm-1", twd );
+		TargetAssociation ta = new TargetAssociation( "/vm-1", "VM", twd );
 
 		writer = new StringWriter();
 		mapper.writeValue( writer, ta );

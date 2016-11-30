@@ -33,17 +33,19 @@ import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
  */
 public class TargetAssociation {
 
-	private final String instancePathOrComponentName;
+	private final String instancePathOrComponentName, instanceComponent;
 	private final TargetWrapperDescriptor targetDescriptor;
 
 
 	/**
 	 * Constructor.
 	 * @param instancePathOrComponentName
+	 * @param instanceComponent
 	 * @param targetDescriptor
 	 */
-	public TargetAssociation( String instancePathOrComponentName, TargetWrapperDescriptor targetDescriptor ) {
+	public TargetAssociation( String instancePathOrComponentName, String instanceComponent, TargetWrapperDescriptor targetDescriptor ) {
 		this.instancePathOrComponentName = instancePathOrComponentName;
+		this.instanceComponent = instanceComponent;
 		this.targetDescriptor = targetDescriptor;
 	}
 
@@ -59,5 +61,12 @@ public class TargetAssociation {
 	 */
 	public TargetWrapperDescriptor getTargetDescriptor() {
 		return this.targetDescriptor;
+	}
+
+	/**
+	 * @return the instanceComponent
+	 */
+	public String getInstanceComponent() {
+		return this.instanceComponent;
 	}
 }

@@ -1046,27 +1046,27 @@ public class JSonBindingUtilsTest {
 
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		TargetAssociation association = new TargetAssociation( null, null );
+		TargetAssociation association = new TargetAssociation( null, null, null );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, association );
 		Assert.assertEquals( "{}", writer.toString());
 
-		association = new TargetAssociation( "/my-path", null );
+		association = new TargetAssociation( "/my-path", "comp1", null );
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
-		Assert.assertEquals( "{\"path\":\"/my-path\"}", writer.toString());
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"component\":\"comp1\"}", writer.toString());
 
 		TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
-		association = new TargetAssociation( "/my-path", twd );
+		association = new TargetAssociation( "/my-path", "comp2", twd );
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
-		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{}}", writer.toString());
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"component\":\"comp2\",\"desc\":{}}", writer.toString());
 
 		twd.setId( "54" );
 		twd.setName( "toto" );
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
-		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{\"id\":\"54\",\"name\":\"toto\"}}", writer.toString());
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"component\":\"comp2\",\"desc\":{\"id\":\"54\",\"name\":\"toto\"}}", writer.toString());
 	}
 
 

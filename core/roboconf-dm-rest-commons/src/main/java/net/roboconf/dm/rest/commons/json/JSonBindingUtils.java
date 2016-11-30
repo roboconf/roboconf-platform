@@ -325,11 +325,14 @@ public final class JSonBindingUtils {
 				TargetAssociation item,
 				JsonGenerator generator,
 				SerializerProvider provider )
-						throws IOException {
+		throws IOException {
 
 			generator.writeStartObject();
 			if( item.getInstancePathOrComponentName() != null )
 				generator.writeStringField( PATH, item.getInstancePathOrComponentName());
+
+			if( item.getInstanceComponent() != null )
+				generator.writeStringField( INST_COMPONENT, item.getInstanceComponent());
 
 			if( item.getTargetDescriptor() != null )
 				generator.writeObjectField( DESC, item.getTargetDescriptor());
