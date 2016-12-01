@@ -199,6 +199,9 @@ public class Manager implements IReconfigurable {
 		// We must update instance states after we restored applications
 		restoreAllInstances();
 
+		// Enable notifications to listeners
+		this.notificationMngr.enableNotifications();
+
 		this.logger.info( "The DM was launched." );
 	}
 
@@ -211,17 +214,21 @@ public class Manager implements IReconfigurable {
 	 */
 	public void stop() {
 
+		// Cancel the timer
 		this.logger.info( "The DM is about to be stopped." );
 		if( this.timer != null ) {
 			this.timer.cancel();
 			this.timer =  null;
 		}
 
-		if( this.messagingClient != null ) {
+		// Disable notifications to listeners
+		this.notificationMngr.disableNotifications();
 
-			// Stops listening to the debug queue.
+		// Stops listening to the debug queue.
+		if( this.messagingClient != null ) {
 			try {
 				this.messagingClient.listenToTheDm( ListenerCommand.STOP );
+
 			} catch ( IOException e ) {
 				this.logger.log( Level.WARNING, "Cannot stop to listen to the debug queue", e );
 			}
