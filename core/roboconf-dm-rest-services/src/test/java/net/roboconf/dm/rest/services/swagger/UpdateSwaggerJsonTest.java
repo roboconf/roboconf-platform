@@ -34,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 import net.roboconf.dm.rest.commons.json.MapWrapper;
 import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
@@ -61,7 +62,10 @@ public class UpdateSwaggerJsonTest {
 				StringWrapper.class,
 				MapWrapper.class,
 				MappedCollectionWrapper.class,
-				ApplicationBindings.class
+				ApplicationBindings.class,
+
+				// FIXME: remove it from this list (see #732)
+				WebSocketMessage.class
 		));
 
 		Assert.assertEquals( Collections.emptySet(), classes );

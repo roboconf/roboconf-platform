@@ -54,11 +54,13 @@ import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.dm.rest.commons.beans.TargetAssociation;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -1152,5 +1154,86 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
 		Assert.assertEquals( job.getAppName(), readJob.getAppName());
 		Assert.assertEquals( job.getCron(), readJob.getCron());
+	}
+
+
+	@Test
+	public void testWebSocketMessage_instance() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage( null, null, null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		TestApplication app = new TestApplication();
+		wsm = new WebSocketMessage( app.getMySql(), app, EventType.CREATED );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"event\":\"CREATED\",\"app\":{\"name\":\"test\",\"tplName\":\"test-app\",\"tplQualifier\":\"test\"},\"inst\":"
+				+ "{\"name\":\"mysql-server\",\"path\":\"/mysql-vm/mysql-server\",\"status\":\"NOT_DEPLOYED\","
+				+ "\"component\":{\"name\":\"mysql\",\"installer\":\"puppet\"},\"exports\":{\"mysql.port\":\"3306\",\"mysql.ip\":null}}}", s );
+	}
+
+
+	@Test
+	public void testWebSocketMessage_application() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage((Application) null, null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		TestApplication app = new TestApplication();
+		wsm = new WebSocketMessage( app, EventType.DELETED );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"event\":\"DELETED\",\"app\":{\"name\":\"test\",\"tplName\":\"test-app\",\"tplQualifier\":\"test\"}}", s );
+	}
+
+
+	@Test
+	public void testWebSocketMessage_applicationTemplate() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage((ApplicationTemplate) null, null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		wsm = new WebSocketMessage( tpl, EventType.CHANGED );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"event\":\"CHANGED\",\"tpl\":{\"name\":\"test-app\",\"qualifier\":\"test\",\"apps\":[]}}", s );
+	}
+
+
+	@Test
+	public void testWebSocketMessage_message() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage( null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		wsm = new WebSocketMessage( "my message" );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"msg\":\"my message\"}", s );
 	}
 }

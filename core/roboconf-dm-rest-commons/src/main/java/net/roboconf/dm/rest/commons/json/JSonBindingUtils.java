@@ -68,6 +68,7 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.dm.rest.commons.beans.TargetAssociation;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 
 /**
  * A set of utilities to bind Roboconf's runtime model to JSon.
@@ -117,6 +118,7 @@ public final class JSonBindingUtils {
 		SERIALIZERS.put( TargetAssociation.class, new TargetAssociationSerializer());
 		SERIALIZERS.put( Preference.class, new PreferenceSerializer());
 		SERIALIZERS.put( ApplicationBindings.class, new ApplicationBindingsSerializer());
+		SERIALIZERS.put( WebSocketMessage.class, new WebSocketMessageSerializer());
 	}
 
 
@@ -175,6 +177,12 @@ public final class JSonBindingUtils {
 	private static final String JOB_NAME = "job-name";
 	private static final String JOB_APP_NAME = "app-name";
 	private static final String JOB_CMD_NAME = "cmd-name";
+
+	private static final String WS_EVENT = "event";
+	private static final String WS_APP = "app";
+	private static final String WS_TPL = "tpl";
+	private static final String WS_INST = "inst";
+	private static final String WS_MSG = "msg";
 
 
 	/**
@@ -801,6 +809,40 @@ public final class JSonBindingUtils {
 
 				generator.writeEndArray();
 			}
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for web socket messages.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class WebSocketMessageSerializer extends JsonSerializer<WebSocketMessage> {
+
+		@Override
+		public void serialize(
+				WebSocketMessage wsm,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( wsm.getEventType() != null )
+				generator.writeStringField( WS_EVENT, wsm.getEventType().toString());
+
+			if( wsm.getApplication() != null )
+				generator.writeObjectField( WS_APP, wsm.getApplication());
+
+			if( wsm.getApplicationTemplate() != null )
+				generator.writeObjectField( WS_TPL, wsm.getApplicationTemplate());
+
+			if( wsm.getInstance() != null )
+				generator.writeObjectField( WS_INST, wsm.getInstance());
+
+			if( wsm.getMessage() != null )
+				generator.writeObjectField( WS_MSG, wsm.getMessage());
 
 			generator.writeEndObject();
 		}

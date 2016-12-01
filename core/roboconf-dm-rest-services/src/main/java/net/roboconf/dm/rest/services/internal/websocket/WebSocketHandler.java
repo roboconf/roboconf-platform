@@ -43,6 +43,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.events.IDmListener;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 
 /**
@@ -104,49 +105,56 @@ public class WebSocketHandler implements IDmListener {
 
 	@Override
 	public void application( Application application, EventType eventType ) {
-		String msg = asJson( " app ", application, eventType );
+		WebSocketMessage message = new WebSocketMessage( application, eventType );
+		String msg = asJson( message );
 		send( msg );
 	}
 
 
 	@Override
 	public void applicationTemplate( ApplicationTemplate tpl, EventType eventType ) {
-		String msg = asJson( " tpl ", tpl, eventType );
+		WebSocketMessage message = new WebSocketMessage( tpl, eventType );
+		String msg = asJson( message );
 		send( msg );
 	}
 
 
 	@Override
 	public void instance( Instance instance, Application application, EventType eventType ) {
-		String msg = asJson( " instance ", instance, eventType ) + " IN " + application;
+		WebSocketMessage message = new WebSocketMessage( instance, application, eventType );
+		String msg = asJson( message );
 		send( msg );
 	}
 
 
 	@Override
 	public void raw( String message, Object... data ) {
-		send( message );
+
+		// We do not use "data"
+		if( message != null ) {
+			WebSocketMessage wrappedMessage = new WebSocketMessage( message );
+			String msg = asJson( wrappedMessage );
+			send( msg );
+		}
 	}
 
 
 	/**
 	 * Creates a JSon/string representation from an object.
-	 * @param prefix
-	 * @param o
-	 * @param eventType
+	 * @param message a web socket message
 	 * @return a non-null string
 	 */
-	String asJson( String prefix, Object o, EventType eventType ) {
+	String asJson( WebSocketMessage message ) {
 
 		String result = null;
 		try {
 			ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 			StringWriter writer = new StringWriter();
-			mapper.writeValue( writer, o );
-			result = eventType + prefix + writer.toString();
+			mapper.writeValue( writer, message );
+			result = writer.toString();
 
 		} catch( IOException e ) {
-			this.logger.severe( "A notification could not be prepared (" + o.getClass().getSimpleName() + "). It will not be sent. " + e.getMessage());
+			this.logger.severe( "A notification could not be prepare. It will not be sent. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
 
