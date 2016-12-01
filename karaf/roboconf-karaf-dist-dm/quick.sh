@@ -24,8 +24,8 @@
 # limitations under the License.
 ############################################################################
 
-# To quickly launch a newly built DM distribution
-cd target && tar -xf roboconf-karaf-dist-dm-*.tar.gz
-cd roboconf-karaf-dist-dm-*
-cd bin
+# To quickly build and launch a DM distribution for local tests
+mvn clean install
+sed -i "s/enable-cors = false/enable-cors = true/g" target/assembly/etc/net.roboconf.dm.rest.services.configuration.cfg
+cd target/assembly/bin
 ./karaf
