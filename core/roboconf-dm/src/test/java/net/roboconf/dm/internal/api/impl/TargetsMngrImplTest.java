@@ -97,7 +97,7 @@ public class TargetsMngrImplTest {
 		props = this.mngr.findRawTargetProperties( targetId );
 		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
 
-		// missing handler
+		// Missing handler
 		try {
 			this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done" );
 			Assert.fail( "Update should have failed, the handler is missing." );
@@ -300,6 +300,44 @@ public class TargetsMngrImplTest {
 	public void testUpdateTarget_whenTargetDoesNotExist() throws Exception {
 
 		this.mngr.updateTarget( "inexisting", "prop: ok\nhandler: h" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testAssociateTargetWith_nonScopedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+
+		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
+		this.mngr.associateTargetWith( targetId, app, mySqlPath );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testDissociateTargetFrom_nonScopedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.dissociateTargetFrom( app, mySqlPath );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testFindTargetId_nonScopedInstance_strict() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.findTargetId( app, mySqlPath, true );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testFindTargetId_nonScopedInstance_notStrict() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.findTargetId( app, mySqlPath, false );
 	}
 
 

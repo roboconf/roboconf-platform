@@ -269,8 +269,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		} else {
 			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
 			valid = instance != null;
-			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+			if( instance != null ) {
+				if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+					throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+
+				if( ! InstanceHelpers.isTarget( instance ))
+					throw new IllegalArgumentException( "Only scoped instances can be associated with targets. Path in error: " + instancePathOrComponentName );
+			}
 		}
 
 		if( valid )
@@ -286,8 +291,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 				&& ! instancePathOrComponentName.startsWith( "@" )) {
 
 			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
-			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+			if( instance != null ) {
+				if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+					throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+
+				if( ! InstanceHelpers.isTarget( instance ))
+					throw new IllegalArgumentException( "Only scoped instances can be associated with targets. Path in error: " + instancePathOrComponentName );
+			}
 		}
 
 		saveAssociation( app, null, instancePathOrComponentName, false );
@@ -420,9 +430,14 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		InstanceContext key = new InstanceContext( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
 
+		// Non-scoped instances cannot be associated with targets.
+		// Such a query is a coding error!
+		Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
+		if( inst != null && ! InstanceHelpers.isTarget( inst ))
+			throw new IllegalArgumentException( "Targets aimed at being queried for scoped instances only. Invalid path: " + instancePath );
+
 		// Association inherited from the component
 		if( targetId == null && ! strict ) {
-			Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
 			if( inst != null ) {
 				key = new InstanceContext( app, "@" + inst.getComponent().getName());
 				targetId = this.instanceToCachedId.get( key );
