@@ -27,6 +27,7 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,7 @@ import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
+import net.roboconf.dm.management.events.EventType;
 import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -86,6 +88,132 @@ public class InstancesMngrImplTest {
 		exceptions.add( new Exception( "oops" ));
 
 		InstancesMngrImpl.processExceptions( logger, exceptions, "whatever" );
+	}
+
+
+	@Test
+	public void testNotificationsWhenUndeployingScopedInstances_changeInstanceState() throws Exception {
+
+		// Prepare stuff
+		final TestApplication app = new TestApplication();
+		final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
+		INotificationMngr notificationMngr = new NotificationMngrImpl() {
+			@Override
+			public void instance( Instance instance, Application application, EventType eventType ) {
+
+				Assert.assertEquals( EventType.CHANGED, eventType );
+				Assert.assertEquals( app, application );
+
+				List<InstanceStatus> status = instanceToStatusHistory.get( instance );
+				if( status == null ) {
+					status = new ArrayList<> ();
+					instanceToStatusHistory.put( instance, status );
+				}
+
+				status.add( instance.getStatus());
+			}
+		};
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
+
+		// Make one of our VM being fully deployed
+		ManagedApplication ma = new ManagedApplication( app );
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getTomcatVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Stop everything
+		mngr.changeInstanceState( ma, app.getTomcatVm(), InstanceStatus.NOT_DEPLOYED );
+
+		// Check notifications
+		Assert.assertEquals( 3, instanceToStatusHistory.size());
+		List<InstanceStatus> statusHistory = instanceToStatusHistory.get( app.getTomcatVm());
+		Assert.assertNotNull( statusHistory );
+		Assert.assertEquals( Arrays.asList( InstanceStatus.UNDEPLOYING, InstanceStatus.NOT_DEPLOYED ), statusHistory );
+
+		statusHistory = instanceToStatusHistory.get( app.getTomcat());
+		Assert.assertNotNull( statusHistory );
+		Assert.assertEquals( Arrays.asList( InstanceStatus.NOT_DEPLOYED ), statusHistory );
+
+		statusHistory = instanceToStatusHistory.get( app.getWar());
+		Assert.assertNotNull( statusHistory );
+		Assert.assertEquals( Arrays.asList( InstanceStatus.NOT_DEPLOYED ), statusHistory );
+	}
+
+
+	@Test
+	public void testNotificationsWhenUndeployingScopedInstances_undeployAll() throws Exception {
+
+		// Prepare stuff
+		final TestApplication app = new TestApplication();
+		final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
+		INotificationMngr notificationMngr = new NotificationMngrImpl() {
+			@Override
+			public void instance( Instance instance, Application application, EventType eventType ) {
+
+				Assert.assertEquals( EventType.CHANGED, eventType );
+				Assert.assertEquals( app, application );
+
+				List<InstanceStatus> status = instanceToStatusHistory.get( instance );
+				if( status == null ) {
+					status = new ArrayList<> ();
+					instanceToStatusHistory.put( instance, status );
+				}
+
+				status.add( instance.getStatus());
+			}
+		};
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
+
+		// Make one of our VM being fully deployed
+		ManagedApplication ma = new ManagedApplication( app );
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getTomcatVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Stop everything
+		mngr.undeployAll( ma, app.getTomcatVm());
+
+		// Check notifications
+		Assert.assertEquals( 3, instanceToStatusHistory.size());
+		List<InstanceStatus> statusHistory = instanceToStatusHistory.get( app.getTomcatVm());
+		Assert.assertNotNull( statusHistory );
+		Assert.assertEquals( Arrays.asList( InstanceStatus.UNDEPLOYING, InstanceStatus.NOT_DEPLOYED ), statusHistory );
+
+		statusHistory = instanceToStatusHistory.get( app.getTomcat());
+		Assert.assertNotNull( statusHistory );
+		Assert.assertEquals( Arrays.asList( InstanceStatus.NOT_DEPLOYED ), statusHistory );
+
+		statusHistory = instanceToStatusHistory.get( app.getWar());
+		Assert.assertNotNull( statusHistory );
+		Assert.assertEquals( Arrays.asList( InstanceStatus.NOT_DEPLOYED ), statusHistory );
 	}
 
 
@@ -274,8 +402,10 @@ public class InstancesMngrImplTest {
 
 		Mockito.verifyZeroInteractions( targetHandlerArgument );
 		Mockito.verifyZeroInteractions( messagingMngr );
-		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
+
+		// No notification was sent since there was no change on Tomcat instances
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 
 
@@ -324,8 +454,10 @@ public class InstancesMngrImplTest {
 		Mockito.verify( targetHandlerArgument, Mockito.only()).getTargetId();
 
 		Mockito.verifyZeroInteractions( messagingMngr );
-		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
+
+		// No notification was sent since there was no change on Tomcat instances
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 
 
@@ -379,6 +511,7 @@ public class InstancesMngrImplTest {
 				Mockito.eq( app.getMySqlVm() ),
 				Mockito.any( MsgCmdSendInstances.class ));
 
+		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
 	}
@@ -439,6 +572,7 @@ public class InstancesMngrImplTest {
 				Mockito.eq( app.getMySqlVm() ),
 				Mockito.any( MsgCmdSendInstances.class ));
 
+		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
 	}
@@ -492,8 +626,13 @@ public class InstancesMngrImplTest {
 		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
 
 		Mockito.verifyZeroInteractions( messagingMngr );
-		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
+
+		// A notification was sent for the instance whose state changed
+		Mockito.verify( notificationMngr ).instance(
+				Mockito.any( Instance.class ),
+				Mockito.eq( app ),
+				Mockito.eq( EventType.CHANGED ));
 	}
 
 

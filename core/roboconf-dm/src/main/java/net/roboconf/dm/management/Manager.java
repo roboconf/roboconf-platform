@@ -187,7 +187,9 @@ public class Manager implements IReconfigurable {
 		// Run the timer
 		this.timer = new Timer( "Roboconf's Management Timer", false );
 		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.applicationMngr, this.messagingMngr ), 0, TIMER_PERIOD );
-		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.applicationMngr ), 0, Constants.HEARTBEAT_PERIOD );
+		this.timer.scheduleAtFixedRate(
+				new CheckerHeartbeatsTask( this.applicationMngr, this.notificationMngr ),
+				0, Constants.HEARTBEAT_PERIOD );
 
 		// Configure the messaging
 		reconfigure();

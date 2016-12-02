@@ -115,7 +115,7 @@ public class TargetsMngrImplTest {
 
 
 	@Test
-	public void testCreateTarget_targetIdIsRemoveCorrectly() throws Exception {
+	public void testCreateTarget_targetIdIsRemovedCorrectly() throws Exception {
 
 		String[] properties = {
 				"id: tid\nprop: ok\nhandler: h\nprop-after: ok",

@@ -29,6 +29,7 @@ import java.util.TimerTask;
 
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.INotificationMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -36,14 +37,17 @@ import net.roboconf.dm.management.api.IApplicationMngr;
 public class CheckerHeartbeatsTask extends TimerTask {
 
 	private final IApplicationMngr appManager;
+	private final INotificationMngr notificationMngr;
 
 
 	/**
 	 * Constructor.
 	 * @param appManager
+	 * @param notificationMngr
 	 */
-	public CheckerHeartbeatsTask( IApplicationMngr appManager ) {
+	public CheckerHeartbeatsTask( IApplicationMngr appManager, INotificationMngr notificationMngr ) {
 		this.appManager = appManager;
+		this.notificationMngr = notificationMngr;
 	}
 
 
@@ -53,7 +57,8 @@ public class CheckerHeartbeatsTask extends TimerTask {
 	 */
 	@Override
 	public void run() {
-		for( ManagedApplication ma : this.appManager.getManagedApplications())
-			ma.checkStates();
+		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
+			ma.checkStates( this.notificationMngr );
+		}
 	}
 }
