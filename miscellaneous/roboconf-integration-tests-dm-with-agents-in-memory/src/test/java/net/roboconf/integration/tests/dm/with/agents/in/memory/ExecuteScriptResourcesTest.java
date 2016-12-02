@@ -28,7 +28,7 @@ package net.roboconf.integration.tests.dm.with.agents.in.memory;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
-import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -111,35 +111,44 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Create script files
-		String targetId = this.manager.targetsMngr().findTargetId(ma.getApplication(), "/MySQL VM");
+		String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/MySQL VM" );
 		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId );
-		Utils.writeStringInto( "#!/bin/bash\necho toto > toto.txt", new File( dir, "toto-script.sh"));
+
+		File targetPropertiesFile = new File( dir, "target.properties" );
+		Assert.assertTrue( targetPropertiesFile.exists());
+		Assert.assertTrue( targetPropertiesFile.renameTo( new File( dir, "toto.properties" )));
+
+		File outputFile = new File( System.getProperty( "java.io.tmpdir" ), "toto.txt" );
+		Assert.assertTrue( ! outputFile.exists() || outputFile.delete());
+
+		// Scripts are written directly in the target directory, so everything will be sent to the agent
+		Utils.createDirectory( new File( dir, "sub" ));
+		Utils.writeStringInto( "#!/bin/bash\necho toto > " + outputFile.getAbsolutePath(), new File( dir, "toto-script.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho toto > " + outputFile.getAbsolutePath(), new File( dir, "sub/script.properties" ));
 
 		// Deploy
-		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
-		Assert.assertNotNull( mysql );
-
-		this.manager.instancesMngr().deployAndStartAll(ma, null);
+		this.manager.instancesMngr().deployAndStartAll( ma, null );
 
 		// The deploy and start messages for 'app' and 'MySQL' were stored in the DM.
 		// Wait for them to be picked up by the message checker thread.
 		// 7s = 6s (Manager#TIMER_PERIOD) + 1s for security
 		Thread.sleep( 7000 );
 
-		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
+		Instance mysqlVm = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
+		Assert.assertNotNull( mysqlVm );
+
+		this.manager.instancesMngr().changeInstanceState( ma, mysqlVm, InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysqlVm.getStatus());
 
 		// Verify that the main script is executed
-		File vmDir = InstanceHelpers.findInstanceDirectoryOnAgent( mysql.getParent() );
-		List<File> files = Utils.listAllFiles(vmDir);
-		Assert.assertEquals( 2, files.size() );
+		File vmDir = InstanceHelpers.findInstanceDirectoryOnAgent( mysqlVm );
+		Assert.assertTrue( new File( vmDir, "toto-script.sh" ).exists());
+		Assert.assertTrue( new File( vmDir, "sub/script.properties" ).exists());
+		Assert.assertEquals( 2, Utils.listAllFiles( vmDir ).size());
+		Assert.assertEquals( 1, Utils.listAllFiles( new File( vmDir, "sub" )).size());
 
-		File script = new File( vmDir, "toto-script.sh");
-		File toto = new File( vmDir, "toto.txt" );
-		Assert.assertTrue( script.exists() );
-		Assert.assertTrue( toto.exists() );
-
-		String s = Utils.readFileContent( toto );
-		Assert.assertEquals( "toto", s.trim() );
+		Assert.assertTrue( outputFile.exists());
+		String s = Utils.readFileContent( outputFile );
+		Assert.assertEquals( "toto", s.trim());
 	}
 }

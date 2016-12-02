@@ -25,6 +25,8 @@
 
 package net.roboconf.core;
 
+import java.io.File;
+
 /**
  * A set of constants.
  * @author Vincent Zurczak - Linagora
@@ -142,6 +144,11 @@ public interface Constants {
 	 * The <strong>application.properties</strong> file name.
 	 */
 	String PROJECT_FILE_DESCRIPTOR = "application" + FILE_EXT_PROPERTIES;
+
+	/**
+	 * The location of the agent's working directory (under the OS' temporary directory).
+	 */
+	String WORK_DIRECTORY_AGENT = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" ).getAbsolutePath();
 
 
 	/**

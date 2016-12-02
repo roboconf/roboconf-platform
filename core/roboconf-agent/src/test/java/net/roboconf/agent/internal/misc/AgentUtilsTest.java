@@ -40,6 +40,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
@@ -57,7 +58,7 @@ public class AgentUtilsTest {
 
 	@After
 	public void clearAgentDirectories() throws Exception {
-		File f = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" );
+		File f = new File( Constants.WORK_DIRECTORY_AGENT );
 		Utils.deleteFilesRecursively( f );
 	}
 

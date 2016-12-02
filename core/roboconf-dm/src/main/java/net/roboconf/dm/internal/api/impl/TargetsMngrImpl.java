@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.internal.api.impl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -447,36 +446,33 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	// Finding script resources
+
+
 	@Override
 	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<>( 0 );
 		File targetDir = findTargetDirectory( targetId );
-		String prefix = Utils.removeFileExtension(findTargetFile(targetId, Constants.TARGET_PROPERTIES_FILE_NAME).getName());
-
 		if( targetDir.isDirectory()){
-			List<File> scriptFiles = Utils.listAllFiles(targetDir);
-			for( File scriptFile : scriptFiles) {
-				String name = scriptFile.getName();
-				if( ! CREATED_BY.equals(name)
-						&& name.startsWith(prefix)
-						&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES)) {
-					ByteArrayOutputStream os = new ByteArrayOutputStream();
-					Utils.copyStream( scriptFile, os );
-					result.put( scriptFile.getName(), os.toByteArray());
-				}
+			result.putAll( Utils.storeDirectoryResourcesAsBytes( targetDir ));
+			result.remove( CREATED_BY );
+
+			// Remove all the root properties files
+			for( File f : Utils.listAllFiles( targetDir )) {
+				if( f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
+					result.remove( f.getName());
 			}
 		}
+
 		return result;
 	}
 
 
 	@Override
-	public Map<String, byte[]> findScriptResources(Application app, Instance scopedInstance) throws IOException {
+	public Map<String, byte[]> findScriptResources( Application app, Instance scopedInstance ) throws IOException {
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<> ();
 		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
-
 		if( targetId != null )
 			result = findScriptResources( targetId );
 

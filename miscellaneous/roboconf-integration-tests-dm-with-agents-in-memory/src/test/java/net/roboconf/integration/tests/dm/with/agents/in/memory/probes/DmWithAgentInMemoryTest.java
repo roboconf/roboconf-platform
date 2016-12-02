@@ -28,6 +28,7 @@ package net.roboconf.integration.tests.dm.with.agents.in.memory.probes;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -35,10 +36,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
+import org.junit.After;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.util.Filter;
 
+import net.roboconf.core.Constants;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.integration.tests.commons.AbstractIntegrationTest;
@@ -72,6 +76,13 @@ public abstract class DmWithAgentInMemoryTest extends AbstractIntegrationTest {
 	@Configuration
 	public Option[] config() throws Exception {
 		return ItUtils.asArray( getOptionsForInMemoryAsList());
+	}
+
+
+	@After
+	public void clearAgentsWorkingDirectory() {
+		File agentdirectory = new File( Constants.WORK_DIRECTORY_AGENT );
+		Utils.deleteFilesRecursivelyAndQuietly( agentdirectory );
 	}
 
 
