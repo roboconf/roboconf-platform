@@ -211,6 +211,8 @@ public enum ErrorCode {
 	CMD_INEXISTING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "There is no command file with this name." ),
 	CMD_LOOPING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A command file cannot invoke itself recursively." ),
 	CMD_NASTY_LOOPING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An 'execute' instruction cannot invoke a *.commands file that contains this same instruction." ),
+	CMD_INVALID_DATE_PATTERN( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Invalid date pattern for a formatted time variable. Please, refer to the Javadoc of the JDK's SimpleDateFormat class." ),
+	CMD_NO_MIX_FOR_PATTERNS( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Formatted date variables must be alone on their line (no other text, no other variable)." ),
 
 	// Rule errors
 	RULE_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.RULES, "I/O error while reading a rule file." ),

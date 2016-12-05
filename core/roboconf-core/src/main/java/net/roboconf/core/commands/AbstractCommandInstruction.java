@@ -40,7 +40,7 @@ import net.roboconf.core.model.beans.AbstractApplication;
  */
 public abstract class AbstractCommandInstruction {
 
-	private static final Pattern VAR_PATTERN = Pattern.compile( "(\\$\\(.*\\))" );
+	private static final Pattern VAR_PATTERN = Pattern.compile( "(\\$\\([^)]*\\))" );
 
 	protected final String instruction;
 	protected final Context context;
@@ -72,8 +72,17 @@ public abstract class AbstractCommandInstruction {
 
 		Matcher m = VAR_PATTERN.matcher( this.instruction );
 		while( m.find()) {
-			if( ! getVariablesToIgnore().contains( m.group( 1 )))
-				errors.add( error( ErrorCode.CMD_UNRESOLVED_VARIABLE, "Variable: " + m.group( 1 )));
+			boolean found = false;
+			String varName = m.group( 1 );
+			for( String variablePattern : getVariablesToIgnore()) {
+				if( varName.matches( variablePattern )) {
+					found = true;
+					break;
+				}
+			}
+
+			if( ! found )
+				errors.add( error( ErrorCode.CMD_UNRESOLVED_VARIABLE, "Variable: " + varName ));
 		}
 
 		if( errors.isEmpty())
@@ -99,7 +108,7 @@ public abstract class AbstractCommandInstruction {
 
 
 	/**
-	 * @return a non-null list of variables to ignore
+	 * @return a non-null list of patterns describing variables to ignore
 	 */
 	protected List<String> getVariablesToIgnore() {
 		return Collections.emptyList();
