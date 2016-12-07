@@ -34,16 +34,16 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
-import net.roboconf.dm.rest.commons.UrlConstants;
-
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.file.FileDataBodyPart;
+
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
+import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -174,9 +174,10 @@ public class ManagementWsDelegate {
 	 * @param applicationName the application name
 	 * @param templateName the template's name
 	 * @param templateQualifier the template's qualifier
+	 * @return the created application
 	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public void createApplication( String applicationName, String templateName, String templateQualifier )
+	public Application createApplication( String applicationName, String templateName, String templateQualifier )
 	throws ManagementWsException {
 
 		this.logger.finer( "Creating application " + applicationName + " from " + templateName + " - " + templateQualifier + "..." );
@@ -188,10 +189,11 @@ public class ManagementWsDelegate {
 				.type( MediaType.APPLICATION_JSON )
 				.post( ClientResponse.class, app );
 
-		String text = response.getEntity( String.class );
-		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
-			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), text );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), "" );
+
+		Application result = response.getEntity( Application.class );
+		return result;
 	}
 
 

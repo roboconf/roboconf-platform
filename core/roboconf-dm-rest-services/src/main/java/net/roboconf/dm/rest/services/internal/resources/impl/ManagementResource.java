@@ -214,7 +214,8 @@ public class ManagementResource implements IManagementResource {
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
 			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
-			ManagedApplication ma = this.manager.applicationMngr().createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
+			String appName = app.getDisplayName() != null ? app.getDisplayName() : app.getName();
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( appName, app.getDescription(), tplName, tplQualifier );
 			result = Response.ok().entity( ma.getApplication()).build();
 
 		} catch( InvalidApplicationException e ) {

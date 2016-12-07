@@ -153,6 +153,41 @@ public class ApplicationTemplateMngrImplTest {
 
 
 	@Test
+	public void testRestoreTemplates_withSpecialName() throws Exception {
+
+		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
+		Assert.assertTrue( tplDir.mkdirs());
+
+		File toCopy = TestUtils.findApplicationDirectory( "lamp" );
+		Utils.copyDirectory( toCopy, tplDir );
+
+		// The VM directory cannot exist for this test
+		File toDelete = new File( tplDir, "graph/VM" );
+		Assert.assertFalse( toDelete.isDirectory());
+
+		// Change the template's name
+		File appDescriptorFile = new File( tplDir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( appDescriptorFile.exists());
+
+		ApplicationTemplateDescriptor appDescriptor = ApplicationTemplateDescriptor.load( appDescriptorFile );
+		appDescriptor.setName( "ça débute" );
+		ApplicationTemplateDescriptor.save( appDescriptorFile, appDescriptor );
+
+		// Restore it and verify the name is kept
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		this.mngr.restoreTemplates();
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		ApplicationTemplate tpl = this.mngr.getApplicationTemplates().iterator().next();
+		Assert.assertEquals( "ca debute", tpl.getName());
+		Assert.assertEquals( "ça débute", tpl.getDisplayName());
+		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertNotNull( tpl.getGraphs());
+		Assert.assertFalse( tpl.getRootInstances().isEmpty());
+	}
+
+
+	@Test
 	public void testRestoreTemplates_withConflict() throws Exception {
 
 		// Copy the template twice

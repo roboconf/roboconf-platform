@@ -255,6 +255,23 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testApplicationTemplateBinding_10() throws Exception {
+
+		final String result = "{\"displayName\":\"àéoçù\",\"desc\":\"some text\",\"qualifier\":\"v1\",\"apps\":[]}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate app = new ApplicationTemplate( "àéoçù" ).description( "some text" ).qualifier( "v1" );
+
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
 	public void testApplicationBindingsBinding() throws Exception {
 
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
@@ -509,6 +526,20 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+		Application readApp = mapper.readValue( result, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+	}
+
+
+	@Test
+	public void testApplicationBinding_12() throws Exception {
+
+		final String result = "{\"name\":\"aeocu\",\"displayName\":\"àéoçù\",\"desc\":\"some text\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Application app = new Application( "àéoçù", null ).description( "some text" );
 		Application readApp = mapper.readValue( result, Application.class );
 		Assert.assertEquals( app, readApp );
 		Assert.assertEquals( app.getName(), readApp.getName());

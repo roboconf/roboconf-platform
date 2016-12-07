@@ -312,6 +312,40 @@ public class ApplicationMngrImplTest {
 
 
 	@Test
+	public void testRestoreApplications_withApp_withSpecialName() throws Exception {
+
+		File dir = new File( this.dmDirectory, ConfigurationUtils.APPLICATIONS + "/ca debute bien/" + Constants.PROJECT_DIR_DESC );
+		File descriptorFile = new File( dir, Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( dir.mkdirs());
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
+		tpl.setDirectory( this.folder.newFolder());
+
+		Application app = new Application( "ça débute bien", tpl );
+		ApplicationDescriptor.save( descriptorFile, app );
+
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+
+		Mockito.verifyZeroInteractions( this.dmClientMock );
+		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+
+		this.mngr.restoreApplications();
+
+		Assert.assertEquals( 1, this.mngr.getManagedApplications().size());
+		Mockito.verify( this.dmClientMock, Mockito.times( 1 )).listenToAgentMessages( app, ListenerCommand.START );
+
+		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
+		Assert.assertEquals( "ca debute bien", ma.getName());
+		Assert.assertEquals( "ça débute bien", ma.getApplication().getDisplayName());
+		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
+		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
+	}
+
+
+	@Test
 	public void testRestoreApplications_withConflict() throws Exception {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );

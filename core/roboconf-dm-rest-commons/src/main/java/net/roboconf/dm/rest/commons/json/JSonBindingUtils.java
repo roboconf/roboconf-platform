@@ -656,7 +656,9 @@ public final class JSonBindingUtils {
 			ApplicationTemplate application = new ApplicationTemplate();
 
 			JsonNode n;
-			if(( n = node.get( NAME )) != null )
+			if(( n = node.get( DISPLAY_NAME )) != null )
+				application.setName( n.textValue());
+			else if(( n = node.get( NAME )) != null )
 				application.setName( n.textValue());
 
 			if(( n = node.get( DESC )) != null )
@@ -958,7 +960,9 @@ public final class JSonBindingUtils {
 				application = new Application( null );
 			}
 
-			if(( n = node.get( NAME )) != null )
+			if(( n = node.get( DISPLAY_NAME )) != null )
+				application.setName( n.textValue());
+			else if(( n = node.get( NAME )) != null )
 				application.setName( n.textValue());
 
 			if(( n = node.get( DESC )) != null )
