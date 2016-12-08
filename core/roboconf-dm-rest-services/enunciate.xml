@@ -29,7 +29,7 @@
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:noNamespaceSchemaLocation="http://enunciate.webcohesion.com/schemas/enunciate-2.5.0.xsd">
 
-	<title>Roboconf REST API</title>
+	<title>REST API</title>
 	<description>The REST API for Roboconf's Administration</description>
 	<contact name="the Roboconf team" url="http://roboconf.net" />
 

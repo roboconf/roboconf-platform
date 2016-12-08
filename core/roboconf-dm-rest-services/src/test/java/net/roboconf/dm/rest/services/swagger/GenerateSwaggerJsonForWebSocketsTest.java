@@ -25,46 +25,32 @@
 
 package net.roboconf.dm.rest.services.swagger;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
-import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
-import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-import net.roboconf.dm.rest.commons.json.MapWrapper;
-import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
-import net.roboconf.dm.rest.commons.json.StringWrapper;
+import io.swagger.models.Swagger;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class UpdateSwaggerJsonTest {
+public class GenerateSwaggerJsonForWebSocketsTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
-	public void verifyProcessedClasses() throws Exception {
+	public void testValidSwaggerFile() throws Exception {
 
-		UpdateSwaggerJson updater = new UpdateSwaggerJson();
-		updater.prepareNewDefinitions();
+		File jsonFile = this.folder.newFile();
+		GenerateSwaggerJsonForWebSockets gen = new GenerateSwaggerJsonForWebSockets();
+		gen.generate( "v1", jsonFile );
 
-		Set<Class<?>> classes = new HashSet<> ();
-		classes.addAll( JSonBindingUtils.getSerializers().keySet());
-		classes.removeAll( updater.processedClasses );
-
-		// These classes are used within other ones.
-		// No need to add them directly in the swagger.json file.
-		classes.removeAll( Arrays.asList(
-				StringWrapper.class,
-				MapWrapper.class,
-				MappedCollectionWrapper.class,
-				ApplicationBindings.class,
-				WebSocketMessage.class
-		));
-
-		Assert.assertEquals( Collections.emptySet(), classes );
+		Swagger swagger = ValidateSwaggerJsonFiles.validate( jsonFile );
+		Assert.assertEquals( GenerateSwaggerJsonForWebSockets.NAME_TO_DESC.size(), swagger.getPaths().size());
 	}
 }

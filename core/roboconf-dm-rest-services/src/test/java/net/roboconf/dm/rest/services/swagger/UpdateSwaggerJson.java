@@ -231,12 +231,28 @@ public class UpdateSwaggerJson {
 		JsonParser jsonParser = new JsonParser();
 		String content = Utils.readFileContent( f );
 
-		// Hack: for some operations, Enunciate indicates the return type is "file", which is wrong.
-		content = content.replaceAll( "\"type\"\\s*:\\s*\"file\"", "\"type\": \"\"" );
+		// Hack: remove useless parts.
+		// For some operations, Enunciate indicates the return type is "file", which is wrong.
+		// Empty types, empty schemas and empty headers are useless too.
+		content = content.replaceAll( "\"type\"\\s*:\\s*\"file\",?", "" );
+		content = content.replaceAll( "\"type\"\\s*:\\s*\"\",?", "" );
+		content = content.replaceAll( "\"headers\"\\s*:\\s*\\{\\},?", "" );
+		content = content.replaceAll( "\"schema\": \\{\\s*\"description\"\\s*:\\s*\"\"\\s*\\s*},?", "" );
+		content = content.replaceAll( ",\\s+(\n[ \t]+\\})", "$1" );
+		// Hack
+
+		// Hack: arrays of arrays are a non-sense (Enunciate bug?)
+		StringBuilder sb = new StringBuilder();
+		sb.append( "(\\s*\"items\": \\{\n)" );
+		sb.append( "\\s*\"type\": \"array\",\n" );
+		sb.append( "\\s*\"items\": \\{\n" );
+		sb.append( "(\\s*\"\\$ref\": \"[^\"]+\"\n)" );
+		sb.append( "\\s*\\}" );
+
+		content = content.replaceAll( sb.toString(), "$1$2" );
 		// Hack
 
 		JsonElement jsonTree = jsonParser.parse( content );
-
 		Set<String> currentTypes = new HashSet<> ();
 		for( Map.Entry<String,JsonElement> entry : jsonTree.getAsJsonObject().get( "definitions" ).getAsJsonObject().entrySet()) {
 			currentTypes.add( entry.getKey());
@@ -277,7 +293,7 @@ public class UpdateSwaggerJson {
 	 * @param className a class or type name
 	 * @param newDef the new definition object to update
 	 */
-	public void convertToTypes( String serialization, String className, JsonObject newDef ) {
+	public static void convertToTypes( String serialization, String className, JsonObject newDef ) {
 
 		JsonParser jsonParser = new JsonParser();
 		JsonElement jsonTree = jsonParser.parse( serialization );
