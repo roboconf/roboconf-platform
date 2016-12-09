@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.MediaType;
@@ -125,14 +126,53 @@ public class ManagementWsDelegate {
 
 	/**
 	 * Lists application templates.
+	 * @param exactName if specified, only the templates with this name will be returned (null to match all)
+	 * <p>
+	 * We only consider the application name, not the display name.
+	 * It means that the parameter should not contain special characters.
+	 * </p>
+	 *
+	 * @param exactQualifier the exact qualifier to search (null to match all)
 	 * @return a non-null list of application templates
 	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public List<ApplicationTemplate> listApplicationTemplates() throws ManagementWsException {
-		this.logger.finer( "Listing application templates..." );
+	public List<ApplicationTemplate> listApplicationTemplates( String exactName, String exactQualifier )
+	throws ManagementWsException {
 
-		List<ApplicationTemplate> result = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( "templates" )
+		// Log
+		if( this.logger.isLoggable( Level.FINER )) {
+			if( exactName == null && exactQualifier == null ) {
+				this.logger.finer( "Listing all the application templates." );
+
+			} else {
+				StringBuilder sb = new StringBuilder( "Listing/finding the application templates" );
+				if( exactName != null ) {
+					sb.append( " with name = " );
+					sb.append( exactName );
+				}
+
+				if( exactQualifier != null ) {
+					if( exactName != null )
+						sb.append( " and" );
+
+					sb.append( " qualifier = " );
+					sb.append( exactQualifier );
+				}
+
+				sb.append( "." );
+				this.logger.finer( sb.toString());
+			}
+		}
+
+		// Search
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "templates" );
+		if( exactName != null )
+			path = path.queryParam( "name", exactName );
+
+		if( exactQualifier != null )
+			path = path.queryParam( "qualifier", exactQualifier );
+
+		List<ApplicationTemplate> result = path
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<ApplicationTemplate>> () {});
 
@@ -142,6 +182,20 @@ public class ManagementWsDelegate {
 			this.logger.finer( "No application template was found on the DM." );
 
 		return result != null ? result : new ArrayList<ApplicationTemplate> ();
+	}
+
+
+	/**
+	 * Lists all the application templates.
+	 * <p>
+	 * Equivalent to <code>listApplicationTemplates( null, null )</code>.
+	 * </p>
+	 *
+	 * @return a non-null list of application templates
+	 * @throws ManagementWsException if a problem occurred with the applications management
+	 */
+	public List<ApplicationTemplate> listApplicationTemplates() throws ManagementWsException {
+		return listApplicationTemplates( null, null );
 	}
 
 
@@ -199,14 +253,22 @@ public class ManagementWsDelegate {
 
 	/**
 	 * Lists applications.
+	 * @param exactName if not null, the result list will contain at most one application (with this name)
 	 * @return a non-null list of applications
 	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public List<Application> listApplications() throws ManagementWsException {
-		this.logger.finer( "Listing applications..." );
+	public List<Application> listApplications( String exactName ) throws ManagementWsException {
 
-		List<Application> result = this.resource
-				.path( UrlConstants.APPLICATIONS )
+		if( exactName != null )
+			this.logger.finer( "List/finding the application named " + exactName + "." );
+		else
+			this.logger.finer( "Listing all the applications." );
+
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS );
+		if( exactName != null )
+			path = path.queryParam( "name", exactName );
+
+		List<Application> result = path
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Application>> () {});
 
@@ -216,6 +278,20 @@ public class ManagementWsDelegate {
 			this.logger.finer( "No application was found on the DM." );
 
 		return result != null ? result : new ArrayList<Application> ();
+	}
+
+
+	/**
+	 * Lists all the applications.
+	 * <p>
+	 * Equivalent to <code>listApplications( null )</code>.
+	 * </p>
+	 *
+	 * @return a non-null list of applications
+	 * @throws ManagementWsException if a problem occurred with the applications management
+	 */
+	public List<Application> listApplications() throws ManagementWsException {
+		return listApplications( null );
 	}
 
 

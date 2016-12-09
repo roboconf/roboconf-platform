@@ -113,13 +113,33 @@ public interface IManagementResource {
 
 	/**
 	 * Lists the application templates.
-	 * @return a non-null list of application templates
+	 * @param exactName if specified, only the templates with this name will be returned (null to match all)
+	 * <p>
+	 * We only consider the application name, not the display name.
+	 * It means that the parameter should not contain special characters.
+	 * </p>
 	 *
+	 * @param exactQualifier the exact qualifier to search (null to match all)
+	 * @return a non-null list of application templates (with at most one element if "exactName" was set)
 	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Path("/templates")
 	@Produces( MediaType.APPLICATION_JSON )
+	List<ApplicationTemplate> listApplicationTemplates(
+			@QueryParam( "name" ) String exactName,
+			@QueryParam( "qualifier" ) String exactQualifier );
+
+
+	/**
+	 * Lists all the application templates.
+	 * <p>
+	 * Java utility, equivalent to <code>listApplicationTemplates( null, null )</code>.
+	 * We do not annotate it for Jersey as listApplicationTemplates( String, String ) already is.
+	 * </p>
+	 *
+	 * @return a non-null list of application templates
+	 */
 	List<ApplicationTemplate> listApplicationTemplates();
 
 
@@ -159,13 +179,30 @@ public interface IManagementResource {
 
 
 	/**
-	 * Lists the applications.
-	 * @return a non-null list of applications
+	 * Lists applications.
+	 * @param exactName if specified, only the application with this name will be returned in the list (null to match all)
+	 * <p>
+	 * We only consider the application name, not the display name.
+	 * It means that the parameter should not contain special characters.
+	 * </p>
 	 *
+	 * @return a non-null list of applications (with at most one element if "exactName" was set)
 	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
+	List<Application> listApplications( @QueryParam("name") String exactName );
+
+
+	/**
+	 * Lists all the applications.
+	 * <p>
+	 * Java utility, equivalent to <code>listApplications( null )</code>.
+	 * We do not annotate it for Jersey as listApplications( String ) already is.
+	 * </p>
+	 *
+	 * @return a non-null list of applications
+	 */
 	List<Application> listApplications();
 
 

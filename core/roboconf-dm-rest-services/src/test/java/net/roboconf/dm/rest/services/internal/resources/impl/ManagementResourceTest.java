@@ -33,6 +33,15 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.sun.jersey.core.header.FormDataContentDisposition;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -47,15 +56,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import com.sun.jersey.core.header.FormDataContentDisposition;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -102,6 +102,7 @@ public class ManagementResourceTest {
 	@Test
 	public void testListApplications() throws Exception {
 
+		// Prepare
 		List<Application> apps = this.resource.listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 0, apps.size());
@@ -111,6 +112,7 @@ public class ManagementResourceTest {
 				app.getName(),
 				new ManagedApplication( app ));
 
+		// Get ALL the applications
 		apps = this.resource.listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 1, apps.size());
@@ -118,12 +120,32 @@ public class ManagementResourceTest {
 		Application receivedApp = apps.get( 0 );
 		Assert.assertEquals( app.getName(), receivedApp.getName());
 		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+
+		// Get the "filter" application
+		apps = this.resource.listApplications( "filter" );
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 0, apps.size());
+
+		// Get the test application
+		apps = this.resource.listApplications( app.getName());
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 1, apps.size());
+
+		receivedApp = apps.get( 0 );
+		Assert.assertEquals( app.getName(), receivedApp.getName());
+		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+
+		// Tricky get
+		apps = this.resource.listApplications( app.getName() + "0" );
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 0, apps.size());
 	}
 
 
 	@Test
 	public void testListApplicationTemplates() throws Exception {
 
+		// Prepare
 		List<ApplicationTemplate> templates = this.resource.listApplicationTemplates();
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
@@ -131,6 +153,7 @@ public class ManagementResourceTest {
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
+		// Get ALL the templates
 		templates = this.resource.listApplicationTemplates();
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
@@ -139,6 +162,51 @@ public class ManagementResourceTest {
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
 		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the "filter" template
+		templates = this.resource.listApplicationTemplates( "filter", null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Get the test template with no specific qualifier
+		templates = this.resource.listApplicationTemplates( tpl.getName(), null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the test template with the exact qualifier
+		templates = this.resource.listApplicationTemplates( tpl.getName(), tpl.getQualifier());
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the test template with the exact qualifier but no specific name
+		templates = this.resource.listApplicationTemplates( null, tpl.getQualifier());
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Invalid qualifier
+		templates = this.resource.listApplicationTemplates( null, tpl.getQualifier() + "2" );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Invalid name
+		templates = this.resource.listApplicationTemplates( tpl.getName() + "1", null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
 	}
 
 

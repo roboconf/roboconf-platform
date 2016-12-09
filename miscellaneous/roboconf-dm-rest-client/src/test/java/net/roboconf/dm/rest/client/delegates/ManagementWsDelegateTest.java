@@ -116,13 +116,15 @@ public class ManagementWsDelegateTest {
 	@Test
 	public void testListApplications() throws Exception {
 
+		// Prepare
 		List<Application> apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 0, apps.size());
 
 		TestApplication app = new TestApplication();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), 	new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 
+		// Get ALL the applications
 		apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 1, apps.size());
@@ -130,12 +132,32 @@ public class ManagementWsDelegateTest {
 		Application receivedApp = apps.get( 0 );
 		Assert.assertEquals( app.getName(), receivedApp.getName());
 		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+
+		// Get the "filter" application
+		apps = this.client.getManagementDelegate().listApplications( "filter" );
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 0, apps.size());
+
+		// Get the test application
+		apps = this.client.getManagementDelegate().listApplications( app.getName());
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 1, apps.size());
+
+		receivedApp = apps.get( 0 );
+		Assert.assertEquals( app.getName(), receivedApp.getName());
+		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+
+		// Tricky get
+		apps = this.client.getManagementDelegate().listApplications( app.getName() + "0" );
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 0, apps.size());
 	}
 
 
 	@Test
 	public void testListApplicationTemplates() throws Exception {
 
+		// Prepare
 		List<ApplicationTemplate> templates = this.client.getManagementDelegate().listApplicationTemplates();
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
@@ -143,6 +165,7 @@ public class ManagementWsDelegateTest {
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
+		// Get ALL the templates
 		templates = this.client.getManagementDelegate().listApplicationTemplates();
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
@@ -151,6 +174,51 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
 		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the "filter" template
+		templates = this.client.getManagementDelegate().listApplicationTemplates( "filter", null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Get the test template with no specific qualifier
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName(), null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the test template with the exact qualifier
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName(), tpl.getQualifier());
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the test template with the exact qualifier but no specific name
+		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getQualifier());
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Invalid qualifier
+		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getQualifier() + "2" );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Invalid name
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName() + "1", null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
 	}
 
 
