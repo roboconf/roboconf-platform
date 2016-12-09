@@ -272,7 +272,7 @@ public interface IApplicationResource {
 	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
-	@Path( "/children" )
+	@Path( "/instances" )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Instance> listChildrenInstances(
 			@PathParam("name") String applicationName,

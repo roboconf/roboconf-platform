@@ -185,7 +185,7 @@ public class ApplicationWsDelegate {
 		this.logger.finer( "Listing children instances for " + instancePath + " in " + applicationName + "." );
 
 		WebResource path = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( "children" )
+				.path( UrlConstants.APP ).path( applicationName ).path( "instances" )
 				.queryParam( "all-children", String.valueOf( all ));
 
 		if( instancePath != null )

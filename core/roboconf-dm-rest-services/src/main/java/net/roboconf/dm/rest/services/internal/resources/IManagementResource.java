@@ -139,6 +139,7 @@ public interface IManagementResource {
 	 * </p>
 	 *
 	 * @return a non-null list of application templates
+	 * @HTTP 200 Everything went fine.
 	 */
 	List<ApplicationTemplate> listApplicationTemplates();
 
@@ -202,6 +203,7 @@ public interface IManagementResource {
 	 * </p>
 	 *
 	 * @return a non-null list of applications
+	 * @HTTP 200 Everything went fine.
 	 */
 	List<Application> listApplications();
 
