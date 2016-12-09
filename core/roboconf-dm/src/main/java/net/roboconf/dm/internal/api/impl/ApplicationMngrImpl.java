@@ -403,7 +403,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 
 		// Register the application
 		ManagedApplication ma = new ManagedApplication( app );
-		this.nameToManagedApplication.put( name, ma );
+		this.nameToManagedApplication.put( app.getName(), ma );
 
 		// Save the instances!
 		ConfigurationUtils.saveInstances( ma );

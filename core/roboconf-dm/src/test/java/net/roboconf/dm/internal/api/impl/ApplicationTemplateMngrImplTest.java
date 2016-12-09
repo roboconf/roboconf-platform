@@ -352,6 +352,39 @@ public class ApplicationTemplateMngrImplTest {
 	}
 
 
+	@Test
+	public void testLoadApplicationTemplate_success_specialName() throws Exception {
+
+		// We need to modify the descriptor, so work on a copy
+		File originalDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( originalDirectory.exists());
+
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
+
+		// Update the external export ID
+		File descriptorFile = new File( directoryCopy, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( descriptorFile.exists());
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( descriptorFile );
+		desc.setName( "ça a commencé" );
+
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		try {
+			this.mngr.loadApplicationTemplate( directoryCopy );
+
+		} catch( Exception e ) {
+			Assert.fail( "Loading the application the first time should not fail." );
+		}
+
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		// Verify the search works
+		Assert.assertNull( this.mngr.findTemplate( desc.getName(), desc.getQualifier()));
+		Assert.assertNotNull( this.mngr.findTemplate( "ca a commence", desc.getQualifier()));
+	}
+
+
 	@Test( expected = IOException.class )
 	public void testLoadApplicationTemplate_invalidDirectory() throws Exception {
 
