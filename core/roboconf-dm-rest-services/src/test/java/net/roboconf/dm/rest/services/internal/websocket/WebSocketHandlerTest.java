@@ -91,7 +91,8 @@ public class WebSocketHandlerTest {
 		WebSocketHandler handler = configuredHandler();
 		handler.enableNotifications();
 		handler.application( app, EventType.CREATED );
-		Mockito.verify( this.remoteEndpoint ).sendString( "{\"event\":\"CREATED\",\"app\":{\"name\":\"test\",\"tplName\":\"test-tpl\"}}" );
+		Mockito.verify( this.remoteEndpoint )
+				.sendString( "{\"event\":\"CREATED\",\"app\":{\"name\":\"test\",\"displayName\":\"test\",\"tplName\":\"test-tpl\"}}" );
 	}
 
 
@@ -103,7 +104,8 @@ public class WebSocketHandlerTest {
 		WebSocketHandler handler = configuredHandler();
 		handler.enableNotifications();
 		handler.applicationTemplate( template, EventType.DELETED );
-		Mockito.verify( this.remoteEndpoint ).sendString( "{\"event\":\"DELETED\",\"tpl\":{\"name\":\"test-tpl\",\"apps\":[]}}" );
+		Mockito.verify( this.remoteEndpoint )
+				.sendString( "{\"event\":\"DELETED\",\"tpl\":{\"name\":\"test-tpl\",\"displayName\":\"test-tpl\",\"apps\":[]}}" );
 	}
 
 
@@ -121,7 +123,7 @@ public class WebSocketHandlerTest {
 		handler.instance( inst, app, EventType.CHANGED );
 
 		String expected =
-				"{\"event\":\"CHANGED\",\"app\":{\"name\":\"test\",\"tplName\":\"test-tpl\"},\"inst\":"
+				"{\"event\":\"CHANGED\",\"app\":{\"name\":\"test\",\"displayName\":\"test\",\"tplName\":\"test-tpl\"},\"inst\":"
 				+ "{\"name\":\"inst\",\"path\":\"/inst\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"comp\"}}}";
 
 		Mockito.verify( this.remoteEndpoint ).sendString( expected );

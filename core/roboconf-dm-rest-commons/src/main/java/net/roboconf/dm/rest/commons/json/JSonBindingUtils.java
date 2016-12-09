@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -556,7 +555,7 @@ public final class JSonBindingUtils {
 			if( app.getName() != null )
 				generator.writeStringField( NAME, app.getName());
 
-			if( ! Objects.equals( app.getName(), app.getDisplayName()))
+			if( app.getDisplayName() != null )
 				generator.writeStringField( DISPLAY_NAME, app.getDisplayName());
 
 			if( app.getDescription() != null )
@@ -868,7 +867,7 @@ public final class JSonBindingUtils {
 			if( app.getName() != null )
 				generator.writeStringField( NAME, app.getName());
 
-			if( ! Objects.equals( app.getName(), app.getDisplayName()))
+			if( app.getDisplayName() != null )
 				generator.writeStringField( DISPLAY_NAME, app.getDisplayName());
 
 			if( app.getDescription() != null )
