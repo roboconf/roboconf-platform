@@ -263,7 +263,7 @@ public interface IApplicationResource {
 
 
 	/**
-	 * Lists the paths of the children of an instance.
+	 * Lists instances of a given application.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @param allChildren true to get all the children, false to only get the direct children
@@ -272,7 +272,7 @@ public interface IApplicationResource {
 	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
-	@Path( "/children" )
+	@Path( "/instances" )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Instance> listChildrenInstances(
 			@PathParam("name") String applicationName,

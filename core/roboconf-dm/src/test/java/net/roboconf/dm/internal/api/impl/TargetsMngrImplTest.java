@@ -97,7 +97,7 @@ public class TargetsMngrImplTest {
 		props = this.mngr.findRawTargetProperties( targetId );
 		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
 
-		// missing handler
+		// Missing handler
 		try {
 			this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done" );
 			Assert.fail( "Update should have failed, the handler is missing." );
@@ -115,7 +115,7 @@ public class TargetsMngrImplTest {
 
 
 	@Test
-	public void testCreateTarget_targetIdIsRemoveCorrectly() throws Exception {
+	public void testCreateTarget_targetIdIsRemovedCorrectly() throws Exception {
 
 		String[] properties = {
 				"id: tid\nprop: ok\nhandler: h\nprop-after: ok",
@@ -300,6 +300,44 @@ public class TargetsMngrImplTest {
 	public void testUpdateTarget_whenTargetDoesNotExist() throws Exception {
 
 		this.mngr.updateTarget( "inexisting", "prop: ok\nhandler: h" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testAssociateTargetWith_nonScopedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+
+		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
+		this.mngr.associateTargetWith( targetId, app, mySqlPath );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testDissociateTargetFrom_nonScopedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.dissociateTargetFrom( app, mySqlPath );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testFindTargetId_nonScopedInstance_strict() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.findTargetId( app, mySqlPath, true );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testFindTargetId_nonScopedInstance_notStrict() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.findTargetId( app, mySqlPath, false );
 	}
 
 
@@ -1220,23 +1258,42 @@ public class TargetsMngrImplTest {
 	@Test
 	public void testFindScriptResources() throws Exception {
 
-		//Prepare our resources
+		// Precondition: all the right scripts were copied in the target directory.
+		// Prepare our resources
 		TestApplication app = new TestApplication();
 		String targetId1 = this.mngr.createTarget( "id: tid1\nhandler: h" );
 		String targetId2 = this.mngr.createTarget( "id: tid2\nhandler: h" );
 
-		this.mngr.associateTargetWith( targetId1, app, null );
-		this.mngr.associateTargetWith( targetId2, app, null );
-
 		File dir1 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId1 );
 		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
-		Utils.createDirectory( dir1 );
-		Utils.createDirectory( dir2 );
+		Utils.createDirectory( new File( dir1, "sub" ));
 		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "target-script.sh" ));
-		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "target-script.py" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/whatever.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/properties-for-whatever.properties" ));
+		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "toto-script.py" ));
 
-		Assert.assertEquals( 1, this.mngr.findScriptResources(targetId1).size() );
-		Assert.assertEquals( 1, this.mngr.findScriptResources( app, app.getMySql()).size());
+		// Associate the application with the first target ID
+		this.mngr.associateTargetWith( targetId1, app, null );
+		Map<String,byte[]> resources = this.mngr.findScriptResources( targetId1 );
+		Assert.assertEquals( 3, resources.size());
+		Assert.assertTrue( resources.containsKey( "target-script.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/whatever.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/properties-for-whatever.properties" ));
+
+		Map<String,byte[]> resourcesByInst = this.mngr.findScriptResources( app, app.getMySqlVm());
+		Assert.assertEquals( resources.keySet(), resourcesByInst.keySet());
+
+		// Change the target for the scoped instance
+		this.mngr.associateTargetWith( targetId2, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		resources = this.mngr.findScriptResources( targetId1 );
+		Assert.assertEquals( 3, resources.size());
+		Assert.assertTrue( resources.containsKey( "target-script.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/whatever.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/properties-for-whatever.properties" ));
+
+		resourcesByInst = this.mngr.findScriptResources( app, app.getMySqlVm());
+		Assert.assertEquals( 1, resourcesByInst.size());
+		Assert.assertTrue( resourcesByInst.containsKey( "toto-script.py" ));
 	}
 
 
@@ -1245,8 +1302,6 @@ public class TargetsMngrImplTest {
 
 		File f = new File(this.folder.newFolder(), "toto.properties");
 		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
-
-		TestApplicationTemplate appT = new TestApplicationTemplate();
 		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( f.getParentFile(), "toto.sh" ));
 		Utils.writeStringInto( "#!/bin/bash\ntouch titi.txt", new File( f.getParentFile(), "titi.sh" ));
 		Utils.writeStringInto( "#!/bin/bash\necho tototo", new File( f.getParentFile(), "toto-script.sh" ));
@@ -1254,16 +1309,16 @@ public class TargetsMngrImplTest {
 		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
 		Assert.assertFalse( targetDir.exists());
 
+		TestApplicationTemplate appT = new TestApplicationTemplate();
 		String targetId = this.mngr.createTarget( f, appT );
 		Assert.assertEquals( "tid", targetId );
 		Assert.assertTrue( targetDir.exists());
 		Assert.assertEquals( 4, targetDir.list().length);
 
-		File toto = new File( targetDir, "toto.sh");
-		File titi = new File( targetDir, "titi.sh");
-		File totoMain = new File( targetDir, "toto-script.sh");
-		Assert.assertTrue(toto.exists());
-		Assert.assertFalse(titi.exists());
-		Assert.assertTrue(totoMain.exists());
+		Assert.assertTrue( new File( targetDir, "target.properties" ).exists());
+		Assert.assertTrue( new File( targetDir, "toto.sh" ).exists());
+		Assert.assertTrue( new File( targetDir, "toto-script.sh" ).exists());
+		Assert.assertTrue( new File( targetDir, "created.from" ).exists());
+		Assert.assertFalse( new File( targetDir, "titi.sh").exists());
 	}
 }

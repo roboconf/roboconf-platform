@@ -2,7 +2,7 @@
 
 <!--
    Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
-   
+
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
    as a "Result" pursuant to the terms and conditions of the LINAGORA
@@ -23,7 +23,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-  -->
+-->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
@@ -222,6 +222,23 @@
 			<version>2.2.2</version>
 			<scope>test</scope>
 		</dependency>
+	
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-parser</artifactId>
+			<version>1.0.23</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-annotations</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -308,16 +325,17 @@
 				<version>${enunciate.version}</version>
 				<executions>
 					<execution>
+						<id>rest-api</id>
 						<phase>process-sources</phase>
 						<goals>
 							<goal>docs</goal>
 						</goals>
+						<configuration>
+							<docsDir>${project.build.directory}/docs</docsDir>
+							<configFile>${project.basedir}/enunciate.xml</configFile>
+						</configuration>
 					</execution>
 				</executions>
-				<configuration>
-					<docsDir>${project.build.directory}/docs</docsDir>
-					<configFile>${project.basedir}/enunciate.xml</configFile>
-				</configuration>
 			</plugin>
 			
 			<plugin>
@@ -331,7 +349,21 @@
 							<target>
 								<property name="test_classpath" refid="maven.test.classpath" />
 								<property name="project_location" value="${project.basedir}" />
+								<property name="roboconf_version" value="${project.version}" />
+
+								<!-- Update the swagger.json file for the REST API. -->
 								<java classname="net.roboconf.dm.rest.services.swagger.UpdateSwaggerJson" classpath="${test_classpath}" failonerror="true">
+									<arg value="${project_location}" />
+								</java>
+
+								<!-- Generate the swagger.json file for the Web Socket API. -->
+								<java classname="net.roboconf.dm.rest.services.swagger.GenerateSwaggerJsonForWebSockets" classpath="${test_classpath}" failonerror="true">
+									<arg value="${project_location}" />
+									<arg value="${roboconf_version}" />
+								</java>
+
+								<!-- Validate all the swagger.json files. -->
+								<java classname="net.roboconf.dm.rest.services.swagger.ValidateSwaggerJsonFiles" classpath="${test_classpath}" failonerror="true">
 									<arg value="${project_location}" />
 								</java>
 							</target>	
@@ -357,7 +389,12 @@
 								<artifact>
 									<file>${project.build.directory}/docs/apidocs/ui/swagger.json</file>
 									<type>json</type>
-									<classifier>swagger</classifier>
+									<classifier>swagger-rest-api</classifier>
+								</artifact>
+								<artifact>
+									<file>${project.build.directory}/docs/apidocs/ui/swagger-websocket.json</file>
+									<type>json</type>
+									<classifier>swagger-web-socket</classifier>
 								</artifact>
 							</artifacts>
 						</configuration>
@@ -374,6 +411,12 @@
 				<groupId>javax.servlet</groupId>
 				<artifactId>javax.servlet-api</artifactId>
 				<version>3.1.0</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

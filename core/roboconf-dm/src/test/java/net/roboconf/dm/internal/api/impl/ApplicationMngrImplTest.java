@@ -178,7 +178,7 @@ public class ApplicationMngrImplTest {
 
 
 	@Test
-	public void testCreateApplication_withTags() throws Exception {
+	public void testCreateApplication_success() throws Exception {
 
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		tpl.setDirectory( this.folder.newFolder());
@@ -193,6 +193,38 @@ public class ApplicationMngrImplTest {
 
 		Assert.assertEquals( ma.getDirectory().getName(), ma.getName());
 		Assert.assertEquals( "toto", ma.getName());
+
+		File expected = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
+		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
+	}
+
+
+	@Test
+	public void testCreateApplication_success_withSpecialName() throws Exception {
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		tpl.setDirectory( this.folder.newFolder());
+
+		Mockito.verifyZeroInteractions( this.applicationTemplateMngr );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+
+		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+		ManagedApplication ma = this.mngr.createApplication( "ça débute", "desc", tpl.getName(), tpl.getQualifier());
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( "ca debute", ma.getName());
+		Assert.assertEquals( "ça débute", ma.getApplication().getDisplayName());
+		Assert.assertEquals( 1, TestManagerWrapper.getNameToManagedApplication( this.mngr ).size());
+		Assert.assertEquals( ma.getDirectory().getName(), ma.getName());
+
+		// Important
+		Assert.assertNull( this.mngr.findManagedApplicationByName( "ça débute" ));
+		Assert.assertNull( this.mngr.findApplicationByName( "ça débute" ));
+
+		Assert.assertNotNull( this.mngr.findManagedApplicationByName( "ca debute" ));
+		Assert.assertNotNull( this.mngr.findApplicationByName( "ca debute" ));
+		// Important
 
 		File expected = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
 		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
@@ -303,6 +335,40 @@ public class ApplicationMngrImplTest {
 
 		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
 		Assert.assertEquals( app.getName(), ma.getName());
+		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
+		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
+	}
+
+
+	@Test
+	public void testRestoreApplications_withApp_withSpecialName() throws Exception {
+
+		File dir = new File( this.dmDirectory, ConfigurationUtils.APPLICATIONS + "/ca debute bien/" + Constants.PROJECT_DIR_DESC );
+		File descriptorFile = new File( dir, Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( dir.mkdirs());
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
+		tpl.setDirectory( this.folder.newFolder());
+
+		Application app = new Application( "ça débute bien", tpl );
+		ApplicationDescriptor.save( descriptorFile, app );
+
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+
+		Mockito.verifyZeroInteractions( this.dmClientMock );
+		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+
+		this.mngr.restoreApplications();
+
+		Assert.assertEquals( 1, this.mngr.getManagedApplications().size());
+		Mockito.verify( this.dmClientMock, Mockito.times( 1 )).listenToAgentMessages( app, ListenerCommand.START );
+
+		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
+		Assert.assertEquals( "ca debute bien", ma.getName());
+		Assert.assertEquals( "ça débute bien", ma.getApplication().getDisplayName());
 		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
 		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
 		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());

@@ -125,7 +125,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( "sample", receivedApp.getTemplate().getQualifier());
 
 		// Check the JSon serialization
-		URI targetUri = URI.create( rootUrl + "/app/app1/children?instance-path=/Apache%20VM" );
+		URI targetUri = URI.create( rootUrl + "/app/app1/instances?instance-path=/Apache%20VM" );
 		String s = TestUtils.readUriContent( targetUri );
 		Assert.assertEquals(
 				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",

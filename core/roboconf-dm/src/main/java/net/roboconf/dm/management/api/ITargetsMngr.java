@@ -342,6 +342,6 @@ public interface ITargetsMngr {
 	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
 	 * @throws IOException if something went wrong while reading a file
 	 */
-	Map<String,byte[]> findScriptResources( Application app, Instance scopedInstance) throws IOException;
+	Map<String,byte[]> findScriptResources( Application app, Instance scopedInstance ) throws IOException;
 
 }

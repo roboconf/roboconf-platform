@@ -31,15 +31,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.MessagingConstants;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -52,7 +52,7 @@ public class UserDataUtilsTest {
 
 	@After
 	public void clearAgentDirectories() throws Exception {
-		File f = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" );
+		File f = new File( Constants.WORK_DIRECTORY_AGENT );
 		Utils.deleteFilesRecursively( f );
 	}
 

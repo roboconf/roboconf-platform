@@ -42,6 +42,7 @@ import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.internal.utils.DmUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
@@ -193,7 +194,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				// Not associated with a VM? => Everything must be not deployed.
 				String machineId = scopedInstance.data.get( Instance.MACHINE_ID );
 				if( machineId == null ) {
-					markScopedInstanceAsNotDeployed( scopedInstance );
+					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
 					continue;
 				}
 
@@ -217,12 +218,13 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 				// Not a running VM? => Everything must be not deployed.
 				if( ! targetHandler.isMachineRunning( targetProperties, machineId )) {
-					markScopedInstanceAsNotDeployed( scopedInstance );
+					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
 				}
 
-				// Otherwise, ask the agent to resent the states under this scoped instance
+				// Otherwise, ask the agent to send back the states under its scoped instance
 				else {
 					scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+					// Do not propagate to listeners, the status set here is arbitrary.
 					this.messagingMngr.sendMessageDirectly( ma, scopedInstance, new MsgCmdSendInstances());
 				}
 
@@ -400,8 +402,11 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
-			// Send the model
+			// State change
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
+			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
+
+			// Send the model
 			Map<String,byte[]> scriptResources = this.targetsMngr.findScriptResources( ma.getApplication(), scopedInstance );
 			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
@@ -462,6 +467,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 			// Restore the state and propagate the exception
 			scopedInstance.setStatus( initialStatus );
+			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
 			throw e;
 		}
 	}
@@ -481,6 +487,10 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		InstanceStatus initialStatus = scopedInstance.getStatus();
 		String machineId = scopedInstance.data.remove( Instance.MACHINE_ID );
 		try {
+			// State change
+			scopedInstance.setStatus( InstanceStatus.UNDEPLOYING );
+			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
+
 			// Terminate the machine...
 			// ...  and notify other agents this agent was killed.
 			this.logger.fine( "Agent '" + path + "' is about to be deleted in " + ma.getName() + "." );
@@ -497,21 +507,13 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			}
 
 			this.logger.fine( "Agent '" + path + "' was successfully deleted in " + ma.getName() + "." );
-			for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
-				i.setStatus( InstanceStatus.NOT_DEPLOYED );
-				// DM won't send old imports upon restart...
-				i.getImports().clear();
-			}
-
-			// Remove useless data for the configuration backup
-			scopedInstance.data.remove( Instance.IP_ADDRESS );
-			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
-			scopedInstance.data.remove( Instance.RUNNING_FROM );
+			DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
 			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( TargetException | IOException e ) {
 			scopedInstance.setStatus( initialStatus );
 			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
+			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
 
 			this.logger.severe( "Failed to undeploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
@@ -539,23 +541,5 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			logger.info( msg );
 			throw new IOException( msg );
 		}
-	}
-
-
-	/**
-	 * Updates a scoped instance to be marked as not deployed.
-	 * <p>
-	 * This includes its children.
-	 * </p>
-	 *
-	 * @param scopedInstance a non-null scoped instance
-	 */
-	private void markScopedInstanceAsNotDeployed( Instance scopedInstance ) {
-
-		scopedInstance.data.remove( Instance.IP_ADDRESS );
-		scopedInstance.data.remove( Instance.MACHINE_ID );
-		scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
-		for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance ))
-			i.setStatus( InstanceStatus.NOT_DEPLOYED );
 	}
 }

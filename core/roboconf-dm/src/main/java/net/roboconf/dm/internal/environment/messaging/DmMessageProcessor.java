@@ -38,9 +38,9 @@ import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.DockerAndScriptUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.utils.DmUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
@@ -67,7 +67,6 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
-	private final IAutonomicMngr autonomicMngr;
 
 	// Set as a class attribute so that it can be replaced for unit tests.
 	String tmpDir = System.getProperty( "java.io.tmpdir" );
@@ -80,7 +79,6 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	public DmMessageProcessor( Manager manager ) {
 		super( "Roboconf DM - Message Processor" );
 		this.manager = manager;
-		this.autonomicMngr = manager.autonomicMngr();
 	}
 
 
@@ -154,7 +152,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifMachineDown( MsgNotifMachineDown message ) {
 
 		String scopedInstancePath = message.getScopedInstancePath();
-		Application app = this.manager.applicationMngr().findApplicationByName( message.getApplicationName());
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( message.getApplicationName());
+		Application app = ma == null ? null : ma.getApplication();
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, scopedInstancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -168,15 +167,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.warning( sb.toString());
 
 		} else {
-			scopedInstance.data.remove( Instance.IP_ADDRESS );
-			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
-			scopedInstance.data.remove( Instance.RUNNING_FROM );
-			scopedInstance.data.remove( Instance.MACHINE_ID );
-
-			for( Instance inst : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
-				inst.setStatus( InstanceStatus.NOT_DEPLOYED );
-			}
-
+			DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.manager.notificationMngr());
 			this.logger.info( scopedInstance + " is now terminated. Back to NOT_DEPLOYED state." );
 		}
 	}
@@ -216,17 +207,23 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 		} else {
 			// Update the data
 			String ipAddress = message.getIpAddress();
+			boolean ipWasSet = false;
 			if( scopedInstance.data.get( Instance.IP_ADDRESS ) == null ) {
 				this.logger.fine( scopedInstancePath + " @ " + ipAddress + " is up and running." );
 				scopedInstance.data.put( Instance.IP_ADDRESS, ipAddress );
-				this.manager.instancesMngr().instanceWasUpdated( scopedInstance, ma );
+				ipWasSet = true;
 			}
 
-			ma.acknowledgeHeartBeat( scopedInstance );
+			// Log and notify
 			this.logger.finest( "A heart beat was acknowledged for " + scopedInstancePath + " in the application " + ma + "." );
+			InstanceStatus oldStatus = scopedInstance.getStatus();
+			ma.acknowledgeHeartBeat( scopedInstance );
+			if( ipWasSet || oldStatus != scopedInstance.getStatus())
+				this.manager.instancesMngr().instanceWasUpdated( scopedInstance, ma );
 
 			try {
-				// A heart beat may also say whether the agent receive its model
+				// Need to send the model to the agent?
+				// A heart beat may also say whether the agent received its model.
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
 					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResources( ma.getApplication(), scopedInstance );
@@ -342,7 +339,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 		} else {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app.getName());
-			this.autonomicMngr.handleEvent( ma, message );
+			this.manager.autonomicMngr().handleEvent( ma, message );
 		}
 	}
 }

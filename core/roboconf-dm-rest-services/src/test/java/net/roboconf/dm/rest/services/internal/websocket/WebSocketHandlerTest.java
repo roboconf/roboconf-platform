@@ -27,19 +27,19 @@ package net.roboconf.dm.rest.services.internal.websocket;
 
 import java.io.IOException;
 
+import org.eclipse.jetty.websocket.api.RemoteEndpoint;
+import org.eclipse.jetty.websocket.api.Session;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.events.EventType;
-
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
-import org.eclipse.jetty.websocket.api.Session;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -91,7 +91,8 @@ public class WebSocketHandlerTest {
 		WebSocketHandler handler = configuredHandler();
 		handler.enableNotifications();
 		handler.application( app, EventType.CREATED );
-		Mockito.verify( this.remoteEndpoint ).sendString( "CREATED app {\"name\":\"test\",\"tplName\":\"test-tpl\"}" );
+		Mockito.verify( this.remoteEndpoint )
+				.sendString( "{\"event\":\"CREATED\",\"app\":{\"name\":\"test\",\"displayName\":\"test\",\"tplName\":\"test-tpl\"}}" );
 	}
 
 
@@ -103,7 +104,8 @@ public class WebSocketHandlerTest {
 		WebSocketHandler handler = configuredHandler();
 		handler.enableNotifications();
 		handler.applicationTemplate( template, EventType.DELETED );
-		Mockito.verify( this.remoteEndpoint ).sendString( "DELETED tpl {\"name\":\"test-tpl\",\"apps\":[]}" );
+		Mockito.verify( this.remoteEndpoint )
+				.sendString( "{\"event\":\"DELETED\",\"tpl\":{\"name\":\"test-tpl\",\"displayName\":\"test-tpl\",\"apps\":[]}}" );
 	}
 
 
@@ -120,7 +122,10 @@ public class WebSocketHandlerTest {
 		handler.enableNotifications();
 		handler.instance( inst, app, EventType.CHANGED );
 
-		String expected = "CHANGED instance {\"name\":\"inst\",\"path\":\"/inst\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"comp\"}} IN test";
+		String expected =
+				"{\"event\":\"CHANGED\",\"app\":{\"name\":\"test\",\"displayName\":\"test\",\"tplName\":\"test-tpl\"},\"inst\":"
+				+ "{\"name\":\"inst\",\"path\":\"/inst\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"comp\"}}}";
+
 		Mockito.verify( this.remoteEndpoint ).sendString( expected );
 	}
 
@@ -131,7 +136,7 @@ public class WebSocketHandlerTest {
 		WebSocketHandler handler = configuredHandler();
 		handler.enableNotifications();
 		handler.raw( "this is a raw notification" );
-		Mockito.verify( this.remoteEndpoint ).sendString( "this is a raw notification" );
+		Mockito.verify( this.remoteEndpoint ).sendString( "{\"msg\":\"this is a raw notification\"}" );
 	}
 
 
@@ -163,7 +168,7 @@ public class WebSocketHandlerTest {
 
 		Mockito.doThrow( new IOException()).when( this.remoteEndpoint ).sendString( Mockito.anyString());
 		handler.raw( "this is another raw notification" );
-		Mockito.verify( this.remoteEndpoint ).sendString( "this is another raw notification" );
+		Mockito.verify( this.remoteEndpoint ).sendString( "{\"msg\":\"this is another raw notification\"}" );
 	}
 
 
@@ -175,15 +180,7 @@ public class WebSocketHandlerTest {
 
 		Mockito.doThrow( new IOException( "some reason" )).when( this.remoteEndpoint ).sendString( Mockito.anyString());
 		handler.raw( "this is another raw notification" );
-		Mockito.verify( this.remoteEndpoint ).sendString( "this is another raw notification" );
-	}
-
-
-	@Test
-	public void testAsJson_error() {
-
-		WebSocketHandler handler = configuredHandler();
-		Assert.assertNull( handler.asJson( "oops", new Object(), EventType.CREATED ));
+		Mockito.verify( this.remoteEndpoint ).sendString( "{\"msg\":\"this is another raw notification\"}" );
 	}
 
 

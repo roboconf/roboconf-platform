@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
@@ -469,7 +470,7 @@ public final class InstanceHelpers {
 		path = path.substring( 1 ).replace( '/', '_' ).replace( ' ', '_' );
 		String installerName = ComponentHelpers.findComponentInstaller( instance.getComponent());
 
-		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + installerName + "/" + path );
+		return new File( Constants.WORK_DIRECTORY_AGENT, installerName + "/" + path );
 	}
 
 

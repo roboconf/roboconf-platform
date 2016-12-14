@@ -251,7 +251,7 @@ public class TargetResource implements ITargetResource {
 		if( bind )
 			this.logger.fine( "Request: associate " + instancePathOrComponentName + " with target " + targetId + "." );
 		else
-			this.logger.fine( "Request: dissociate " + instancePathOrComponentName + " with target " + targetId + "." );
+			this.logger.fine( "Request: dissociate " + instancePathOrComponentName + " from its target." );
 
 		Response response = Response.ok().build();
 		AbstractApplication app = findAbstractApplication( name, qualifier );

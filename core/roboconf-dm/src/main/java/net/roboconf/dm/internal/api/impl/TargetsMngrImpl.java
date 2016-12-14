@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.internal.api.impl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -270,8 +269,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		} else {
 			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
 			valid = instance != null;
-			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+			if( instance != null ) {
+				if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+					throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+
+				if( ! InstanceHelpers.isTarget( instance ))
+					throw new IllegalArgumentException( "Only scoped instances can be associated with targets. Path in error: " + instancePathOrComponentName );
+			}
 		}
 
 		if( valid )
@@ -287,8 +291,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 				&& ! instancePathOrComponentName.startsWith( "@" )) {
 
 			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
-			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+			if( instance != null ) {
+				if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+					throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+
+				if( ! InstanceHelpers.isTarget( instance ))
+					throw new IllegalArgumentException( "Only scoped instances can be associated with targets. Path in error: " + instancePathOrComponentName );
+			}
 		}
 
 		saveAssociation( app, null, instancePathOrComponentName, false );
@@ -421,9 +430,14 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		InstanceContext key = new InstanceContext( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
 
+		// Non-scoped instances cannot be associated with targets.
+		// Such a query is a coding error!
+		Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
+		if( inst != null && ! InstanceHelpers.isTarget( inst ))
+			throw new IllegalArgumentException( "Targets aimed at being queried for scoped instances only. Invalid path: " + instancePath );
+
 		// Association inherited from the component
 		if( targetId == null && ! strict ) {
-			Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
 			if( inst != null ) {
 				key = new InstanceContext( app, "@" + inst.getComponent().getName());
 				targetId = this.instanceToCachedId.get( key );
@@ -447,36 +461,33 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	// Finding script resources
+
+
 	@Override
 	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<>( 0 );
 		File targetDir = findTargetDirectory( targetId );
-		String prefix = Utils.removeFileExtension(findTargetFile(targetId, Constants.TARGET_PROPERTIES_FILE_NAME).getName());
-
 		if( targetDir.isDirectory()){
-			List<File> scriptFiles = Utils.listAllFiles(targetDir);
-			for( File scriptFile : scriptFiles) {
-				String name = scriptFile.getName();
-				if( ! CREATED_BY.equals(name)
-						&& name.startsWith(prefix)
-						&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES)) {
-					ByteArrayOutputStream os = new ByteArrayOutputStream();
-					Utils.copyStream( scriptFile, os );
-					result.put( scriptFile.getName(), os.toByteArray());
-				}
+			result.putAll( Utils.storeDirectoryResourcesAsBytes( targetDir ));
+			result.remove( CREATED_BY );
+
+			// Remove all the root properties files
+			for( File f : Utils.listAllFiles( targetDir )) {
+				if( f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
+					result.remove( f.getName());
 			}
 		}
+
 		return result;
 	}
 
 
 	@Override
-	public Map<String, byte[]> findScriptResources(Application app, Instance scopedInstance) throws IOException {
+	public Map<String, byte[]> findScriptResources( Application app, Instance scopedInstance ) throws IOException {
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<> ();
 		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
-
 		if( targetId != null )
 			result = findScriptResources( targetId );
 

@@ -40,6 +40,8 @@ import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.events.EventType;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -67,7 +69,7 @@ public class ManagedApplication {
 		Objects.requireNonNull( application.getTemplate());
 
 		this.application = application;
-		this.scopedInstanceToAwaitingMessages = new HashMap<Instance,List<Message>> ();
+		this.scopedInstanceToAwaitingMessages = new HashMap<> ();
 	}
 
 
@@ -126,7 +128,7 @@ public class ManagedApplication {
 		synchronized( this.scopedInstanceToAwaitingMessages ) {
 			List<Message> messages = this.scopedInstanceToAwaitingMessages.get( scopedInstance );
 			if( messages == null ) {
-				messages = new ArrayList<Message>( 1 );
+				messages = new ArrayList<>( 1 );
 				this.scopedInstanceToAwaitingMessages.put( scopedInstance, messages );
 			}
 
@@ -184,8 +186,9 @@ public class ManagedApplication {
 
 	/**
 	 * Check the scoped instances states with respect to missed heart beats.
+	 * @param notificationMngr
 	 */
-	public void checkStates() {
+	public void checkStates( INotificationMngr notificationMngr ) {
 
 		// Check the status of scoped instances
 		Collection<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( this.application );
@@ -206,6 +209,7 @@ public class ManagedApplication {
 			int count = countAs == null ? 0 : Integer.parseInt( countAs );
 			if( ++ count > THRESHOLD ) {
 				scopedInstance.setStatus( InstanceStatus.PROBLEM );
+				notificationMngr.instance( scopedInstance, this.application, EventType.CHANGED );
 				this.logger.severe( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " has not sent heart beats for quite a long time. Status changed to PROBLEM." );
 			}
 

@@ -365,14 +365,14 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( Utils.isEmptyOrWhitespaces( name ))
 			throw new IOException( "An application name cannot be empty." );
 
-		if( ! name.matches( ParsingConstants.PATTERN_APP_NAME ))
+		Application app = new Application( name, tpl ).description( description );
+		if( ! app.getName().matches( ParsingConstants.PATTERN_APP_NAME ))
 			throw new IOException( "Application names cannot contain invalid characters. Letters, digits, dots, underscores, brackets, spaces and the minus symbol are allowed." );
 
 		if( this.nameToManagedApplication.containsKey( name ))
 			throw new AlreadyExistingException( name );
 
 		// Create the application's directory
-		Application app = new Application( name, tpl ).description( description );
 		File targetDirectory = ConfigurationUtils.findApplicationDirectory( app.getName(), configurationDirectory );
 		Utils.createDirectory( targetDirectory );
 		app.setDirectory( targetDirectory );
@@ -403,7 +403,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 
 		// Register the application
 		ManagedApplication ma = new ManagedApplication( app );
-		this.nameToManagedApplication.put( name, ma );
+		this.nameToManagedApplication.put( app.getName(), ma );
 
 		// Save the instances!
 		ConfigurationUtils.saveInstances( ma );

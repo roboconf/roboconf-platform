@@ -51,8 +51,8 @@ import net.roboconf.dm.scheduler.IScheduler;
 public class ServletRegistrationComponent {
 
 	// Constants
-	static final String REST_CONTEXT = "/roboconf-dm";
-	static final String WEBSOCKET_CONTEXT = "/roboconf-dm-websocket";
+	public static final String REST_CONTEXT = "/roboconf-dm";
+	public static final String WEBSOCKET_CONTEXT = "/roboconf-dm-websocket";
 	static final String ICONS_CONTEXT = "/roboconf-icons";
 
 	// Injected by iPojo

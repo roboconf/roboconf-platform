@@ -25,7 +25,9 @@
 
 package net.roboconf.core.commands;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +47,7 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 
 	public static final String MILLI_TIME = "$(MILLI_TIME)";
 	public static final String NANO_TIME = "$(NANO_TIME)";
+	public static final String FORMATTED_TIME_PREFIX = "$(FORMATTED_TIME ";
 	public static final String RANDOM_UUID = "$(UUID)";
 	public static final String SMART_INDEX = "$(SMART_INDEX)";
 
@@ -87,9 +90,36 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 	public List<ParsingError> doValidate() {
 
 		List<ParsingError> result = new ArrayList<> ();
+
+		// Basic checks
 		if( Utils.isEmptyOrWhitespaces( this.key ))
 			result.add( error( ErrorCode.CMD_EMPTY_VARIABLE_NAME ));
-		else if( this.instancePath != null
+
+		// Formatted time must be processed apart.
+		// Such a variable must be single on its line.
+		else if( this.value.startsWith( FORMATTED_TIME_PREFIX )
+				&& this.value.endsWith( ")" )) {
+
+			String datePattern = extractDatePattern( this.value );
+			if( datePattern.contains( "$(" )) {
+				result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, "Variable: " + this.key ));
+
+			} else try {
+				new SimpleDateFormat( datePattern );
+
+			} catch( Exception e ) {
+				result.add( error( ErrorCode.CMD_INVALID_DATE_PATTERN, "Pattern: " + datePattern ));
+			}
+		}
+
+		// A formatted time in the middle of something else?
+		else if( this.value.contains( FORMATTED_TIME_PREFIX )) {
+			result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, "Variable: " + this.value ));
+		}
+
+		// Validate instance existence at the end, and only if no error was found before
+		if( result.isEmpty()
+				&& this.instancePath != null
 				&& ! this.context.instanceExists( this.instancePath ))
 			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE ));
 
@@ -108,23 +138,34 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.core.commands.AbstractCommandInstruction#getVariablesToIgnore()
+	/**
+	 * Gets the (native) variables to ignore.
+	 * @return a non-null list
 	 */
 	@Override
 	protected List<String> getVariablesToIgnore() {
 
 		List<String> variablesToIgnore = new ArrayList<> ();
-		variablesToIgnore.add( MILLI_TIME );
-		variablesToIgnore.add( NANO_TIME );
-		variablesToIgnore.add( SMART_INDEX );
-		variablesToIgnore.add( RANDOM_UUID );
+		variablesToIgnore.add( "^" + Pattern.quote( MILLI_TIME ) + "$" );
+		variablesToIgnore.add( "^" + Pattern.quote( NANO_TIME ) + "$" );
+		variablesToIgnore.add( "^" + Pattern.quote( SMART_INDEX ) + "$" );
+		variablesToIgnore.add( "^" + Pattern.quote( RANDOM_UUID ) + "$" );
 
-		for( String var : this.context.variables.keySet() )
-			variablesToIgnore.add( "$(" + var + ")" );
+		for( String var : this.context.variables.keySet())
+			variablesToIgnore.add( "^\\$\\(" + Pattern.quote( var ) + "\\)$" );
 
+		variablesToIgnore.add( "^" + Pattern.quote( FORMATTED_TIME_PREFIX ) + ".*\\)$" );
 		return variablesToIgnore;
+	}
+
+
+	/**
+	 * Extracts the date pattern for a "formatted time" variable.
+	 * @param group a formatted time
+	 * @return a non-null string
+	 */
+	static String extractDatePattern( String group ) {
+		return group.substring( FORMATTED_TIME_PREFIX.length(), group.length() - 2 ).trim();
 	}
 
 
@@ -147,6 +188,17 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 		name = name.replace( RANDOM_UUID, UUID.randomUUID().toString());
 
 		// A little more complex
+		if( name.startsWith( FORMATTED_TIME_PREFIX )
+				&& name.endsWith( ")" )) {
+
+			String datePattern = extractDatePattern( name );
+			SimpleDateFormat sdf = new SimpleDateFormat( datePattern );
+
+			// We replace the whole value as such variables were validated and span over a entire line
+			name = sdf.format( new Date( milliTime ));
+		}
+
+		// Even more complex
 		int smartCpt = 0;
 		if( name.contains( SMART_INDEX )) {
 			for( int cpt = 1; smartCpt == 0; cpt++ ) {

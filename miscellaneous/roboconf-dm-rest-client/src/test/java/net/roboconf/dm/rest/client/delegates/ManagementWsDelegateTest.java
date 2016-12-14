@@ -34,10 +34,21 @@ import java.util.Map;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
+
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.ApplicationTemplateDescriptor;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
@@ -49,15 +60,6 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
-
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -114,13 +116,15 @@ public class ManagementWsDelegateTest {
 	@Test
 	public void testListApplications() throws Exception {
 
+		// Prepare
 		List<Application> apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 0, apps.size());
 
 		TestApplication app = new TestApplication();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), 	new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 
+		// Get ALL the applications
 		apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 1, apps.size());
@@ -128,12 +132,32 @@ public class ManagementWsDelegateTest {
 		Application receivedApp = apps.get( 0 );
 		Assert.assertEquals( app.getName(), receivedApp.getName());
 		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+
+		// Get the "filter" application
+		apps = this.client.getManagementDelegate().listApplications( "filter" );
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 0, apps.size());
+
+		// Get the test application
+		apps = this.client.getManagementDelegate().listApplications( app.getName());
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 1, apps.size());
+
+		receivedApp = apps.get( 0 );
+		Assert.assertEquals( app.getName(), receivedApp.getName());
+		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+
+		// Tricky get
+		apps = this.client.getManagementDelegate().listApplications( app.getName() + "0" );
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 0, apps.size());
 	}
 
 
 	@Test
 	public void testListApplicationTemplates() throws Exception {
 
+		// Prepare
 		List<ApplicationTemplate> templates = this.client.getManagementDelegate().listApplicationTemplates();
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
@@ -141,6 +165,7 @@ public class ManagementWsDelegateTest {
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
+		// Get ALL the templates
 		templates = this.client.getManagementDelegate().listApplicationTemplates();
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
@@ -149,6 +174,51 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
 		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the "filter" template
+		templates = this.client.getManagementDelegate().listApplicationTemplates( "filter", null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Get the test template with no specific qualifier
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName(), null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the test template with the exact qualifier
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName(), tpl.getQualifier());
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Get the test template with the exact qualifier but no specific name
+		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getQualifier());
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+
+		// Invalid qualifier
+		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getQualifier() + "2" );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Invalid name
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName() + "1", null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
 	}
 
 
@@ -194,6 +264,31 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
+	}
+
+
+	@Test
+	public void testLoadApplicationTemplate_localPath_withSpecialName() throws Exception {
+
+		File sourceDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( sourceDirectory.exists());
+		File directory = this.folder.newFolder();
+		Utils.copyDirectory( sourceDirectory, directory );
+
+		File appDescriptorFile = new File( directory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( appDescriptorFile.exists());
+
+		ApplicationTemplateDescriptor appDescriptor = ApplicationTemplateDescriptor.load( appDescriptorFile );
+		appDescriptor.setName( "ça débute" );
+		ApplicationTemplateDescriptor.save( appDescriptorFile, appDescriptor );
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+
+		List<ApplicationTemplate> tpls = this.client.getManagementDelegate().listApplicationTemplates();
+		Assert.assertEquals( 1, tpls.size());
+		Assert.assertEquals( "ca debute", tpls.get( 0  ).getName());
+		Assert.assertEquals( "ça débute", tpls.get( 0  ).getDisplayName());
 	}
 
 
@@ -368,6 +463,31 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
 		this.client.getManagementDelegate().createApplication( "app2", "Legacy LAMP", "sample" );
 		Assert.assertEquals( 2, this.client.getManagementDelegate().listApplications().size());
+	}
+
+
+	@Test
+	public void createApplication_withAccents() throws Exception {
+
+		// Create the template
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( directory.exists());
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
+
+		// Create an application wit a special name
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		Application app = this.client.getManagementDelegate().createApplication( "avé dés acçents", "Legacy LAMP", "sample" );
+		Assert.assertNotNull( app );
+		Assert.assertEquals( "ave des accents", app.getName());
+		Assert.assertEquals( "avé dés acçents", app.getDisplayName());
+
+		List<Application> apps = this.client.getManagementDelegate().listApplications();
+		Assert.assertEquals( 1, apps.size());
+		Assert.assertEquals( "ave des accents", apps.get( 0 ).getName());
+		Assert.assertEquals( "avé dés acçents", apps.get( 0 ).getDisplayName());
 	}
 
 

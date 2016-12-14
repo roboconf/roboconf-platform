@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,42 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.tasks;
+package net.roboconf.dm.rest.services.swagger;
 
-import java.util.TimerTask;
+import java.io.File;
 
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.api.IApplicationMngr;
-import net.roboconf.dm.management.api.INotificationMngr;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import io.swagger.models.Swagger;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerHeartbeatsTask extends TimerTask {
+public class GenerateSwaggerJsonForWebSocketsTest {
 
-	private final IApplicationMngr appManager;
-	private final INotificationMngr notificationMngr;
-
-
-	/**
-	 * Constructor.
-	 * @param appManager
-	 * @param notificationMngr
-	 */
-	public CheckerHeartbeatsTask( IApplicationMngr appManager, INotificationMngr notificationMngr ) {
-		this.appManager = appManager;
-		this.notificationMngr = notificationMngr;
-	}
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.TimerTask#run()
-	 */
-	@Override
-	public void run() {
-		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
-			ma.checkStates( this.notificationMngr );
-		}
+	@Test
+	public void testValidSwaggerFile() throws Exception {
+
+		File jsonFile = this.folder.newFile();
+		GenerateSwaggerJsonForWebSockets gen = new GenerateSwaggerJsonForWebSockets();
+		gen.generate( "v1", jsonFile );
+
+		Swagger swagger = ValidateSwaggerJsonFiles.validate( jsonFile );
+		Assert.assertEquals( GenerateSwaggerJsonForWebSockets.NAME_TO_DESC.size(), swagger.getPaths().size());
 	}
 }

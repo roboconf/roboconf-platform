@@ -684,6 +684,7 @@ public class ApplicationResourceTest {
 		for( int i=0; i<scopedInstances.size(); i++ ) {
 			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
+			Assert.assertEquals( scopedInstances.get( i ).getComponent().getName(), ta.getInstanceComponent());
 
 			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 			Assert.assertNull( ta.getTargetDescriptor());
@@ -722,6 +723,7 @@ public class ApplicationResourceTest {
 		for( int i=0; i<scopedInstances.size(); i++ ) {
 			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
+			Assert.assertEquals( scopedInstances.get( i ).getComponent().getName(), ta.getInstanceComponent());
 
 			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 			Assert.assertNull( ta.getTargetDescriptor());
@@ -761,6 +763,7 @@ public class ApplicationResourceTest {
 		for( int i=0; i<scopedInstances.size(); i++ ) {
 			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
+			Assert.assertEquals( scopedInstances.get( i ).getComponent().getName(), ta.getInstanceComponent());
 
 			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
 			Assert.assertNull( ta.getTargetDescriptor());
@@ -808,6 +811,7 @@ public class ApplicationResourceTest {
 			TargetAssociation ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
 			Assert.assertEquals( path, ta.getInstancePathOrComponentName());
+			Assert.assertEquals( scopedInstances.get( i ).getComponent().getName(), ta.getInstanceComponent());
 
 			if( instancePath.equals( path )) {
 				Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());

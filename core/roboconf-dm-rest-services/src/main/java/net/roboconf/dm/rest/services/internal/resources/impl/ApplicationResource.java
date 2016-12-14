@@ -542,7 +542,7 @@ public class ApplicationResource implements IApplicationResource {
 			if( defaultTargetId != null )
 				twd = this.manager.targetsMngr().findTargetById( defaultTargetId );
 
-			result.add( new TargetAssociation( "", twd ));
+			result.add( new TargetAssociation( "", null, twd ));
 
 			// Then, show the scoped instances.
 			// List them, even if they do not have an associated target.
@@ -554,7 +554,7 @@ public class ApplicationResource implements IApplicationResource {
 				if( targetId != null )
 					twd = this.manager.targetsMngr().findTargetById( targetId );
 
-				result.add( new TargetAssociation( instancePath, twd ));
+				result.add( new TargetAssociation( instancePath, inst.getComponent().getName(), twd ));
 			}
 
 			// Deal with components.
@@ -569,7 +569,7 @@ public class ApplicationResource implements IApplicationResource {
 				if( targetId != null )
 					twd = this.manager.targetsMngr().findTargetById( targetId );
 
-				result.add( new TargetAssociation( key, twd ));
+				result.add( new TargetAssociation( key, null, twd ));
 			}
 		}
 

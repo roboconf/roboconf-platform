@@ -34,11 +34,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 import net.roboconf.dm.rest.commons.json.MapWrapper;
 import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
-import net.roboconf.karaf.dist.dm.GeneratePreferencesFile;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -61,23 +61,10 @@ public class UpdateSwaggerJsonTest {
 				StringWrapper.class,
 				MapWrapper.class,
 				MappedCollectionWrapper.class,
-				ApplicationBindings.class
+				ApplicationBindings.class,
+				WebSocketMessage.class
 		));
 
 		Assert.assertEquals( Collections.emptySet(), classes );
-	}
-
-
-	@Test( expected = RuntimeException.class )
-	public void testGeneratedFile_invalidNumberOfArguments() throws Exception {
-
-		new GeneratePreferencesFile().run( new String[] { "a", "b", "c" });
-	}
-
-
-	@Test( expected = RuntimeException.class )
-	public void testGeneratedFile_invalidArguments() throws Exception {
-
-		new GeneratePreferencesFile().run( new String[] { "invalid path" });
 	}
 }
