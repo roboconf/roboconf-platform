@@ -1132,12 +1132,20 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"mail.toto\",\"value\":\"smtp.something\",\"category\":\"email\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
+		// Test the serializer
 		Preference pref = new Preference( "mail.toto", "smtp.something", PreferenceKeyCategory.EMAIL );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, pref );
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+
+		// Test the deserializer
+		Preference readPref = mapper.readValue( result, Preference.class );
+		Assert.assertNotNull( readPref );
+		Assert.assertEquals( "mail.toto", readPref.getName());
+		Assert.assertEquals( "smtp.something", readPref.getValue());
+		Assert.assertEquals( PreferenceKeyCategory.EMAIL, readPref.getCategory());
 	}
 
 

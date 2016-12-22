@@ -30,6 +30,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
@@ -141,6 +142,17 @@ public interface IPreferencesMngr {
 	)
 	String USER_LANGUAGE = "user.language";
 
+	/**
+	 * List of web extensions (automatically fetched by the web console).
+	 */
+	@PreferenceDescription(
+			desc = "List of web extensions (automatically fetched by the web console).\n"
+			+ "This preference is generally populated by bundles and directly from the code. "
+			+ "The web console only loads extensions located on the DM's web server. So, one could "
+			+ "save (e.g.) 'http://google.com' in this preference. But the web console would not embed its content."
+	)
+	String WEB_EXTENSIONS = "web.extensions";
+
 
 
 	/**
@@ -169,6 +181,44 @@ public interface IPreferencesMngr {
 	 * @throws IOException if something went wrong
 	 */
 	void save( String key, String value ) throws IOException;
+
+	/**
+	 * Adds a value to a list preference.
+	 * <p>
+	 * List preferences are considered to have their values separated by a comma.
+	 * Values should thus not contain a comma.
+	 * </p>
+	 *
+	 * @param key a non-null key
+	 * @param value a value to add to a list value
+	 * @throws IOException if something went wrong
+	 */
+	void addToList( String key, String value ) throws IOException;
+
+	/**
+	 * Removes a value from a list preference.
+	 * <p>
+	 * List preferences are considered to have their values separated by a comma.
+	 * Values should thus not contain a comma.
+	 * </p>
+	 *
+	 * @param key a non-null key
+	 * @param value a value to remove from a list value
+	 * @throws IOException if something went wrong
+	 */
+	void removeFromList( String key, String value ) throws IOException;
+
+	/**
+	 * Gets the preferences for a given key as a list.
+	 * <p>
+	 * List preferences are considered to have their values separated by a comma.
+	 * Values should thus not contain a comma.
+	 * </p>
+	 *
+	 * @param key a non-null key
+	 * @return a non-null collection
+	 */
+	Collection<String> getAsCollection( String key );
 
 	/**
 	 * Update several properties at once.
@@ -228,7 +278,8 @@ public interface IPreferencesMngr {
 			this.keyToCategory.put( AUTONOMIC_MAX_VM_NUMBER, PreferenceKeyCategory.AUTONOMIC );
 			this.keyToCategory.put( AUTONOMIC_STRICT_MAX_VM_NUMBER, PreferenceKeyCategory.AUTONOMIC );
 
-			this.keyToCategory.put( USER_LANGUAGE, PreferenceKeyCategory.LANGUAGE );
+			this.keyToCategory.put( USER_LANGUAGE, PreferenceKeyCategory.WEB );
+			this.keyToCategory.put( WEB_EXTENSIONS, PreferenceKeyCategory.WEB );
 			this.keyToCategory.put( FORBIDDEN_RANDOM_PORTS, PreferenceKeyCategory.MISCELLANEOUS );
 
 			// Define default values

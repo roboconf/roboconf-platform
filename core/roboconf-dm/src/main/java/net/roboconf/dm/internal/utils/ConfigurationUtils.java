@@ -28,7 +28,6 @@ package net.roboconf.dm.internal.utils;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -207,16 +206,9 @@ public final class ConfigurationUtils {
 
 		// Convert the bindings map
 		Map<String,String> format = new HashMap<> ();
-		for(  Map.Entry<String,Set<String>> entry : app.getApplicationBindings().entrySet()) {
-
-			StringBuilder sb = new StringBuilder();
-			for( Iterator<String> it = entry.getValue().iterator(); it.hasNext(); ) {
-				sb.append( it.next());
-				if( it.hasNext())
-					sb.append( ", " );
-			}
-
-			format.put( entry.getKey(), sb.toString());
+		for( Map.Entry<String,Set<String>> entry : app.getApplicationBindings().entrySet()) {
+			String s = Utils.format( entry.getValue(), ", " );
+			format.put( entry.getKey(), s );
 		}
 
 		// Save it

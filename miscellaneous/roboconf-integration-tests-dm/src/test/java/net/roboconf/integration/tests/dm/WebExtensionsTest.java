@@ -25,10 +25,14 @@
 
 package net.roboconf.integration.tests.dm;
 
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -39,17 +43,17 @@ import org.ops4j.pax.exam.TestContainer;
 import org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer;
 import org.ops4j.pax.exam.spi.PaxExamRuntime;
 
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.integration.tests.commons.internal.ItUtils;
 import net.roboconf.integration.tests.dm.probes.DmTest;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+import net.roboconf.webextension.kibana.KibanaExtensionConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class WebAdminCustomizationTest extends DmTest {
+public class WebExtensionsTest extends DmTest {
 
 	@Test
 	public void run() throws Exception {
@@ -57,8 +61,15 @@ public class WebAdminCustomizationTest extends DmTest {
 		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 
 		// Prepare to run a DM distribution
-		Option[] options = super.config();
-		ExamSystem system = PaxExamRuntime.createServerSystem( options );
+		String roboconfVersion = ItUtils.findRoboconfVersion();
+		List<Option> options = new ArrayList<>( Arrays.asList( super.config()));
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-web-extension-for-kibana" )
+				.version( roboconfVersion )
+				.start());
+
+		ExamSystem system = PaxExamRuntime.createServerSystem( ItUtils.asArray( options ));
 		TestContainer container = PaxExamRuntime.createContainer( system );
 		Assert.assertEquals( KarafTestContainer.class, container.getClass());
 
@@ -67,57 +78,28 @@ public class WebAdminCustomizationTest extends DmTest {
 			container.start();
 			ItUtils.waitForDmRestServices( getCurrentPort());
 
-			// Verify we get the default CSS, which is quite big
-			URL url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css" );
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			InputStream in = url.openStream();
-			try {
-				Utils.copyStreamUnsafelyUseWithCaution( in, os );
+			// It may not work at the first time, since the extension needs to be loaded.
+			// Verify that by default, there is a web extension
+			boolean found = false;
+			URL url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-dm/preferences" );
+			for( int i=0; i<10; i++ ) {
+				ByteArrayOutputStream os = new ByteArrayOutputStream();
+				InputStream in = url.openStream();
+				try {
+					Utils.copyStreamUnsafelyUseWithCaution( in, os );
 
-			} finally {
-				Utils.closeQuietly( in );
+				} finally {
+					Utils.closeQuietly( in );
+				}
+
+				String received = os.toString( "UTF-8" );
+				String expected = "{\"name\":\"" + IPreferencesMngr.WEB_EXTENSIONS + "\",\"value\":\"" + KibanaExtensionConstants.CONTEXT + "\",";
+				found = received.contains( expected );
+				if( found )
+					break;
 			}
 
-			String cssContent = os.toString( "UTF-8" );
-			Assert.assertTrue( cssContent.length() > 100 );
-
-			// Now, override it with our custom one and verify it is returned by our servlet
-			//
-			// Since this test runs outside Karaf, we cannot rely on System.getProperty( "karaf.base" );
-			// So, we need to extract the Karaf directory by Java reflection.
-			File karafDirectory = TestUtils.getInternalField( container, "targetFolder", File.class );
-			Assert.assertNotNull( karafDirectory );
-
-			File etcDirectory = new File( karafDirectory, "etc" );
-			Utils.writeStringInto( "hi!", new File( etcDirectory, "roboconf.custom.css" ));
-
-			// Now, verify what we get
-			url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css" );
-			os = new ByteArrayOutputStream();
-			in = url.openStream();
-			try {
-				Utils.copyStreamUnsafelyUseWithCaution( in, os );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
-
-			Assert.assertEquals( "hi!", os.toString( "UTF-8" ));
-
-			// Verify that by default, there is no web extension
-			url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-dm/preferences" );
-			os = new ByteArrayOutputStream();
-			in = url.openStream();
-			try {
-				Utils.copyStreamUnsafelyUseWithCaution( in, os );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
-
-			String received = os.toString( "UTF-8" );
-			String expected = "{\"name\":\"" + IPreferencesMngr.WEB_EXTENSIONS + "\",\"value\":\"\",";
-			Assert.assertTrue( received.contains( expected ));
+			Assert.assertTrue( found );
 
 		} finally {
 			container.stop();

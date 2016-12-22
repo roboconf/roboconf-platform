@@ -40,80 +40,6 @@
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
-	<modules>
-		<!--  "THE" Core Module -->
-		<module>core/roboconf-core</module>
-
-		<!-- 
-			This module embeds the web administration.
-			We put it in second because it requires NPM.
-			To save time (when possible), use "mvn clean install -rf :roboconf-target-api".
-		-->
-		<module>core/roboconf-dm-web-administration</module>
-
-		<!-- Other Core Modules -->
-		<module>core/roboconf-target-api</module>
-		<module>core/roboconf-plugin-api</module>
-		<module>core/roboconf-messaging-api</module>
-		<module>core/roboconf-agent-monitoring-api</module>
-
-		<!-- Utilities -->
-		<module>miscellaneous/roboconf-tooling-core</module>
-		<module>miscellaneous/roboconf-doc-generator</module>
-		<module>miscellaneous/roboconf-maven-plugin</module>
-
-		<!-- Messaging providers -->
-		<module>core/roboconf-messaging-rabbitmq</module>
-		<module>core/roboconf-messaging-http</module>
-
-		<!-- Agent -->
-		<module>core/roboconf-agent</module>
-		<module>core/roboconf-agent-default</module>
-
-		<!-- DM modules -->
-		<module>core/roboconf-dm</module>
-		<module>core/roboconf-dm-templating</module>
-		<module>core/roboconf-dm-scheduler</module>
-		<module>core/roboconf-dm-rest-commons</module>
-		<module>core/roboconf-dm-rest-services</module>
-
-		<!-- Target Handlers -->
-		<module>core/roboconf-target-in-memory</module>
-		<module>core/roboconf-target-docker</module>
-		<module>core/roboconf-target-embedded</module>
-		<module>core/roboconf-target-jclouds</module>
-		<module>core/roboconf-target-iaas-azure</module>
-		<module>core/roboconf-target-iaas-ec2</module>
-		<module>core/roboconf-target-iaas-openstack</module>
-		<module>core/roboconf-target-iaas-vmware</module>
-		<module>core/roboconf-target-iaas-occi</module>
-
-		<!-- Agent plug-ins -->
-		<module>core/roboconf-plugin-script</module>
-		<module>core/roboconf-plugin-puppet</module>
-		<module>core/roboconf-plugin-file</module>
-		<module>core/roboconf-plugin-logger</module>
-		
-		<!-- Agent Monitoring -->
-		<module>core/roboconf-agent-monitoring</module>
-		<module>core/roboconf-agent-monitoring-docker</module>
-
-		<!-- Distributions -->
-		<module>karaf/roboconf-karaf-commands-common</module>
-		<module>karaf/roboconf-karaf-commands-agent</module>
-		<module>karaf/roboconf-karaf-commands-dm</module>
-		<module>karaf/roboconf-karaf-feature-agent</module>
-		<module>karaf/roboconf-karaf-feature-dm</module>
-		<module>karaf/roboconf-karaf-dist-agent</module>
-		<module>karaf/roboconf-karaf-dist-dm</module>
-
-		<!-- Miscellaneous -->
-		<module>miscellaneous/roboconf-dm-rest-client</module>
-		
-		<!-- Integration Tests are not listed here but in a profile below -->
-	</modules>
-
-
 	<!-- Properties and other things... -->
 	<properties>
 		<jersey.stack.version>1.18.2</jersey.stack.version>
@@ -304,8 +230,97 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<profiles>
+
+		<!-- 
+			The default profile is the one run when using "mvn clean install".
+			It is not run when the "it-only" property is set.
+		 -->
+		<profile>
+			<id>default</id>
+			<activation>
+				<property>
+					<name>!it-only</name>
+				</property>
+			</activation>
+			<modules>
+				<!--  "THE" Core Module -->
+				<module>core/roboconf-core</module>
+		
+				<!-- 
+					This module embeds the web administration.
+					We put it in second because it requires NPM.
+					To save time (when possible), use "mvn clean install -rf :roboconf-target-api".
+				-->
+				<module>core/roboconf-dm-web-administration</module>
+		
+				<!-- Other Core Modules -->
+				<module>core/roboconf-target-api</module>
+				<module>core/roboconf-plugin-api</module>
+				<module>core/roboconf-messaging-api</module>
+				<module>core/roboconf-agent-monitoring-api</module>
+		
+				<!-- Utilities -->
+				<module>miscellaneous/roboconf-tooling-core</module>
+				<module>miscellaneous/roboconf-doc-generator</module>
+				<module>miscellaneous/roboconf-maven-plugin</module>
+		
+				<!-- Messaging providers -->
+				<module>core/roboconf-messaging-rabbitmq</module>
+				<module>core/roboconf-messaging-http</module>
+		
+				<!-- Agent -->
+				<module>core/roboconf-agent</module>
+				<module>core/roboconf-agent-default</module>
+		
+				<!-- DM modules -->
+				<module>core/roboconf-dm</module>
+				<module>core/roboconf-dm-templating</module>
+				<module>core/roboconf-dm-scheduler</module>
+				<module>core/roboconf-dm-rest-commons</module>
+				<module>core/roboconf-dm-rest-services</module>
+		
+				<!-- Target Handlers -->
+				<module>core/roboconf-target-in-memory</module>
+				<module>core/roboconf-target-docker</module>
+				<module>core/roboconf-target-embedded</module>
+				<module>core/roboconf-target-jclouds</module>
+				<module>core/roboconf-target-iaas-azure</module>
+				<module>core/roboconf-target-iaas-ec2</module>
+				<module>core/roboconf-target-iaas-openstack</module>
+				<module>core/roboconf-target-iaas-vmware</module>
+				<module>core/roboconf-target-iaas-occi</module>
+		
+				<!-- Agent plug-ins -->
+				<module>core/roboconf-plugin-script</module>
+				<module>core/roboconf-plugin-puppet</module>
+				<module>core/roboconf-plugin-file</module>
+				<module>core/roboconf-plugin-logger</module>
+				
+				<!-- Agent Monitoring -->
+				<module>core/roboconf-agent-monitoring</module>
+				<module>core/roboconf-agent-monitoring-docker</module>
+		
+				<!-- Distributions -->
+				<module>karaf/roboconf-karaf-commands-common</module>
+				<module>karaf/roboconf-karaf-commands-agent</module>
+				<module>karaf/roboconf-karaf-commands-dm</module>
+				<module>karaf/roboconf-karaf-feature-agent</module>
+				<module>karaf/roboconf-karaf-feature-dm</module>
+				<module>karaf/roboconf-karaf-dist-agent</module>
+				<module>karaf/roboconf-karaf-dist-dm</module>
+		
+				<!-- Miscellaneous -->
+				<module>miscellaneous/roboconf-dm-rest-client</module>
+				
+				<!-- Web Extensions -->
+				<module>web-extensions/roboconf-web-extension-for-kibana</module>
+				
+				<!-- Integration Tests are not listed here but in a profile below -->
+			</modules>
+		</profile>
+	
 		<!-- Configure the Maven surefire plugin. -->
 		<!-- 
 			Log levels must be taken in the same file, no matter if we
@@ -341,7 +356,7 @@
 				</pluginManagement>
 			</build>
 		</profile>
-	
+
 		<profile>
 			<id>debug-sub-module-with-logs</id>
 			<activation>
@@ -372,7 +387,8 @@
 				</pluginManagement>
 			</build>
 		</profile>
-		
+
+		<!-- Integration Tests -->
 		<profile>
 			<id>it-dm-agent</id>
 			<modules>
@@ -389,9 +405,14 @@
 				<module>miscellaneous/roboconf-integration-tests-dm-with-agents-in-memory</module>
 			</modules>
 		</profile>
-		
+
 		<profile>
 			<id>it-all</id>
+			<activation>
+				<property>
+					<name>it-only</name>
+				</property>
+			</activation>
 			<modules>
 				<module>miscellaneous/roboconf-integration-tests-commons</module>
 				<module>miscellaneous/roboconf-integration-tests-agent</module>

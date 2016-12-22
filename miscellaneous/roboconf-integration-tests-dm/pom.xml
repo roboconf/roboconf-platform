@@ -64,6 +64,13 @@
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-web-extension-for-kibana</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>

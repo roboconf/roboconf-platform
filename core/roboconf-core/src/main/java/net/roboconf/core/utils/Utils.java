@@ -43,10 +43,12 @@ import java.io.Writer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -145,6 +147,42 @@ public final class Utils {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Creates a new list and only keeps values that are not null or made up of white characters.
+	 * @param values a non-null list of items (can contain null and "empty" values)
+	 * @return a list of items (never null), with no null or "empty" values
+	 */
+	public static List<String> filterEmptyValues( List<String> values ) {
+
+		List<String> result = new ArrayList<> ();
+		for( String s : values ) {
+			if( ! Utils.isEmptyOrWhitespaces( s ))
+				result.add( s );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Formats a collection of elements as a string.
+	 * @param items a non-null list of items
+	 * @param separator a string to separate items
+	 * @return a non-null string
+	 */
+	public static String format( Collection<String> items, String separator ) {
+
+		StringBuilder sb = new StringBuilder();
+		for( Iterator<String> it = items.iterator(); it.hasNext(); ) {
+			sb.append( it.next());
+			if( it.hasNext())
+				sb.append( separator );
+		}
+
+		return sb.toString();
 	}
 
 
@@ -943,13 +981,14 @@ public final class Utils {
 		return new AbstractMap.SimpleEntry<>( address, port );
 	}
 
+
 	/**
 	 * Returns the value contained in a map of string if it exists using the key.
 	 * @param map a map of string
 	 * @param key a string
-	 * @param dvalue the default value
+	 * @param defaultValue the default value
 	 */
-	public static String getValue(Map<String,String> map, String key, String dvalue) {
-		return map.containsKey( key ) ? map.get( key ) : dvalue;
+	public static String getValue(Map<String,String> map, String key, String defaultValue) {
+		return map.containsKey( key ) ? map.get( key ) : defaultValue;
 	}
 }

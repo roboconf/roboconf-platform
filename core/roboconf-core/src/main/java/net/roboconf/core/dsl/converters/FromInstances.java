@@ -76,14 +76,14 @@ public class FromInstances {
 
 
 	private Collection<AbstractBlock> buildInstanceOf( FileDefinition file, Instance rootInstance, boolean addComment, boolean saveRuntimeInformation ) {
-		Collection<AbstractBlock> result = new ArrayList<AbstractBlock> ();
+		Collection<AbstractBlock> result = new ArrayList<> ();
 
 		// Process the root instance
-		Map<Instance,BlockInstanceOf> instanceToBlock = new LinkedHashMap<Instance,BlockInstanceOf> ();
+		Map<Instance,BlockInstanceOf> instanceToBlock = new LinkedHashMap<> ();
 		BlockInstanceOf rootBlock = new BlockInstanceOf( file );
 		instanceToBlock.put( rootInstance, rootBlock );
 
-		List<Instance> toProcess = new ArrayList<Instance> ();
+		List<Instance> toProcess = new ArrayList<> ();
 		toProcess.add( rootInstance );
 		while( ! toProcess.isEmpty()) {
 
@@ -99,14 +99,8 @@ public class FromInstances {
 			}
 
 			if( ! instance.channels.isEmpty()) {
-				StringBuilder sb = new StringBuilder();
-				for( Iterator<String> it = instance.channels.iterator(); it.hasNext(); ) {
-					sb.append( it.next());
-					if( it.hasNext())
-						sb.append( ", " );
-				}
-
-				p = new BlockProperty( file, ParsingConstants.PROPERTY_INSTANCE_CHANNELS, sb.toString());
+				String s = Utils.format( instance.channels, ", " );
+				p = new BlockProperty( file, ParsingConstants.PROPERTY_INSTANCE_CHANNELS, s );
 				currentBlock.getInnerBlocks().add( p );
 			}
 

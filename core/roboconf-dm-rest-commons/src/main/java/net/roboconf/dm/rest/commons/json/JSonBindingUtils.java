@@ -57,6 +57,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
@@ -111,11 +112,13 @@ public final class JSonBindingUtils {
 		SERIALIZERS.put( ScheduledJob.class, new ScheduledJobSerializer());
 		DESERIALIZERS.put( ScheduledJob.class, new ScheduledJobDeserializer());
 
+		SERIALIZERS.put( Preference.class, new PreferenceSerializer());
+		DESERIALIZERS.put( Preference.class, new PreferenceDeserializer());
+
 		// Write ONLY
 		SERIALIZERS.put( MappedCollectionWrapper.class, new MappedCollectionWrapperSerializer());
 		SERIALIZERS.put( TargetUsageItem.class, new TargetUsageItemSerializer());
 		SERIALIZERS.put( TargetAssociation.class, new TargetAssociationSerializer());
-		SERIALIZERS.put( Preference.class, new PreferenceSerializer());
 		SERIALIZERS.put( ApplicationBindings.class, new ApplicationBindingsSerializer());
 		SERIALIZERS.put( WebSocketMessage.class, new WebSocketMessageSerializer());
 	}
@@ -351,10 +354,6 @@ public final class JSonBindingUtils {
 
 	/**
 	 * A JSon serializer for Roboconf preferences.
-	 * <p>
-	 * No deserializer is provided, as it does not make sense for the REST API.
-	 * </p>
-	 *
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class PreferenceSerializer extends JsonSerializer<Preference> {
@@ -377,6 +376,34 @@ public final class JSonBindingUtils {
 				generator.writeObjectField( PREF_CATEGORY, item.getCategory().toString().toLowerCase());
 
 			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for Roboconf preferences.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class PreferenceDeserializer extends JsonDeserializer<Preference> {
+
+		@Override
+		public Preference deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+			JsonNode node = oc.readTree( parser );
+			String name = null, value = null, cat = null;
+
+			JsonNode n;
+			if(( n = node.get( NAME )) != null )
+				name = n.textValue();
+
+			if(( n = node.get( PREF_VALUE )) != null )
+				value = n.textValue();
+
+			if(( n = node.get( PREF_CATEGORY )) != null )
+				cat = n.textValue();
+
+			return new Preference( name, value, PreferenceKeyCategory.which( cat ));
 		}
 	}
 

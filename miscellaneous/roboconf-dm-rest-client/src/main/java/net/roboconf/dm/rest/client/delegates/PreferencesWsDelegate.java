@@ -23,59 +23,56 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.internal.resources;
+package net.roboconf.dm.rest.client.delegates;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
 
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**
- * The REST API to set global preferences.
- * <p>
- * Implementing classes have to define the "Path" annotation
- * on the class. Use {@link #PATH}.
- * </p>
- *
  * @author Vincent Zurczak - Linagora
  */
-public interface IPreferencesResource {
+public class PreferencesWsDelegate {
 
-	String PATH = "/" + UrlConstants.PREFERENCES;
-
-
-	/**
-	 * Get a specific or all the preferences.
-	 * @param key a specific key, or null to get all the properties
-	 * @return a non-null list of preferences
-	 *
-	 * @HTTP 200 Everything went fine.
-	 */
-	@GET
-	@Produces( MediaType.APPLICATION_JSON )
-	List<Preference> getPreferences( @QueryParam("key") String key );
+	private final WebResource resource;
+	private final Logger logger;
 
 
 	/**
-	 * Changes a preference value.
-	 * <p>
-	 * Notice that preferences cannot be deleted (and created) through
-	 * the REST API.
-	 * </p>
-	 *
-	 * @param key the preference name
-	 * @param value the preference value
-	 * @return a response
-	 *
-	 * @HTTP 200 Everything went fine.
+	 * Constructor.
+	 * @param resource a web resource
 	 */
-	@POST
-	Response savePreference( @QueryParam("key") String key, @QueryParam("value") String value );
+	public PreferencesWsDelegate( WebResource resource ) {
+		this.resource = resource;
+		this.logger = Logger.getLogger( getClass().getName());
+	}
+
+
+	/**
+	 * Lists all the preferences.
+	 */
+	public List<Preference> listPreferences() {
+
+		this.logger.finer( "Getting all the preferences."  );
+
+		WebResource path = this.resource.path( UrlConstants.PREFERENCES );
+		List<Preference> result = path
+				.accept( MediaType.APPLICATION_JSON )
+				.get( new GenericType<List<Preference>> () {});
+
+		if( result != null )
+			this.logger.finer( result.size() + " preferences were found on the DM." );
+		else
+			this.logger.finer( "No preference was found on the DM." );
+
+		return result != null ? result : new ArrayList<Preference> ();
+	}
 }

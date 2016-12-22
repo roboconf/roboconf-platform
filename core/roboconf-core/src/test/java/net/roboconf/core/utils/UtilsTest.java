@@ -37,6 +37,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -208,6 +209,31 @@ public class UtilsTest {
 	@Test( expected = IllegalArgumentException.class )
 	public void testSplitNicelyWithPattern_illegalArgument_2() {
 		Utils.splitNicelyWithPattern( "once, upon, a , time   ", null );
+	}
+
+
+	@Test
+	public void testFilterEmptyValues() {
+
+		List<String> list = new ArrayList<> ();
+		Assert.assertEquals( Collections.emptyList(), Utils.filterEmptyValues( list ));
+
+		list.add( "1" );
+		list.add( null );
+		list.add( "1" );
+		list.add( "  " );
+		list.add( "2" );
+
+		Assert.assertEquals( Arrays.asList( "1", "1", "2" ), Utils.filterEmptyValues( list ));
+	}
+
+
+	@Test
+	public void testFormat() {
+
+		List<String> list = Arrays.asList( "1", "2", "", "3", "4" );
+		Assert.assertEquals( "1, 2, , 3, 4", Utils.format( list, ", " ));
+		Assert.assertEquals( "1 - 2 -  - 3 - 4", Utils.format( list, " - " ));
 	}
 
 

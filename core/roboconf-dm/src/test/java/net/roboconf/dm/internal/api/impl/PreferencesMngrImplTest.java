@@ -26,8 +26,10 @@
 package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -145,5 +147,45 @@ public class PreferencesMngrImplTest {
 			if( pref.getCategory() == PreferenceKeyCategory.EMAIL )
 				Assert.assertTrue( name, match );
 		}
+	}
+
+
+	@Test
+	public void testPropertiesAsList() throws Exception {
+
+		final String key = "whatever";
+
+		String value = this.mngr.get( key );
+		Assert.assertNull( value );
+		Assert.assertEquals( 0, this.mngr.getAsCollection( key ).size());
+
+		this.mngr.addToList( key, "v1" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "v1", value );
+		Assert.assertEquals(
+				new LinkedHashSet<>( Arrays.asList( "v1" )),
+				this.mngr.getAsCollection( key ));
+
+		this.mngr.addToList( key, "v3" );
+		this.mngr.addToList( key, "v2" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "v1, v3, v2", value );
+		Assert.assertEquals(
+				new LinkedHashSet<>( Arrays.asList( "v1", "v3", "v2" )),
+				this.mngr.getAsCollection( key ));
+
+		this.mngr.removeFromList( key, "v3" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "v1, v2", value );
+		Assert.assertEquals(
+				new LinkedHashSet<>( Arrays.asList( "v1", "v2" )),
+				this.mngr.getAsCollection( key ));
+
+		this.mngr.removeFromList( key, "v3" );
+		this.mngr.removeFromList( key, "v2" );
+		this.mngr.removeFromList( key, "v1" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "", value );
+		Assert.assertEquals( 0, this.mngr.getAsCollection( key ).size());
 	}
 }

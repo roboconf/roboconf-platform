@@ -27,12 +27,16 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -41,6 +45,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.api.IPreferencesMngr;
 
 /**
@@ -81,16 +86,26 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 	@Override
 	public void updateProperties( Dictionary<?,?> properties ) {
 
+		// Ignore iPojo properties
+		final List<String> propertiesToSkip = Arrays.asList(
+				"component",
+				"felix.fileinstall.filename" );
+
 		Map<String,String> map = new HashMap<> ();
 		for( Enumeration<?> en = properties.keys(); en.hasMoreElements(); ) {
+
 			Object key = en.nextElement();
-			Object value = properties.get( key );
+			String keyAsString = String.valueOf( key );
+			if( propertiesToSkip.contains( keyAsString ))
+				continue;
 
 			// "null" are not acceptable values in dictionaries
 			// (OSGi often use Hash tables)
-			map.put( String.valueOf( key ), String.valueOf( value ));
+			Object value = properties.get( key );
+			map.put( keyAsString, String.valueOf( value ));
 		}
 
+		this.cache.clear();
 		this.cache.putAll( map );
 		this.logger.fine( "Preferences were updated in bulk mode." );
 	}
@@ -138,6 +153,7 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 
 		// Log
 		this.logger.fine( "Preference with key '" + key + "' is being updated." );
+		this.logger.finest( "New preference value: " + key + " = " + value );
 
 		// Update the cache right away
 		String realValue = value == null ? "" : value;
@@ -145,15 +161,53 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 
 		// Update the config admin property.
 		// This will invoke (indirectly) the "updateProperties" method.
-		// It will simply reupdate the cache, it does not cost a lot.
+		// It will simply update the cache, it does not cost a lot.
 		if( this.configAdmin != null ) {
-			Configuration config = this.configAdmin.getConfiguration( PID );
-			config.getProperties().put( key, realValue );
-			config.update();
+			Configuration config = this.configAdmin.getConfiguration( PID, null );
+
+			// Do NOT be too smart here.
+			// Felix's implementation returns a new object every time
+			// one invoke "config.getProperties()". So, we do not have a direct
+			// access to the properties and "config.update()" does not work.
+			//
+			// So, we store the result of "config.getProperties()" in a variable.
+			// We update this temporary map. And then, we pass the map as a parameter
+			// to "config.update()". Manual tests with Karaf have shown it does not work
+			// otherwise.
+			Dictionary<Object,Object> props = config.getProperties();
+			props.put( key, realValue );
+			config.update( props );
+
+		} else {
+			this.logger.warning( "Config Admin is not available." );
 		}
 
 		// We need to mix both approaches here so that this API works in
 		// both OSGi and non-OSGi environments.
+	}
+
+
+	@Override
+	public void addToList( String key, String value ) throws IOException {
+
+		Collection<String> values = getPreferencesAsCollection( key );
+		values.add( value );
+		save( key, Utils.format( values, ", " ));
+	}
+
+
+	@Override
+	public void removeFromList( String key, String value ) throws IOException {
+
+		Collection<String> values = getPreferencesAsCollection( key );
+		values.remove( value );
+		save( key, Utils.format( values, ", " ));
+	}
+
+
+	@Override
+	public Collection<String> getAsCollection( String key ) {
+		return getPreferencesAsCollection( key );
 	}
 
 
@@ -189,5 +243,13 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 		}
 
 		return result;
+	}
+
+
+	private Set<String> getPreferencesAsCollection( String key ) {
+
+		String listAsString = get( key, "" );
+		List<String> list = Utils.filterEmptyValues( Utils.splitNicely( listAsString, "," ));
+		return new LinkedHashSet<>( list );
 	}
 }

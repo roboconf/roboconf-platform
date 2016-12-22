@@ -146,7 +146,7 @@ public final class ItUtils {
 		// For some tests however, we must also be sure that the REST services are online.
 		// The most simple solution is to wait for the applications listing to work.
 
-		URI targetUri = UriUtils.urlToUri( "http://localhost:" + serverPort + "/applications" );
+		URI targetUri = UriUtils.urlToUri( "http://localhost:" + serverPort + "/roboconf-dm/applications" );
 		for( int i=0; i<20; i++ ) {
 			Thread.sleep( 1000 );
 			String s = "";

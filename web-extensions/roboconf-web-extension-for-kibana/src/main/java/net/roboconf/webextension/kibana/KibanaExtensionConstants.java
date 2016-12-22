@@ -23,38 +23,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
+package net.roboconf.webextension.kibana;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class PreferenceTest {
+public interface KibanaExtensionConstants {
 
-	@Test
-	public void verifyToString() {
-
-		Preference pref = new Preference( null, null, null );
-		Assert.assertNull( pref.toString());
-
-		pref = new Preference( "key", "value", null );
-		Assert.assertEquals( "key", pref.toString());
-
-		for( PreferenceKeyCategory cat : PreferenceKeyCategory.values()) {
-			Assert.assertNotNull( cat.toString());
-			Assert.assertNotNull( cat.getDescription());
-		}
-	}
-
-	@Test
-	public void testWhich() {
-
-		Assert.assertEquals( PreferenceKeyCategory.EMAIL, PreferenceKeyCategory.which( "email" ));
-		Assert.assertEquals( PreferenceKeyCategory.EMAIL, PreferenceKeyCategory.which( "eMAil" ));
-		Assert.assertNull( PreferenceKeyCategory.which( "nawak" ));
-	}
+	String CONTEXT = "/roboconf-web-extension/kibana";
 }
