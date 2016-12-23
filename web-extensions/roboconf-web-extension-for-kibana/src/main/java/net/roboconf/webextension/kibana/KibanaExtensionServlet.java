@@ -101,6 +101,13 @@ public class KibanaExtensionServlet extends HttpServlet {
 		String content = null;
 		String path = req.getRequestURI().substring( req.getServletPath().length());
 
+		// Handle CORS
+		resp.addHeader( "Access-Control-Allow-Origin","*" );
+		resp.addHeader( "Access-Control-Allow-Methods", "GET, DELETE, POST, OPTIONS" );
+		String reqHead = req.getHeader( "Access-Control-Request-Headers" );
+		if( ! Utils.isEmptyOrWhitespaces( reqHead ))
+			resp.addHeader( "Access-Control-Allow-Headers", reqHead );
+
 		// Prepare the response
 		if( Utils.isEmptyOrWhitespaces( path ) || "/".equals( path )) {
 			List<Application> applications = new ArrayList<> ();
@@ -145,9 +152,9 @@ public class KibanaExtensionServlet extends HttpServlet {
 		StringBuilder sb = new StringBuilder();
 		sb.append( "<p>This page lists all the Kibana Dashboards for Roboconf applications.<br />\n" );
 		sb.append( "Notice that all the agents are considered as having Decanter installed and configured to work " );
-		sb.append( "with Elastic Search and Kibana. Please, refer to <a href=\"\">this page</a> for more details.</p>\n" );
+		sb.append( "with Elastic Search and Kibana. Please, refer to <a href=\"\">this page</a> for more details.</p>\n<br />\n" );
 
-		sb.append( "<table>\n<tr>\n" );
+		sb.append( "<table class=\"table table-hover table-rbcf\">\n<tr>\n" );
 		sb.append( "\t<th>Application Name</th>\n" );
 		sb.append( "\t<th>Application's Dashboard</th>\n" );
 		sb.append( "\t<th>Agents List</th>\n" );
@@ -200,9 +207,9 @@ public class KibanaExtensionServlet extends HttpServlet {
 		sb.append( "<p>This page lists all the Kibana Dashboards for " );
 		sb.append( application.getName());
 		sb.append( ".<br />\nNotice that all the agents are considered as having Decanter installed and configured to work " );
-		sb.append( "with Elastic Search and Kibana. Please, refer to <a href=\"\">this page</a> for more details.</p>\n" );
+		sb.append( "with Elastic Search and Kibana. Please, refer to <a href=\"\">this page</a> for more details.</p>\n<br />\n" );
 
-		sb.append( "<table>\n<tr>\n" );
+		sb.append( "<table class=\"table table-hover table-rbcf\">\n<tr>\n" );
 		sb.append( "\t<th>Instance Path</th>\n" );
 		sb.append( "\t<th>Associated Dashboard</th>\n" );
 		sb.append( "</tr>\n" );

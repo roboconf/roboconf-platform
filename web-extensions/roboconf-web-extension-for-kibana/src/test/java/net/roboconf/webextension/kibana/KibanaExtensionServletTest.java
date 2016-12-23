@@ -77,8 +77,7 @@ public class KibanaExtensionServletTest {
 
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
 		servlet.doGet( req, resp );
-
-		Mockito.verify( resp, Mockito.only()).sendError( HttpServletResponse.SC_NOT_FOUND );
+		Mockito.verify( resp ).sendError( HttpServletResponse.SC_NOT_FOUND );
 	}
 
 
@@ -96,8 +95,7 @@ public class KibanaExtensionServletTest {
 
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
 		servlet.doGet( req, resp );
-
-		Mockito.verify( resp, Mockito.only()).sendError( HttpServletResponse.SC_NOT_FOUND );
+		Mockito.verify( resp ).sendError( HttpServletResponse.SC_NOT_FOUND );
 	}
 
 
@@ -123,7 +121,7 @@ public class KibanaExtensionServletTest {
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
 		servlet.doGet( req, resp );
 
-		Mockito.verify( resp, Mockito.only()).getOutputStream();
+		Mockito.verify( resp ).getOutputStream();
 		String s = wrappedOs.os.toString( "UTF-8" );
 		Assert.assertTrue( s.contains( "\t<th>Agents List</th>\n" ));
 	}
@@ -147,7 +145,7 @@ public class KibanaExtensionServletTest {
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
 		servlet.doGet( req, resp );
 
-		Mockito.verify( resp, Mockito.only()).getOutputStream();
+		Mockito.verify( resp ).getOutputStream();
 		String s = wrappedOs.os.toString( "UTF-8" );
 		Assert.assertTrue( s.contains( "\t<th>Agents List</th>\n" ));
 	}
@@ -175,7 +173,7 @@ public class KibanaExtensionServletTest {
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
 		servlet.doGet( req, resp );
 
-		Mockito.verify( resp, Mockito.only()).getOutputStream();
+		Mockito.verify( resp ).getOutputStream();
 		String s = wrappedOs.os.toString( "UTF-8" );
 		Assert.assertFalse( s.contains( "\t<th>Agents List</th>\n" ));
 		Assert.assertTrue( s.contains( "\t<th>Associated Dashboard</th>\n" ));
