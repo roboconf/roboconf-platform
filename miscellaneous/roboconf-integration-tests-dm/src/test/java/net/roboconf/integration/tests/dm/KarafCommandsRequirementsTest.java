@@ -49,6 +49,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.ManifestUtils;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.scheduler.IScheduler;
 import net.roboconf.integration.tests.commons.AbstractIntegrationTest;
 import net.roboconf.integration.tests.commons.ItConfigurationBean;
 import net.roboconf.integration.tests.commons.internal.ItUtils;
@@ -65,6 +66,9 @@ public class KarafCommandsRequirementsTest extends DmTest {
 
 	@Inject
 	protected Manager manager;
+
+	@Inject
+	protected IScheduler scheduler;
 
 
 	@ProbeBuilder
