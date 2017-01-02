@@ -2,7 +2,7 @@
 
 <!--
    Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
-   
+
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
    as a "Result" pursuant to the terms and conditions of the LINAGORA
@@ -23,7 +23,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-  -->
+-->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
@@ -69,9 +69,34 @@
 			<scope>runtime</scope>
 		</dependency>
 		
+		<!-- Test dependencies, to generate the configuration file for the preferences -->
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-core</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		
 	</dependencies>
 
 	<build>
+		<sourceDirectory>src/build/java</sourceDirectory>
+	
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -135,6 +160,30 @@
 				<configuration>
 					<includeResources>false</includeResources>
 				</configuration>
+			</plugin>
+
+			<!-- Generate the content of the "net.roboconf.dm.preferences" file -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>test-compile</phase>
+						<configuration>
+							<failOnError>true</failOnError>
+							<target>
+								<property name="test_classpath" refid="maven.test.classpath"/>
+								<property name="project_location" value="${project.basedir}" />
+								<java classname="net.roboconf.karaf.dist.dm.GeneratePreferencesFile" classpath="${test_classpath}" failonerror="true">
+									<arg value="${project_location}/target/assembly/etc/net.roboconf.dm.preferences.cfg" />
+								</java>
+							</target>	
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

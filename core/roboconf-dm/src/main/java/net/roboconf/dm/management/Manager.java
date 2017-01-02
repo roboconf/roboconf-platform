@@ -102,6 +102,7 @@ public class Manager implements IReconfigurable {
 	// Injected by iPojo or Admin Config
 	protected String messagingType;
 	protected String domain = Constants.DEFAULT_DOMAIN;
+	protected IPreferencesMngr preferencesMngr;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
@@ -116,7 +117,6 @@ public class Manager implements IReconfigurable {
 	private final InstancesMngrImpl instancesMngr;
 
 	private final IRandomMngr randomMngr;
-	private final IPreferencesMngr preferencesMngr;
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
 	private final ITargetsMngr targetsMngr;
@@ -137,8 +137,7 @@ public class Manager implements IReconfigurable {
 		// We do not want to mix N frameworks.
 		this.notificationMngr = new NotificationMngrImpl();
 		this.configurationMngr = new ConfigurationMngrImpl();
-		this.preferencesMngr = new PreferencesMngrImpl( this.configurationMngr );
-		this.randomMngr = new RandomMngrImpl( this.preferencesMngr );
+		this.randomMngr = new RandomMngrImpl();
 
 		this.messagingMngr = new MessagingMngrImpl();
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
@@ -146,7 +145,7 @@ public class Manager implements IReconfigurable {
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
 		this.commandsMngr = new CommandsMngrImpl( this );
 
-		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr, this.preferencesMngr );
+		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr );
 		this.applicationMngr = new ApplicationMngrImpl(
 				this.notificationMngr, this.configurationMngr,
 				this.targetsMngr, this.messagingMngr,
@@ -158,6 +157,11 @@ public class Manager implements IReconfigurable {
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 		this.instancesMngr.setRuleBasedHandler( this.autonomicMngr );
+
+		// The manager is supposed to be an API.
+		// To make it simple to use in non-OSGi environments, we instantiate a default set of preferences.
+		// This will prevent NPEs. In OSGi environments, iPojo will override it.
+		setPreferencesMngr( new PreferencesMngrImpl());
 	}
 
 
@@ -173,9 +177,6 @@ public class Manager implements IReconfigurable {
 	public void start() {
 		this.logger.info( "The DM is about to be launched." );
 
-		// Load the preferences
-		this.preferencesMngr.loadProperties();
-
 		// Start the messaging
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
 		this.messagingClient = new RCDm( this.applicationMngr );
@@ -186,7 +187,9 @@ public class Manager implements IReconfigurable {
 		// Run the timer
 		this.timer = new Timer( "Roboconf's Management Timer", false );
 		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.applicationMngr, this.messagingMngr ), 0, TIMER_PERIOD );
-		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.applicationMngr ), 0, Constants.HEARTBEAT_PERIOD );
+		this.timer.scheduleAtFixedRate(
+				new CheckerHeartbeatsTask( this.applicationMngr, this.notificationMngr ),
+				0, Constants.HEARTBEAT_PERIOD );
 
 		// Configure the messaging
 		reconfigure();
@@ -197,6 +200,9 @@ public class Manager implements IReconfigurable {
 
 		// We must update instance states after we restored applications
 		restoreAllInstances();
+
+		// Enable notifications to listeners
+		this.notificationMngr.enableNotifications();
 
 		this.logger.info( "The DM was launched." );
 	}
@@ -210,17 +216,21 @@ public class Manager implements IReconfigurable {
 	 */
 	public void stop() {
 
+		// Cancel the timer
 		this.logger.info( "The DM is about to be stopped." );
 		if( this.timer != null ) {
 			this.timer.cancel();
 			this.timer =  null;
 		}
 
-		if( this.messagingClient != null ) {
+		// Disable notifications to listeners
+		this.notificationMngr.disableNotifications();
 
-			// Stops listening to the debug queue.
+		// Stops listening to the debug queue.
+		if( this.messagingClient != null ) {
 			try {
 				this.messagingClient.listenToTheDm( ListenerCommand.STOP );
+
 			} catch ( IOException e ) {
 				this.logger.log( Level.WARNING, "Cannot stop to listen to the debug queue", e );
 			}
@@ -358,6 +368,16 @@ public class Manager implements IReconfigurable {
 		this.logger.fine( "Domain set to " + domain );
 		if( this.messagingClient != null )
 			this.messagingClient.setDomain( domain );
+	}
+
+
+	/**
+	 * @param preferencesMngr the preferencesMngr to set
+	 */
+	public void setPreferencesMngr( IPreferencesMngr preferencesMngr ) {
+		this.preferencesMngr = preferencesMngr;
+		((RandomMngrImpl) this.randomMngr).setPreferencesMngr( preferencesMngr );
+		((AutonomicMngrImpl) this.autonomicMngr).setPreferencesMngr( preferencesMngr );
 	}
 
 

@@ -291,6 +291,7 @@ public abstract class AbstractLifeCycleManager {
 
 		} catch( Exception e ) {
 			newStatus = InstanceStatus.DEPLOYED_STOPPED;
+			Utils.logException( this.logger, e );
 
 		} finally {
 			// Update the status of all the instances
@@ -420,7 +421,7 @@ public abstract class AbstractLifeCycleManager {
 			}
 
 		} finally {
-			List<Instance> forNotifications = new ArrayList<Instance> ();
+			List<Instance> forNotifications = new ArrayList<> ();
 			for( Instance i : instancesToStop ) {
 				if( i.getStatus() != InstanceStatus.STOPPING
 						&& i.getStatus() != InstanceStatus.UNRESOLVED )

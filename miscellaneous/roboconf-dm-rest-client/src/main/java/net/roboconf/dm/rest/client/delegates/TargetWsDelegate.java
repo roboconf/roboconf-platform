@@ -95,7 +95,7 @@ public class TargetWsDelegate {
 		this.logger.finer( "Creating a new target."  );
 
 		WebResource path = this.resource.path( UrlConstants.TARGETS );
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class, targetContent );
+		ClientResponse response = path.post( ClientResponse.class, targetContent );
 		handleResponse( response );
 
 		return response.getEntity( String.class );

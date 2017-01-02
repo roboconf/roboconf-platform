@@ -230,7 +230,9 @@ public class AgentMessageProcessorBasicTest {
 		applicationBindings.put( "Tpl1", new HashSet<>( Arrays.asList( "app1", "app3" )));
 		applicationBindings.put( "Tpl2", new HashSet<>( Arrays.asList( "app2" )));
 
-		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings );
+		Map<String,byte[]> scriptResources = new HashMap<> ();
+
+		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings, scriptResources );
 
 		// Send the message
 		Assert.assertNull( processor.scopedInstance );
@@ -565,6 +567,30 @@ public class AgentMessageProcessorBasicTest {
 
 		Assert.assertEquals( 1, processor.applicationBindings.size());
 		Assert.assertEquals( new HashSet<>( Arrays.asList( "demo" )), processor.applicationBindings.get( "ext" ));
+
+		// No imported added before => nothing to update
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+	}
+
+
+	@Test
+	public void testApplicationBinding_noPrevious_noImportAdded_noNPE() throws IllegalAccessException {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+
+		// Create a binding
+		Assert.assertEquals( 0, processor.applicationBindings.size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "ext", null );
+		processor.processMessage( msg );
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertTrue( processor.applicationBindings.containsKey( "ext" ));
+		Assert.assertEquals( null, processor.applicationBindings.get( "ext" ));
 
 		// No imported added before => nothing to update
 		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());

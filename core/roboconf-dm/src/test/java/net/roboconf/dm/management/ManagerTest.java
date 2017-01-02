@@ -38,11 +38,13 @@ import org.mockito.Mockito;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.dm.internal.api.impl.PreferencesMngrImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.api.IInstancesMngr;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -143,7 +145,17 @@ public class ManagerTest {
 		Assert.assertNotNull( this.manager.notificationMngr());
 		Assert.assertNotNull( this.manager.targetsMngr());
 		Assert.assertNotNull( this.manager.commandsMngr());
+
+		// The preferences are injected by iPojo
+		IPreferencesMngr impl1 = this.manager.preferencesMngr();
+		Assert.assertNotNull( impl1 );
+
+		IPreferencesMngr impl2 = new PreferencesMngrImpl();
+		this.manager.setPreferencesMngr( impl2 );
 		Assert.assertNotNull( this.manager.preferencesMngr());
+
+		Assert.assertSame( impl2, this.manager.preferencesMngr());
+		Assert.assertNotSame( impl1, this.manager.preferencesMngr());
 	}
 
 
@@ -244,7 +256,7 @@ public class ManagerTest {
 			// Create a binding between this application and itself.
 			// It does not make sense, but this is for test.
 			Assert.assertEquals( 0, ma.getApplication().getApplicationBindings().size());
-			this.manager.applicationMngr().bindApplication( ma, tpl.getExternalExportsPrefix(), ma.getName());
+			this.manager.applicationMngr().bindOrUnbindApplication( ma, tpl.getExternalExportsPrefix(), ma.getName(), true );
 			Assert.assertEquals( 1, ma.getApplication().getApplicationBindings().size());
 
 			// Bindings must have been saved.
@@ -258,6 +270,20 @@ public class ManagerTest {
 
 			Assert.assertEquals( 1, ma.getApplication().getApplicationBindings().size());
 			Assert.assertTrue( ma.getApplication().getApplicationBindings().get( tpl.getExternalExportsPrefix()).contains( ma.getName()));
+
+			// Unbind and verify
+			this.manager.applicationMngr().bindOrUnbindApplication( ma, tpl.getExternalExportsPrefix(), ma.getName(), false );
+			Assert.assertEquals( 0, ma.getApplication().getApplicationBindings().size());
+
+			// Bindings must have been saved.
+			// Remove the application from the cache and restore it.
+			managerWrapper.getNameToManagedApplication().remove( ma.getName());
+			Assert.assertNull( this.manager.applicationMngr().findApplicationByName( ma.getName()));
+
+			this.manager.applicationMngr().restoreApplications();
+			ma = this.manager.applicationMngr().findManagedApplicationByName( ma.getName());
+			Assert.assertNotNull( ma );
+			Assert.assertEquals( 0, ma.getApplication().getApplicationBindings().size());
 
 		} finally {
 			this.manager.stop();

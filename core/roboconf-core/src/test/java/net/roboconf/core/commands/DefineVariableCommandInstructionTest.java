@@ -29,12 +29,12 @@ import java.io.File;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.ParsingError;
-
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -167,6 +167,66 @@ public class DefineVariableCommandInstructionTest {
 
 
 	@Test
+	public void testValidate_11() {
+
+		String line = "define ftime = at " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )";
+		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		List<ParsingError> errors = instr.validate();
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, errors.get( 0 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testValidate_12() {
+
+		String line = "define m = " + DefineVariableCommandInstruction.MILLI_TIME + " " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )";
+		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		List<ParsingError> errors = instr.validate();
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, errors.get( 0 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testValidate_13() {
+
+		String line = "define m = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )" + " " + DefineVariableCommandInstruction.MILLI_TIME;
+		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		List<ParsingError> errors = instr.validate();
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, errors.get( 0 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testValidate_14() {
+
+		String line = "define m = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )" + " oops ";
+		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		List<ParsingError> errors = instr.validate();
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, errors.get( 0 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testValidate_15() {
+
+		String line = "define m = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "invalid pattern )";
+		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		List<ParsingError> errors = instr.validate();
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_INVALID_DATE_PATTERN, errors.get( 0 ).getErrorCode());
+	}
+
+
+	@Test
 	public void testUpdateContext() {
 
 		// Preparation
@@ -179,6 +239,10 @@ public class DefineVariableCommandInstructionTest {
 		String instr7 = "define indexWithoutInstance = oops " + DefineVariableCommandInstruction.SMART_INDEX;
 		String instr8 = "define index = oops " + DefineVariableCommandInstruction.SMART_INDEX + " under /tomcat-vm";
 		String instr9 = "define tt = t " + DefineVariableCommandInstruction.SMART_INDEX + " t under /tomcat-vm";
+		String instr10 = "define ftime1 = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )";
+		String instr11 = "define ftime2 = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "MMMM)";
+		String instr12 = "define ftime3 = something happenned at $(ftime1)";
+		String instr13 = "define ftime4 = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "'today at' HH:mm:ss )";
 
 		// Assertions
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, instr1, 1 );
@@ -226,13 +290,40 @@ public class DefineVariableCommandInstructionTest {
 		Assert.assertNotNull( this.context.variables.get( "tt" ));
 		Assert.assertEquals( "t 1 t", this.context.variables.get( "tt" ));
 
+		instr = new DefineVariableCommandInstruction( this.context, instr10, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertNotNull( this.context.variables.get( "ftime1" ));
+		Assert.assertNotEquals( "HH:mm:ss", this.context.variables.get( "ftime1" ));
+		Assert.assertTrue( this.context.variables.get( "ftime1" ).matches( "\\d\\d:\\d\\d:\\d\\d" ));
+
+		instr = new DefineVariableCommandInstruction( this.context, instr11, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertNotNull( this.context.variables.get( "ftime2" ));
+		Assert.assertNotEquals( "MMM", this.context.variables.get( "ftime2" ));
+		Assert.assertTrue( this.context.variables.get( "ftime2" ).matches( "[a-zA-Z]+.*" ));
+
+		instr = new DefineVariableCommandInstruction( this.context, instr12, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertEquals(
+				"something happenned at " + this.context.variables.get( "ftime1" ),
+				this.context.variables.get( "ftime3" ));
+
+		instr = new DefineVariableCommandInstruction( this.context, instr13, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertNotNull( this.context.variables.get( "ftime4" ));
+		Assert.assertTrue( this.context.variables.get( "ftime4" ).matches( "today at \\d\\d:\\d\\d:\\d\\d" ));
+
+		// Verify the smart index works as expected
 		instr = new DefineVariableCommandInstruction( this.context, instr8, 1 );
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "index" ));
 		Assert.assertEquals( "oops 1", this.context.variables.get( "index" ));
 
-		// Verify the smart index works as expected
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "index" ));
 		Assert.assertEquals( "oops 1", this.context.variables.get( "index" ));

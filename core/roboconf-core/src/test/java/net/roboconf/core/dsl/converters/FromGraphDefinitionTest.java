@@ -26,8 +26,10 @@
 package net.roboconf.core.dsl.converters;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -38,6 +40,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -58,6 +61,68 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 		Assert.assertEquals( "my-own-installer", graphs.getRootComponents().iterator().next().getInstallerName());
+	}
+
+
+	@Test
+	public void test_WithSpecialNames() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/special-names.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 4, graphs.getRootComponents().size());
+
+		List<String> componentNames = new ArrayList<> ();
+		for( Component component : graphs.getRootComponents() ) {
+			componentNames.add( component.getName());
+		}
+
+		Assert.assertTrue( componentNames.contains( "ImportingComponent" ));
+		Assert.assertTrue( componentNames.contains( "ExportingComponent" ));
+		Assert.assertTrue( componentNames.contains( "FacetComponent" ));
+		Assert.assertTrue( componentNames.contains( "InstanceOfComponent" ));
+	}
+
+
+	@Test
+	public void test_complexVariablesValues() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/component-with-complex-variables-values.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 1, graphs.getRootComponents().size());
+		Component comp = graphs.getRootComponents().iterator().next();
+		Assert.assertEquals( 6, comp.exportedVariables.size());
+
+		ExportedVariable var = comp.exportedVariables.get( "key1" );
+		Assert.assertEquals( "value1", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key2" );
+		Assert.assertEquals( "value2", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key3" );
+		Assert.assertEquals( "this is key number 3", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key4" );
+		Assert.assertEquals( "key4", var.getValue());
+		Assert.assertTrue( var.isRandom());
+		Assert.assertEquals( RandomKind.PORT, var.getRandomKind());
+
+		var = comp.exportedVariables.get( "key5" );
+		Assert.assertEquals( "key5", var.getValue());
+		Assert.assertFalse( var.isRandom());
+
+		var = comp.exportedVariables.get( "key6" );
+		Assert.assertEquals( " key; 6 ", var.getValue());
+		Assert.assertTrue( var.isRandom());
+		Assert.assertEquals( RandomKind.PORT, var.getRandomKind());
 	}
 
 
@@ -617,5 +682,32 @@ public class FromGraphDefinitionTest {
 		Component comp2 = ComponentHelpers.findComponent( graphs, "comp2" );
 		Assert.assertNotNull( comp2 );
 		Assert.assertNull( fromDef.getTypeAnnotations().get( comp2.getName()));
+	}
+
+
+	@Test
+	public void testQuotedProperties() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/component-with-quoted-values.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile(), false );
+		fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 4, fromDef.getErrors().size());
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
+
+		ParsingError error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTALLER_NAME, error.getErrorCode());
+
+		error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_CHILD_NAME, error.getErrorCode());
+		Assert.assertEquals( "Child name: \"toto\"", error.getDetails());
+
+		error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, error.getErrorCode());
+		Assert.assertEquals( "Invalid name: \"A\"", error.getDetails());
+
+		error = iterator.next();
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, error.getErrorCode());
+		Assert.assertEquals( "Invalid name: \"component\"", error.getDetails());
 	}
 }

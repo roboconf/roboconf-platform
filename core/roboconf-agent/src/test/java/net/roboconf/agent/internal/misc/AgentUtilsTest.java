@@ -35,16 +35,19 @@ import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
 public class AgentUtilsTest {
 
@@ -55,8 +58,14 @@ public class AgentUtilsTest {
 
 	@After
 	public void clearAgentDirectories() throws Exception {
-		File f = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" );
+		File f = new File( Constants.WORK_DIRECTORY_AGENT );
 		Utils.deleteFilesRecursively( f );
+	}
+
+
+	private boolean isUnix() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return (os.contains("nix")  || os.contains("nux") || os.contains("aix") );
 	}
 
 
@@ -270,5 +279,29 @@ public class AgentUtilsTest {
 
 		String expectedIp = InetAddress.getLocalHost().getHostAddress();
 		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( AgentConstants.DEFAULT_NETWORK_INTERFACE ));
+	}
+
+	@Test
+	public void testExecuteScriptResources() throws IOException, InterruptedException {
+
+		Assume.assumeTrue( isUnix());
+
+		//prepare our resources
+		File scriptsDir = this.folder.newFolder();
+
+		AgentUtils.executeScriptResources( scriptsDir );
+		Assert.assertEquals(0, scriptsDir.listFiles().length);
+
+		File script = new File( scriptsDir, "toto-script.sh" );
+		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script);
+
+		AgentUtils.executeScriptResources( scriptsDir );
+		File toto = new File(scriptsDir,"toto.txt");
+
+		Assert.assertTrue( toto.exists() );
+		Assert.assertEquals( 2,scriptsDir.listFiles().length );
+
+		String s = Utils.readFileContent( toto );
+		Assert.assertEquals("totototototo",s.trim());
 	}
 }

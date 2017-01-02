@@ -33,14 +33,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -53,7 +53,7 @@ public class ParsingModelIoTest {
 	@Test
 	public void testFileTypes() throws Exception {
 
-		Map<String,Integer> fileNameToFileType = new LinkedHashMap<String,Integer> ();
+		Map<String,Integer> fileNameToFileType = new LinkedHashMap<> ();
 		fileNameToFileType.put( "commented-import-1.graph", FileDefinition.AGGREGATOR );
 		fileNameToFileType.put( "only-import-1.graph", FileDefinition.AGGREGATOR );
 		fileNameToFileType.put( "commented-import-3.graph", FileDefinition.AGGREGATOR );
@@ -96,10 +96,10 @@ public class ParsingModelIoTest {
 		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
 		Assert.assertEquals( 0, def.getParsingErrors().size());
 
-		List<AbstractBlock> toProcess = new ArrayList<AbstractBlock> ();
+		List<AbstractBlock> toProcess = new ArrayList<> ();
 		toProcess.addAll( def.getBlocks());
 
-		List<BlockInstanceOf> instances = new ArrayList<BlockInstanceOf> ();
+		List<BlockInstanceOf> instances = new ArrayList<> ();
 		while( ! toProcess.isEmpty()) {
 			AbstractBlock currentBlock = toProcess.remove( 0 );
 
@@ -121,7 +121,8 @@ public class ParsingModelIoTest {
 
 		List<File> validFiles = TestUtils.findTestFiles( PATH );
 		for( File f : validFiles ) {
-			if( ! "instance-with-space-after.instances".equals( f.getName()))
+			if( ! "instance-with-space-after.instances".equals( f.getName())
+					&& ! "component-with-complex-variables-values.graph".equals( f.getName()))
 				testLoadingAndWritingOfValidFile( f );
 		}
 	}

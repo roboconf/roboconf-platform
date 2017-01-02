@@ -26,6 +26,11 @@
 package net.roboconf.dm.management.api;
 
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +38,7 @@ import java.util.Properties;
 
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
+import net.roboconf.dm.internal.api.impl.RandomMngrImpl;
 
 /**
  * An API to store and retrieve DM preferences.
@@ -41,13 +47,29 @@ import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 public interface IPreferencesMngr {
 
 	// javax.mail keys.
+
+	@PreferenceDescription( desc = "The e-mail address of the sender.\nThis is a javax.mail property." )
 	String JAVAX_MAIL_FROM = "mail.from";
+
+	@PreferenceDescription( desc = "The user name for the SMTP server.\nThis is a javax.mail property." )
 	String JAVAX_MAIL_SMTP_USER = "mail.user";
+
+	@PreferenceDescription( desc = "The password for the SMTP server.\nThis is a javax.mail property." )
 	String JAVAX_MAIL_SMTP_PWD = "mail.password";
+
+	@PreferenceDescription( desc = "Whether authentication is required or not.\nThis is a javax.mail property.", values={ "true", "false" })
 	String JAVAX_MAIL_SMTP_AUTH = "mail.smtp.auth";
+
+	@PreferenceDescription( desc = "The host name or IP address of the SMTP server.\nThis is a javax.mail property." )
 	String JAVAX_MAIL_SMTP_HOST = "mail.smtp.host";
+
+	@PreferenceDescription( desc = "The port used to reach the SMTP server.\nThis is a javax.mail property." )
 	String JAVAX_MAIL_SMTP_PORT = "mail.smtp.port";
+
+	@PreferenceDescription( desc = "Whether TLS is enabled or not.\nThis is a javax.mail property.", values={ "true", "false" })
 	String JAVAX_MAIL_START_SSL_ENABLE = "mail.smtp.starttls.enable";
+
+	@PreferenceDescription( desc = "A list of trusted host names or IP addresses for secured connections.\nThis is a javax.mail property." )
 	String JAVAX_MAIL_SSL_TRUST = "mail.smtp.ssl.trust";
 
 	// General keys.
@@ -56,16 +78,33 @@ public interface IPreferencesMngr {
 	/**
 	 * Default email recipients.
 	 */
+	@PreferenceDescription(
+			desc =
+			"A list of default recipients that will receive all the e-mails sent by Roboconf.\n"
+			+ "These recipients come in addition to those configured somewhere else\n"
+			+ "(e.g. within a command or through the autonomic)."
+	)
 	String EMAIL_DEFAULT_RECIPIENTS = "email.default.recipients";
 
 	/**
 	 * The ports that must be excluded from random port generation.
 	 */
+	@PreferenceDescription(
+			desc =
+			"Instead of forcing a given port, it is possible to let Roboconf pick up one randomly.\n"
+			+ "Random ports are selected between " + RandomMngrImpl.PORT_MIN + " and " + RandomMngrImpl.PORT_MAX + ".\n"
+			+ "This preference allows to exclude one or several ports from being chosen by Roboconf.\n"
+			+ "Ports must be separated by a comma. Example: 11000, 11001, 11002"
+	)
 	String FORBIDDEN_RANDOM_PORTS = "forbidden.random.ports";
 
 	/**
 	 * The maximum number of VM the autonomic can create.
 	 */
+	@PreferenceDescription(
+			desc =
+			"The maximum number of VMs the autonomic can create.\nThis is a global maximum, the count is effctive for all the applications."
+	)
 	String AUTONOMIC_MAX_VM_NUMBER = "autonomic.maximum.vm.number";
 
 	/**
@@ -83,17 +122,25 @@ public interface IPreferencesMngr {
 	 * their execution.
 	 * </p>
 	 */
+	@PreferenceDescription(
+			values={ "true", "false" },
+			desc =
+			"Whether the maximum number of VMs is strict or if it could support some outbounds.\n"
+			+ "Given all the concurrency in Roboconf, it may happen several autonomic VMs are created at once and\n"
+			+ "may result in the maximum being a little overheaded.\n\n"
+			+ "Set it to \"true\" to be strict. Setting it to \"false\" may result in the maximum being never reached."
+	)
 	String AUTONOMIC_STRICT_MAX_VM_NUMBER = "autonomic.strict.maximum.vm.number";
 
-
 	/**
-	 * Loads the properties.
-	 * <p>
-	 * This method is not invoked in the constructor.
-	 * It must be explicitly be run by the DM when it starts, or by any client (e.g. in tests).
-	 * </p>
+	 * The user language (example: the web console).
 	 */
-	void loadProperties();
+	@PreferenceDescription(
+			values={ "EN (for English)", "FR (for French)" },
+			desc = "The user language (e.g. for the web console)."
+	)
+	String USER_LANGUAGE = "user.language";
+
 
 
 	/**
@@ -113,11 +160,26 @@ public interface IPreferencesMngr {
 
 	/**
 	 * Saves a key and its value.
+	 * <p>
+	 * This method updates the working cache and the configuration files.
+	 * </p>
+	 *
 	 * @param key a non-null key
 	 * @param value a non-null value
 	 * @throws IOException if something went wrong
 	 */
 	void save( String key, String value ) throws IOException;
+
+	/**
+	 * Update several properties at once.
+	 * <p>
+	 * Unlike {@link #save(String, String)}, this method only updates the working cache.
+	 * Modifications are not propagated to configuration files.
+	 * </p>
+	 *
+	 * @param properties the properties
+	 */
+	void updateProperties( Dictionary<?,?> properties );
 
 	/**
 	 * Deletes a key.
@@ -164,6 +226,10 @@ public interface IPreferencesMngr {
 			this.keyToCategory.put( EMAIL_DEFAULT_RECIPIENTS, PreferenceKeyCategory.EMAIL );
 
 			this.keyToCategory.put( AUTONOMIC_MAX_VM_NUMBER, PreferenceKeyCategory.AUTONOMIC );
+			this.keyToCategory.put( AUTONOMIC_STRICT_MAX_VM_NUMBER, PreferenceKeyCategory.AUTONOMIC );
+
+			this.keyToCategory.put( USER_LANGUAGE, PreferenceKeyCategory.LANGUAGE );
+			this.keyToCategory.put( FORBIDDEN_RANDOM_PORTS, PreferenceKeyCategory.MISCELLANEOUS );
 
 			// Define default values
 			this.keyToDefaultValue.put( JAVAX_MAIL_FROM, "dm@roboconf.net" );
@@ -172,6 +238,20 @@ public interface IPreferencesMngr {
 			this.keyToDefaultValue.put( JAVAX_MAIL_SMTP_PORT, "587" );
 			this.keyToDefaultValue.put( JAVAX_MAIL_SSL_TRUST, "smtp.gmail.com" );
 			this.keyToDefaultValue.put( JAVAX_MAIL_START_SSL_ENABLE, "true" );
+			this.keyToDefaultValue.put( USER_LANGUAGE, "EN" );
 		}
+	}
+
+
+	/**
+	 * An annotation that helps to generate the documentation for the "net.roboconf.dm.preferences" file.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	@Retention( RetentionPolicy.RUNTIME )
+	@Target( ElementType.FIELD )
+	public static @interface PreferenceDescription {
+
+		String desc() default "";
+		String[] values() default {};
 	}
 }

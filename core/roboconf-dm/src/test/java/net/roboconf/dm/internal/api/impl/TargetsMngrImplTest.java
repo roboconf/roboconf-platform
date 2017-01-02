@@ -40,6 +40,7 @@ import org.mockito.Mockito;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
@@ -55,6 +56,7 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarraa - UGA
  */
 public class TargetsMngrImplTest {
 
@@ -95,7 +97,7 @@ public class TargetsMngrImplTest {
 		props = this.mngr.findRawTargetProperties( targetId );
 		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
 
-		// missing handler
+		// Missing handler
 		try {
 			this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done" );
 			Assert.fail( "Update should have failed, the handler is missing." );
@@ -113,7 +115,7 @@ public class TargetsMngrImplTest {
 
 
 	@Test
-	public void testCreateTarget_targetIdIsRemoveCorrectly() throws Exception {
+	public void testCreateTarget_targetIdIsRemovedCorrectly() throws Exception {
 
 		String[] properties = {
 				"id: tid\nprop: ok\nhandler: h\nprop-after: ok",
@@ -142,17 +144,155 @@ public class TargetsMngrImplTest {
 	@Test
 	public void testCreateTargetFromFile() throws Exception {
 
-		File f = this.folder.newFile();
+		File f = this.folder.newFile("toto.properties");
 		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
 
-		String targetId = this.mngr.createTarget( f );
+		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+		Assert.assertFalse( targetDir.exists());
+
+		String targetId = this.mngr.createTarget( f, null );
 		Assert.assertEquals( "tid", targetId );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertEquals( 1, targetDir.listFiles().length);
 
 		String props = this.mngr.findRawTargetProperties( targetId );
 		Assert.assertEquals( "prop: value\nhandler: h", props );
 
 		this.mngr.deleteTarget( targetId );
+		Assert.assertFalse( targetDir.exists());
+
 		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+		Assert.assertFalse( targetDir.exists());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateTargetFromFile_noApplicationTemplate_conflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile("toto.properties");
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, null );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 1, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Recreate it => conflict
+		this.mngr.createTarget( f, null );
+	}
+
+
+	@Test
+	public void testCreateTargetFromFile_withApplicationTemplate_noConflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile("toto.properties");
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, tpl );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 2, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Create it with the same template => no conflict
+		this.mngr.createTarget( f, tpl );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateTargetFromFile_withApplicationTemplate_conflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile("toto.properties");
+		TestApplicationTemplate tpl1 = new TestApplicationTemplate();
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, tpl1 );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 2, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Create it from another template => conflict
+		TestApplicationTemplate tpl2 = new TestApplicationTemplate();
+		tpl2.setName( "whatever" );
+		this.mngr.createTarget( f, tpl2 );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateTargetFromFile_mix_conflict() throws Exception {
+
+		// Create a target
+		File f = this.folder.newFile("toto.properties");
+		try {
+			Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+			File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+			Assert.assertFalse( targetDir.exists());
+
+			String targetId = this.mngr.createTarget( f, null );
+			Assert.assertEquals( "tid", targetId );
+			Assert.assertTrue( targetDir.exists());
+			Assert.assertEquals( 1, targetDir.listFiles().length);
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception was expected here." );
+		}
+
+		// Create it from another template => conflict
+		TestApplicationTemplate tpl2 = new TestApplicationTemplate();
+		this.mngr.createTarget( f, tpl2 );
+	}
+
+
+	@Test
+	public void testCreateTargetFromFileAndApplicationTemplate() throws Exception {
+
+		File f = this.folder.newFile("toto.properties");
+		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+
+		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+		Assert.assertFalse( targetDir.exists());
+
+		String targetId = this.mngr.createTarget( f, new TestApplicationTemplate());
+		Assert.assertEquals( "tid", targetId );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertEquals( 2, targetDir.listFiles().length);
+
+		String props = this.mngr.findRawTargetProperties( targetId );
+		Assert.assertEquals( "prop: value\nhandler: h", props );
+
+		this.mngr.deleteTarget( targetId );
+		Assert.assertFalse( targetDir.exists());
+
+		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+		Assert.assertFalse( targetDir.exists());
 	}
 
 
@@ -160,6 +300,44 @@ public class TargetsMngrImplTest {
 	public void testUpdateTarget_whenTargetDoesNotExist() throws Exception {
 
 		this.mngr.updateTarget( "inexisting", "prop: ok\nhandler: h" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testAssociateTargetWith_nonScopedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+
+		String targetId = this.mngr.createTarget( "prop: ok\nid: abc\nhandler: h" );
+		this.mngr.associateTargetWith( targetId, app, mySqlPath );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testDissociateTargetFrom_nonScopedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.dissociateTargetFrom( app, mySqlPath );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testFindTargetId_nonScopedInstance_strict() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.findTargetId( app, mySqlPath, true );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testFindTargetId_nonScopedInstance_notStrict() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String mySqlPath = InstanceHelpers.computeInstancePath( app.getMySql());
+		this.mngr.findTargetId( app, mySqlPath, false );
 	}
 
 
@@ -816,6 +994,47 @@ public class TargetsMngrImplTest {
 
 
 	@Test
+	public void testCopyOriginalMapping_withComponents() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		String t1 = this.mngr.createTarget( "prop: ok\nid: t1\nhandler: h" );
+		String t2 = this.mngr.createTarget( "prop: ok\nid: t2\nhandler: h" );
+
+		// Association is on the template and BY DEFAULT
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
+		this.mngr.associateTargetWith( t1, app.getTemplate(), null );
+
+		Assert.assertNull( this.mngr.findTargetId( app.getTemplate(), instancePath, true ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app.getTemplate(), instancePath, false ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, false ));
+
+		this.mngr.associateTargetWith( t2, app.getTemplate(), "@" + app.getMySqlVm().getComponent().getName());
+
+		Assert.assertNull( this.mngr.findTargetId( app.getTemplate(), instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app.getTemplate(), instancePath, false ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, false ));
+
+		// Copy the mapping
+		this.mngr.copyOriginalMapping( app );
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, false ));
+
+		// Remove the component association
+		this.mngr.dissociateTargetFrom( app, "@" + app.getMySqlVm().getComponent().getName());
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app, instancePath, false ));
+
+		// We can override the association
+		this.mngr.associateTargetWith( t2, app, instancePath );
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, true ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath, false ));
+	}
+
+
+	@Test
 	public void testCopyOriginalMapping_withException() throws Exception {
 
 		// Check that when the association fails for one instance,
@@ -1033,5 +1252,73 @@ public class TargetsMngrImplTest {
 		newMngr = new TargetsMngrImpl( this.configurationMngr );
 		Assert.assertEquals( targetId_1, newMngr.findTargetId( app, null, true ));
 		Assert.assertNull( newMngr.findTargetId( app, path, true ));
+	}
+
+
+	@Test
+	public void testFindScriptResources() throws Exception {
+
+		// Precondition: all the right scripts were copied in the target directory.
+		// Prepare our resources
+		TestApplication app = new TestApplication();
+		String targetId1 = this.mngr.createTarget( "id: tid1\nhandler: h" );
+		String targetId2 = this.mngr.createTarget( "id: tid2\nhandler: h" );
+
+		File dir1 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId1 );
+		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
+		Utils.createDirectory( new File( dir1, "sub" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "target-script.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/whatever.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/properties-for-whatever.properties" ));
+		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "toto-script.py" ));
+
+		// Associate the application with the first target ID
+		this.mngr.associateTargetWith( targetId1, app, null );
+		Map<String,byte[]> resources = this.mngr.findScriptResources( targetId1 );
+		Assert.assertEquals( 3, resources.size());
+		Assert.assertTrue( resources.containsKey( "target-script.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/whatever.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/properties-for-whatever.properties" ));
+
+		Map<String,byte[]> resourcesByInst = this.mngr.findScriptResources( app, app.getMySqlVm());
+		Assert.assertEquals( resources.keySet(), resourcesByInst.keySet());
+
+		// Change the target for the scoped instance
+		this.mngr.associateTargetWith( targetId2, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		resources = this.mngr.findScriptResources( targetId1 );
+		Assert.assertEquals( 3, resources.size());
+		Assert.assertTrue( resources.containsKey( "target-script.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/whatever.sh" ));
+		Assert.assertTrue( resources.containsKey( "sub/properties-for-whatever.properties" ));
+
+		resourcesByInst = this.mngr.findScriptResources( app, app.getMySqlVm());
+		Assert.assertEquals( 1, resourcesByInst.size());
+		Assert.assertTrue( resourcesByInst.containsKey( "toto-script.py" ));
+	}
+
+
+	@Test
+	public void testCopyScriptsInTargetDirectory() throws IOException {
+
+		File f = new File(this.folder.newFolder(), "toto.properties");
+		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( f.getParentFile(), "toto.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\ntouch titi.txt", new File( f.getParentFile(), "titi.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho tototo", new File( f.getParentFile(), "toto-script.sh" ));
+
+		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
+		Assert.assertFalse( targetDir.exists());
+
+		TestApplicationTemplate appT = new TestApplicationTemplate();
+		String targetId = this.mngr.createTarget( f, appT );
+		Assert.assertEquals( "tid", targetId );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertEquals( 4, targetDir.list().length);
+
+		Assert.assertTrue( new File( targetDir, "target.properties" ).exists());
+		Assert.assertTrue( new File( targetDir, "toto.sh" ).exists());
+		Assert.assertTrue( new File( targetDir, "toto-script.sh" ).exists());
+		Assert.assertTrue( new File( targetDir, "created.from" ).exists());
+		Assert.assertFalse( new File( targetDir, "titi.sh").exists());
 	}
 }

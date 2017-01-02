@@ -41,8 +41,8 @@ import javax.ws.rs.core.Response;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.dm.rest.commons.UrlConstants;
+import net.roboconf.dm.rest.commons.beans.TargetAssociation;
 
 /**
  * The REST API to manipulate instances on the DM.
@@ -196,8 +196,8 @@ public interface IApplicationResource {
 	/**
 	 * Binds an application for external exports.
 	 * @param applicationName the application name
-	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
-	 * @param boundApp the name of the application (instance of <code>tplName</code>)
+	 * @param externalExportPrefix the name of the prefix for external variables
+	 * @param boundApp the name of the application (instance of <code>boundTplName</code>)
 	 * @return a response
 	 *
 	 * @HTTP 200 Everything went fine.
@@ -208,8 +208,45 @@ public interface IApplicationResource {
 	@Path( "/bind" )
 	Response bindApplication(
 			@PathParam("name") String applicationName,
-			@QueryParam("bound-tpl") String boundTplName,
+			@QueryParam("bound-tpl") String externalExportPrefix,
 			@QueryParam("bound-app") String boundApp );
+
+
+	/**
+	 * Unbinds an application for external exports.
+	 * @param applicationName the application name
+	 * @param externalExportPrefix the name of the prefix for external variables
+	 * @param boundApp the name of the application (instance of <code>boundTplName</code>)
+	 * @return a response
+	 *
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 */
+	@POST
+	@Path( "/unbind" )
+	Response unbindApplication(
+			@PathParam("name") String applicationName,
+			@QueryParam("bound-tpl") String externalExportPrefix,
+			@QueryParam("bound-app") String boundApp );
+
+
+	/**
+	 * Replaces application bindings for external exports.
+	 * @param applicationName the application name
+	 * @param externalExportPrefix the name of the prefix for external variables
+	 * @param boundApps the application names (instance of <code>boundTplName</code>)
+	 * @return a response
+	 *
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application was not found.
+	 * @HTTP 403 Such a binding is not allowed.
+	 */
+	@POST
+	@Path( "/bind-x" )
+	Response replaceApplicationBindings(
+			@PathParam("name") String applicationName,
+			@QueryParam("bound-tpl") String externalExportPrefix,
+			@QueryParam("app") List<String> boundApps );
 
 
 	/**
@@ -226,7 +263,7 @@ public interface IApplicationResource {
 
 
 	/**
-	 * Lists the paths of the children of an instance.
+	 * Lists instances of a given application.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @param allChildren true to get all the children, false to only get the direct children
@@ -235,7 +272,7 @@ public interface IApplicationResource {
 	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
-	@Path( "/children" )
+	@Path( "/instances" )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Instance> listChildrenInstances(
 			@PathParam("name") String applicationName,

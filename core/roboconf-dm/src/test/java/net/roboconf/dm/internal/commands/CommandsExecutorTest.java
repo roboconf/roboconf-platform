@@ -72,6 +72,7 @@ public class CommandsExecutorTest {
 	public void startManager() throws Exception {
 
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
 
 		// Prepare the DM
 		this.manager = new Manager();

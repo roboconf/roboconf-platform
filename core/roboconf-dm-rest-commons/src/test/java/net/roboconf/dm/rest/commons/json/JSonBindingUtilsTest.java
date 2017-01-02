@@ -52,11 +52,15 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
-import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
+import net.roboconf.dm.rest.commons.beans.TargetAssociation;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -87,7 +91,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationTemplateBinding_2() throws Exception {
 
-		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\",\"apps\":[\"a1\",\"a2\"]}";
+		final String result = "{\"name\":\"my application\",\"displayName\":\"my application\",\"qualifier\":\"v1-17.snapshot\",\"apps\":[\"a1\",\"a2\"]}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate app = new ApplicationTemplate( "my application" ).qualifier( "v1-17.snapshot" );
@@ -127,7 +131,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationTemplateBinding_4() throws Exception {
 
-		final String result = "{\"name\":\"my application\",\"apps\":[]}";
+		final String result = "{\"name\":\"my application\",\"displayName\":\"my application\",\"apps\":[]}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate app = new ApplicationTemplate( "my application" );
@@ -178,7 +182,7 @@ public class JSonBindingUtilsTest {
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
 
-		Assert.assertEquals( "{\"name\":\"my application\",\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"},\"apps\":[]}", s );
+		Assert.assertEquals( "{\"name\":\"my application\",\"displayName\":\"my application\",\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"},\"apps\":[]}", s );
 	}
 
 
@@ -193,7 +197,7 @@ public class JSonBindingUtilsTest {
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, tpl );
 
-		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[\"app\"]}", writer.toString());
+		Assert.assertEquals( "{\"name\":\"my tpl\",\"displayName\":\"my tpl\",\"apps\":[\"app\"]}", writer.toString());
 
 		// After we remove the association with the application
 		app.removeAssociationWithTemplate();
@@ -201,7 +205,7 @@ public class JSonBindingUtilsTest {
 		writer = new StringWriter();
 		mapper.writeValue( writer, tpl );
 
-		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[]}", writer.toString());
+		Assert.assertEquals( "{\"name\":\"my tpl\",\"displayName\":\"my tpl\",\"apps\":[]}", writer.toString());
 	}
 
 
@@ -222,6 +226,8 @@ public class JSonBindingUtilsTest {
 
 		Assert.assertEquals(
 				"{\"name\":\"" + tpl.getName()
+						+ "\",\"displayName\":\""
+						+ tpl.getName()
 						+ "\",\"qualifier\":\""
 						+ tpl.getQualifier()
 						+ "\",\"extDep\":[\"other\",\"something\"],\"apps\":[]}",
@@ -251,9 +257,66 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testApplicationTemplateBinding_10() throws Exception {
+
+		final String result = "{\"displayName\":\"àéoçù\",\"desc\":\"some text\",\"qualifier\":\"v1\",\"apps\":[]}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate app = new ApplicationTemplate( "àéoçù" ).description( "some text" ).qualifier( "v1" );
+
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationBindingsBinding() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		// Empty object
+		ApplicationBindings bindings = new ApplicationBindings();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals( "{}", writer.toString());
+
+		// Single key
+		List<ApplicationBindingItem> list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app1", true ));
+		bindings.prefixToItems.put( "prefix1", list );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals( "{\"prefix1\":[{\"name\":\"app1\",\"bound\":true}]}", writer.toString());
+
+		// Complex object
+		list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app2", false ));
+		list.add( new ApplicationBindingItem( "app3", true ));
+		bindings.prefixToItems.put( "prefix2", list );
+
+		list = new ArrayList<> ();
+		list.add( new ApplicationBindingItem( "app4", false ));
+		bindings.prefixToItems.put( "prefix0", list );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, bindings );
+		Assert.assertEquals(
+				"{\"prefix0\":[{\"name\":\"app4\",\"bound\":false}],"
+				+ "\"prefix1\":[{\"name\":\"app1\",\"bound\":true}],\"prefix2\":[{\"name\":\"app2\",\"bound\":false},"
+				+ "{\"name\":\"app3\",\"bound\":true}]}",
+				writer.toString());
+	}
+
+
+	@Test
 	public void testApplicationBinding_1() throws Exception {
 
-		final String result = "{\"name\":\"app1\",\"desc\":\"some text\"}";
+		final String result = "{\"name\":\"app1\",\"displayName\":\"app1\",\"desc\":\"some text\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Application app = new Application( "app1", null ).description( "some text" );
@@ -317,7 +380,7 @@ public class JSonBindingUtilsTest {
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 
-		Assert.assertEquals( "{\"name\":\"test\",\"info\":\"warn\"}", writer.toString());
+		Assert.assertEquals( "{\"name\":\"test\",\"displayName\":\"test\",\"info\":\"warn\"}", writer.toString());
 	}
 
 
@@ -331,14 +394,14 @@ public class JSonBindingUtilsTest {
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 
-		Assert.assertEquals( "{\"name\":\"test\",\"desc\":\"hi!\",\"info\":\"ok\"}", writer.toString());
+		Assert.assertEquals( "{\"name\":\"test\",\"displayName\":\"test\",\"desc\":\"hi!\",\"info\":\"ok\"}", writer.toString());
 	}
 
 
 	@Test
 	public void testApplicationBinding_6() throws Exception {
 
-		final String result = "{\"name\":\"app1\",\"tplName\":\"oops\"}";
+		final String result = "{\"name\":\"app1\",\"displayName\":\"app1\",\"tplName\":\"oops\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "oops" );
@@ -362,7 +425,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_7() throws Exception {
 
-		final String result = "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\"}";
+		final String result = "{\"name\":\"app1\",\"displayName\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "" ).qualifier( "oops" );
@@ -398,7 +461,9 @@ public class JSonBindingUtilsTest {
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
 
-		Assert.assertEquals( "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\",\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"}}", s );
+		Assert.assertEquals(
+				"{\"name\":\"app1\",\"displayName\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\","
+				+ "\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"}}", s );
 	}
 
 
@@ -416,7 +481,9 @@ public class JSonBindingUtilsTest {
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
 
-		Assert.assertEquals( "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\",\"tplEep\":\"toto\"}", s );
+		Assert.assertEquals(
+				"{\"name\":\"app1\",\"displayName\":\"app1\",\"tplName\":\"\","
+				+ "\"tplQualifier\":\"oops\",\"tplEep\":\"toto\"}", s );
 
 		Application readApp = mapper.readValue( s, Application.class );
 		Assert.assertEquals( app, readApp );
@@ -444,6 +511,8 @@ public class JSonBindingUtilsTest {
 
 		Assert.assertEquals(
 				"{\"name\":\"" + app.getName()
+						+ "\",\"displayName\":\""
+						+ app.getName()
 						+ "\",\"tplName\":\""
 						+ app.getTemplate().getName()
 						+ "\",\"tplQualifier\":\""
@@ -465,6 +534,20 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+		Application readApp = mapper.readValue( result, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+	}
+
+
+	@Test
+	public void testApplicationBinding_12() throws Exception {
+
+		final String result = "{\"name\":\"aeocu\",\"displayName\":\"àéoçù\",\"desc\":\"some text\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Application app = new Application( "àéoçù", null ).description( "some text" );
 		Application readApp = mapper.readValue( result, Application.class );
 		Assert.assertEquals( app, readApp );
 		Assert.assertEquals( app.getName(), readApp.getName());
@@ -507,6 +590,24 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( comp, readComp );
 		Assert.assertEquals( comp.getName(), readComp.getName());
 		Assert.assertEquals( comp.getInstallerName(), readComp.getInstallerName());
+	}
+
+
+	@Test
+	public void testComponentBinding_3() throws Exception {
+
+		Component c1 = new Component( "component 1" ).installerName( "target" );
+		Component c2 = new Component( "component 2" );
+		c2.extendComponent( c1 );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, c1 );
+		Assert.assertEquals( "{\"name\":\"component 1\",\"installer\":\"target\"}", writer.toString());
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, c2 );
+		Assert.assertEquals( "{\"name\":\"component 2\",\"installer\":\"target\"}", writer.toString());
 	}
 
 
@@ -986,27 +1087,27 @@ public class JSonBindingUtilsTest {
 
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		TargetAssociation association = new TargetAssociation( null, null );
+		TargetAssociation association = new TargetAssociation( null, null, null );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, association );
 		Assert.assertEquals( "{}", writer.toString());
 
-		association = new TargetAssociation( "/my-path", null );
+		association = new TargetAssociation( "/my-path", "comp1", null );
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
-		Assert.assertEquals( "{\"path\":\"/my-path\"}", writer.toString());
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"component\":\"comp1\"}", writer.toString());
 
 		TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
-		association = new TargetAssociation( "/my-path", twd );
+		association = new TargetAssociation( "/my-path", "comp2", twd );
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
-		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{}}", writer.toString());
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"component\":\"comp2\",\"desc\":{}}", writer.toString());
 
 		twd.setId( "54" );
 		twd.setName( "toto" );
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
-		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{\"id\":\"54\",\"name\":\"toto\"}}", writer.toString());
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"component\":\"comp2\",\"desc\":{\"id\":\"54\",\"name\":\"toto\"}}", writer.toString());
 	}
 
 
@@ -1092,5 +1193,88 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
 		Assert.assertEquals( job.getAppName(), readJob.getAppName());
 		Assert.assertEquals( job.getCron(), readJob.getCron());
+	}
+
+
+	@Test
+	public void testWebSocketMessage_instance() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage( null, null, null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		TestApplication app = new TestApplication();
+		wsm = new WebSocketMessage( app.getMySql(), app, EventType.CREATED );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"event\":\"CREATED\",\"app\":{\"name\":\"test\",\"displayName\":\"test\",\"tplName\":\"test-app\",\"tplQualifier\":\"test\"},\"inst\":"
+				+ "{\"name\":\"mysql-server\",\"path\":\"/mysql-vm/mysql-server\",\"status\":\"NOT_DEPLOYED\","
+				+ "\"component\":{\"name\":\"mysql\",\"installer\":\"puppet\"},\"exports\":{\"mysql.port\":\"3306\",\"mysql.ip\":null}}}", s );
+	}
+
+
+	@Test
+	public void testWebSocketMessage_application() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage((Application) null, null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		TestApplication app = new TestApplication();
+		wsm = new WebSocketMessage( app, EventType.DELETED );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals(
+				"{\"event\":\"DELETED\",\"app\":{\"name\":\"test\",\"displayName\":\"test\","
+				+ "\"tplName\":\"test-app\",\"tplQualifier\":\"test\"}}", s );
+	}
+
+
+	@Test
+	public void testWebSocketMessage_applicationTemplate() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage((ApplicationTemplate) null, null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		wsm = new WebSocketMessage( tpl, EventType.CHANGED );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"event\":\"CHANGED\",\"tpl\":{\"name\":\"test-app\",\"displayName\":\"test-app\",\"qualifier\":\"test\",\"apps\":[]}}", s );
+	}
+
+
+	@Test
+	public void testWebSocketMessage_message() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		WebSocketMessage wsm = new WebSocketMessage( null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+		Assert.assertEquals( "{}", writer.toString());
+
+		wsm = new WebSocketMessage( "my message" );
+		writer = new StringWriter();
+		mapper.writeValue( writer, wsm );
+
+		String s = writer.toString();
+		Assert.assertEquals( "{\"msg\":\"my message\"}", s );
 	}
 }

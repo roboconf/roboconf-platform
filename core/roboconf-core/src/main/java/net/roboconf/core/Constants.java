@@ -25,6 +25,8 @@
 
 package net.roboconf.core;
 
+import java.io.File;
+
 /**
  * A set of constants.
  * @author Vincent Zurczak - Linagora
@@ -66,6 +68,11 @@ public interface Constants {
 	 * The wild card symbol (can be used in a component to reference any variable for a given group).
 	 */
 	String WILDCARD = "*";
+
+	/**
+	 * The suffix of a script name.
+	 * */
+	String SCOPED_SCRIPT_SUFFIX = "-script.";
 
 	/**
 	 * The name of the target installer (which is somehow specific).
@@ -138,6 +145,11 @@ public interface Constants {
 	 */
 	String PROJECT_FILE_DESCRIPTOR = "application" + FILE_EXT_PROPERTIES;
 
+	/**
+	 * The location of the agent's working directory (under the OS' temporary directory).
+	 */
+	String WORK_DIRECTORY_AGENT = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" ).getAbsolutePath();
+
 
 	/**
 	 * A specific variable whose value is set at runtime.
@@ -158,6 +170,11 @@ public interface Constants {
 	 * The Maven directory to store application files.
 	 */
 	String MAVEN_SRC_MAIN_MODEL = "src/main/model/";
+
+	/**
+	 * The symbolic name of the "roboconf-core" bundle.
+	 */
+	String RBCF_CORE_SYMBOLIC_NAME = "net.roboconf.core";
 
 
 	/**

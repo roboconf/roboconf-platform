@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
@@ -45,6 +46,7 @@ public class NotificationMngrImpl implements INotificationMngr {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final List<IDmListener> dmListeners = new ArrayList<> ();
+	private final AtomicBoolean enableNotifications = new AtomicBoolean( false );
 
 
 	@Override
@@ -52,14 +54,28 @@ public class NotificationMngrImpl implements INotificationMngr {
 		return "main";
 	}
 
+
 	@Override
 	public void enableNotifications() {
-		// nothing
+
+		this.logger.info( "Notifications are being enabled for DM listeners..." );
+		this.enableNotifications.set( true );
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.enableNotifications();
+		}
 	}
+
 
 	@Override
 	public void disableNotifications() {
-		// nothing
+
+		this.logger.info( "Notifications are being disabled for DM listeners..." );
+		this.enableNotifications.set( false );
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.disableNotifications();
+		}
 	}
 
 
@@ -69,14 +85,18 @@ public class NotificationMngrImpl implements INotificationMngr {
 	 */
 	public void addListener( IDmListener listener ) {
 
-		if( listener != null ) {
+		if( listener == null ) {
+			this.logger.info( "An invalid DM listener failed to be added." );
+
+		} else {
 			synchronized( this.dmListeners ) {
 				this.dmListeners.add( listener );
 			}
 
+			if( this.enableNotifications.get())
+				listener.enableNotifications();
+
 			this.logger.info( "The listener '" + listener.getId() + "' is now available in Roboconf's DM." );
-		} else {
-			this.logger.info( "An invalid DM listener failed to be added." );
 		}
 
 		listListeners();

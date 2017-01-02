@@ -158,9 +158,9 @@ public class FileDefinitionParser {
 		String alteredLine = line.trim().toLowerCase();
 		if( ! alteredLine.isEmpty()
 				&& ! alteredLine.startsWith( String.valueOf( ParsingConstants.COMMENT_DELIMITER ))
-				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )
-				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )
-				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_IMPORT ))
+				&& ! startsWith( alteredLine, ParsingConstants.KEYWORD_FACET )
+				&& ! startsWith( alteredLine, ParsingConstants.KEYWORD_INSTANCE_OF )
+				&& ! startsWith( alteredLine, ParsingConstants.KEYWORD_IMPORT ))
 			result = recognizePropertiesHolder( line, br, new BlockComponent( this.definitionFile ));
 
 		return result;
@@ -174,7 +174,7 @@ public class FileDefinitionParser {
 	int recognizeFacet( String line, BufferedReader br ) throws IOException {
 
 		int result = P_CODE_NO;
-		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )) {
+		if( startsWith( line, ParsingConstants.KEYWORD_FACET )) {
 			String newLine = line.replaceFirst( "(?i)\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
 			result = recognizePropertiesHolder( newLine, br, new BlockFacet( this.definitionFile ));
 		}
@@ -191,7 +191,7 @@ public class FileDefinitionParser {
 	int recognizeInstanceOf( String line, BufferedReader br, AbstractBlockHolder holderInstance ) throws IOException {
 
 		int result = P_CODE_NO;
-		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )) {
+		if( startsWith( line, ParsingConstants.KEYWORD_INSTANCE_OF )) {
 			String newLine = line.replaceFirst( "(?i)\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
 			BlockInstanceOf newInstance = new BlockInstanceOf( this.definitionFile );
 			result = recognizePropertiesHolder( newLine, br, newInstance );
@@ -245,7 +245,7 @@ public class FileDefinitionParser {
 
 	/**
 	 * @param line the raw line
-	 * @param holder
+	 * @param holder the properties holder
 	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
 	int recognizeProperty( String line, AbstractBlockHolder holder ) {
@@ -254,21 +254,32 @@ public class FileDefinitionParser {
 		String[] parts = splitFromInlineComment( line );
 		String realLine = parts[ 0 ].trim();
 
-		String regex = "([^:\\s]+)\\s*:\\s*([^;]*)";
+		String regex = "([^:\\s]+)\\s*:\\s*(.*)$";
 		Matcher m = Pattern.compile( regex ).matcher( realLine );
 		if( m.find()) {
+
+			// A property was identified
 			result = P_CODE_YES;
 			BlockProperty block = new BlockProperty( this.definitionFile );
 			block.setLine( this.currentLineNumber );
 			block.setName( m.group( 1 ));
-			block.setValue( m.group( 2 ));
+
+			// Properties end with a semicolon
+			if( ! m.group( 2 ).endsWith( ";" ))
+				addModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
+
+			block.setValue( m.group( 2 ).replaceFirst( ";$", "" ));
 			block.setInlineComment( parts[ 1 ]);
 			holder.getInnerBlocks().add( block );
 
-			realLine = realLine.substring( m.end());
-			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
-				addModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
-			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
+			// A property block should only contain one semicolon.
+			// Only exception: exported variables, that can contain semicolons in their quoted values.
+			String escapedLine = block.getValue();
+			if( realLine.contains( "\"" )) {
+				escapedLine = escapedLine.replaceAll( "\"[^\"]*\"", "" );
+			}
+
+			if( escapedLine.contains( ";" ))
 				addModelError( ErrorCode.P_ONE_BLOCK_PER_LINE );
 		}
 
@@ -647,5 +658,16 @@ public class FileDefinitionParser {
 	private void addModelError( ErrorCode errorCode, int line, String details ) {
 		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), line, details );
 		this.definitionFile.getParsingErrors().add( me );
+	}
+
+
+	/**
+	 * Verifies whether starts with a keyword or is made up of this single keyword.
+	 * @param line the line
+	 * @param keyword the keyword
+	 * @return true if the keyword was found, false otherwise
+	 */
+	private boolean startsWith( String line, String keyword ) {
+		return line.trim().matches( "(?i)^" + keyword + "((\\s.*)|$)" );
 	}
 }

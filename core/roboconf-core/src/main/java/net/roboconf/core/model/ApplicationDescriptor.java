@@ -141,8 +141,8 @@ public class ApplicationDescriptor {
 	public static void save( File f, Application app ) throws IOException {
 
 		Properties properties = new Properties();
-		if( ! Utils.isEmptyOrWhitespaces( app.getName()))
-			properties.setProperty( APPLICATION_NAME, app.getName());
+		if( ! Utils.isEmptyOrWhitespaces( app.getDisplayName()))
+			properties.setProperty( APPLICATION_NAME, app.getDisplayName());
 
 		if( ! Utils.isEmptyOrWhitespaces( app.getDescription()))
 			properties.setProperty( APPLICATION_DESCRIPTION, app.getDescription());

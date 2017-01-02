@@ -28,6 +28,8 @@ package net.roboconf.dm.internal.api.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -176,7 +178,7 @@ public class ApplicationMngrImplTest {
 
 
 	@Test
-	public void testCreateApplication_withTags() throws Exception {
+	public void testCreateApplication_success() throws Exception {
 
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		tpl.setDirectory( this.folder.newFolder());
@@ -191,6 +193,38 @@ public class ApplicationMngrImplTest {
 
 		Assert.assertEquals( ma.getDirectory().getName(), ma.getName());
 		Assert.assertEquals( "toto", ma.getName());
+
+		File expected = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
+		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
+	}
+
+
+	@Test
+	public void testCreateApplication_success_withSpecialName() throws Exception {
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		tpl.setDirectory( this.folder.newFolder());
+
+		Mockito.verifyZeroInteractions( this.applicationTemplateMngr );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+
+		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+		ManagedApplication ma = this.mngr.createApplication( "ça débute", "desc", tpl.getName(), tpl.getQualifier());
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( "ca debute", ma.getName());
+		Assert.assertEquals( "ça débute", ma.getApplication().getDisplayName());
+		Assert.assertEquals( 1, TestManagerWrapper.getNameToManagedApplication( this.mngr ).size());
+		Assert.assertEquals( ma.getDirectory().getName(), ma.getName());
+
+		// Important
+		Assert.assertNull( this.mngr.findManagedApplicationByName( "ça débute" ));
+		Assert.assertNull( this.mngr.findApplicationByName( "ça débute" ));
+
+		Assert.assertNotNull( this.mngr.findManagedApplicationByName( "ca debute" ));
+		Assert.assertNotNull( this.mngr.findApplicationByName( "ca debute" ));
+		// Important
 
 		File expected = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
 		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
@@ -310,6 +344,40 @@ public class ApplicationMngrImplTest {
 
 
 	@Test
+	public void testRestoreApplications_withApp_withSpecialName() throws Exception {
+
+		File dir = new File( this.dmDirectory, ConfigurationUtils.APPLICATIONS + "/ca debute bien/" + Constants.PROJECT_DIR_DESC );
+		File descriptorFile = new File( dir, Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( dir.mkdirs());
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
+		tpl.setDirectory( this.folder.newFolder());
+
+		Application app = new Application( "ça débute bien", tpl );
+		ApplicationDescriptor.save( descriptorFile, app );
+
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+
+		Mockito.verifyZeroInteractions( this.dmClientMock );
+		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+
+		this.mngr.restoreApplications();
+
+		Assert.assertEquals( 1, this.mngr.getManagedApplications().size());
+		Mockito.verify( this.dmClientMock, Mockito.times( 1 )).listenToAgentMessages( app, ListenerCommand.START );
+
+		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
+		Assert.assertEquals( "ca debute bien", ma.getName());
+		Assert.assertEquals( "ça débute bien", ma.getApplication().getDisplayName());
+		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
+		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
+	}
+
+
+	@Test
 	public void testRestoreApplications_withConflict() throws Exception {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
@@ -419,7 +487,7 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
 
-		this.mngr.bindApplication( ma, ma.getApplication().getTemplate().getName(), "invalid" );
+		this.mngr.bindOrUnbindApplication( ma, ma.getApplication().getTemplate().getName(), "invalid", true );
 	}
 
 
@@ -440,7 +508,7 @@ public class ApplicationMngrImplTest {
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
 		// ma1 and ma2 do not have the same template name
-		this.mngr.bindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName());
+		this.mngr.bindOrUnbindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName(), true );
 	}
 
 
@@ -461,7 +529,7 @@ public class ApplicationMngrImplTest {
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
 		// ma1 and ma2 do not have the same template name
-		this.mngr.bindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName());
+		this.mngr.bindOrUnbindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName(), true );
 	}
 
 
@@ -494,11 +562,12 @@ public class ApplicationMngrImplTest {
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
 
 		Mockito.verifyZeroInteractions( this.messagingMngr );
-		this.mngr.bindApplication( ma1, eep, ma2.getName());
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), true );
 
 		Assert.assertEquals( 1, ma1.getApplication().getApplicationBindings().size());
 		Assert.assertTrue( ma1.getApplication().getApplicationBindings().get( eep ).contains( ma2.getName()));
 
+		// Verify the messaging
 		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
 		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
 		ArgumentCaptor<Message> arg2 = ArgumentCaptor.forClass( Message.class );
@@ -522,5 +591,234 @@ public class ApplicationMngrImplTest {
 		List<Instance> instances = arg1.getAllValues();
 		Assert.assertTrue( instances.contains( app1.getMySqlVm()));
 		Assert.assertTrue( instances.contains( app1.getTomcatVm()));
+	}
+
+
+	@Test
+	public void testUnbindApplication_success_withNotification() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		TestApplication app2 = new TestApplication();
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.getTemplate().setExternalExportsPrefix( "prefix2" );
+		app2.setName( "app-other" );
+
+		// Rename root instances in the second application.
+		// This is to make sure messages are sent to the right instances in the right application.
+		app2.getMySqlVm().setName( "other-mysql" );
+		app2.getTomcatVm().setName( "other-tomcat" );
+
+		app2.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app2 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), true );
+		Assert.assertEquals( 1, ma1.getApplication().getApplicationBindings().size());
+		Assert.assertTrue( ma1.getApplication().getApplicationBindings().get( eep ).contains( ma2.getName()));
+
+		Mockito.reset( this.messagingMngr );
+
+		// Unbind
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), false );
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+
+		// Verify sent messages
+		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
+		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
+		ArgumentCaptor<Message> arg2 = ArgumentCaptor.forClass( Message.class );
+		Mockito.verify( this.messagingMngr, Mockito.times( 2 )).sendMessageSafely( arg0.capture(), arg1.capture(), arg2.capture());
+
+		for( ManagedApplication s : arg0.getAllValues()) {
+			Assert.assertEquals( ma1, s );
+		}
+
+		for( Message m : arg2.getAllValues()) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNull( msg.getAppNames());
+		}
+
+		// Messages must be sent to ma1!
+		List<Instance> instances = arg1.getAllValues();
+		Assert.assertTrue( instances.contains( app1.getMySqlVm()));
+		Assert.assertTrue( instances.contains( app1.getTomcatVm()));
+	}
+
+
+	@Test
+	public void testUnbindApplication_success_withoutNotification() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		TestApplication app2 = new TestApplication();
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.getTemplate().setExternalExportsPrefix( "prefix2" );
+		app2.setName( "app-other" );
+
+		// Rename root instances in the second application.
+		// This is to make sure messages are sent to the right instances in the right application.
+		app2.getMySqlVm().setName( "other-mysql" );
+		app2.getTomcatVm().setName( "other-tomcat" );
+
+		app2.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app2 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
+		// Unbind an application that is not bound
+		this.mngr.bindOrUnbindApplication( ma1, eep, ma2.getName(), false );
+
+		// Nothing changed
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+
+		// No message should have been sent when we tried to unbind
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+	}
+
+
+	@Test
+	public void testReplaceApplicationBindings_success() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.getTemplate().setExternalExportsPrefix( "prefix2" );
+		app2.setName( "app-other" );
+
+		// Rename root instances in the second application.
+		// This is to make sure messages are sent to the right instances in the right application.
+		app2.getMySqlVm().setName( "other-mysql" );
+		app2.getTomcatVm().setName( "other-tomcat" );
+
+		ManagedApplication ma2 = new ManagedApplication( app2 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		this.mngr.replaceApplicationBindings( ma1, eep, new HashSet<>( Arrays.asList( ma2.getName())));
+
+		Assert.assertEquals( 1, ma1.getApplication().getApplicationBindings().size());
+		Assert.assertTrue( ma1.getApplication().getApplicationBindings().get( eep ).contains( ma2.getName()));
+
+		// Verify the messaging
+		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
+		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
+		ArgumentCaptor<Message> arg2 = ArgumentCaptor.forClass( Message.class );
+		Mockito.verify( this.messagingMngr, Mockito.times( 2 )).sendMessageSafely( arg0.capture(), arg1.capture(), arg2.capture());
+
+		for( ManagedApplication s : arg0.getAllValues()) {
+			Assert.assertEquals( ma1, s );
+		}
+
+		for( Message m : arg2.getAllValues()) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNotNull( msg.getAppNames());
+			Assert.assertEquals( 1, msg.getAppNames().size());
+			Assert.assertTrue( msg.getAppNames().contains( ma2.getName()));
+		}
+
+		// Messages must be sent to ma1!
+		List<Instance> instances = arg1.getAllValues();
+		Assert.assertTrue( instances.contains( app1.getMySqlVm()));
+		Assert.assertTrue( instances.contains( app1.getTomcatVm()));
+
+		// Set the same bindings: no message should be sent
+		Mockito.reset( this.messagingMngr );
+		this.mngr.replaceApplicationBindings( ma1, eep, new HashSet<>( Arrays.asList( ma2.getName())));
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+
+		// Change the binding to an empty list => there should be messages
+		this.mngr.replaceApplicationBindings( ma1, eep, new HashSet<String>( 0 ));
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+
+		// Verify the messaging
+		arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
+		arg1 = ArgumentCaptor.forClass( Instance.class );
+		arg2 = ArgumentCaptor.forClass( Message.class );
+		Mockito.verify( this.messagingMngr, Mockito.times( 2 )).sendMessageSafely( arg0.capture(), arg1.capture(), arg2.capture());
+
+		for( ManagedApplication s : arg0.getAllValues()) {
+			Assert.assertEquals( ma1, s );
+		}
+
+		for( Message m : arg2.getAllValues()) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertNull( msg.getAppNames());
+		}
+	}
+
+
+	@Test( expected = UnauthorizedActionException.class )
+	public void testReplaceApplicationBindings_failure_inexistingApplication() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		this.mngr.replaceApplicationBindings( ma1, "prefix1", new HashSet<>( Arrays.asList( "inexisting" )));
+	}
+
+
+	@Test( expected = UnauthorizedActionException.class )
+	public void testReplaceApplicationBindings_failure_invalidTemplate() throws Exception {
+
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
+		ManagedApplication ma1 = new ManagedApplication( app1 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+
+		ManagedApplication ma2 = new ManagedApplication( app2 );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		this.mngr.replaceApplicationBindings( ma1, "prefix1", new HashSet<>( Arrays.asList( ma2.getName())));
 	}
 }

@@ -94,7 +94,7 @@ public final class ParsingModelIo {
 
 
 	/**
-	 * Saves the model into the original file.
+	 * Saves the model into another file.
 	 * @param targetFile the target file (may not exist)
 	 * @param relationsFile the relations file
 	 * @param writeComments true to write comments

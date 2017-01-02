@@ -38,6 +38,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
@@ -78,12 +79,14 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
  * </ul>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra   - UGA
  */
 public class TargetsMngrImpl implements ITargetsMngr {
 
 	private static final String TARGETS_ASSOC_FILE = "associations.properties";
 	private static final String TARGETS_HINTS_FILE = "hints.properties";
 	private static final String TARGETS_USAGE_FILE = "usage.properties";
+	private static final String CREATED_BY = "created.from";
 
 	private static final Object LOCK = new Object();
 
@@ -119,11 +122,28 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( RoboconfErrorHelpers.containsCriticalErrors( tv.getErrors()))
 			throw new IOException( "There are errors in the target definition." );
 
-		// Critical section.
+		// Critical section to insert a target.
 		// Store the ID, it cannot be reused.
 		String targetId = tv.getProperties().getProperty( Constants.TARGET_PROPERTY_ID );
-		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null )
-			throw new IOException( "ID " + targetId + " is already used." );
+		String creator = tv.getProperties().getProperty( CREATED_BY );
+		if( this.targetIds.putIfAbsent( targetId, Boolean.TRUE ) != null ) {
+
+			// No creator? Then there is a conflict.
+			if( creator == null )
+				throw new IOException( "ID " + targetId + " is already used." );
+
+			// It cannot be reused, unless they were created by the same template.
+			File createdByFile = new File( findTargetDirectory( targetId ), CREATED_BY );
+			String storedCreator = null;
+			if( createdByFile.exists())
+				storedCreator = Utils.readFileContent( createdByFile );
+
+			// If they do not match, throw an exception
+			if( ! Objects.equals( creator, storedCreator ))
+				throw new IOException( "ID " + targetId + " is already used." );
+
+			// Otherwise, we can override the properties
+		}
 
 		// Rewrite the properties without the ID.
 		// We do not want it to be modified later.
@@ -131,20 +151,58 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		// a time stamp, removes user comments and looses the properties order.
 		targetContent = targetContent.replaceAll( Constants.TARGET_PROPERTY_ID + "\\s*(:|=)[^\n]*(\n|$)", "" );
 
+		// For the same reason, we remove the "created.by" property
+		targetContent = targetContent.replaceAll( "\n\n" + Pattern.quote( CREATED_BY ) + "\\s*(:|=)[^\n]*(\n|$)", "" );
+
 		// Write the properties
 		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
 		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( targetContent, targetFile );
+
+		// Write the creator, if any
+		if( creator != null ) {
+			File createdByFile = new File( findTargetDirectory( targetId ), CREATED_BY );
+			Utils.writeStringInto( creator, createdByFile );
+		}
 
 		return targetId;
 	}
 
 
 	@Override
-	public String createTarget( File targetPropertiesFile ) throws IOException {
+	public String createTarget( File targetPropertiesFile, ApplicationTemplate creator ) throws IOException {
 
 		String fileContent = Utils.readFileContent( targetPropertiesFile );
-		return createTarget( fileContent );
+
+		// So that application templates can redefine some targets (when they are redeployed),
+		// we insert a custom property when
+		StringBuilder sb = new StringBuilder( fileContent );
+		if( creator != null ) {
+			sb.append( "\n\n" );
+			sb.append( CREATED_BY );
+			sb.append( ": " );
+			sb.append( creator.getName());
+			sb.append( " - " );
+			sb.append( creator.getQualifier());
+		}
+
+		// Create a target
+		String targetId = createTarget( sb.toString());
+
+		// Copy script files in target directory
+		File scriptsInDir = targetPropertiesFile.getParentFile();
+		File scriptsOutDir = findTargetDirectory( targetId );
+		String prefix = Utils.removeFileExtension(targetPropertiesFile.getName());
+		List<File> scripts = Utils.listAllFiles( scriptsInDir );
+		for( File f : scripts) {
+			String name = f.getName();
+			if( ! CREATED_BY.equals(name)
+					&& name.startsWith(prefix)
+					&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES))
+				Utils.copyStream(f, new File(scriptsOutDir, name));
+		}
+
+		return targetId;
 	}
 
 
@@ -211,8 +269,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		} else {
 			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
 			valid = instance != null;
-			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+			if( instance != null ) {
+				if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+					throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+
+				if( ! InstanceHelpers.isTarget( instance ))
+					throw new IllegalArgumentException( "Only scoped instances can be associated with targets. Path in error: " + instancePathOrComponentName );
+			}
 		}
 
 		if( valid )
@@ -228,8 +291,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 				&& ! instancePathOrComponentName.startsWith( "@" )) {
 
 			Instance instance = InstanceHelpers.findInstanceByPath( app, instancePathOrComponentName );
-			if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+			if( instance != null ) {
+				if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+					throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePathOrComponentName + " should be not deployed." );
+
+				if( ! InstanceHelpers.isTarget( instance ))
+					throw new IllegalArgumentException( "Only scoped instances can be associated with targets. Path in error: " + instancePathOrComponentName );
+			}
 		}
 
 		saveAssociation( app, null, instancePathOrComponentName, false );
@@ -247,6 +315,12 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		// We can search defaults only for the existing instances
 		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app ))
 			keys.add( new InstanceContext( app.getTemplate(), scopedInstance ));
+
+		// Copy mappings for the components
+		for( Component comp : ComponentHelpers.findAllComponents( app )) {
+			if( ComponentHelpers.isTarget( comp ))
+				keys.add( new InstanceContext( app.getTemplate(), "@" + comp.getName()));
+		}
 
 		// Copy the associations when they exist for the template
 		for( InstanceContext key : keys ) {
@@ -356,9 +430,14 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		InstanceContext key = new InstanceContext( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
 
+		// Non-scoped instances cannot be associated with targets.
+		// Such a query is a coding error!
+		Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
+		if( inst != null && ! InstanceHelpers.isTarget( inst ))
+			throw new IllegalArgumentException( "Targets aimed at being queried for scoped instances only. Invalid path: " + instancePath );
+
 		// Association inherited from the component
 		if( targetId == null && ! strict ) {
-			Instance inst = InstanceHelpers.findInstanceByPath( app, instancePath );
 			if( inst != null ) {
 				key = new InstanceContext( app, "@" + inst.getComponent().getName());
 				targetId = this.instanceToCachedId.get( key );
@@ -378,6 +457,41 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public String findTargetId( AbstractApplication app, String instancePath ) {
 		return findTargetId( app, instancePath, false );
+	}
+
+
+	// Finding script resources
+
+
+	@Override
+	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
+
+		Map<String,byte[]> result = new HashMap<>( 0 );
+		File targetDir = findTargetDirectory( targetId );
+		if( targetDir.isDirectory()){
+			result.putAll( Utils.storeDirectoryResourcesAsBytes( targetDir ));
+			result.remove( CREATED_BY );
+
+			// Remove all the root properties files
+			for( File f : Utils.listAllFiles( targetDir )) {
+				if( f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
+					result.remove( f.getName());
+			}
+		}
+
+		return result;
+	}
+
+
+	@Override
+	public Map<String, byte[]> findScriptResources( Application app, Instance scopedInstance ) throws IOException {
+
+		Map<String,byte[]> result = new HashMap<> ();
+		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
+		if( targetId != null )
+			result = findScriptResources( targetId );
+
+		return result;
 	}
 
 

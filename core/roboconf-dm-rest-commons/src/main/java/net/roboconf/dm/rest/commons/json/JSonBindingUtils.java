@@ -27,10 +27,11 @@ package net.roboconf.dm.rest.commons.json;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -52,17 +53,21 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.ScheduledJob;
-import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
+import net.roboconf.dm.rest.commons.beans.TargetAssociation;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 
 /**
  * A set of utilities to bind Roboconf's runtime model to JSon.
@@ -71,10 +76,11 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 public final class JSonBindingUtils {
 
 	// We use global maps to verify some little things in tests.
-	public static final Map<Class<?>,? super JsonSerializer<?>> SERIALIZERS = new HashMap<> ();
-	public static final Map<Class<?>,? super JsonDeserializer<?>> DESERIALIZERS = new HashMap<> ();
+	static final Map<Class<?>,JsonSerializer<?>> SERIALIZERS = new HashMap<> ();
+	static final Map<Class<?>,JsonDeserializer<?>> DESERIALIZERS = new HashMap<> ();
 
 	static {
+		// Read - Write
 		SERIALIZERS.put( Instance.class, new InstanceSerializer());
 		DESERIALIZERS.put( Instance.class, new InstanceDeserializer());
 
@@ -105,10 +111,21 @@ public final class JSonBindingUtils {
 		SERIALIZERS.put( ScheduledJob.class, new ScheduledJobSerializer());
 		DESERIALIZERS.put( ScheduledJob.class, new ScheduledJobDeserializer());
 
+		// Write ONLY
 		SERIALIZERS.put( MappedCollectionWrapper.class, new MappedCollectionWrapperSerializer());
 		SERIALIZERS.put( TargetUsageItem.class, new TargetUsageItemSerializer());
 		SERIALIZERS.put( TargetAssociation.class, new TargetAssociationSerializer());
 		SERIALIZERS.put( Preference.class, new PreferenceSerializer());
+		SERIALIZERS.put( ApplicationBindings.class, new ApplicationBindingsSerializer());
+		SERIALIZERS.put( WebSocketMessage.class, new WebSocketMessageSerializer());
+	}
+
+
+	/**
+	 * @return the serializers as an unmodifiable map
+	 */
+	public static Map<Class<?>,? super JsonSerializer<?>> getSerializers() {
+		return Collections.unmodifiableMap( SERIALIZERS );
 	}
 
 
@@ -123,6 +140,7 @@ public final class JSonBindingUtils {
 	private static final String PATH = "path";
 	private static final String CRON = "cron";
 	private static final String ID = "id";
+	private static final String BOUND = "bound";
 
 	private static final String APP_ICON = "icon";
 	private static final String APP_INFO = "info";
@@ -158,6 +176,12 @@ public final class JSonBindingUtils {
 	private static final String JOB_NAME = "job-name";
 	private static final String JOB_APP_NAME = "app-name";
 	private static final String JOB_CMD_NAME = "cmd-name";
+
+	private static final String WS_EVENT = "event";
+	private static final String WS_APP = "app";
+	private static final String WS_TPL = "tpl";
+	private static final String WS_INST = "inst";
+	private static final String WS_MSG = "msg";
 
 
 	/**
@@ -308,11 +332,14 @@ public final class JSonBindingUtils {
 				TargetAssociation item,
 				JsonGenerator generator,
 				SerializerProvider provider )
-						throws IOException {
+		throws IOException {
 
 			generator.writeStartObject();
 			if( item.getInstancePathOrComponentName() != null )
 				generator.writeStringField( PATH, item.getInstancePathOrComponentName());
+
+			if( item.getInstanceComponent() != null )
+				generator.writeStringField( INST_COMPONENT, item.getInstanceComponent());
 
 			if( item.getTargetDescriptor() != null )
 				generator.writeObjectField( DESC, item.getTargetDescriptor());
@@ -528,7 +555,7 @@ public final class JSonBindingUtils {
 			if( app.getName() != null )
 				generator.writeStringField( NAME, app.getName());
 
-			if( ! Objects.equals( app.getName(), app.getDisplayName()))
+			if( app.getDisplayName() != null )
 				generator.writeStringField( DISPLAY_NAME, app.getDisplayName());
 
 			if( app.getDescription() != null )
@@ -628,7 +655,9 @@ public final class JSonBindingUtils {
 			ApplicationTemplate application = new ApplicationTemplate();
 
 			JsonNode n;
-			if(( n = node.get( NAME )) != null )
+			if(( n = node.get( DISPLAY_NAME )) != null )
+				application.setName( n.textValue());
+			else if(( n = node.get( NAME )) != null )
 				application.setName( n.textValue());
 
 			if(( n = node.get( DESC )) != null )
@@ -756,6 +785,72 @@ public final class JSonBindingUtils {
 
 
 	/**
+	 * A JSon serializer for application bindings.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ApplicationBindingsSerializer extends JsonSerializer<ApplicationBindings> {
+
+		@Override
+		public void serialize(
+				ApplicationBindings bindings,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			for( Map.Entry<String,List<ApplicationBindingItem>> entry : bindings.prefixToItems.entrySet()) {
+				generator.writeArrayFieldStart( entry.getKey());
+
+				for( ApplicationBindingItem item : entry.getValue()) {
+					generator.writeStartObject();
+					generator.writeStringField( NAME, item.getApplicationName());
+					generator.writeBooleanField( BOUND, item.isBound());
+					generator.writeEndObject();
+				}
+
+				generator.writeEndArray();
+			}
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for web socket messages.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class WebSocketMessageSerializer extends JsonSerializer<WebSocketMessage> {
+
+		@Override
+		public void serialize(
+				WebSocketMessage wsm,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( wsm.getEventType() != null )
+				generator.writeStringField( WS_EVENT, wsm.getEventType().toString());
+
+			if( wsm.getApplication() != null )
+				generator.writeObjectField( WS_APP, wsm.getApplication());
+
+			if( wsm.getApplicationTemplate() != null )
+				generator.writeObjectField( WS_TPL, wsm.getApplicationTemplate());
+
+			if( wsm.getInstance() != null )
+				generator.writeObjectField( WS_INST, wsm.getInstance());
+
+			if( wsm.getMessage() != null )
+				generator.writeObjectField( WS_MSG, wsm.getMessage());
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
 	 * A JSon serializer for applications.
 	 * @author Vincent Zurczak - Linagora
 	 */
@@ -772,7 +867,7 @@ public final class JSonBindingUtils {
 			if( app.getName() != null )
 				generator.writeStringField( NAME, app.getName());
 
-			if( ! Objects.equals( app.getName(), app.getDisplayName()))
+			if( app.getDisplayName() != null )
 				generator.writeStringField( DISPLAY_NAME, app.getDisplayName());
 
 			if( app.getDescription() != null )
@@ -864,7 +959,9 @@ public final class JSonBindingUtils {
 				application = new Application( null );
 			}
 
-			if(( n = node.get( NAME )) != null )
+			if(( n = node.get( DISPLAY_NAME )) != null )
+				application.setName( n.textValue());
+			else if(( n = node.get( NAME )) != null )
 				application.setName( n.textValue());
 
 			if(( n = node.get( DESC )) != null )
@@ -1002,8 +1099,9 @@ public final class JSonBindingUtils {
 			if( component.getName() != null )
 				generator.writeStringField( NAME, component.getName());
 
-			if( component.getInstallerName() != null )
-				generator.writeStringField( COMP_INSTALLER, component.getInstallerName());
+			String installerName = ComponentHelpers.findComponentInstaller( component );
+			if( installerName != null )
+				generator.writeStringField( COMP_INSTALLER, installerName );
 
 			generator.writeEndObject();
 		}

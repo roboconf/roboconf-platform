@@ -33,6 +33,8 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
+import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
+import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 import net.roboconf.dm.rest.commons.json.MapWrapper;
 import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
@@ -50,12 +52,18 @@ public class UpdateSwaggerJsonTest {
 		updater.prepareNewDefinitions();
 
 		Set<Class<?>> classes = new HashSet<> ();
-		classes.addAll( JSonBindingUtils.SERIALIZERS.keySet());
+		classes.addAll( JSonBindingUtils.getSerializers().keySet());
 		classes.removeAll( updater.processedClasses );
 
 		// These classes are used within other ones.
 		// No need to add them directly in the swagger.json file.
-		classes.removeAll( Arrays.asList( StringWrapper.class, MapWrapper.class, MappedCollectionWrapper.class ));
+		classes.removeAll( Arrays.asList(
+				StringWrapper.class,
+				MapWrapper.class,
+				MappedCollectionWrapper.class,
+				ApplicationBindings.class,
+				WebSocketMessage.class
+		));
 
 		Assert.assertEquals( Collections.emptySet(), classes );
 	}

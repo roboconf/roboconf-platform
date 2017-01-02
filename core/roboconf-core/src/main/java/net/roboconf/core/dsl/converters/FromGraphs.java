@@ -76,7 +76,7 @@ public class FromGraphs {
 		}
 
 		// Process and serialize the components
-		Set<String> alreadySerializedNames = new HashSet<String> ();
+		Set<String> alreadySerializedNames = new HashSet<> ();
 		for( Component c : ComponentHelpers.findAllComponents( graphs )) {
 			if( alreadySerializedNames.contains( c.getName()))
 				continue;
@@ -106,7 +106,7 @@ public class FromGraphs {
 
 
 	private Collection<AbstractBlock> buildComponent( FileDefinition file, Component component, boolean addComment ) {
-		Collection<AbstractBlock> result = new ArrayList<AbstractBlock> ();
+		Collection<AbstractBlock> result = new ArrayList<> ();
 
 		// Add a comment
 		if( addComment ) {
@@ -185,7 +185,7 @@ public class FromGraphs {
 
 
 	private Collection<AbstractBlock> buildFacet( FileDefinition file, Facet facet, boolean addComment ) {
-		Collection<AbstractBlock> result = new ArrayList<AbstractBlock> ();
+		Collection<AbstractBlock> result = new ArrayList<> ();
 
 		// Add a comment
 		if( addComment ) {
@@ -238,8 +238,9 @@ public class FromGraphs {
 
 			String variableValue = entry.getValue().getValue();
 			if( ! Utils.isEmptyOrWhitespaces( variableValue )) {
-				sb.append( "=" );
+				sb.append( "=\"" );
 				sb.append( variableValue );
+				sb.append( "\"" );
 			}
 
 			if( it.hasNext())

@@ -26,8 +26,10 @@
 package net.roboconf.dm.internal.api.impl;
 
 import org.junit.Assert;
-
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import net.roboconf.dm.management.events.IDmListener;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -43,5 +45,47 @@ public class NotificationMngrImplTest {
 
 		Assert.assertNotNull( mngr.getId());
 		Assert.assertNotNull( mngr.getDmListeners());
+	}
+
+
+	@Test
+	public void testNotificationsEnablement() {
+
+		// Basics about notifications
+		IDmListener listener1 = Mockito.mock( IDmListener.class );
+		IDmListener listener2 = Mockito.mock( IDmListener.class );
+
+		// Notifications are not enabled by default
+		NotificationMngrImpl mngr = new NotificationMngrImpl();
+		mngr.addListener( listener1 );
+		mngr.addListener( listener2 );
+		Mockito.verify( listener1, Mockito.atLeast( 1 )).getId();
+		Mockito.verify( listener2, Mockito.atLeast( 1 )).getId();
+		Mockito.verifyNoMoreInteractions( listener1, listener2 );
+
+		// When they are, existing listeners are enabled
+		Mockito.reset( listener1, listener2 );
+		mngr.enableNotifications();
+		Mockito.verify( listener1, Mockito.only()).enableNotifications();
+		Mockito.verify( listener2, Mockito.only()).enableNotifications();
+
+		// When notifications are enabled, new listeners are automatically activated
+		Mockito.reset( listener1, listener2 );
+		IDmListener listener3 = Mockito.mock( IDmListener.class );
+		mngr.addListener( listener3 );
+
+		Mockito.verify( listener3, Mockito.atLeast( 1 )).getId();
+		Mockito.verify( listener3, Mockito.times( 1 )).enableNotifications();
+		Mockito.verifyNoMoreInteractions( listener3 );
+
+		Mockito.verify( listener1, Mockito.atLeast( 1 )).getId();
+		Mockito.verify( listener2, Mockito.atLeast( 1 )).getId();
+		Mockito.verifyNoMoreInteractions( listener1, listener2 );
+
+		// Disabling the notifications impacts the listeners
+		Mockito.reset( listener1, listener2 );
+		mngr.disableNotifications();
+		Mockito.verify( listener1, Mockito.only()).disableNotifications();
+		Mockito.verify( listener2, Mockito.only()).disableNotifications();
 	}
 }

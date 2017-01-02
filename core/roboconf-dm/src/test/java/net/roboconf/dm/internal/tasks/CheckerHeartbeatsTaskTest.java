@@ -27,6 +27,10 @@ package net.roboconf.dm.internal.tasks;
 
 import java.util.Map;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
@@ -39,10 +43,6 @@ import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -78,19 +78,23 @@ public class CheckerHeartbeatsTaskTest {
 	@Test
 	public void testRun_noApplication() {
 
-		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager );
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager, notificationMngr );
 		task.run();
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 
 
 	@Test
 	public void testRun() {
 
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		Application app = new Application( "test", new TestApplicationTemplate());
 		ManagedApplication ma = new ManagedApplication( app );
 		this.nameToManagedApplication.put( app.getName(), ma );
 
-		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager );
+		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager, notificationMngr );
 		task.run();
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 }

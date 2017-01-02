@@ -29,12 +29,12 @@ import java.io.File;
 import java.util.UUID;
 
 import org.junit.Assert;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.ApplicationTemplate;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -64,6 +64,9 @@ public class ApplicationDescriptorTest {
 		saveAndCompare( desc1 );
 
 		desc1.setDescription( "A string\nwith\nmany\n\tline\nbreaks!" );
+		saveAndCompare( desc1 );
+
+		desc1.setName( "avé les àçents" );
 		saveAndCompare( desc1 );
 	}
 

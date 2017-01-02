@@ -180,7 +180,7 @@ public class ServletRegistrationComponentTest {
 			httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
 			Assert.assertTrue( httpServer.isStarted());
 			URI targetUri = UriBuilder.fromUri( uri )
-					.path( UrlConstants.APP ).path( this.app.getName()).path( "children" )
+					.path( UrlConstants.APP ).path( this.app.getName()).path( "instances" )
 					.queryParam( "instance-path", "/tomcat-vm" ).build();
 
 			received = TestUtils.readUriContent( targetUri );

@@ -39,7 +39,7 @@ public class Graphs implements Serializable {
 
 	private static final long serialVersionUID = 2918281424743945139L;
 	private final Collection<Component> rootsComponents = new HashSet<Component> ();
-	private final Map<String,Facet> facetNameToFacet = new HashMap<String,Facet> ();
+	private final Map<String,Facet> facetNameToFacet = new HashMap<> ();
 
 	/**
 	 * @return a non-null list of root components

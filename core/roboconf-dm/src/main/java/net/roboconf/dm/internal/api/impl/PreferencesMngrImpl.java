@@ -25,9 +25,10 @@
 
 package net.roboconf.dm.internal.api.impl;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,55 +36,87 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
+
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IPreferencesMngr;
 
 /**
+ * Unlike other APIs, this one is managed by iPojo.
+ * <p>
+ * This allows administrators to define preferences through usual
+ * CFG files. It also provides a way for the REST API to access and retrieve preferences.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public class PreferencesMngrImpl implements IPreferencesMngr {
 
-	static final String FILE_NAME = "preferences.properties";
+	// Constants
+	static final String PID = "net.roboconf.dm.preferences";
 	static final Defaults DEFAULTS = new Defaults();
 
+	// Injected by iPojo
+	private ConfigurationAdmin configAdmin;
+
+	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final ConcurrentHashMap<String,String> cache = new ConcurrentHashMap<> ();
-	private final IConfigurationMngr configurationMngr;
 
 
 
 	/**
 	 * Constructor.
-	 * @param configurationMngr the configuration manager
 	 */
-	public PreferencesMngrImpl( IConfigurationMngr configurationMngr ) {
-		this.configurationMngr = configurationMngr;
+	public PreferencesMngrImpl() {
+		this.cache.putAll( DEFAULTS.keyToDefaultValue );
 	}
 
 
+	/**
+	 * Invoked by iPojo when one or several properties were updated from Config Admin.
+	 */
 	@Override
-	public void loadProperties() {
+	public void updateProperties( Dictionary<?,?> properties ) {
 
-		// At the beginning, this was done in the constructor.
-		// But it made tests complicated as preferences were loaded before
-		// we could change the manager's working directory.
+		Map<String,String> map = new HashMap<> ();
+		for( Enumeration<?> en = properties.keys(); en.hasMoreElements(); ) {
+			Object key = en.nextElement();
+			Object value = properties.get( key );
 
-		// Build a new map
-		Map<String,String> snapshot = new HashMap<> ();
-		Properties props = Utils.readPropertiesFileQuietly( getPropertiesFile(), this.logger );
-		for( Map.Entry<Object,Object> entry : props.entrySet()) {
-			snapshot.put((String) entry.getKey(), (String) entry.getValue());
+			// "null" are not acceptable values in dictionaries
+			// (OSGi often use Hash tables)
+			map.put( String.valueOf( key ), String.valueOf( value ));
 		}
 
-		if( snapshot.isEmpty())
-			snapshot.putAll( DEFAULTS.keyToDefaultValue );
+		this.cache.putAll( map );
+		this.logger.fine( "Preferences were updated in bulk mode." );
+	}
 
-		// Replace the cache by the new map
-		this.cache.clear();
-		this.cache.putAll( snapshot );
+
+	/**
+	 * Invoked by iPojo when the component is started.
+	 */
+	public void start() {
+		this.logger.info( "The DM preferences were started." );
+	}
+
+
+	/**
+	 * Invoked by iPojo when the component is stopped.
+	 */
+	public void stop() {
+		this.logger.info( "The DM preferences were stopped." );
+	}
+
+
+	/**
+	 * @param configAdmin the configAdmin to set
+	 */
+	public void setConfigAdmin( ConfigurationAdmin configAdmin ) {
+		this.configAdmin = configAdmin;
 	}
 
 
@@ -100,12 +133,27 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 
 
 	@Override
+	@SuppressWarnings( "unchecked" )
 	public void save( String key, String value ) throws IOException {
 
-		this.cache.put( key, value );
-		Properties props = new Properties();
-		props.putAll( this.cache );
-		Utils.writePropertiesFile( props, getPropertiesFile());
+		// Log
+		this.logger.fine( "Preference with key '" + key + "' is being updated." );
+
+		// Update the cache right away
+		String realValue = value == null ? "" : value;
+		this.cache.put( key, realValue );
+
+		// Update the config admin property.
+		// This will invoke (indirectly) the "updateProperties" method.
+		// It will simply reupdate the cache, it does not cost a lot.
+		if( this.configAdmin != null ) {
+			Configuration config = this.configAdmin.getConfiguration( PID );
+			config.getProperties().put( key, realValue );
+			config.update();
+		}
+
+		// We need to mix both approaches here so that this API works in
+		// both OSGi and non-OSGi environments.
 	}
 
 
@@ -141,10 +189,5 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 		}
 
 		return result;
-	}
-
-
-	private File getPropertiesFile() {
-		return new File( this.configurationMngr.getWorkingDirectory(), FILE_NAME );
 	}
 }

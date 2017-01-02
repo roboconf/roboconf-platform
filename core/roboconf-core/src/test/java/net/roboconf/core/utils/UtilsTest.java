@@ -223,6 +223,24 @@ public class UtilsTest {
 
 
 	@Test
+	public void testAppendStringInto() throws Exception {
+
+		File f = this.folder.newFile();
+		Assert.assertTrue( f.delete());
+
+		String content = "whatever\n\thop   ";
+		Assert.assertFalse( f.exists());
+
+		Utils.appendStringInto( content, f );
+		Assert.assertTrue( f.exists());
+
+		Assert.assertEquals( content, Utils.readFileContent( f ));
+		Utils.appendStringInto( "\npop", f );
+		Assert.assertEquals( content + "\npop", Utils.readFileContent( f ));
+	}
+
+
+	@Test
 	public void testIsEmptyOrWhitespaces() {
 
 		Assert.assertTrue( Utils.isEmptyOrWhitespaces( null ));
@@ -906,7 +924,7 @@ public class UtilsTest {
 
 	@Test
 	public void testGetValue() throws Exception {
-		Map<String,String> map = new HashMap<String,String>();
+		Map<String,String> map = new HashMap<>();
 		for(int i=0;i<10;i++) {
 			map.put(""+i, "toto"+i);
 		}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,39 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime;
+package net.roboconf.dm.rest.services.swagger;
+
+import java.io.File;
+
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import io.swagger.models.Swagger;
 
 /**
- * A bean that describes associations between instances and targets.
  * @author Vincent Zurczak - Linagora
  */
-public class TargetAssociation {
+public class GenerateSwaggerJsonForWebSocketsTest {
 
-	private final String instancePathOrComponentName;
-	private final TargetWrapperDescriptor targetDescriptor;
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
-	/**
-	 * Constructor.
-	 * @param instancePathOrComponentName
-	 * @param targetDescriptor
-	 */
-	public TargetAssociation( String instancePathOrComponentName, TargetWrapperDescriptor targetDescriptor ) {
-		this.instancePathOrComponentName = instancePathOrComponentName;
-		this.targetDescriptor = targetDescriptor;
-	}
+	@Test
+	public void testValidSwaggerFile() throws Exception {
 
-	/**
-	 * @return the instancePath
-	 */
-	public String getInstancePathOrComponentName() {
-		return this.instancePathOrComponentName;
-	}
+		File jsonFile = this.folder.newFile();
+		GenerateSwaggerJsonForWebSockets gen = new GenerateSwaggerJsonForWebSockets();
+		gen.generate( "v1", jsonFile );
 
-	/**
-	 * @return the target descriptor
-	 */
-	public TargetWrapperDescriptor getTargetDescriptor() {
-		return this.targetDescriptor;
+		Swagger swagger = ValidateSwaggerJsonFiles.validate( jsonFile );
+		Assert.assertEquals( GenerateSwaggerJsonForWebSockets.NAME_TO_DESC.size(), swagger.getPaths().size());
 	}
 }

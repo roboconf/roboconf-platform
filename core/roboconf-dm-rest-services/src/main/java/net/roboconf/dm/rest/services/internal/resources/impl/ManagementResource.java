@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -162,17 +163,58 @@ public class ManagementResource implements IManagementResource {
 
 	/*
 	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
+	 * #listApplicationTemplates(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<ApplicationTemplate> listApplicationTemplates( String exactName, String exactQualifier ) {
+
+		// Log
+		if( this.logger.isLoggable( Level.FINE )) {
+			if( exactName == null && exactQualifier == null ) {
+				this.logger.fine( "Request: list all the application templates." );
+
+			} else {
+				StringBuilder sb = new StringBuilder( "Request: list/find the application templates" );
+				if( exactName != null ) {
+					sb.append( " with name = " );
+					sb.append( exactName );
+				}
+
+				if( exactQualifier != null ) {
+					if( exactName != null )
+						sb.append( " and" );
+
+					sb.append( " qualifier = " );
+					sb.append( exactQualifier );
+				}
+
+				sb.append( "." );
+				this.logger.fine( sb.toString());
+			}
+		}
+
+		// Search
+		List<ApplicationTemplate> result = new ArrayList<> ();
+		for( ApplicationTemplate tpl : this.manager.applicationTemplateMngr().getApplicationTemplates()) {
+			// Equality is on the name, not on the display name
+			if(( exactName == null || exactName.equals( tpl.getName()))
+					&& (exactQualifier == null || exactQualifier.equals( tpl.getQualifier())))
+				result.add( tpl );
+		}
+
+		return result;
+	}
+
+
+	/*
+	 * (non-Javadoc)
 	 * @see net.roboconf.dm.internal.rest.client.exceptions.server.IApplicationWs
-	 * #listApplicationTemplatess()
+	 * #listApplicationTemplates()
 	 */
 	@Override
 	public List<ApplicationTemplate> listApplicationTemplates() {
-		this.logger.fine( "Request: list all the application templates." );
-
-		List<ApplicationTemplate> result = new ArrayList<> ();
-		result.addAll( this.manager.applicationTemplateMngr().getApplicationTemplates());
-
-		return result;
+		return listApplicationTemplates( null, null );
 	}
 
 
@@ -214,7 +256,8 @@ public class ManagementResource implements IManagementResource {
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
 			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
-			ManagedApplication ma = this.manager.applicationMngr().createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
+			String appName = app.getDisplayName() != null ? app.getDisplayName() : app.getName();
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( appName, app.getDescription(), tplName, tplQualifier );
 			result = Response.ok().entity( ma.getApplication()).build();
 
 		} catch( InvalidApplicationException e ) {
@@ -231,19 +274,38 @@ public class ManagementResource implements IManagementResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.internal.rest.client.exceptions.server.IApplicationWs
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
+	 * #listApplications(java.lang.String)
+	 */
+	@Override
+	public List<Application> listApplications( String exactName ) {
+
+		if( exactName != null )
+			this.logger.fine( "Request: list/find the application named " + exactName + "." );
+		else
+			this.logger.fine( "Request: list all the applications." );
+
+		List<Application> result = new ArrayList<> ();
+		for( ManagedApplication ma : this.manager.applicationMngr().getManagedApplications()) {
+			// Equality is on the name, not on the display name
+			if( exactName == null || exactName.equals( ma.getName()))
+				result.add( ma.getApplication());
+		}
+
+		return result;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
 	 * #listApplications()
 	 */
 	@Override
 	public List<Application> listApplications() {
-		this.logger.fine( "Request: list all the applications." );
-
-		List<Application> result = new ArrayList<> ();
-		for( ManagedApplication ma : this.manager.applicationMngr().getManagedApplications())
-			result.add( ma.getApplication());
-
-		return result;
+		return listApplications( null );
 	}
 
 

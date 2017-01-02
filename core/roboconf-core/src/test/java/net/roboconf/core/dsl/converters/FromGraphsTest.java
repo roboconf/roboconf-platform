@@ -65,8 +65,9 @@ public class FromGraphsTest {
 
 	@Test
 	public void testFromGraphs_noFacet() throws Exception {
-		Graphs graphs = new Graphs();
 
+		// Build a model
+		Graphs graphs = new Graphs();
 		Component cA = new Component( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 
@@ -78,10 +79,17 @@ public class FromGraphsTest {
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
 
-		cB.addExportedVariable( new ExportedVariable( "B.port", "9000" ));
-		cB.addExportedVariable( new ExportedVariable( "B.ip", null ));
+		cB.addExportedVariable( new ExportedVariable( "port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "ip", null ));
 
+		// Write it into a file, load a new graph from this file and compare it with the current one
 		compareGraphs( graphs, false );
+
+		// Verify exported variables are written correctly
+		FileDefinition defToWrite = new FromGraphs().buildFileDefinition( graphs, null, false );
+		String s = ParsingModelIo.writeConfigurationFile( defToWrite, false, System.getProperty( "line.separator" ));
+		Assert.assertTrue( s.contains( "port=\"9000\"" ));
+		Assert.assertTrue( s.contains( "exports: ip, port=\"9000\";" ));
 	}
 
 

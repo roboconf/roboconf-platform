@@ -25,6 +25,7 @@
 
 package net.roboconf.core.model.beans;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 import org.junit.Assert;
@@ -206,23 +207,85 @@ public class ApplicationTest {
 		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "p1", "app1" );
+		Assert.assertTrue( app.unbindFromApplication( "p1", "app1" ));
 		Assert.assertEquals( 2, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
 		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "p1", "app2" );
+		Assert.assertFalse( app.unbindFromApplication( "p1", "app1" ));
+
+		Assert.assertTrue( app.unbindFromApplication( "p1", "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "inexisting", "app2" );
+		Assert.assertFalse( app.unbindFromApplication( "inexisting", "app2" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
 
-		app.unbindFromApplication( "p2", "inexisting" );
+		Assert.assertFalse( app.unbindFromApplication( "p2", "inexisting" ));
 		Assert.assertEquals( 1, app.getApplicationBindings().size());
 		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+	}
+
+
+	@Test
+	public void testReplaceApplicationBindings() {
+
+		TestApplication app = new TestApplication();
+		Assert.assertEquals( 0, app.getApplicationBindings().size());
+
+		app.bindWithApplication( "p1", "app1" );
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app1" ));
+
+		Assert.assertTrue( app.replaceApplicationBindings( "p1", new HashSet<>( Arrays.asList( "app1", "app2", "app3" ))));
+		Assert.assertEquals( 3, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertFalse( app.replaceApplicationBindings( "p1", new HashSet<>( Arrays.asList( "app1", "app2", "app3" ))));
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 3, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app1" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app3" ));
+
+		Assert.assertTrue( app.replaceApplicationBindings( "p1", new HashSet<>( Arrays.asList( "app2", "app3" ))));
+		Assert.assertFalse( app.replaceApplicationBindings( "p1", new HashSet<>( Arrays.asList( "app2", "app3" ))));
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 2, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertFalse( app.getApplicationBindings().get( "p1" ).contains( "app1" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app3" ));
+
+		Assert.assertTrue( app.replaceApplicationBindings( "p2", new HashSet<>( Arrays.asList( "app1", "app2", "app3" ))));
+		Assert.assertFalse( app.replaceApplicationBindings( "p2", new HashSet<>( Arrays.asList( "app1", "app2", "app3" ))));
+		Assert.assertEquals( 2, app.getApplicationBindings().size());
+		Assert.assertEquals( 2, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertFalse( app.getApplicationBindings().get( "p1" ).contains( "app1" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app3" ));
+		Assert.assertEquals( 3, app.getApplicationBindings().get( "p2" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app1" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app2" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app3" ));
+
+		Assert.assertTrue( app.replaceApplicationBindings( "p1", new HashSet<String>( 0 )));
+		Assert.assertFalse( app.replaceApplicationBindings( "p1", new HashSet<String>( 0 )));
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertNull( app.getApplicationBindings().get( "p1" ));
+		Assert.assertEquals( 3, app.getApplicationBindings().get( "p2" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app1" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app2" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app3" ));
+
+		Assert.assertTrue( app.replaceApplicationBindings( "p2", new HashSet<>( Arrays.asList( "app4", "app5", "app6" ))));
+		Assert.assertFalse( app.replaceApplicationBindings( "p2", new HashSet<>( Arrays.asList( "app4", "app5", "app6" ))));
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertNull( app.getApplicationBindings().get( "p1" ));
+		Assert.assertEquals( 3, app.getApplicationBindings().get( "p2" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app4" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app5" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p2" ).contains( "app6" ));
 	}
 
 

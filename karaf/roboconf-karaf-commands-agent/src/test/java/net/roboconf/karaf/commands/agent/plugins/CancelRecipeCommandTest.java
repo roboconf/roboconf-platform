@@ -46,5 +46,4 @@ public class CancelRecipeCommandTest {
 		cmd.execute();
 		Assert.assertTrue( os.toString( "UTF-8" ).contains( "No agent found" ));
 	}
-
 }

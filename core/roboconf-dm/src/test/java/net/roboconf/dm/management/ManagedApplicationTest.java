@@ -28,20 +28,23 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.util.List;
 
-import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.events.EventType;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -189,17 +192,20 @@ public class ManagedApplicationTest {
 	@Test
 	public void testCheckStates() {
 
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.ma.checkStates();
+		this.ma.checkStates( notificationMngr );
 		Assert.assertEquals( "1", this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
+		Mockito.verifyZeroInteractions( notificationMngr );
 
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
 		for( int i=0; i<=ManagedApplication.THRESHOLD; i++ ) {
-			this.ma.checkStates();
+			this.ma.checkStates( notificationMngr );
 			Assert.assertEquals(
 					String.valueOf( i ),
 					String.valueOf( i+1 ),
@@ -207,16 +213,22 @@ public class ManagedApplicationTest {
 		}
 
 		Assert.assertEquals( InstanceStatus.PROBLEM, this.app.getMySqlVm().getStatus());
+		Mockito.verify( notificationMngr ).instance( this.app.getMySqlVm(), this.app, EventType.CHANGED );
+		Mockito.reset( notificationMngr );
+
 		this.app.getMySqlVm().setStatus( InstanceStatus.UNDEPLOYING );
-		this.ma.checkStates();
+		this.ma.checkStates( notificationMngr );
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
+		Mockito.verifyZeroInteractions( notificationMngr );
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		this.ma.checkStates();
+		this.ma.checkStates( notificationMngr );
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
+		Mockito.verifyZeroInteractions( notificationMngr );
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
-		this.ma.checkStates();
+		this.ma.checkStates( notificationMngr );
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 }

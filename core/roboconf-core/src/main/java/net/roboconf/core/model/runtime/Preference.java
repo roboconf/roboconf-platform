@@ -67,6 +67,18 @@ public class Preference {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public enum PreferenceKeyCategory {
-		EMAIL, AUTONOMIC;
+		LANGUAGE( "Language settings" ),
+		EMAIL( "Email settings (when Roboconf has to send e-mails)" ),
+		AUTONOMIC( "Autonomic" ),
+		MISCELLANEOUS( "Miscellaneous properties" );
+
+		private String description;
+		private PreferenceKeyCategory( String description ) {
+			this.description = description;
+		}
+
+		public String getDescription() {
+			return this.description;
+		}
 	}
 }
