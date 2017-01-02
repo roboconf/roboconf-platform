@@ -27,6 +27,7 @@ package net.roboconf.target.occi.internal;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
@@ -39,20 +40,39 @@ import net.roboconf.target.api.TargetException;
  */
 public class OcciMachineConfigurator implements MachineConfigurator {
 
+	/**
+	 * The steps of a workflow.
+	 * <ul>
+	 * <li>STARTING_VM: initial state.</li>
+	 * <li>RUNNING_VM: the VM must be running (started).</li>
+	 * <li>COMPLETE: there is nothing to do anymore.</li>
+	 * </ul>
+	 */
+	public enum State {
+		STARTING_VM, RUNNING_VM, COMPLETE
+	}
+	private State state = State.STARTING_VM;
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final String machineId;
 	private final Map<String,String> targetProperties;
-	private final String userData, rootInstanceName;
+	private final Properties userData;
+	private final String rootInstanceName;
 	private final Instance scopedInstance;
+
+	private int userdataCheckCount = 0; // Hack (expecting user-data implementation)
 
 	/**
 	 * Constructor.
 	 */
 	public OcciMachineConfigurator(
+			String machineId,
 			Map<String,String> targetProperties,
-			String userData,
+			Properties userData,
 			String rootInstanceName,
 			Instance scopedInstance ) {
 
+		this.machineId = machineId;
 		this.targetProperties = targetProperties;
 		this.userData = userData;
 		this.rootInstanceName = rootInstanceName;
@@ -75,18 +95,31 @@ public class OcciMachineConfigurator implements MachineConfigurator {
 	@Override
 	public boolean configure() throws TargetException {
 
-/*
 		try {
+
 			// Is the VM up?
+			if(this.state == State.STARTING_VM) {
+				if(OcciVMUtils.isVMRunning(
+						targetProperties.get(OcciIaasHandler.SERVER_IP_PORT), machineId)) {
+					this.state = State.RUNNING_VM;
+				}
+			}
 
-			// If yes, write user data.
+			if(this.state == State.RUNNING_VM) {
+				//TODO If yes, write user data.
+				this.state = State.COMPLETE;
+			}
 
-			return true;
+			return this.state == State.COMPLETE;
 
 		} catch( Exception e ) {
+			/*
+			if(++ this.userdataCheckCount < 240) { // Hack (temporary ?)
+				this.logger.fine("VM Agent not yet started... check #" + this.userdataCheckCount + " failed");
+				return false;
+			}*/
 			throw new TargetException( e );
 		}
-*/
-		return true;
+
 	}
 }

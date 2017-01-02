@@ -27,6 +27,7 @@ package net.roboconf.target.occi.internal;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -51,7 +52,6 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	static final String SUMMARY = "occi.summary";
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
-
 
 	/*
 	 * (non-Javadoc)
@@ -82,14 +82,22 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 		// Deal with the creation
 		try {
 			UUID id = UUID.randomUUID();
-			Map<String, String> properties = parameters.getTargetProperties();
-			return OcciVMUtils.createVM(properties.get(SERVER_IP_PORT),
+			Map<String, String> targetProperties = parameters.getTargetProperties();
+
+			String userData = DataHelpers.writeUserDataAsString(
+					parameters.getMessagingProperties(),
+					parameters.getDomain(),
+					parameters.getApplicationName(),
+					parameters.getScopedInstancePath());
+
+			return OcciVMUtils.createVM(targetProperties.get(SERVER_IP_PORT),
 					id.toString(),
-					properties.get(IMAGE),
-					properties.get(TITLE),
-					properties.get(SUMMARY));
+					targetProperties.get(IMAGE),
+					targetProperties.get(TITLE),
+					targetProperties.get(SUMMARY),
+					userData);
 		} catch( Exception e ) {
-			throw new TargetException( e );
+			throw new TargetException(e);
 		}
 	}
 
@@ -105,21 +113,14 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 			String machineId,
 			Instance scopedInstance ) {
 
-		String userData = "";
-		try {
-			userData = DataHelpers.writeUserDataAsString(
+		Properties userData = DataHelpers.writeUserDataAsProperties(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
 					parameters.getScopedInstancePath());
 
-		} catch( IOException e ) {
-			this.logger.severe( "User data could not be generated." );
-			Utils.logException( this.logger, e );
-		}
-
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
-		return new OcciMachineConfigurator( parameters.getTargetProperties(), userData, rootInstanceName, scopedInstance );
+		return new OcciMachineConfigurator(machineId, parameters.getTargetProperties(), userData, rootInstanceName, scopedInstance );
 	}
 
 
@@ -132,9 +133,7 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
 	throws TargetException {
 
-		boolean result = false;
-		//TODO implement method
-		return result;
+		return OcciVMUtils.isVMRunning(targetProperties.get(SERVER_IP_PORT), machineId);
 	}
 
 
