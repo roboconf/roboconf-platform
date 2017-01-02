@@ -42,8 +42,8 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ProgramUtils;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Noël - LIG
@@ -51,6 +51,9 @@ import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
  * @author Amadou Diarra - UGA
  */
 public final class AgentUtils {
+
+	public static final String INJECTED_CONFIGS_DIR = "roboconf/cfg-injection";
+
 
 	/**
 	 * Private empty constructor.
@@ -118,10 +121,10 @@ public final class AgentUtils {
 
 	/**
 	 * Executes a script resource on a given instance.
-	 * @param instance an instance
+	 * @param scriptsDir the scripts directoryé
 	 * @throws IOException
 	 */
-	public static void executeScriptResources( File scriptsDir) throws IOException {
+	public static void executeScriptResources( File scriptsDir ) throws IOException {
 
 		if( scriptsDir.isDirectory()) {
 			List<File> scriptFiles = Utils.listAllFiles( scriptsDir );
@@ -129,10 +132,8 @@ public final class AgentUtils {
 
 			for( File script : scriptFiles) {
 				if( script.getName().contains(Constants.SCOPED_SCRIPT_SUFFIX)) {
-					if( ! script.canExecute())
-						script.setExecutable(true);
-
-					String[] command = { script.getAbsolutePath() };
+					script.setExecutable( true );
+					String[] command = { script.getAbsolutePath()};
 					try {
 						ExecutionResult result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, null, null);
 						if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
@@ -140,6 +141,7 @@ public final class AgentUtils {
 
 						if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
 							logger.warning( result.getErrorOutput());
+
 					} catch (InterruptedException e) {
 						Utils.logException( logger, e );
 					}
@@ -261,5 +263,47 @@ public final class AgentUtils {
 
 		logger.info( "The agent's address was resolved to " + ipAddress );
 		return ipAddress;
+	}
+
+
+	/**
+	 * Generates configuration files from templates.
+	 * @param karafEtc Karaf's etc directory
+	 * @param applicationName the application name
+	 * @param scopedInstancePath the scoped instance path
+	 * @param domain the domain
+	 * @param ipAddress the IP address
+	 */
+	public static void injectConfigurations(
+			String karafEtc,
+			String applicationName,
+			String scopedInstancePath,
+			String domain,
+			String ipAddress ) {
+
+		File injectionDir = new File( karafEtc, INJECTED_CONFIGS_DIR );
+		if( injectionDir.isDirectory()) {
+			for( File source : Utils.listAllFiles( injectionDir, ".cfg.tpl" )) {
+				try {
+					File target = new File( karafEtc, source.getName().replaceFirst( "\\.tpl$", "" ));
+
+					// Do not overwrite the agent's configuration file (infinite configuration loop)
+					if( UserDataUtils.CONF_FILE_AGENT.equalsIgnoreCase( target.getName()))
+						continue;
+
+					String content = Utils.readFileContent( source );
+					content = content.replace( "<domain>", domain );
+					content = content.replace( "<application-name>", applicationName );
+					content = content.replace( "<scoped-instance-path>", scopedInstancePath );
+					content = content.replace( "<ip-address>", ipAddress );
+					Utils.writeStringInto( content, target );
+
+				} catch( IOException e ) {
+					Logger logger = Logger.getLogger( AgentUtils.class.getName());
+					logger.severe( "A configuration file could not be injected from " + source.getName());
+					Utils.logException( logger, e );
+				}
+			}
+		}
 	}
 }

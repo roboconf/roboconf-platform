@@ -93,7 +93,7 @@ public class PreferencesMngrImplTest {
 		Dictionary properties = new Hashtable<> ();
 		ConfigurationAdmin configAdmin = Mockito.mock( ConfigurationAdmin.class );
 		Configuration config = Mockito.mock( Configuration.class );
-		Mockito.when( configAdmin.getConfiguration( PreferencesMngrImpl.PID )).thenReturn( config );
+		Mockito.when( configAdmin.getConfiguration( PreferencesMngrImpl.PID, null )).thenReturn( config );
 		Mockito.when( config.getProperties()).thenReturn( properties );
 
 		((PreferencesMngrImpl) this.mngr).setConfigAdmin( configAdmin );
@@ -101,9 +101,9 @@ public class PreferencesMngrImplTest {
 		Mockito.verifyZeroInteractions( config );
 
 		this.mngr.save( "my key", "my value" );
-		Mockito.verify( configAdmin, Mockito.only()).getConfiguration( PreferencesMngrImpl.PID );
+		Mockito.verify( configAdmin, Mockito.only()).getConfiguration( PreferencesMngrImpl.PID, null );
 		Mockito.verify( config, Mockito.times( 1 )).getProperties();
-		Mockito.verify( config, Mockito.times( 1 )).update();
+		Mockito.verify( config, Mockito.times( 1 )).update( properties );
 		Mockito.verifyNoMoreInteractions( config );
 		Assert.assertEquals( 1, properties.size());
 		Assert.assertEquals( "my value", properties.get( "my key" ));
@@ -122,7 +122,7 @@ public class PreferencesMngrImplTest {
 		properties.put( "something", "" );
 		this.mngr.updateProperties( properties );
 
-		Assert.assertEquals( expectedSize + 2, this.mngr.getAllPreferences().size());
+		Assert.assertEquals( properties.size(), this.mngr.getAllPreferences().size());
 		Assert.assertEquals( "8154", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS ));
 		Assert.assertEquals( "8154", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "def" ));
 		Assert.assertEquals( "", this.mngr.get( "something" ));

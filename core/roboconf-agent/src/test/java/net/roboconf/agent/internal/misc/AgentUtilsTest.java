@@ -281,27 +281,117 @@ public class AgentUtilsTest {
 		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( AgentConstants.DEFAULT_NETWORK_INTERFACE ));
 	}
 
+
 	@Test
-	public void testExecuteScriptResources() throws IOException, InterruptedException {
-
+	public void testExecuteScriptResources_ok() throws Exception {
 		Assume.assumeTrue( isUnix());
-
-		//prepare our resources
 		File scriptsDir = this.folder.newFolder();
 
+		// Nothing to execute
 		AgentUtils.executeScriptResources( scriptsDir );
 		Assert.assertEquals(0, scriptsDir.listFiles().length);
 
-		File script = new File( scriptsDir, "toto-script.sh" );
+		// Something invalid to execute
+		File script = new File( scriptsDir, "toto.sh" );
+		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script);
+
+		Assert.assertEquals( 1, scriptsDir.listFiles().length );
+		File toto = new File( scriptsDir,"toto.txt" );
+		Assert.assertFalse( toto.exists());
+
+		AgentUtils.executeScriptResources( scriptsDir );
+		Assert.assertFalse( toto.exists());
+		Assert.assertEquals( 1, scriptsDir.listFiles().length );
+		Assert.assertTrue( script.delete());
+
+		// Something to execute
+		script = new File( scriptsDir, "toto-script.sh" );
 		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script);
 
 		AgentUtils.executeScriptResources( scriptsDir );
-		File toto = new File(scriptsDir,"toto.txt");
-
-		Assert.assertTrue( toto.exists() );
+		Assert.assertTrue( toto.exists());
 		Assert.assertEquals( 2,scriptsDir.listFiles().length );
 
 		String s = Utils.readFileContent( toto );
-		Assert.assertEquals("totototototo",s.trim());
+		Assert.assertEquals( "totototototo", s.trim());
+	}
+
+
+	@Test
+	public void testExecuteScriptResources_noScriptDirectory() throws Exception {
+
+		File scriptsDir = this.folder.newFile();
+		AgentUtils.executeScriptResources( scriptsDir );
+		// No exception
+	}
+
+
+	@Test
+	public void testInjectConfigurations_invalidEtc() throws Exception {
+
+		File karafEtc = this.folder.newFile();
+		AgentUtils.injectConfigurations( karafEtc.getAbsolutePath(), "app", "/vm", "default", "127.0.0.1" );
+		// No exception
+	}
+
+
+	@Test
+	public void testInjectConfigurations_emptyEtc() throws Exception {
+
+		File karafEtc = this.folder.newFolder();
+		Assert.assertEquals( 0, karafEtc.listFiles().length );
+		AgentUtils.injectConfigurations( karafEtc.getAbsolutePath(), "app", "/vm", "default", "127.0.0.1" );
+		Assert.assertEquals( 0, karafEtc.listFiles().length );
+	}
+
+
+	@Test
+	public void testInjectConfigurations_fullSample() throws Exception {
+
+		File karafEtc = this.folder.newFolder();
+		File injectionDir = new File( karafEtc, AgentUtils.INJECTED_CONFIGS_DIR );
+		Assert.assertTrue( injectionDir.mkdirs());
+
+		// Valid template
+		Utils.writeStringInto( "ip = <ip-address>\napp = <application-name>\n", new File( injectionDir, "valid1.cfg.tpl" ));
+		Utils.writeStringInto( "I am <scoped-instance-path>", new File( injectionDir, "valid2.cfg.tpl" ));
+
+		// Skipped (not templates or invalid target file)
+		Utils.writeStringInto( "ip = <ip-address>\napp = <application-name>", new File( injectionDir, "not-a-template.cfg" ));
+		Utils.writeStringInto( "I am <scoped-instance-path>", new File( injectionDir, UserDataUtils.CONF_FILE_AGENT + ".tpl" ));
+
+		// Check
+		Assert.assertEquals( 1, karafEtc.listFiles().length );
+		AgentUtils.injectConfigurations( karafEtc.getAbsolutePath(), "app", "/vm", "default", "127.0.0.1" );
+		Assert.assertEquals( 3, karafEtc.listFiles().length );
+
+		File f = new File( karafEtc, "valid1.cfg" );
+		Assert.assertTrue( f.isFile());
+		Assert.assertEquals( "ip = 127.0.0.1\napp = app\n", Utils.readFileContent( f ));
+
+		f = new File( karafEtc, "valid2.cfg" );
+		Assert.assertTrue( f.isFile());
+		Assert.assertEquals( "I am /vm", Utils.readFileContent( f ));
+	}
+
+
+	@Test
+	public void testInjectConfigurations_exceptionOnConflict() throws Exception {
+
+		File karafEtc = this.folder.newFolder();
+		File injectionDir = new File( karafEtc, AgentUtils.INJECTED_CONFIGS_DIR );
+		Assert.assertTrue( injectionDir.mkdirs());
+
+		File conflict = new File( karafEtc, "valid1.cfg" );
+		Assert.assertTrue( conflict.mkdir());
+		Utils.writeStringInto( "ip = <ip-address>\napp = <application-name>\n", new File( injectionDir, "valid1.cfg.tpl" ));
+
+		// Check
+		Assert.assertEquals( 2, karafEtc.listFiles().length );
+		AgentUtils.injectConfigurations( karafEtc.getAbsolutePath(), "app", "/vm", "default", "127.0.0.1" );
+		Assert.assertEquals( 2, karafEtc.listFiles().length );
+
+		File f = new File( karafEtc, "valid1.cfg" );
+		Assert.assertTrue( f.isDirectory());
 	}
 }

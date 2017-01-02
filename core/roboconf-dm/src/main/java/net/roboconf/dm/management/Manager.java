@@ -314,6 +314,7 @@ public class Manager implements IReconfigurable {
 		// Update the messaging client
 		this.logger.info( "Reconfiguration requested in the DM." );
 		if( this.messagingClient != null ) {
+			this.messagingClient.setDomain( this.domain );
 			this.messagingClient.switchMessagingType( this.messagingType );
 			try {
 				if( this.messagingClient.isConnected())
@@ -346,12 +347,13 @@ public class Manager implements IReconfigurable {
 	public void setMessagingType( String messagingType ) {
 
 		// Properties are injected on every modification.
-		// so, we just want to track changes.
+		// So, we just want to track changes.
 
 		// We only want to reconfigure the messaging client
 		// when the messaging type changes.
 		if( ! Objects.equals( this.messagingType, messagingType )) {
 			this.messagingType = messagingType;
+			this.logger.fine( "Messaging type set to " + this.messagingType );
 
 			// Explicitly require a reconfiguration.
 			reconfigure();
@@ -364,10 +366,18 @@ public class Manager implements IReconfigurable {
 	 */
 	public void setDomain( String domain ) {
 
-		this.domain = domain;
-		this.logger.fine( "Domain set to " + domain );
-		if( this.messagingClient != null )
-			this.messagingClient.setDomain( domain );
+		// Properties are injected on every modification.
+		// So, we just want to track changes.
+
+		// We only want to reconfigure the messaging client
+		// when the domain changes.
+		if( ! Objects.equals( this.domain, domain )) {
+			this.domain = domain;
+			this.logger.fine( "Domain set to " + domain );
+
+			// Explicitly require a reconfiguration.
+			reconfigure();
+		}
 	}
 
 
