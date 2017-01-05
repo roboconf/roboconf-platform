@@ -61,7 +61,7 @@ public class InMemoryHandlerWithoutIPojoTest {
 		InMemoryHandler target = new InMemoryHandler();
 		Assert.assertEquals( InMemoryHandler.TARGET_ID, target.getTargetId());
 
-		target.terminateMachine( null, "whatever" );
+		target.terminateMachine( new TargetHandlerParameters(), "whatever" );
 	}
 
 
@@ -132,8 +132,12 @@ public class InMemoryHandlerWithoutIPojoTest {
 				.domain( "domain" );
 
 		InMemoryHandler handler = new InMemoryHandler();
-		handler.configureMachine( parameters, null, new Instance());
-		Assert.assertFalse( handler.isMachineRunning( null, "whatever, there is no iPojo factory" ));
+		Instance scopedInstance = new Instance();
+		Assert.assertEquals( 0, scopedInstance.data.size());
+
+		handler.configureMachine( parameters, null, scopedInstance );
+		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
+		Assert.assertFalse( handler.isMachineRunning( new TargetHandlerParameters(), "whatever, there is no iPojo factory" ));
 	}
 
 

@@ -27,9 +27,13 @@ package net.roboconf.dm.internal.tasks;
 
 import java.util.Map;
 
-import net.roboconf.core.internal.tests.TestApplication;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
@@ -40,19 +44,16 @@ import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerMessagesTaskTest {
+public class CheckerForHeartbeatsTaskTest {
 
 	private IApplicationMngr appManager;
-	private IMessagingMngr messagingMngr;
+	private Map<String,ManagedApplication> nameToManagedApplication;
 
 
+	@SuppressWarnings( "unchecked" )
 	@Before
 	public void resetManager() throws Exception {
 
@@ -60,57 +61,40 @@ public class CheckerMessagesTaskTest {
 		// ... as well as the managed applications themselves.
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		IAutonomicMngr autonomicMngr = Mockito.mock( IAutonomicMngr.class );
 
-		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
 		this.appManager = new ApplicationMngrImpl(
 				notificationMngr, configurationMngr,
-				targetsMngr, this.messagingMngr,
+				targetsMngr, messagingMngr,
 				randomMngr, autonomicMngr );
+
+		this.nameToManagedApplication = TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class );
 	}
 
 
 	@Test
 	public void testRun_noApplication() {
 
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, this.messagingMngr );
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		CheckerForHeartbeatsTask task = new CheckerForHeartbeatsTask( this.appManager, notificationMngr );
 		task.run();
-		Mockito.verifyZeroInteractions( this.messagingMngr );
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 
 
 	@Test
-	@SuppressWarnings( "unchecked" )
-	public void testRun_appWithAllStates() throws Exception {
+	public void testRun() {
 
-		TestApplication app = new TestApplication();
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		Application app = new Application( "test", new TestApplicationTemplate());
 		ManagedApplication ma = new ManagedApplication( app );
-		TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class ).put( ma.getName(), ma );
+		this.nameToManagedApplication.put( app.getName(), ma );
 
-		InstanceStatus[] statuses = new InstanceStatus[] {
-				InstanceStatus.NOT_DEPLOYED,
-				InstanceStatus.DEPLOYING,
-				InstanceStatus.DEPLOYED_STARTED,
-				InstanceStatus.DEPLOYED_STOPPED,
-				InstanceStatus.PROBLEM
-		};
-
-		for( InstanceStatus status : statuses ) {
-			Mockito.reset( this.messagingMngr );
-			CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, this.messagingMngr );
-			app.getMySqlVm().setStatus( status );
-
-			Mockito.verifyZeroInteractions( this.messagingMngr );
-			task.run();
-			Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendStoredMessages(
-					Mockito.eq( ma ),
-					Mockito.eq( app.getMySqlVm()));
-
-			Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendStoredMessages(
-					Mockito.eq( ma ),
-					Mockito.eq( app.getTomcatVm()));
-		}
+		CheckerForHeartbeatsTask task = new CheckerForHeartbeatsTask( this.appManager, notificationMngr );
+		task.run();
+		Mockito.verifyZeroInteractions( notificationMngr );
 	}
 }

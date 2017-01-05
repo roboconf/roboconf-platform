@@ -193,10 +193,10 @@ public class AzureIaasHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		// TODO See #230
 		return false;
@@ -206,14 +206,14 @@ public class AzureIaasHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String instanceId ) throws TargetException {
 
 		// instanceID is CloudServiceName
 		try {
-			final AzureProperties azureProperties = buildProperties( targetProperties );
+			final AzureProperties azureProperties = buildProperties( parameters.getTargetProperties());
 			String baseURL = String.format("https://management.core.windows.net/%s/services", azureProperties.getSubscriptionId());
 			String deleteCloudServiceURL = baseURL+"/hostedservices/"+instanceId+"?comp=media";
 
@@ -228,6 +228,19 @@ public class AzureIaasHandler implements TargetHandler {
 		} catch( Exception e ) {
 			throw new TargetException( e );
 		}
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		// Most likely feasible but not implemented for the moment
+		return null;
 	}
 
 

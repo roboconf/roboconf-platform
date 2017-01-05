@@ -57,6 +57,7 @@ public final class DmUtils {
 		scopedInstance.data.remove( Instance.MACHINE_ID );
 		scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
 		scopedInstance.data.remove( Instance.RUNNING_FROM );
+		scopedInstance.data.remove( Instance.READY_FOR_CFG_MARKER );
 		for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
 			InstanceStatus oldstatus = i.getStatus();
 			i.setStatus( InstanceStatus.NOT_DEPLOYED );

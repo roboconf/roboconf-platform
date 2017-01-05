@@ -23,35 +23,45 @@
  * limitations under the License.
  */
 
-package net.roboconf.maven;
+package net.roboconf.dm.internal.tasks;
+
+import java.util.TimerTask;
+import java.util.logging.Logger;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IMessagingMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface MavenPluginConstants {
+public class CheckerForStoredMessagesTask extends TimerTask {
+
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final IMessagingMngr messagingMngr;
+	private final IApplicationMngr appManager;
+
 
 	/**
-	 * The src/main/model directory.
+	 * Constructor.
+	 * @param appManager
+	 * @param messagingMngr
 	 */
-	String SOURCE_MODEL_DIRECTORY = "src/main/model";
+	public CheckerForStoredMessagesTask( IApplicationMngr appManager, IMessagingMngr messagingMngr ) {
+		this.appManager = appManager;
+		this.messagingMngr = messagingMngr;
+	}
 
-	/**
-	 * The src/main/resources directory.
-	 */
-	String SOURCE_MAIN_RESOURCES = "src/main/resources";
 
-	/**
-	 * The Maven output of the model directory.
-	 */
-	String TARGET_MODEL_DIRECTORY = "target/roboconf-model";
+	@Override
+	public void run() {
 
-	/**
-	 * The Maven output of the documentation directory.
-	 */
-	String TARGET_DOC_DIRECTORY = "target/documentation";
-
-	/**
-	 * The relative path of the validation results.
-	 */
-	String VALIDATION_RESULT_PATH = "target/roboconf/roboconf-validation.txt";
+		this.logger.finest( "The task that checks stored messages runs." );
+		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
+			for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( ma.getApplication()))
+				this.messagingMngr.sendStoredMessages( ma, scopedInstance );
+		}
+	}
 }

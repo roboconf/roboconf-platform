@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.internal.test;
 
-import java.util.Map;
 import java.util.Objects;
 
 import net.roboconf.core.model.beans.Instance;
@@ -49,7 +48,7 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 		// nothing
 	}
 
@@ -74,8 +73,14 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId ) throws TargetException {
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 		return false;
+	}
+
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		return null;
 	}
 
 	@Override

@@ -28,41 +28,29 @@ package net.roboconf.dm.internal.tasks;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.api.IApplicationMngr;
-import net.roboconf.dm.management.api.IMessagingMngr;
+import net.roboconf.dm.internal.api.ITargetConfigurator;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerMessagesTask extends TimerTask {
+public class CheckerForTargetsConfigurationTask extends TimerTask {
 
-	private final Logger logger;
-	private final IMessagingMngr messagingMngr;
-	private final IApplicationMngr appManager;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final ITargetConfigurator targetConfigurator;
 
 
 	/**
 	 * Constructor.
-	 * @param appManager
-	 * @param messagingMngr
+	 * @param targetConfigurator
 	 */
-	public CheckerMessagesTask( IApplicationMngr appManager, IMessagingMngr messagingMngr ) {
-		this.appManager = appManager;
-		this.messagingMngr = messagingMngr;
-		this.logger = Logger.getLogger( getClass().getName());
+	public CheckerForTargetsConfigurationTask( ITargetConfigurator targetConfigurator ) {
+		this.targetConfigurator = targetConfigurator;
 	}
 
 
 	@Override
 	public void run() {
-
-		this.logger.finer( "The messager checker task runs." );
-		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
-			for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( ma.getApplication()))
-				this.messagingMngr.sendStoredMessages( ma, scopedInstance );
-		}
+		this.logger.finest( "The task that checks for targets configuration runs." );
+		this.targetConfigurator.verifyCandidates();
 	}
 }

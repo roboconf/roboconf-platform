@@ -151,15 +151,15 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		boolean result = false;
 		try {
-			AmazonEC2 ec2 = createEc2Client( targetProperties );
+			AmazonEC2 ec2 = createEc2Client( parameters.getTargetProperties());
 			DescribeInstancesRequest dis = new DescribeInstancesRequest();
 			dis.setInstanceIds(Collections.singletonList(machineId));
 
@@ -170,7 +170,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			// nothing, the instance does not exist
 
 		} catch( AmazonClientException e ) {
-			this.logger.severe( "An error occurred while creating a machine on Amazon EC2. " + e.getMessage());
+			this.logger.severe( "An error occurred while checking whether a machine is running on Amazon EC2. " + e.getMessage());
 			throw new TargetException( e );
 		}
 
@@ -181,15 +181,15 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 
 		this.logger.fine( "Terminating machine '" + machineId + "'." );
 		cancelMachineConfigurator( machineId );
 		try {
-			AmazonEC2 ec2 = createEc2Client( targetProperties );
+			AmazonEC2 ec2 = createEc2Client( parameters.getTargetProperties());
 			TerminateInstancesRequest terminateInstancesRequest = new TerminateInstancesRequest();
 			terminateInstancesRequest.withInstanceIds( machineId );
 			ec2.terminateInstances( terminateInstancesRequest );
@@ -198,6 +198,39 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			this.logger.severe( "An error occurred while terminating a machine on Amazon EC2. " + e.getMessage());
 			throw new TargetException( e );
 		}
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+
+		String result = null;
+		try {
+			AmazonEC2 ec2 = createEc2Client( parameters.getTargetProperties());
+			DescribeInstancesRequest dis = new DescribeInstancesRequest();
+			dis.setInstanceIds(Collections.singletonList(machineId));
+
+			DescribeInstancesResult disresult = ec2.describeInstances( dis );
+			if( ! disresult.getReservations().isEmpty()) {
+				// Only one instance should match this machine ID
+				result = disresult.getReservations().get( 0 ).getInstances().get( 0 ).getPublicIpAddress();
+			}
+
+		} catch( AmazonServiceException e ) {
+			// nothing, the instance does not exist
+
+		} catch( Exception e ) {
+			this.logger.severe( "An error occurred while retrieving a public IP address from Amazon EC2. " + e.getMessage());
+			throw new TargetException( e );
+		}
+
+		return result;
 	}
 
 

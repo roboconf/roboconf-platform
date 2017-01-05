@@ -42,7 +42,6 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ProgramUtils;
-import net.roboconf.core.utils.ProgramUtils.ExecutionResult;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -121,7 +120,7 @@ public final class AgentUtils {
 
 	/**
 	 * Executes a script resource on a given instance.
-	 * @param scriptsDir the scripts directoryé
+	 * @param scriptsDir the scripts directory
 	 * @throws IOException
 	 */
 	public static void executeScriptResources( File scriptsDir ) throws IOException {
@@ -131,18 +130,13 @@ public final class AgentUtils {
 			Logger logger = Logger.getLogger( AgentUtils.class.getName());
 
 			for( File script : scriptFiles) {
-				if( script.getName().contains(Constants.SCOPED_SCRIPT_SUFFIX)) {
+				if( script.getName().contains( Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX )) {
 					script.setExecutable( true );
 					String[] command = { script.getAbsolutePath()};
 					try {
-						ExecutionResult result = ProgramUtils.executeCommandWithResult( logger, command, script.getParentFile(), null, null, null);
-						if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
-							logger.fine( result.getNormalOutput());
+						ProgramUtils.executeCommand( logger, command, script.getParentFile(), null, null, null );
 
-						if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
-							logger.warning( result.getErrorOutput());
-
-					} catch (InterruptedException e) {
+					} catch( InterruptedException e ) {
 						Utils.logException( logger, e );
 					}
 				}

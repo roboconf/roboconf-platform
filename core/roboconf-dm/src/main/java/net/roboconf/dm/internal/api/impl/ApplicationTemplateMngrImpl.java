@@ -259,10 +259,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 			Set<String> targetIds = new HashSet<> ();
 			componentToTargetIds.put( entry.getKey(), targetIds );
 
-			for( File f : Utils.listAllFiles( entry.getValue())) {
-				if( ! f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
-					continue;
-
+			for( File f : Utils.listDirectFiles( entry.getValue(), Constants.FILE_EXT_PROPERTIES )) {
 				this.logger.fine( "Registering target " + f.getName() + " from component " + entry.getKey() + " in application template " + tpl );
 				String targetId;
 				try {

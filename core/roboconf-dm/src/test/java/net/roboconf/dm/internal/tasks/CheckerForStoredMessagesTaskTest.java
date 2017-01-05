@@ -27,13 +27,9 @@ package net.roboconf.dm.internal.tasks;
 
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
-import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
@@ -44,16 +40,19 @@ import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerHeartbeatsTaskTest {
+public class CheckerForStoredMessagesTaskTest {
 
 	private IApplicationMngr appManager;
-	private Map<String,ManagedApplication> nameToManagedApplication;
+	private IMessagingMngr messagingMngr;
 
 
-	@SuppressWarnings( "unchecked" )
 	@Before
 	public void resetManager() throws Exception {
 
@@ -61,40 +60,57 @@ public class CheckerHeartbeatsTaskTest {
 		// ... as well as the managed applications themselves.
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
-		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		IAutonomicMngr autonomicMngr = Mockito.mock( IAutonomicMngr.class );
 
+		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
 		this.appManager = new ApplicationMngrImpl(
 				notificationMngr, configurationMngr,
-				targetsMngr, messagingMngr,
+				targetsMngr, this.messagingMngr,
 				randomMngr, autonomicMngr );
-
-		this.nameToManagedApplication = TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class );
 	}
 
 
 	@Test
 	public void testRun_noApplication() {
 
-		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
-		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager, notificationMngr );
+		CheckerForStoredMessagesTask task = new CheckerForStoredMessagesTask( this.appManager, this.messagingMngr );
 		task.run();
-		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
 	}
 
 
 	@Test
-	public void testRun() {
+	@SuppressWarnings( "unchecked" )
+	public void testRun_appWithAllStates() throws Exception {
 
-		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
-		Application app = new Application( "test", new TestApplicationTemplate());
+		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.nameToManagedApplication.put( app.getName(), ma );
+		TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class ).put( ma.getName(), ma );
 
-		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager, notificationMngr );
-		task.run();
-		Mockito.verifyZeroInteractions( notificationMngr );
+		InstanceStatus[] statuses = new InstanceStatus[] {
+				InstanceStatus.NOT_DEPLOYED,
+				InstanceStatus.DEPLOYING,
+				InstanceStatus.DEPLOYED_STARTED,
+				InstanceStatus.DEPLOYED_STOPPED,
+				InstanceStatus.PROBLEM
+		};
+
+		for( InstanceStatus status : statuses ) {
+			Mockito.reset( this.messagingMngr );
+			CheckerForStoredMessagesTask task = new CheckerForStoredMessagesTask( this.appManager, this.messagingMngr );
+			app.getMySqlVm().setStatus( status );
+
+			Mockito.verifyZeroInteractions( this.messagingMngr );
+			task.run();
+			Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendStoredMessages(
+					Mockito.eq( ma ),
+					Mockito.eq( app.getMySqlVm()));
+
+			Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendStoredMessages(
+					Mockito.eq( ma ),
+					Mockito.eq( app.getTomcatVm()));
+		}
 	}
 }

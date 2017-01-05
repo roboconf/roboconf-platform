@@ -78,11 +78,11 @@ public interface TargetHandler {
 
 	/**
 	 * Asks for the termination of the machine identified by its id.
-	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to terminate
 	 * @throws TargetException
 	 */
-	void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException;
+	void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException;
 
 
 	/**
@@ -92,9 +92,20 @@ public interface TargetHandler {
 	 * of the machines it used to know.
 	 * </p>
 	 *
-	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
+	 * @return true if the machine is running, false otherwise
 	 * @throws TargetException
 	 */
-	boolean isMachineRunning( Map<String,String> targetProperties, String machineId ) throws TargetException;
+	boolean isMachineRunning( TargetHandlerParameters parameters, String machineId ) throws TargetException;
+
+
+	/**
+	 * Retrieves a public IP address for a given machine.
+	 * @param parameters the target parameters
+	 * @param machineId the ID machine of the machine to configure
+	 * @return an IP address (can be null)
+	 * @throws TargetException
+	 */
+	String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId ) throws TargetException;
 }

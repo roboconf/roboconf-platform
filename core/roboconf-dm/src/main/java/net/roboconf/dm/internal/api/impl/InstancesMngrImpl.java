@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
+import net.roboconf.dm.internal.api.ITargetConfigurator;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.internal.utils.DmUtils;
 import net.roboconf.dm.management.ManagedApplication;
@@ -80,9 +82,11 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	private final INotificationMngr notificationMngr;
 	private final ITargetsMngr targetsMngr;
 	private final IRandomMngr randomMngr;
-	private IAutonomicMngr autonomicMngr;
+	private final ITargetConfigurator targetConfigurator;
 
+	private IAutonomicMngr autonomicMngr;
 	private ITargetHandlerResolver targetHandlerResolver;
+	private String dmDomain;
 
 
 	/**
@@ -91,17 +95,20 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	 * @param messagingMngr
 	 * @param notificationMngr
 	 * @param randomMngr
+	 * @param targetConfigurator
 	 */
 	public InstancesMngrImpl(
 			IMessagingMngr messagingMngr,
 			INotificationMngr notificationMngr,
 			ITargetsMngr targetsMngr,
-			IRandomMngr randomMngr ) {
+			IRandomMngr randomMngr,
+			ITargetConfigurator targetConfigurator ) {
 
 		this.targetsMngr = targetsMngr;
 		this.messagingMngr = messagingMngr;
 		this.notificationMngr = notificationMngr;
 		this.randomMngr = randomMngr;
+		this.targetConfigurator = targetConfigurator;
 	}
 
 
@@ -118,6 +125,14 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	 */
 	public void setRuleBasedHandler( IAutonomicMngr autonomicMngr ) {
 		this.autonomicMngr = autonomicMngr;
+	}
+
+
+	/**
+	 * @param dmDomain the dmDomain to set
+	 */
+	public void setDmDomain( String dmDomain ) {
+		this.dmDomain = dmDomain;
 	}
 
 
@@ -203,6 +218,12 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
+				TargetHandlerParameters parameters = new TargetHandlerParameters()
+						.targetProperties( targetProperties )
+						.scopedInstancePath( scopedInstancePath )
+						.applicationName( ma.getName())
+						.domain( this.dmDomain );
+
 				TargetHandler readTargetHandler = null;
 				try {
 					readTargetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
@@ -217,7 +238,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 					continue;
 
 				// Not a running VM? => Everything must be not deployed.
-				if( ! targetHandler.isMachineRunning( targetProperties, machineId )) {
+				if( ! targetHandler.isMachineRunning( parameters, machineId )) {
 					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
 				}
 
@@ -407,7 +428,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
 
 			// Send the model
-			Map<String,byte[]> scriptResources = this.targetsMngr.findScriptResources( ma.getApplication(), scopedInstance );
+			Map<String,byte[]> scriptResources = this.targetsMngr.findScriptResourcesForAgent( ma.getApplication(), scopedInstance );
 			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),
@@ -431,12 +452,14 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
 			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 
+			File localExecutionScript = this.targetsMngr.findScriptForDm( ma.getApplication(), scopedInstance );
 			TargetHandlerParameters parameters = new TargetHandlerParameters()
 					.targetProperties( targetProperties )
 					.messagingProperties( messagingConfiguration )
 					.scopedInstancePath( scopedInstancePath )
 					.applicationName( ma.getName())
-					.domain( this.messagingMngr.getMessagingClient().getDomain());
+					.domain( this.dmDomain )
+					.targetConfigurationScript( localExecutionScript );
 
 			// FIXME: there can be many problems here.
 			// Not sure we handle all the possible problems correctly.
@@ -455,6 +478,9 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			// This will prevent us from having ghost VMs with no target.
 			targetHandler.configureMachine( parameters, machineId, scopedInstance );
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
+
+			// Schedule post-configuration (script)
+			this.targetConfigurator.reportCandidate( parameters, scopedInstance );
 
 		} catch( TargetException | IOException e ) {
 			this.logger.severe( "Failed to deploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
@@ -499,8 +525,18 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
+				TargetHandlerParameters parameters = new TargetHandlerParameters()
+						.targetProperties( targetProperties )
+						.scopedInstancePath( scopedInstancePath )
+						.applicationName( ma.getName())
+						.domain( this.dmDomain );
+
+				// Cancel post-configuration
+				this.targetConfigurator.cancelCandidate( parameters, scopedInstance );
+
+				// Terminate the machine and release the lock
 				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
-				targetHandler.terminateMachine( targetProperties, machineId );
+				targetHandler.terminateMachine( parameters, machineId );
 
 				this.targetsMngr.unlockTarget( ma.getApplication(), scopedInstance );
 				this.messagingMngr.getMessagingClient().propagateAgentTermination( ma.getApplication(), scopedInstance );

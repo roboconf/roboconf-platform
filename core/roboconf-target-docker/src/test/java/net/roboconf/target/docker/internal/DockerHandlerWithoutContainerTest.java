@@ -46,13 +46,19 @@ public class DockerHandlerWithoutContainerTest {
 
 	@Test( expected = TargetException.class )
 	public void testTerminate_noConnection() throws Exception {
-		new DockerHandler().terminateMachine( new HashMap<String,String> (), "whatever" );
+
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		new DockerHandler().terminateMachine( parameters, "whatever" );
 	}
 
 
 	@Test
 	public void testIsRunning_noConnection() throws Exception {
-		boolean running = new DockerHandler().isMachineRunning( new HashMap<String,String> (), "whatever" );
+
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		boolean running = new DockerHandler().isMachineRunning( parameters, "whatever" );
 		Assert.assertFalse( running );
 	}
 

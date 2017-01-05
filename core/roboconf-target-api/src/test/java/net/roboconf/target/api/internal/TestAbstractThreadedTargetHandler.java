@@ -25,7 +25,6 @@
 
 package net.roboconf.target.api.internal;
 
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.roboconf.core.model.beans.Instance;
@@ -62,14 +61,14 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 
 
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId )
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		// nothing
 	}
 
 
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		return false;
 	}
@@ -78,6 +77,13 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 	@Override
 	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
 		return new TestMachineConfigurator( this.cpt, this.failConfiguration, scopedInstance );
+	}
+
+
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		return null;
 	}
 
 

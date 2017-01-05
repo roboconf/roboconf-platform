@@ -35,8 +35,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import net.roboconf.target.api.TargetException;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -103,7 +103,7 @@ public class OcciVMUtils {
 			in = new DataInputStream(httpURLConnection.getInputStream());
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			Utils.copyStreamSafely(in, out);
-			ret = out.toString();
+			ret = out.toString( "UTF-8" );
 
 		} catch (IOException e) {
 			throw new TargetException(e);
@@ -144,10 +144,11 @@ public class OcciVMUtils {
 			in = new DataInputStream(httpURLConnection.getInputStream());
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			Utils.copyStreamSafely(in, out);
-			ret = out.toString();
+			ret = out.toString( "UTF-8" );
 
 		} catch (IOException e) {
 			throw new TargetException(e);
+
 		}  finally {
 			Utils.closeQuietly(in);
 			if (httpURLConnection != null) {

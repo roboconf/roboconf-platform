@@ -26,6 +26,7 @@
 package net.roboconf.dm.internal.tasks;
 
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
@@ -34,8 +35,9 @@ import net.roboconf.dm.management.api.INotificationMngr;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerHeartbeatsTask extends TimerTask {
+public class CheckerForHeartbeatsTask extends TimerTask {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final IApplicationMngr appManager;
 	private final INotificationMngr notificationMngr;
 
@@ -45,18 +47,16 @@ public class CheckerHeartbeatsTask extends TimerTask {
 	 * @param appManager
 	 * @param notificationMngr
 	 */
-	public CheckerHeartbeatsTask( IApplicationMngr appManager, INotificationMngr notificationMngr ) {
+	public CheckerForHeartbeatsTask( IApplicationMngr appManager, INotificationMngr notificationMngr ) {
 		this.appManager = appManager;
 		this.notificationMngr = notificationMngr;
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.TimerTask#run()
-	 */
 	@Override
 	public void run() {
+
+		this.logger.finest( "The task that checks heart beats runs." );
 		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
 			ma.checkStates( this.notificationMngr );
 		}

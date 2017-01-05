@@ -164,7 +164,7 @@ public class TargetValidator {
 		// Validate all the properties
 		List<ModelError> result = new ArrayList<> ();
 		Set<String> targetIds = new HashSet<> ();
-		for( File f: Utils.listAllFiles( directory, Constants.FILE_EXT_PROPERTIES )) {
+		for( File f : Utils.listDirectFiles( directory, Constants.FILE_EXT_PROPERTIES )) {
 
 			TargetValidator tv = new TargetValidator( f, c );
 			tv.validate();

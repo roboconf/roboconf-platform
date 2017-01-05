@@ -299,15 +299,15 @@ public class DockerHandlerWithContainerTest {
 			Assert.assertNotNull( containerId );
 
 			// Check the machine is running
-			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+			Assert.assertTrue( target.isMachineRunning( parameters, containerId ));
 
 			// Just for verification, try to terminate an invalid container
-			target.terminateMachine( targetProperties, "invalid identifier" );
-			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+			target.terminateMachine( parameters, "invalid identifier" );
+			Assert.assertTrue( target.isMachineRunning( parameters, containerId ));
 
 			// Terminate the container
-			target.terminateMachine( targetProperties, containerId );
-			Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
+			target.terminateMachine( parameters, containerId );
+			Assert.assertFalse( target.isMachineRunning( parameters, containerId ));
 
 		} finally {
 			target.stop();

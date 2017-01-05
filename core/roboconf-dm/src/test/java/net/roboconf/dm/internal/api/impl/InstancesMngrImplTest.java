@@ -47,6 +47,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.internal.api.IRandomMngr;
+import net.roboconf.dm.internal.api.ITargetConfigurator;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IConfigurationMngr;
@@ -116,6 +117,7 @@ public class InstancesMngrImplTest {
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -123,7 +125,7 @@ public class InstancesMngrImplTest {
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
 
 		// Make one of our VM being fully deployed
@@ -151,6 +153,10 @@ public class InstancesMngrImplTest {
 		statusHistory = instanceToStatusHistory.get( app.getWar());
 		Assert.assertNotNull( statusHistory );
 		Assert.assertEquals( Arrays.asList( InstanceStatus.NOT_DEPLOYED ), statusHistory );
+
+		Mockito.verify( targetConfigurator, Mockito.only()).cancelCandidate(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( app.getTomcatVm()));
 	}
 
 
@@ -179,6 +185,7 @@ public class InstancesMngrImplTest {
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -186,7 +193,7 @@ public class InstancesMngrImplTest {
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
 
 		// Make one of our VM being fully deployed
@@ -214,6 +221,10 @@ public class InstancesMngrImplTest {
 		statusHistory = instanceToStatusHistory.get( app.getWar());
 		Assert.assertNotNull( statusHistory );
 		Assert.assertEquals( Arrays.asList( InstanceStatus.NOT_DEPLOYED ), statusHistory );
+
+		Mockito.verify( targetConfigurator, Mockito.only()).cancelCandidate(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( app.getTomcatVm()));
 	}
 
 
@@ -224,6 +235,7 @@ public class InstancesMngrImplTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -231,7 +243,7 @@ public class InstancesMngrImplTest {
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
 
 		TestApplication app = new TestApplication();
@@ -282,6 +294,10 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( 1, lockCount.intValue());
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
+		Mockito.verify( targetConfigurator ).reportCandidate(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( app.getMySqlVm()));
+
 		// Release the machine
 		mngr.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
@@ -296,6 +312,7 @@ public class InstancesMngrImplTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -308,7 +325,7 @@ public class InstancesMngrImplTest {
 				.createMachine( Mockito.any( TargetHandlerParameters.class )))
 				.thenThrow( new TargetException( "for test" ));
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
@@ -358,6 +375,9 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertTrue( acquired.get());
 		Assert.assertTrue( released.get());
+
+		// Since the handler failed, nothing was scheduled for post-configuration
+		Mockito.verifyZeroInteractions( targetConfigurator );
 	}
 
 
@@ -368,6 +388,7 @@ public class InstancesMngrImplTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -380,7 +401,7 @@ public class InstancesMngrImplTest {
 		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
 		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
@@ -406,6 +427,7 @@ public class InstancesMngrImplTest {
 
 		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( targetConfigurator );
 	}
 
 
@@ -416,6 +438,7 @@ public class InstancesMngrImplTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -431,7 +454,7 @@ public class InstancesMngrImplTest {
 		final TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
 		Mockito.when( targetHandler.getTargetId()).thenReturn( "some other target id" );
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
@@ -458,6 +481,7 @@ public class InstancesMngrImplTest {
 
 		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( targetConfigurator );
 	}
 
 
@@ -470,6 +494,7 @@ public class InstancesMngrImplTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -482,7 +507,7 @@ public class InstancesMngrImplTest {
 		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
 		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
@@ -498,13 +523,18 @@ public class InstancesMngrImplTest {
 
 		// Try to restore instances
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Mockito.when( targetHandlerArgument.isMachineRunning( targetProperties, "machine-id" )).thenReturn( true );
+		Mockito.when( targetHandlerArgument.isMachineRunning(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( "machine-id" ))).thenReturn( true );
+
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
 		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
-		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
+		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( "machine-id" ));
 
 		Mockito.verify( messagingMngr, Mockito.only()).sendMessageDirectly(
 				Mockito.eq( ma ),
@@ -514,6 +544,7 @@ public class InstancesMngrImplTest {
 		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
+		Mockito.verifyZeroInteractions( targetConfigurator );
 	}
 
 
@@ -525,6 +556,7 @@ public class InstancesMngrImplTest {
 
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -543,7 +575,7 @@ public class InstancesMngrImplTest {
 		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
 		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
@@ -559,13 +591,18 @@ public class InstancesMngrImplTest {
 
 		// Try to restore instances
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Mockito.when( targetHandlerArgument.isMachineRunning( targetProperties, "machine-id" )).thenReturn( true );
+		Mockito.when( targetHandlerArgument.isMachineRunning(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( "machine-id" ))).thenReturn( true );
+
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
 		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
-		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
+		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( "machine-id" ));
 
 		Mockito.verify( messagingMngr, Mockito.only()).sendMessageDirectly(
 				Mockito.eq( ma ),
@@ -575,6 +612,7 @@ public class InstancesMngrImplTest {
 		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
+		Mockito.verifyZeroInteractions( targetConfigurator );
 	}
 
 
@@ -587,6 +625,7 @@ public class InstancesMngrImplTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -599,7 +638,7 @@ public class InstancesMngrImplTest {
 		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
 		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
@@ -617,16 +656,22 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		Mockito.when( targetHandlerArgument.isMachineRunning( targetProperties, "machine-id" )).thenReturn( false );
+		Mockito.when( targetHandlerArgument.isMachineRunning(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( "machine-id" ))).thenReturn( false );
+
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is NOT running => no message was sent.
 		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
-		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
+		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.eq( "machine-id" ));
 
 		Mockito.verifyZeroInteractions( messagingMngr );
 		Mockito.verifyZeroInteractions( randomMngr );
+		Mockito.verifyZeroInteractions( targetConfigurator );
 
 		// A notification was sent for the instance whose state changed
 		Mockito.verify( notificationMngr ).instance(
@@ -640,7 +685,7 @@ public class InstancesMngrImplTest {
 	public void testRestoreInstances_noMachineId() throws Exception {
 
 		// Prepare stuff
-		IInstancesMngr mngr = new InstancesMngrImpl( null, null, null, null );
+		IInstancesMngr mngr = new InstancesMngrImpl( null, null, null, null, null );
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 

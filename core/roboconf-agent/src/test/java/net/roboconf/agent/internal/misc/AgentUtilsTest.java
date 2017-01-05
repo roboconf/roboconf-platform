@@ -42,6 +42,7 @@ import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
@@ -60,12 +61,6 @@ public class AgentUtilsTest {
 	public void clearAgentDirectories() throws Exception {
 		File f = new File( Constants.WORK_DIRECTORY_AGENT );
 		Utils.deleteFilesRecursively( f );
-	}
-
-
-	private boolean isUnix() {
-		String os = System.getProperty("os.name").toLowerCase();
-		return (os.contains("nix")  || os.contains("nux") || os.contains("aix") );
 	}
 
 
@@ -284,7 +279,8 @@ public class AgentUtilsTest {
 
 	@Test
 	public void testExecuteScriptResources_ok() throws Exception {
-		Assume.assumeTrue( isUnix());
+
+		Assume.assumeTrue( TestUtils.isUnix());
 		File scriptsDir = this.folder.newFolder();
 
 		// Nothing to execute
@@ -305,12 +301,12 @@ public class AgentUtilsTest {
 		Assert.assertTrue( script.delete());
 
 		// Something to execute
-		script = new File( scriptsDir, "toto-script.sh" );
+		script = new File( scriptsDir, "toto." + Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" );
 		Utils.writeStringInto( "#!/bin/bash\necho totototototo > toto.txt", script);
 
 		AgentUtils.executeScriptResources( scriptsDir );
 		Assert.assertTrue( toto.exists());
-		Assert.assertEquals( 2,scriptsDir.listFiles().length );
+		Assert.assertEquals( 2, scriptsDir.listFiles().length );
 
 		String s = Utils.readFileContent( toto );
 		Assert.assertEquals( "totototototo", s.trim());

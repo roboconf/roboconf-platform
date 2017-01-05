@@ -110,6 +110,7 @@ public final class ProgramUtils {
 			exitValue = process.waitFor();
 			if( exitValue != 0 )
 				logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
+
 		} finally {
 			ProcessStore.clearProcess(applicationName, scopedInstancePath);
 		}
@@ -138,10 +139,10 @@ public final class ProgramUtils {
 			final File workingDir,
 			final Map<String,String> environmentVars,
 			final String applicationName,
-			final String scopedInstanceName)
+			final String scopedInstancePath)
 	throws IOException, InterruptedException {
 
-		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars, applicationName, scopedInstanceName);
+		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars, applicationName, scopedInstancePath);
 		if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
 			logger.fine( result.getNormalOutput());
 

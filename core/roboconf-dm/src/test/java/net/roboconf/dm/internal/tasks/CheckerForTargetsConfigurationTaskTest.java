@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,35 +23,25 @@
  * limitations under the License.
  */
 
-package net.roboconf.maven;
+package net.roboconf.dm.internal.tasks;
+
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import net.roboconf.dm.internal.api.ITargetConfigurator;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface MavenPluginConstants {
+public class CheckerForTargetsConfigurationTaskTest {
 
-	/**
-	 * The src/main/model directory.
-	 */
-	String SOURCE_MODEL_DIRECTORY = "src/main/model";
+	@Test
+	public void testApiIsInvoked() {
 
-	/**
-	 * The src/main/resources directory.
-	 */
-	String SOURCE_MAIN_RESOURCES = "src/main/resources";
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+		CheckerForTargetsConfigurationTask task = new CheckerForTargetsConfigurationTask( targetConfigurator );
+		task.run();
 
-	/**
-	 * The Maven output of the model directory.
-	 */
-	String TARGET_MODEL_DIRECTORY = "target/roboconf-model";
-
-	/**
-	 * The Maven output of the documentation directory.
-	 */
-	String TARGET_DOC_DIRECTORY = "target/documentation";
-
-	/**
-	 * The relative path of the validation results.
-	 */
-	String VALIDATION_RESULT_PATH = "target/roboconf/roboconf-validation.txt";
+		Mockito.verify( targetConfigurator, Mockito.only()).verifyCandidates();
+	}
 }

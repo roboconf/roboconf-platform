@@ -43,21 +43,12 @@ public class EmbeddedHandler implements TargetHandler {
 	private final Map<String,Boolean> machineIdToRunning = new HashMap<> ();
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#getTargetId()
-	 */
 	@Override
 	public String getTargetId() {
 		return TARGET_ID;
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
-	 */
 	@Override
 	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
@@ -67,33 +58,33 @@ public class EmbeddedHandler implements TargetHandler {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
-	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String machineId )
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		this.machineIdToRunning.remove( machineId );
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
-	 */
 	@Override
 	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
-		// nothing
+
+		// It may require to be configured from the DM => add the right marker
+		scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
 	}
 
 
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		return this.machineIdToRunning.containsKey( machineId );
+	}
+
+
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		// This handler cannot determine the IP address
+		return null;
 	}
 }

@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -156,6 +157,15 @@ public class ManagerTest {
 
 		Assert.assertSame( impl2, this.manager.preferencesMngr());
 		Assert.assertNotSame( impl1, this.manager.preferencesMngr());
+
+		// Only public API are exported by the manager
+		for( Method m : Manager.class.getMethods()) {
+			if( ! m.getName().startsWith( "get" ))
+				continue;
+
+			String packageName = m.getReturnType().getPackage().getName();
+			Assert.assertFalse( m.getReturnType().getName() + " is internal!", packageName.toLowerCase().contains( "internal" ));
+		}
 	}
 
 

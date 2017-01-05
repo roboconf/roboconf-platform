@@ -46,15 +46,33 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
+import org.junit.Assert;
+
 import net.roboconf.core.dsl.ParsingModelIoTest;
 import net.roboconf.core.utils.Utils;
-
-import org.junit.Assert;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class TestUtils {
+
+	/**
+	 * @return true if the current OS is part of the Linux systems
+	 */
+	public static boolean isUnix() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return os.contains( "nix" )  || os.contains( "nux" ) || os.contains( "aix" ) || os.contains( "freebsd" );
+	}
+
+
+	/**
+	 * @return true if the current OS is part of the Windows systems
+	 */
+	public static boolean isWindows() {
+		String os = System.getProperty("os.name").toLowerCase();
+		return os.contains( "win" );
+	}
+
 
 	/**
 	 * Finds test files.
@@ -153,7 +171,7 @@ public class TestUtils {
 	 */
 	public static Map<String,String> buildZipContent() {
 
-		Map<String,String> entryToContent = new LinkedHashMap<String,String> ();
+		Map<String,String> entryToContent = new LinkedHashMap<> ();
 
 		entryToContent.put( "readme.txt", "This is a readme file." );
 		entryToContent.put( "graph/main.graph", "import facets.graph;\nimport components.graph;" );

@@ -34,15 +34,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.plugin.puppet.internal.PluginPuppet.PuppetState;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -58,7 +58,7 @@ public class BasicPluginPuppetTest {
 	@Test
 	public void testFormatExportedVariables() {
 
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
+		Map<String,String> exports = new LinkedHashMap<> ();
 		exports.put( "port", "3306" );
 		exports.put( "MySQL.port", "3306" );
 		exports.put( "ip", "" );
@@ -92,9 +92,6 @@ public class BasicPluginPuppetTest {
 	public void testFormatInstanceImports_emptyImport() {
 
 		// We should never have this use case, but still, we do not want to get something wrong
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
-		exports.put( "MySQL.port", "3306" );
-
 		Component component = new Component( "test-component" );
 		component.addImportedVariable( new ImportedVariable( "MySQL.port", false, false ));
 
@@ -109,7 +106,7 @@ public class BasicPluginPuppetTest {
 	@Test
 	public void testFormatInstanceImports_oneImportOneVariable() {
 
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
+		Map<String,String> exports = new LinkedHashMap<> ();
 		exports.put( "MySQL.port", "3306" );
 		Import imp = new Import( "/toto", "component1", exports );
 
@@ -128,7 +125,7 @@ public class BasicPluginPuppetTest {
 	@Test
 	public void testFormatInstanceImports_oneImportTwoVariables() {
 
-		Map<String,String> exports = new HashMap<String,String> ();
+		Map<String,String> exports = new HashMap<> ();
 		exports.put( "MySQL.port", "3306" );
 		exports.put( "MySQL.ip", "172.16.20.12" );
 		Import imp = new Import( "/toto", "component1", exports );
@@ -151,16 +148,16 @@ public class BasicPluginPuppetTest {
 	@Test
 	public void testFormatInstanceImports_twoImportsTwoVariables() {
 
-		List<Import> mySqlImports = new ArrayList<Import> ();
+		List<Import> mySqlImports = new ArrayList<> ();
 		for( int i=0; i<2; i++ ) {
-			Map<String,String> exports = new LinkedHashMap<String,String> ();
+			Map<String,String> exports = new LinkedHashMap<> ();
 			exports.put( "MySQL.port", String.valueOf( 3306 + i ));
 			exports.put( "MySQL.ip", "172.16.20." + String.valueOf( 12 + i ));
 			mySqlImports.add( new Import( "/toto-" + i, "component1", exports ));
 		}
 
-		List<Import> somethingImports = new ArrayList<Import> ();
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
+		List<Import> somethingImports = new ArrayList<> ();
+		Map<String,String> exports = new LinkedHashMap<> ();
 		exports.put( "Something.test", "true" );
 		somethingImports.add( new Import( "/oops", "component2", exports ));
 

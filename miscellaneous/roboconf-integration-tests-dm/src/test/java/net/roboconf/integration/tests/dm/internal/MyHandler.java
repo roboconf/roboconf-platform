@@ -83,17 +83,24 @@ public class MyHandler implements TargetHandler {
 
 
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		return this.agentIdToAgent.containsKey( machineId );
 	}
 
 
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 
 		Agent agent = this.agentIdToAgent.remove( machineId );
 		if( agent != null )
 			agent.stop();
+	}
+
+
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		return null;
 	}
 }

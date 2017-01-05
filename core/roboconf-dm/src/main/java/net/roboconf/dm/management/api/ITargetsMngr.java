@@ -327,21 +327,29 @@ public interface ITargetsMngr {
 
 
 	/**
-	 * Finds the script that will be executed once the VM is created.
+	 * Finds the scripts that will be sent and executed by an agent once the VM is created.
 	 * @param targetId a target ID
 	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
 	 * @throws IOException if something went wrong while reading a file
 	 */
-	Map<String,byte[]> findScriptResources( String targetId ) throws IOException;
+	Map<String,byte[]> findScriptResourcesForAgent( String targetId ) throws IOException;
 
 
 	/**
-	 * Finds the script that will be executed once the VM is created.
+	 * Finds the scripts that will be sent and executed by an agent once the VM is created.
 	 * @param app an application
 	 * @param scopedInstance a scopedInstance
 	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
 	 * @throws IOException if something went wrong while reading a file
 	 */
-	Map<String,byte[]> findScriptResources( Application app, Instance scopedInstance ) throws IOException;
+	Map<String,byte[]> findScriptResourcesForAgent( AbstractApplication app, Instance scopedInstance ) throws IOException;
 
+
+	/**
+	 * Finds the script the DM has to execute to complete the configuration of a machine.
+	 * @param app an application
+	 * @param scopedInstance a scopedInstance
+	 * @return an existing file if such a script was found, null otherwise
+	 */
+	File findScriptForDm( AbstractApplication app, Instance scopedInstance );
 }

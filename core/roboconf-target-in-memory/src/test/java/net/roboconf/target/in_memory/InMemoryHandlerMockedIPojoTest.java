@@ -111,10 +111,10 @@ public class InMemoryHandlerMockedIPojoTest {
 
 		List<String> result = new ArrayList<> ();
 		Mockito.when( this.agentFactory.getInstancesNames()).thenReturn( result );
-		Assert.assertFalse( this.handler.isMachineRunning( null, "test" ));
+		Assert.assertFalse( this.handler.isMachineRunning( new TargetHandlerParameters(), "test" ));
 
 		result.add( "test" );
-		Assert.assertTrue( this.handler.isMachineRunning( null, "test" ));
+		Assert.assertTrue( this.handler.isMachineRunning( new TargetHandlerParameters(), "test" ));
 	}
 
 
@@ -124,7 +124,7 @@ public class InMemoryHandlerMockedIPojoTest {
 		List<ComponentInstance> instances = new ArrayList<> ();
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
 
-		this.handler.terminateMachine( null, "test @ test" );
+		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
 		// No error, even if no iPojo instance was found (e.g. if it was killed from the Ipojo console)
 
 		Mockito.verifyZeroInteractions( this.manager );
@@ -141,7 +141,7 @@ public class InMemoryHandlerMockedIPojoTest {
 		instances.add( componentInstance );
 
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
-		this.handler.terminateMachine( null, "test @ test" );
+		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
 
 		Mockito.verify( componentInstance, Mockito.only()).getInstanceName();
 		Mockito.verifyZeroInteractions( this.manager );
@@ -162,7 +162,7 @@ public class InMemoryHandlerMockedIPojoTest {
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
 
 		// Execute and check
-		this.handler.terminateMachine( null, "test @ test" );
+		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
 
 		Mockito.verify( componentInstance, Mockito.times( 1 )).getInstanceName();
 		Mockito.verify( componentInstance, Mockito.times( 1 )).dispose();
@@ -191,8 +191,10 @@ public class InMemoryHandlerMockedIPojoTest {
 		// Execute and check
 		Map<String,String> targetProperties = new HashMap<>( 1 );
 		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "true" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.targetProperties( targetProperties );
 
-		this.handler.terminateMachine( targetProperties, componentInstance.getInstanceName());
+		this.handler.terminateMachine( parameters, componentInstance.getInstanceName());
 
 		Mockito.verify( componentInstance, Mockito.times( 1 )).dispose();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();

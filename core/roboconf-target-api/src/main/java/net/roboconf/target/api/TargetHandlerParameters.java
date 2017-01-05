@@ -25,6 +25,7 @@
 
 package net.roboconf.target.api;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -36,6 +37,7 @@ public class TargetHandlerParameters {
 	private Map<String,String> targetProperties;
 	private Map<String,String> messagingProperties;
 	private String scopedInstancePath, applicationName, domain;
+	private File targetConfigurationScript;
 
 
 
@@ -105,6 +107,20 @@ public class TargetHandlerParameters {
 
 	public TargetHandlerParameters domain( String domain ) {
 		this.domain = domain;
+		return this;
+	}
+
+
+	public File getTargetConfigurationScript() {
+		return this.targetConfigurationScript;
+	}
+
+	public void setTargetConfigurationScript( File targetConfigurationScript ) {
+		this.targetConfigurationScript = targetConfigurationScript;
+	}
+
+	public TargetHandlerParameters targetConfigurationScript( File targetConfigurationScript ) {
+		this.targetConfigurationScript = targetConfigurationScript;
 		return this;
 	}
 }

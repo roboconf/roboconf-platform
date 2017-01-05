@@ -43,7 +43,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
  */
 public class ToRunByHand {
 
-	private static final String PROPS_LOCATION = "/data1/targets/openstack.ovh.with.object.storage.properties";
+	private static final String PROPS_LOCATION = "/data1/targets/openstack.ow2.properties";
 
 	/**
 	 * A test that starts a new VM, passes user data, waits 5 minutes and terminates the VM.
@@ -59,18 +59,18 @@ public class ToRunByHand {
 		for( Map.Entry<Object,Object> entry : p.entrySet())
 			conf.put( entry.getKey().toString(), entry.getValue().toString());
 
+		Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( conf )
+				.messagingProperties( msgCfg )
+				.scopedInstancePath( "root" )
+				.applicationName( "app" )
+				.domain( "def-domain" );
+
+		String serverId = null;
 		OpenstackIaasHandler target = new OpenstackIaasHandler();
 		target.start();
-		String serverId = null;
 		try {
-			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
-			TargetHandlerParameters parameters = new TargetHandlerParameters()
-					.targetProperties( conf )
-					.messagingProperties( msgCfg )
-					.scopedInstancePath( "root" )
-					.applicationName( "app" )
-					.domain( "def-domain" );
-
 			serverId = target.createMachine( parameters );
 			target.configureMachine( parameters, serverId, new Instance( "root" ));
 
@@ -78,8 +78,8 @@ public class ToRunByHand {
 			Thread.sleep( 60000 );
 
 			System.out.print( "Check about machine " + serverId );
-			if( target.isMachineRunning( conf, serverId ))
-				System.out.println( ": it is running." );
+			if( target.isMachineRunning( parameters, serverId ))
+				System.out.println( ": it is running. IP = " + target.retrievePublicIpAddress( parameters, serverId ));
 			else
 				System.out.println( ": it does NOT run." );
 
@@ -91,7 +91,7 @@ public class ToRunByHand {
 
 		} finally {
 			if( serverId != null )
-				target.terminateMachine( conf, serverId );
+				target.terminateMachine( parameters, serverId );
 
 			target.stop();
 		}

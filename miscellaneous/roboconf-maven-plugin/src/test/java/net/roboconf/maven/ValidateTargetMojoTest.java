@@ -48,6 +48,14 @@ public class ValidateTargetMojoTest extends AbstractTest {
 
 
 	@Test
+	public void testValidTargetProject_singleWithScripts() throws Exception {
+
+		retrivePrepareAndExecuteMojo( "target-ok-with-scripts" );
+		// No exception thrown
+	}
+
+
+	@Test
 	public void testValidTargetProject_multi() throws Exception {
 
 		retrivePrepareAndExecuteMojo( "target-ok-multi" );
@@ -97,7 +105,7 @@ public class ValidateTargetMojoTest extends AbstractTest {
 
 		// Copy the resources
 		Utils.copyDirectory(
-				project.getBasedir(),
+				new File( project.getBasedir(), MavenPluginConstants.SOURCE_MAIN_RESOURCES ),
 				new File( project.getBuild().getOutputDirectory()));
 
 		// Execute

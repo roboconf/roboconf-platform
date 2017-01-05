@@ -25,6 +25,11 @@
 
 package net.roboconf.dm.rest.services.cors;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Logger;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
@@ -59,8 +64,17 @@ public class ResponseCorsFilter implements ContainerResponseFilter {
 		.header( "Access-Control-Allow-Methods", "GET, DELETE, POST, OPTIONS" );
 
 		String reqHead = req.getHeaderValue( "Access-Control-Request-Headers" );
-		if( ! Utils.isEmptyOrWhitespaces( reqHead ))
+		if( ! Utils.isEmptyOrWhitespaces( reqHead )) {
+			try {
+				reqHead = URLEncoder.encode( reqHead, StandardCharsets.UTF_8.displayName());
+
+			} catch( UnsupportedEncodingException e ) {
+				Logger logger = Logger.getLogger( getClass().getName());
+				Utils.logException( logger, e );
+			}
+
 			resp.header( "Access-Control-Allow-Headers", reqHead );
+		}
 
 		contResp.setResponse( resp.build());
 		return contResp;

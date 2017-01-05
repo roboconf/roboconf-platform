@@ -741,6 +741,38 @@ public class UtilsTest {
 
 
 	@Test
+	public void testStoreDirectoryResourcesAsBytes_withExclusionPatterns() throws Exception {
+
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, "dir1/dir2" ).mkdirs());
+		Assert.assertTrue( new File( dir, "dir1/dir2/t1.txt" ).createNewFile());
+		Assert.assertTrue( new File( dir, "dir1/dir2/t2.toto" ).createNewFile());
+		Assert.assertTrue( new File( dir, "t3.txt" ).createNewFile());
+
+		Map<String,byte[]> map = Utils.storeDirectoryResourcesAsBytes( dir );
+		Assert.assertEquals( 3, map.size());
+		Assert.assertTrue( map.containsKey( "dir1/dir2/t1.txt" ));
+		Assert.assertTrue( map.containsKey( "dir1/dir2/t2.toto" ));
+		Assert.assertTrue( map.containsKey( "t3.txt" ));
+
+		map = Utils.storeDirectoryResourcesAsBytes( dir, Arrays.asList( ".*\\.txt" ));
+		Assert.assertEquals( 1, map.size());
+		Assert.assertTrue( map.containsKey( "dir1/dir2/t2.toto" ));
+
+		map = Utils.storeDirectoryResourcesAsBytes( dir, Arrays.asList( ".*toto.*" ));
+		Assert.assertEquals( 2, map.size());
+		Assert.assertTrue( map.containsKey( "dir1/dir2/t1.txt" ));
+		Assert.assertTrue( map.containsKey( "t3.txt" ));
+
+		map = Utils.storeDirectoryResourcesAsBytes( dir, Arrays.asList( "dir1" ));
+		Assert.assertEquals( 3, map.size());
+		Assert.assertTrue( map.containsKey( "dir1/dir2/t1.txt" ));
+		Assert.assertTrue( map.containsKey( "dir1/dir2/t2.toto" ));
+		Assert.assertTrue( map.containsKey( "t3.txt" ));
+	}
+
+
+	@Test
 	public void testIsAncestorFile() throws Exception {
 
 		File parent = new File( "home/toto/whatever" );
@@ -992,6 +1024,30 @@ public class UtilsTest {
 		Assert.assertEquals( 2, Utils.listAllFiles( dir, "txt" ).size());
 		Assert.assertEquals( 1, Utils.listAllFiles( dir, ".zip" ).size());
 		Assert.assertEquals( 5, Utils.listAllFiles( dir, null ).size());
+	}
+
+
+	@Test
+	public void testListDirectFiles_withFileExtension() throws Exception {
+
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, "sub" ).mkdir());
+
+		Assert.assertTrue( new File( dir, "f1.txt" ).createNewFile());
+		Assert.assertTrue( new File( dir, "sub/f2.jpg" ).createNewFile());
+		Assert.assertTrue( new File( dir, "f3.txt" ).createNewFile());
+		Assert.assertTrue( new File( dir, "f4.JPG" ).createNewFile());
+		Assert.assertTrue( new File( dir, "sub/f5.zip" ).createNewFile());
+
+		Assert.assertEquals( 1, Utils.listDirectFiles( dir, "jpg" ).size());
+		Assert.assertEquals( 1, Utils.listDirectFiles( dir, ".jpg" ).size());
+		Assert.assertEquals( 1, Utils.listDirectFiles( dir, "jPg" ).size());
+
+		Assert.assertEquals( 2, Utils.listDirectFiles( dir, "txt" ).size());
+		Assert.assertEquals( 0, Utils.listDirectFiles( dir, ".zip" ).size());
+		Assert.assertEquals( 3, Utils.listDirectFiles( dir, null ).size());
+
+		Assert.assertEquals( 0, Utils.listDirectFiles( this.folder.newFile(), null ).size());
 	}
 
 

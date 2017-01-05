@@ -54,7 +54,7 @@ public class InstanceTemplatingTest {
 	@Test
 	public void testImportTemplate() throws Exception {
 
-		Map<String, String> vars = new HashMap<String, String>();
+		Map<String, String> vars = new HashMap<>();
 		vars.put("name1", "val1");
 		vars.put("name2", "val2");
 		vars.put("name3", "val3");
@@ -75,17 +75,17 @@ public class InstanceTemplatingTest {
 	@Test
 	public void testInstanceTemplate() throws Exception {
 
-		Map<String, String> vars = new HashMap<String, String>();
+		Map<String, String> vars = new HashMap<>();
 		vars.put("name1", "val1");
 		vars.put("name2", "val2");
 		vars.put("name3", "val3");
 		Import impt1 = new Import( "/", "component1", vars );
 
-		List<Import> imports = new ArrayList<Import>();
+		List<Import> imports = new ArrayList<>();
 		imports.add(impt1);
 		imports.add(impt1);
 
-		Map<String, Collection<Import>> importsByPrefix = new HashMap<String, Collection<Import>>();
+		Map<String, Collection<Import>> importsByPrefix = new HashMap<>();
 		importsByPrefix.put("prefix1", imports);
 		importsByPrefix.put("prefix2", imports);
 
@@ -101,8 +101,9 @@ public class InstanceTemplatingTest {
 		for(String prefix : importsByPrefix.keySet()) {
 			Assert.assertTrue("Prefix was not displayed correctly", writtenString.contains("Prefix "+prefix));
 		}
-		for(String name : vars.keySet()) {
-			Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" -> "+vars.get(name)));
+
+		for( Map.Entry<String,String> entry : vars.entrySet()) {
+			Assert.assertTrue("Var was not displayed correctly", writtenString.contains( entry.getKey() + " -> " + entry.getValue()));
 		}
 
 		// Test templating into a new file

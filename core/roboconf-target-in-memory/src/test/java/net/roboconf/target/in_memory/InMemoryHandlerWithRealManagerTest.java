@@ -51,6 +51,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -122,12 +123,14 @@ public class InMemoryHandlerWithRealManagerTest {
 		// Prepare...
 		Map<String,String> targetProperties = new HashMap<> ();
 		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "true" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.targetProperties( targetProperties );
 
 		this.app.getTomcatVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 		String machineId = InstanceHelpers.computeInstancePath( this.app.getTomcatVm()) + " @ " + this.app.getName();
 
 		// Run and verify
-		Assert.assertFalse( this.handler.isMachineRunning( targetProperties, machineId ));
+		Assert.assertFalse( this.handler.isMachineRunning( parameters, machineId ));
 		Mockito.verify( this.agentFactory, Mockito.times( 0 )).createComponentInstance( Mockito.any( Dictionary.class ));
 	}
 
@@ -143,12 +146,14 @@ public class InMemoryHandlerWithRealManagerTest {
 		// Prepare
 		Map<String,String> targetProperties = new HashMap<> ();
 		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "true" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.targetProperties( targetProperties );
 
 		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		String machineId = InstanceHelpers.computeInstancePath( this.app.getTomcatVm()) + " @ " + this.app.getName();
 
 		// Run and verify
-		Assert.assertTrue( this.handler.isMachineRunning( targetProperties, machineId ));
+		Assert.assertTrue( this.handler.isMachineRunning( parameters, machineId ));
 		Mockito.verify( this.agentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
 		Mockito.verify( componentInstance, Mockito.times( 1 )).start();
 	}

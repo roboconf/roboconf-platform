@@ -56,9 +56,11 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 
 	protected static final int DEFAULT_DELAY = 1000;
 
+	// Protected fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected long delay = DEFAULT_DELAY;
 
+	// Private fields
 	private ScheduledThreadPoolExecutor timer;
 	private final Map<String,MachineConfigurator> machineIdToConfigurators = new ConcurrentHashMap<> ();
 	private final CancelledMachines cancelledMachineIds = new CancelledMachines();
@@ -178,6 +180,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 		public CheckingRunnable(
 				Map<String,MachineConfigurator> machineIdToConfigurators,
 				CancelledMachines cancelledMachineIds ) {
+
 			super();
 			this.machineIdToConfigurators = machineIdToConfigurators;
 			this.cancelledMachineIds = cancelledMachineIds;
@@ -202,17 +205,23 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 				MachineConfigurator handler = entry.getValue();
 				try {
 					if( handler.configure()) {
+
+						// Configure is completed, remove it from the things to check
 						keysToRemove.add( entry.getKey());
 						closeConfigurator( entry.getKey(), handler );
+
+						// It may require to be configured from the DM => add the right marker
+						Instance scopedInstance = handler.getScopedInstance();
+						scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
 					}
 
-				} catch( Exception e ) {
+				} catch( Throwable t ) {
 					// We need to catch ALL the exceptions.
 					// Otherwise, the timer will stop scheduling this runnable,
 					// and this may result in unpredictable behaviors in Roboconf deployments.
 					// That would impact all the VMs on a given target.
-					this.logger.severe( "An error occurred while configuring machine '" + entry.getKey() + "'. " + e.getMessage());
-					Utils.logException( this.logger, e );
+					this.logger.severe( "An error occurred while configuring machine '" + entry.getKey() + "'. " + t.getMessage());
+					Utils.logException( this.logger, t );
 					keysToRemove.add( entry.getKey());
 
 					// If a problem occurs, try to close the handler anyway
@@ -222,7 +231,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 					Instance scopedInstance = handler.getScopedInstance();
 					if( scopedInstance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
 						scopedInstance.setStatus( InstanceStatus.PROBLEM );
-						scopedInstance.data.put( Instance.LAST_PROBLEM, "Configuration failed. " + e.getMessage());
+						scopedInstance.data.put( Instance.LAST_PROBLEM, "Configuration failed. " + t.getMessage());
 					}
 				}
 			}

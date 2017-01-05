@@ -29,6 +29,8 @@ import static net.roboconf.webextension.kibana.KibanaExtensionConstants.CONTEXT;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -105,8 +107,10 @@ public class KibanaExtensionServlet extends HttpServlet {
 		resp.addHeader( "Access-Control-Allow-Origin","*" );
 		resp.addHeader( "Access-Control-Allow-Methods", "GET, DELETE, POST, OPTIONS" );
 		String reqHead = req.getHeader( "Access-Control-Request-Headers" );
-		if( ! Utils.isEmptyOrWhitespaces( reqHead ))
+		if( ! Utils.isEmptyOrWhitespaces( reqHead )) {
+			reqHead = URLEncoder.encode( reqHead, StandardCharsets.UTF_8.displayName());
 			resp.addHeader( "Access-Control-Allow-Headers", reqHead );
+		}
 
 		// Prepare the response
 		if( Utils.isEmptyOrWhitespaces( path ) || "/".equals( path )) {

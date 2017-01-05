@@ -226,7 +226,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				// A heart beat may also say whether the agent received its model.
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
-					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResources( ma.getApplication(), scopedInstance );
+					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResourcesForAgent( ma.getApplication(), scopedInstance );
 					Message msg = new MsgCmdSetScopedInstance(
 							scopedInstance,
 							app.getExternalExports(),

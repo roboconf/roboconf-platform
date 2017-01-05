@@ -333,7 +333,7 @@ public class DockerHandlerWithPackagesTest {
 		Assert.assertNotNull(this.dockerContainerId);
 
 		// Ensure the machine is running
-		Assert.assertTrue(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
+		Assert.assertTrue(this.dockerHandler.isMachineRunning( parameters, this.dockerContainerId ));
 
 		// Now perform the tests...
 		checkAgentIsUnpacked();
@@ -343,8 +343,8 @@ public class DockerHandlerWithPackagesTest {
 			checkPackageIsInstalled(p);
 
 		// Terminate the container.
-		this.dockerHandler.terminateMachine(this.targetProperties, this.dockerContainerId);
-		Assert.assertFalse(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
+		this.dockerHandler.terminateMachine( parameters, this.dockerContainerId );
+		Assert.assertFalse(this.dockerHandler.isMachineRunning( parameters, this.dockerContainerId ));
 	}
 
 

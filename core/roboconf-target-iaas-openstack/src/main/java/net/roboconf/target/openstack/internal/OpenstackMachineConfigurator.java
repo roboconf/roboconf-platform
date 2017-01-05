@@ -218,10 +218,13 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			}
 
 			// And associate it
-			if (availableIp != null)
+			if (availableIp != null) {
 				floatingIPApi.addToServer(availableIp, this.machineId);
-			else
+				this.scopedInstance.data.put( OpenstackIaasHandler.FLOATING_IP, availableIp );
+
+			} else {
 				this.logger.warning("No floating IP was available in Openstack (pool '" + floatingIpPool + "').");
+			}
 
 			done = true;
 
