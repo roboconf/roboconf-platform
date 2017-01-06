@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,12 +25,20 @@
 
 package net.roboconf.integration.tests.dm.with.agents.in.memory;
 
+import static net.roboconf.core.Constants.LOCAL_RESOURCE_PREFIX;
+import static net.roboconf.core.Constants.PROJECT_DIR_GRAPH;
+import static net.roboconf.core.Constants.PROJECT_SUB_DIR_SCRIPTS;
+import static net.roboconf.core.Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX;
+import static net.roboconf.core.Constants.SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX;
+import static net.roboconf.core.Constants.TARGET_PROPERTIES_FILE_NAME;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -57,14 +65,17 @@ import net.roboconf.integration.tests.dm.with.agents.in.memory.internal.MyTarget
 import net.roboconf.integration.tests.dm.with.agents.in.memory.probes.DmWithAgentInMemoryTest;
 
 /**
- * Test a script execution by an agent.
+ * Test the execution of scripts provided by a target.
  * @author Amadou Diarra - UGA
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
 public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 	private static final String APP_LOCATION = "my.app.location";
+
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
@@ -89,8 +100,8 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		File resourcesDirectory = TestUtils.findApplicationDirectory( "simple" );
-		String appLocation = resourcesDirectory.getAbsolutePath();
+		File appDirectory = TestUtils.findApplicationDirectory( "simple" );
+		String appLocation = appDirectory.getAbsolutePath();
 		return OptionUtils.combine(
 				super.config(),
 				systemProperty( APP_LOCATION ).value( appLocation ));
@@ -103,52 +114,69 @@ public class ExecuteScriptResourcesTest extends DmWithAgentInMemoryTest {
 		// Update the manager
 		configureManagerForInMemoryUsage();
 
-		// Load the application
+		// Copy the application...
 		String appLocation = System.getProperty( APP_LOCATION );
-		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
-		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
-		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
+		File originalDirectory = new File( appLocation );
+		Assert.assertTrue( originalDirectory.exists());
 
-		// Create script files
-		String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/MySQL VM" );
-		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId );
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
 
-		File targetPropertiesFile = new File( dir, "target.properties" );
-		Assert.assertTrue( targetPropertiesFile.exists());
-		Assert.assertTrue( targetPropertiesFile.renameTo( new File( dir, "toto.properties" )));
+		// ...  and update it
+		File targetDir = new File( directoryCopy, PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( targetDir.exists());
+		Assert.assertTrue( new File( targetDir, "target.properties" ).renameTo( new File( targetDir, "toto.properties" )));
 
 		File outputFile = new File( System.getProperty( "java.io.tmpdir" ), "toto.txt" );
 		Assert.assertTrue( ! outputFile.exists() || outputFile.delete());
 
-		// Scripts are written directly in the target directory, so everything will be sent to the agent
-		Utils.createDirectory( new File( dir, "sub" ));
-		Utils.writeStringInto( "#!/bin/bash\necho toto > " + outputFile.getAbsolutePath(), new File( dir, "toto-script.sh" ));
-		Utils.writeStringInto( "#!/bin/bash\necho toto > " + outputFile.getAbsolutePath(), new File( dir, "sub/script.properties" ));
+		Assert.assertTrue( new File( targetDir, "toto/sub" ).mkdirs());
+		Utils.writeStringInto(
+				"#!/bin/bash\necho \"agent was here!\" >> " + outputFile.getAbsolutePath(),
+				new File( targetDir, "toto/" + SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ));
+
+		Utils.writeStringInto( "key = value", new File( targetDir, "toto/sub/script.properties" ));
+		Utils.writeStringInto(
+				"#!/bin/bash\necho \"DM was here!\" >> " + outputFile.getAbsolutePath(),
+				new File( targetDir, "toto/" + LOCAL_RESOURCE_PREFIX + SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX + "sh" ));
+
+		// Load the application
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directoryCopy );
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
+		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
+
+		// Verify the script files were copied correctly
+		String targetId = "target-id";
+		File dir = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId );
+		Assert.assertTrue( dir.exists());
+		Assert.assertTrue( new File( dir, TARGET_PROPERTIES_FILE_NAME ).exists());
+		Assert.assertTrue( new File( dir, PROJECT_SUB_DIR_SCRIPTS + "/" + SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ).exists());
+		Assert.assertTrue( new File( dir, PROJECT_SUB_DIR_SCRIPTS + "/" + LOCAL_RESOURCE_PREFIX + SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX + "sh" ).exists());
+		Assert.assertTrue( new File( dir, PROJECT_SUB_DIR_SCRIPTS + "/sub/script.properties" ).exists());
 
 		// Deploy
-		this.manager.instancesMngr().deployAndStartAll( ma, null );
+		Instance scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
+		Assert.assertNotNull( scopedInstance );
+		this.manager.instancesMngr().deployAndStartAll( ma, scopedInstance );
 
 		// The deploy and start messages for 'app' and 'MySQL' were stored in the DM.
 		// Wait for them to be picked up by the message checker thread.
 		// 7s = 6s (Manager#TIMER_PERIOD) + 1s for security
 		Thread.sleep( 7000 );
 
-		Instance mysqlVm = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
-		Assert.assertNotNull( mysqlVm );
+		this.manager.instancesMngr().changeInstanceState( ma, scopedInstance, InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, scopedInstance.getStatus());
 
-		this.manager.instancesMngr().changeInstanceState( ma, mysqlVm, InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysqlVm.getStatus());
-
-		// Verify that the main script is executed
-		File vmDir = InstanceHelpers.findInstanceDirectoryOnAgent( mysqlVm );
-		Assert.assertTrue( new File( vmDir, "toto-script.sh" ).exists());
-		Assert.assertTrue( new File( vmDir, "sub/script.properties" ).exists());
-		Assert.assertEquals( 2, Utils.listAllFiles( vmDir ).size());
-		Assert.assertEquals( 1, Utils.listAllFiles( new File( vmDir, "sub" )).size());
-
+		// Verify that the main scripts were executed.
+		// Normally, the DM's script should have been executed before the agent's one.
+		// But since the DM and the agent here lies in the same machine, the order cannot be guaranted.
 		Assert.assertTrue( outputFile.exists());
-		String s = Utils.readFileContent( outputFile );
-		Assert.assertEquals( "toto", s.trim());
+		String s = Utils.readFileContent( outputFile ).trim();
+
+		String s1 = "DM was here!\nagent was here!";
+		String s2 = "agent was here!\nDM was here!";
+		Assert.assertTrue( s, s.equals( s1 ) || s.equals( s2 ));
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -43,6 +43,7 @@ import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -51,7 +52,6 @@ import net.roboconf.dm.management.api.IApplicationTemplateMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -259,10 +259,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 			Set<String> targetIds = new HashSet<> ();
 			componentToTargetIds.put( entry.getKey(), targetIds );
 
-			for( File f : Utils.listAllFiles( entry.getValue())) {
-				if( ! f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
-					continue;
-
+			for( File f : Utils.listDirectFiles( entry.getValue(), Constants.FILE_EXT_PROPERTIES )) {
 				this.logger.fine( "Registering target " + f.getName() + " from component " + entry.getKey() + " in application template " + tpl );
 				String targetId;
 				try {

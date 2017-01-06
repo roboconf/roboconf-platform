@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -67,7 +67,7 @@ public class Preference {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public enum PreferenceKeyCategory {
-		LANGUAGE( "Language settings" ),
+		WEB( "Web" ),
 		EMAIL( "Email settings (when Roboconf has to send e-mails)" ),
 		AUTONOMIC( "Autonomic" ),
 		MISCELLANEOUS( "Miscellaneous properties" );
@@ -79,6 +79,19 @@ public class Preference {
 
 		public String getDescription() {
 			return this.description;
+		}
+
+		public static PreferenceKeyCategory which( String s ) {
+
+			PreferenceKeyCategory result = null;
+			for( PreferenceKeyCategory cat : values()) {
+				if( cat.toString().equalsIgnoreCase( s )) {
+					result = cat;
+					break;
+				}
+			}
+
+			return result;
 		}
 	}
 }

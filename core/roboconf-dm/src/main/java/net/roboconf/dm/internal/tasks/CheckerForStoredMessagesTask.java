@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -37,9 +37,9 @@ import net.roboconf.dm.management.api.IMessagingMngr;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerMessagesTask extends TimerTask {
+public class CheckerForStoredMessagesTask extends TimerTask {
 
-	private final Logger logger;
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final IMessagingMngr messagingMngr;
 	private final IApplicationMngr appManager;
 
@@ -49,17 +49,16 @@ public class CheckerMessagesTask extends TimerTask {
 	 * @param appManager
 	 * @param messagingMngr
 	 */
-	public CheckerMessagesTask( IApplicationMngr appManager, IMessagingMngr messagingMngr ) {
+	public CheckerForStoredMessagesTask( IApplicationMngr appManager, IMessagingMngr messagingMngr ) {
 		this.appManager = appManager;
 		this.messagingMngr = messagingMngr;
-		this.logger = Logger.getLogger( getClass().getName());
 	}
 
 
 	@Override
 	public void run() {
 
-		this.logger.finer( "The messager checker task runs." );
+		this.logger.finest( "The task that checks stored messages runs." );
 		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
 			for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( ma.getApplication()))
 				this.messagingMngr.sendStoredMessages( ma, scopedInstance );

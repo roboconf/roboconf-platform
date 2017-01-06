@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -70,9 +70,25 @@ public interface Constants {
 	String WILDCARD = "*";
 
 	/**
-	 * The suffix of a script name.
+	 * The suffix for the name of a script to be executed by an agent (machine configuration).
 	 * */
-	String SCOPED_SCRIPT_SUFFIX = "-script.";
+	String SCOPED_SCRIPT_AT_AGENT_SUFFIX = "agent.script.";
+
+	/**
+	 * The suffix for the name of a script to be executed by the DM (configure a machine).
+	 * */
+	String SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX = "dm.configure.script.";
+
+	/**
+	 * The suffix for the name of a script to be executed by the DM (unconfigure a machine).
+	 * FIXME: although it was defined, it is not used at the moment. Too many problems with asynchronous unconfiguration.
+	 * */
+	String SCOPED_SCRIPT_AT_DM_UNCONFIGURE_SUFFIX = "dm.unconfigure.script.";
+
+	/**
+	 * A prefix for resources that should never be sent to an agent.
+	 */
+	String LOCAL_RESOURCE_PREFIX = "local.";
 
 	/**
 	 * The name of the target installer (which is somehow specific).
@@ -139,6 +155,11 @@ public interface Constants {
 	 * The <strong>commands</strong> directory.
 	 */
 	String PROJECT_DIR_COMMANDS = "commands";
+
+	/**
+	 * The <strong>scripts</strong> sub-directory.
+	 */
+	String PROJECT_SUB_DIR_SCRIPTS = "scripts";
 
 	/**
 	 * The <strong>application.properties</strong> file name.

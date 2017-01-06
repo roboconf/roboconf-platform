@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -226,7 +226,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				// A heart beat may also say whether the agent received its model.
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
-					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResources( ma.getApplication(), scopedInstance );
+					Map<String,byte[]> scriptResources = this.manager.targetsMngr().findScriptResourcesForAgent( ma.getApplication(), scopedInstance );
 					Message msg = new MsgCmdSetScopedInstance(
 							scopedInstance,
 							app.getExternalExports(),

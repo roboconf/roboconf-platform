@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -56,10 +56,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import net.roboconf.target.api.TargetException;
-
+import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.openstack.internal.OpenstackIaasHandler.InstancePredicate;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -345,5 +347,14 @@ public class OpenstackIaasHandlerTest {
 
 		name = "pre-" + TPL_VOLUME_APP + "-post 2";
 		Assert.assertEquals( "pre-app-51--post-2", expandVolumeName( name, "app 51 ", "vm 1" ));
+	}
+
+
+	@Test
+	public void testInstancePredicate() {
+
+		FloatingIP ip = new FloatingIP( "id", "ip", "fixedIp", "mid", "pool" ) {};
+		InstancePredicate predicate = new InstancePredicate( "mid" );
+		Assert.assertTrue( predicate.apply( ip ));
 	}
 }

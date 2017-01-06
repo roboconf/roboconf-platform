@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -49,12 +49,12 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
@@ -1132,12 +1132,20 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"mail.toto\",\"value\":\"smtp.something\",\"category\":\"email\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
+		// Test the serializer
 		Preference pref = new Preference( "mail.toto", "smtp.something", PreferenceKeyCategory.EMAIL );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, pref );
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+
+		// Test the deserializer
+		Preference readPref = mapper.readValue( result, Preference.class );
+		Assert.assertNotNull( readPref );
+		Assert.assertEquals( "mail.toto", readPref.getName());
+		Assert.assertEquals( "smtp.something", readPref.getValue());
+		Assert.assertEquals( PreferenceKeyCategory.EMAIL, readPref.getCategory());
 	}
 
 

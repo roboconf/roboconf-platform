@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -47,7 +47,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerMessagesTaskTest {
+public class CheckerForStoredMessagesTaskTest {
 
 	private IApplicationMngr appManager;
 	private IMessagingMngr messagingMngr;
@@ -75,7 +75,7 @@ public class CheckerMessagesTaskTest {
 	@Test
 	public void testRun_noApplication() {
 
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, this.messagingMngr );
+		CheckerForStoredMessagesTask task = new CheckerForStoredMessagesTask( this.appManager, this.messagingMngr );
 		task.run();
 		Mockito.verifyZeroInteractions( this.messagingMngr );
 	}
@@ -99,7 +99,7 @@ public class CheckerMessagesTaskTest {
 
 		for( InstanceStatus status : statuses ) {
 			Mockito.reset( this.messagingMngr );
-			CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, this.messagingMngr );
+			CheckerForStoredMessagesTask task = new CheckerForStoredMessagesTask( this.appManager, this.messagingMngr );
 			app.getMySqlVm().setStatus( status );
 
 			Mockito.verifyZeroInteractions( this.messagingMngr );

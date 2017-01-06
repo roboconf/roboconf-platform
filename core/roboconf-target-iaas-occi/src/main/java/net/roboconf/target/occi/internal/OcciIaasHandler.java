@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -126,10 +126,10 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		boolean result = false;
@@ -141,10 +141,23 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String machineId ) throws TargetException {
-		OcciVMUtils.deleteVM(targetProperties.get(SERVER_IP_PORT), machineId);
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
+		OcciVMUtils.deleteVM( parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		// TODO: implement this method as it will provide an alternative to user data
+		return null;
 	}
 }

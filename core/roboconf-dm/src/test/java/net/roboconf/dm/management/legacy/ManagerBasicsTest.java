@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,10 +25,19 @@
 
 package net.roboconf.dm.management.legacy;
 
+import static net.roboconf.core.Constants.LOCAL_RESOURCE_PREFIX;
+import static net.roboconf.core.Constants.PROJECT_DIR_DESC;
+import static net.roboconf.core.Constants.PROJECT_DIR_GRAPH;
+import static net.roboconf.core.Constants.PROJECT_FILE_DESCRIPTOR;
+import static net.roboconf.core.Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX;
+import static net.roboconf.core.Constants.SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX;
+import static net.roboconf.core.Constants.TARGET_INSTALLER;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 
 import org.junit.After;
@@ -39,7 +48,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
-import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ApplicationTemplateDescriptor;
@@ -419,7 +427,7 @@ public class ManagerBasicsTest {
 		File directory = this.folder.newFolder();
 		Utils.copyDirectory( firstDirectory, directory );
 
-		File targetDir = new File( directory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		File targetDir = new File( directory, PROJECT_DIR_GRAPH + "/VM" );
 		Assert.assertTrue( targetDir.mkdir());
 
 		String content = "id = test-target-conflict\nhandler: whatever";
@@ -436,7 +444,7 @@ public class ManagerBasicsTest {
 
 		// Update the source directory (change the application name, but keep the target properties).
 		// So, we have two templates that share a same target properties => conflict.
-		File f = new File( directory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		File f = new File( directory, PROJECT_DIR_DESC + "/" + PROJECT_FILE_DESCRIPTOR );
 		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
 		desc.setName( "abcdefghijklmnopqrstuvwxyz" );
 		ApplicationTemplateDescriptor.save( f, desc );
@@ -465,7 +473,7 @@ public class ManagerBasicsTest {
 		File directory = this.folder.newFolder();
 		Utils.copyDirectory( firstDirectory, directory );
 
-		File targetDir = new File( directory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		File targetDir = new File( directory, PROJECT_DIR_GRAPH + "/VM" );
 		Assert.assertTrue( targetDir.mkdir());
 
 		String content = "id = test-target\nhandler: whatever";
@@ -506,7 +514,7 @@ public class ManagerBasicsTest {
 		Utils.writeStringInto( content, new File( targetDir, "target.properties" ));
 
 		// Deploy it again.
-		// We should not have any conflict (different targt ID).
+		// We should not have any conflict (different target ID).
 		tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
 		Assert.assertNotNull( tpl );
 		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
@@ -529,7 +537,7 @@ public class ManagerBasicsTest {
 		Assert.assertTrue( directory.mkdirs());
 		Utils.copyDirectory( firstDirectory, directory );
 
-		File targetDir = new File( directory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		File targetDir = new File( directory, PROJECT_DIR_GRAPH + "/VM" );
 		Assert.assertTrue( targetDir.mkdir());
 
 		String content = "id = test-target-conflict\nhandler: whatever";
@@ -749,7 +757,7 @@ public class ManagerBasicsTest {
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		// Let's try again, but we change the WAR installer
-		app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
+		app.getWar().getComponent().installerName( TARGET_INSTALLER );
 
 		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
@@ -896,5 +904,64 @@ public class ManagerBasicsTest {
 		Instance instance2 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container2" );
 		Assert.assertNotNull( instance2 );
 		Assert.assertEquals( "45012", InstanceHelpers.findAllExportedVariables( instance2 ).get( "Container2.port" ));
+	}
+
+
+	@Test
+	public void testTargetScriptsChain() throws Exception {
+
+		// We need to add targets
+		File originalDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( originalDirectory.exists());
+
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
+
+		File targetDir = new File( directoryCopy, PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( targetDir.mkdir());
+		Assert.assertTrue( new File( targetDir, "apple/lib" ).mkdirs());
+		Assert.assertTrue( new File( targetDir, "oops" ).mkdir());
+
+		Utils.writeStringInto( "id: apple\nhandler: h", new File( targetDir, "apple.properties" ));
+		Utils.writeStringInto( "", new File( targetDir, "apple/" + SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ));
+		Utils.writeStringInto( "", new File( targetDir, "apple/" + LOCAL_RESOURCE_PREFIX + "-" + SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX + "sh" ));
+		Utils.writeStringInto( "", new File( targetDir, "apple/lib/apple2.properties" ));
+		Utils.writeStringInto( "id: oops\nhandler: h", new File( targetDir, "oops.properties" ));
+		Utils.writeStringInto( "", new File( targetDir, "oops/oops.sh" ));
+
+		// Load the application template
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.targetsMngr().listAllTargets().size());
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directoryCopy );
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertEquals( 2, this.manager.targetsMngr().listAllTargets().size());
+		Assert.assertEquals( 2, this.manager.targetsMngr().listPossibleTargets( tpl ).size());
+
+		// Associate scoped instances with targets
+		this.manager.targetsMngr().associateTargetWith( "apple", tpl, null );
+		this.manager.targetsMngr().associateTargetWith( "oops", tpl, "/MySQL VM" );
+		Assert.assertEquals( "apple", this.manager.targetsMngr().findTargetId( tpl, null ));
+		Assert.assertEquals( "oops", this.manager.targetsMngr().findTargetId( tpl, "/MySQL VM" ));
+
+		// Verify the resources sent to an agent
+		Map<String,byte[]> resources = this.manager.targetsMngr().findScriptResourcesForAgent( "apple" );
+		Assert.assertEquals( 2, resources.size());
+		Assert.assertNotNull( resources.get( SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ));
+		Assert.assertNotNull( resources.get( "lib/apple2.properties" ));
+
+		resources = this.manager.targetsMngr().findScriptResourcesForAgent( "oops" );
+		Assert.assertEquals( 1, resources.size());
+		Assert.assertNotNull( resources.get( "oops.sh" ));
+
+		// Verify the DM's scripts
+		File scriptFile = this.manager.targetsMngr().findScriptForDm( tpl, null );
+		Assert.assertNotNull( scriptFile );
+		Assert.assertTrue( scriptFile.exists());
+
+		Instance scopedInstance = InstanceHelpers.findInstanceByPath( tpl, "/MySQL VM" );
+		Assert.assertNotNull( scopedInstance );
+
+		scriptFile = this.manager.targetsMngr().findScriptForDm( tpl, scopedInstance );
+		Assert.assertNull( scriptFile );
 	}
 }

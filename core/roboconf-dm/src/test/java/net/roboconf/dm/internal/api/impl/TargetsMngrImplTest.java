@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -1256,55 +1257,100 @@ public class TargetsMngrImplTest {
 
 
 	@Test
-	public void testFindScriptResources() throws Exception {
+	public void testFindScriptResourcesForAgent() throws Exception {
 
 		// Precondition: all the right scripts were copied in the target directory.
 		// Prepare our resources
+		Properties props = new Properties();
+		props.setProperty( "id", "tid1" );
+		props.setProperty( "handler", "h" );
+
+		File propsFile = this.folder.newFile( "my-target.properties" );
+		Utils.writePropertiesFile( props, propsFile );
+
 		TestApplication app = new TestApplication();
-		String targetId1 = this.mngr.createTarget( "id: tid1\nhandler: h" );
+		String targetId1 = this.mngr.createTarget( propsFile, app.getTemplate());
 		String targetId2 = this.mngr.createTarget( "id: tid2\nhandler: h" );
 
-		File dir1 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId1 );
-		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 );
-		Utils.createDirectory( new File( dir1, "sub" ));
-		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "target-script.sh" ));
+		File dir1 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId1 + "/" + Constants.PROJECT_SUB_DIR_SCRIPTS );
+		File dir2 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId2 + "/" + Constants.PROJECT_SUB_DIR_SCRIPTS );
+		Assert.assertTrue( new File( dir1, "sub" ).mkdirs());
+		Assert.assertTrue( new File( dir2, "sub" ).mkdirs());
+
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ));
 		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/whatever.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/" + Constants.LOCAL_RESOURCE_PREFIX + "whatever.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "some-properties-for-whatever.properties" ));
 		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/properties-for-whatever.properties" ));
 		Utils.writeStringInto( "#!/bin/bash\necho touch toto.txt", new File( dir2, "toto-script.py" ));
 
 		// Associate the application with the first target ID
 		this.mngr.associateTargetWith( targetId1, app, null );
-		Map<String,byte[]> resources = this.mngr.findScriptResources( targetId1 );
-		Assert.assertEquals( 3, resources.size());
-		Assert.assertTrue( resources.containsKey( "target-script.sh" ));
+		Map<String,byte[]> resources = this.mngr.findScriptResourcesForAgent( targetId1 );
+		Assert.assertEquals( 4, resources.size());
+		Assert.assertTrue( resources.containsKey( Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ));
 		Assert.assertTrue( resources.containsKey( "sub/whatever.sh" ));
+		Assert.assertTrue( resources.containsKey( "some-properties-for-whatever.properties" ));
 		Assert.assertTrue( resources.containsKey( "sub/properties-for-whatever.properties" ));
 
-		Map<String,byte[]> resourcesByInst = this.mngr.findScriptResources( app, app.getMySqlVm());
+		Map<String,byte[]> resourcesByInst = this.mngr.findScriptResourcesForAgent( app, app.getMySqlVm());
 		Assert.assertEquals( resources.keySet(), resourcesByInst.keySet());
 
 		// Change the target for the scoped instance
 		this.mngr.associateTargetWith( targetId2, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
-		resources = this.mngr.findScriptResources( targetId1 );
-		Assert.assertEquals( 3, resources.size());
-		Assert.assertTrue( resources.containsKey( "target-script.sh" ));
+		resources = this.mngr.findScriptResourcesForAgent( targetId1 );
+		Assert.assertEquals( 4, resources.size());
+		Assert.assertTrue( resources.containsKey( Constants.SCOPED_SCRIPT_AT_AGENT_SUFFIX + "sh" ));
 		Assert.assertTrue( resources.containsKey( "sub/whatever.sh" ));
+		Assert.assertTrue( resources.containsKey( "some-properties-for-whatever.properties" ));
 		Assert.assertTrue( resources.containsKey( "sub/properties-for-whatever.properties" ));
 
-		resourcesByInst = this.mngr.findScriptResources( app, app.getMySqlVm());
+		resourcesByInst = this.mngr.findScriptResourcesForAgent( app, app.getMySqlVm());
 		Assert.assertEquals( 1, resourcesByInst.size());
 		Assert.assertTrue( resourcesByInst.containsKey( "toto-script.py" ));
 	}
 
 
 	@Test
+	public void testFindScriptForDm() throws Exception {
+
+		// Precondition: all the right scripts were copied in the target directory.
+		// Prepare our resources
+		TestApplication app = new TestApplication();
+		String targetId1 = this.mngr.createTarget( "id: tid1\nhandler: h" );
+
+		File dir1 = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/" + targetId1 + "/" + Constants.PROJECT_SUB_DIR_SCRIPTS );
+		Assert.assertTrue( new File( dir1, "sub" ).mkdirs());
+
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/whatever.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/" + Constants.LOCAL_RESOURCE_PREFIX + "whatever.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( dir1, "sub/properties-for-whatever.properties" ));
+
+		// Associate the application with the first target ID
+		this.mngr.associateTargetWith( targetId1, app, null );
+		File dmScript = this.mngr.findScriptForDm( app, app.getMySqlVm());
+		Assert.assertNull( dmScript );
+
+		Utils.writeStringInto(
+				"#!/bin/bash\necho Bonjour le monde cruel > toto.txt",
+				new File( dir1, "target." + Constants.SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX + ".sh" ));
+
+		dmScript = this.mngr.findScriptForDm( app, app.getMySqlVm());
+		Assert.assertNotNull( dmScript );
+		Assert.assertEquals( "target." + Constants.SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX + ".sh", dmScript.getName());
+	}
+
+
+	@Test
 	public void testCopyScriptsInTargetDirectory() throws IOException {
 
-		File f = new File(this.folder.newFolder(), "toto.properties");
+		File f = new File( this.folder.newFolder(), "toto.properties" );
+		Assert.assertTrue( new File( f.getParentFile(), "toto" ).mkdir());
+
 		Utils.writeStringInto( "id: tid\nprop: value\nhandler: h", f );
-		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( f.getParentFile(), "toto.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho Bonjour le monde cruel > toto.txt", new File( f.getParentFile(), "toto/toto.sh" ));
 		Utils.writeStringInto( "#!/bin/bash\ntouch titi.txt", new File( f.getParentFile(), "titi.sh" ));
-		Utils.writeStringInto( "#!/bin/bash\necho tototo", new File( f.getParentFile(), "toto-script.sh" ));
+		Utils.writeStringInto( "#!/bin/bash\necho tototo", new File( f.getParentFile(), "toto/script.sh" ));
 
 		File targetDir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/tid" );
 		Assert.assertFalse( targetDir.exists());
@@ -1313,12 +1359,17 @@ public class TargetsMngrImplTest {
 		String targetId = this.mngr.createTarget( f, appT );
 		Assert.assertEquals( "tid", targetId );
 		Assert.assertTrue( targetDir.exists());
-		Assert.assertEquals( 4, targetDir.list().length);
+		Assert.assertEquals( 3, targetDir.list().length);
 
 		Assert.assertTrue( new File( targetDir, "target.properties" ).exists());
-		Assert.assertTrue( new File( targetDir, "toto.sh" ).exists());
-		Assert.assertTrue( new File( targetDir, "toto-script.sh" ).exists());
 		Assert.assertTrue( new File( targetDir, "created.from" ).exists());
+		Assert.assertTrue( new File( targetDir, Constants.PROJECT_SUB_DIR_SCRIPTS ).isDirectory());
+
+		targetDir = new File( targetDir, Constants.PROJECT_SUB_DIR_SCRIPTS );
+		Assert.assertEquals( 2, targetDir.list().length);
+
+		Assert.assertTrue( new File( targetDir, "toto.sh" ).exists());
+		Assert.assertTrue( new File( targetDir, "script.sh" ).exists());
 		Assert.assertFalse( new File( targetDir, "titi.sh").exists());
 	}
 }

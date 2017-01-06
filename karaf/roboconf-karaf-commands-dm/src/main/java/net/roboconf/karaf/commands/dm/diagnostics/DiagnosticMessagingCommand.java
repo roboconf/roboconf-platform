@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -43,8 +43,8 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.karaf.commands.dm.KarafDmCommandsUtils;
 import net.roboconf.karaf.commands.dm.KarafDmCommandsUtils.RbcfInfo;

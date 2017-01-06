@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -26,8 +26,10 @@
 package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,7 +93,7 @@ public class PreferencesMngrImplTest {
 		Dictionary properties = new Hashtable<> ();
 		ConfigurationAdmin configAdmin = Mockito.mock( ConfigurationAdmin.class );
 		Configuration config = Mockito.mock( Configuration.class );
-		Mockito.when( configAdmin.getConfiguration( PreferencesMngrImpl.PID )).thenReturn( config );
+		Mockito.when( configAdmin.getConfiguration( PreferencesMngrImpl.PID, null )).thenReturn( config );
 		Mockito.when( config.getProperties()).thenReturn( properties );
 
 		((PreferencesMngrImpl) this.mngr).setConfigAdmin( configAdmin );
@@ -99,9 +101,9 @@ public class PreferencesMngrImplTest {
 		Mockito.verifyZeroInteractions( config );
 
 		this.mngr.save( "my key", "my value" );
-		Mockito.verify( configAdmin, Mockito.only()).getConfiguration( PreferencesMngrImpl.PID );
+		Mockito.verify( configAdmin, Mockito.only()).getConfiguration( PreferencesMngrImpl.PID, null );
 		Mockito.verify( config, Mockito.times( 1 )).getProperties();
-		Mockito.verify( config, Mockito.times( 1 )).update();
+		Mockito.verify( config, Mockito.times( 1 )).update( properties );
 		Mockito.verifyNoMoreInteractions( config );
 		Assert.assertEquals( 1, properties.size());
 		Assert.assertEquals( "my value", properties.get( "my key" ));
@@ -120,7 +122,7 @@ public class PreferencesMngrImplTest {
 		properties.put( "something", "" );
 		this.mngr.updateProperties( properties );
 
-		Assert.assertEquals( expectedSize + 2, this.mngr.getAllPreferences().size());
+		Assert.assertEquals( properties.size(), this.mngr.getAllPreferences().size());
 		Assert.assertEquals( "8154", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS ));
 		Assert.assertEquals( "8154", this.mngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "def" ));
 		Assert.assertEquals( "", this.mngr.get( "something" ));
@@ -145,5 +147,45 @@ public class PreferencesMngrImplTest {
 			if( pref.getCategory() == PreferenceKeyCategory.EMAIL )
 				Assert.assertTrue( name, match );
 		}
+	}
+
+
+	@Test
+	public void testPropertiesAsList() throws Exception {
+
+		final String key = "whatever";
+
+		String value = this.mngr.get( key );
+		Assert.assertNull( value );
+		Assert.assertEquals( 0, this.mngr.getAsCollection( key ).size());
+
+		this.mngr.addToList( key, "v1" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "v1", value );
+		Assert.assertEquals(
+				new LinkedHashSet<>( Arrays.asList( "v1" )),
+				this.mngr.getAsCollection( key ));
+
+		this.mngr.addToList( key, "v3" );
+		this.mngr.addToList( key, "v2" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "v1, v3, v2", value );
+		Assert.assertEquals(
+				new LinkedHashSet<>( Arrays.asList( "v1", "v3", "v2" )),
+				this.mngr.getAsCollection( key ));
+
+		this.mngr.removeFromList( key, "v3" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "v1, v2", value );
+		Assert.assertEquals(
+				new LinkedHashSet<>( Arrays.asList( "v1", "v2" )),
+				this.mngr.getAsCollection( key ));
+
+		this.mngr.removeFromList( key, "v3" );
+		this.mngr.removeFromList( key, "v2" );
+		this.mngr.removeFromList( key, "v1" );
+		value = this.mngr.get( key );
+		Assert.assertEquals( "", value );
+		Assert.assertEquals( 0, this.mngr.getAsCollection( key ).size());
 	}
 }

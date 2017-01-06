@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -167,20 +167,23 @@ public class JCloudsHandler implements TargetHandler {
 	@Override
 	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
-		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
+
+		// It may require to be configured from the DM => add the right marker
+		scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
+		this.logger.fine( "Configuring machine '" + machineId + "'..." );
 	}
 
 
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
-		ComputeService computeService = jcloudContext( targetProperties );
+		ComputeService computeService = jcloudContext( parameters.getTargetProperties());
 		return computeService.getNodeMetadata( machineId ) != null;
 	}
 
@@ -188,15 +191,36 @@ public class JCloudsHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 
 		this.logger.fine( "Terminating machine " + machineId );
-		ComputeService computeService = jcloudContext( targetProperties );
+		ComputeService computeService = jcloudContext( parameters.getTargetProperties());
 		computeService.destroyNode( machineId );
 		computeService.getContext().close();
+	}
+
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+
+		ComputeService computeService = jcloudContext( parameters.getTargetProperties());
+		NodeMetadata metadata = computeService.getNodeMetadata( machineId );
+
+		String result = null;
+		if( metadata != null
+				&& metadata.getPublicAddresses() != null
+				&& ! metadata.getPublicAddresses().isEmpty())
+			result = metadata.getPublicAddresses().iterator().next();
+
+		return result;
 	}
 
 

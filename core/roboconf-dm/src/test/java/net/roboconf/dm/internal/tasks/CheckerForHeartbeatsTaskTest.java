@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -47,7 +47,7 @@ import net.roboconf.dm.management.api.ITargetsMngr;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerHeartbeatsTaskTest {
+public class CheckerForHeartbeatsTaskTest {
 
 	private IApplicationMngr appManager;
 	private Map<String,ManagedApplication> nameToManagedApplication;
@@ -79,7 +79,7 @@ public class CheckerHeartbeatsTaskTest {
 	public void testRun_noApplication() {
 
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
-		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager, notificationMngr );
+		CheckerForHeartbeatsTask task = new CheckerForHeartbeatsTask( this.appManager, notificationMngr );
 		task.run();
 		Mockito.verifyZeroInteractions( notificationMngr );
 	}
@@ -93,7 +93,7 @@ public class CheckerHeartbeatsTaskTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.nameToManagedApplication.put( app.getName(), ma );
 
-		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager, notificationMngr );
+		CheckerForHeartbeatsTask task = new CheckerForHeartbeatsTask( this.appManager, notificationMngr );
 		task.run();
 		Mockito.verifyZeroInteractions( notificationMngr );
 	}

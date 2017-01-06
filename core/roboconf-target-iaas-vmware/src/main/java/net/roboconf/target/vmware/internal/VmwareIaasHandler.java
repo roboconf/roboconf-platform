@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -197,15 +197,15 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		boolean result;
 		try {
-			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
+			final ServiceInstance vmwareServiceInstance = getServiceInstance( parameters.getTargetProperties());
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineId );
 			result = vm != null;
 
@@ -220,15 +220,15 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 
 		try {
 			cancelMachineConfigurator( machineId );
 
-			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
+			final ServiceInstance vmwareServiceInstance = getServiceInstance( parameters.getTargetProperties());
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineId );
 			if (vm == null)
 				throw new TargetException( "Error vm: " + machineId + " was not found");
@@ -247,10 +247,34 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
-		} catch( RemoteException | MalformedURLException e ) {
+		} catch( Exception e ) {
 			throw new TargetException(e);
-
 		}
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+
+		String result = null;
+		try {
+			ServiceInstance vmwareServiceInstance = VmwareIaasHandler.getServiceInstance( parameters.getTargetProperties());
+			String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
+			VirtualMachine vm = VmwareIaasHandler.getVirtualMachine( vmwareServiceInstance, rootInstanceName );
+			if( vm != null )
+				result = vm.getGuest().getIpAddress();
+
+		} catch( Exception e ) {
+			throw new TargetException( e );
+		}
+
+		return result;
 	}
 
 

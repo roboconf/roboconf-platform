@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -41,6 +41,7 @@ import org.ops4j.pax.exam.spi.PaxExamRuntime;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.integration.tests.commons.internal.ItUtils;
 import net.roboconf.integration.tests.dm.probes.DmTest;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
@@ -55,7 +56,7 @@ public class WebAdminCustomizationTest extends DmTest {
 
 		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 
-		// Prepare to run an agent distribution
+		// Prepare to run a DM distribution
 		Option[] options = super.config();
 		ExamSystem system = PaxExamRuntime.createServerSystem( options );
 		TestContainer container = PaxExamRuntime.createContainer( system );
@@ -102,6 +103,21 @@ public class WebAdminCustomizationTest extends DmTest {
 			}
 
 			Assert.assertEquals( "hi!", os.toString( "UTF-8" ));
+
+			// Verify that by default, there is no web extension
+			url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-dm/preferences" );
+			os = new ByteArrayOutputStream();
+			in = url.openStream();
+			try {
+				Utils.copyStreamUnsafelyUseWithCaution( in, os );
+
+			} finally {
+				Utils.closeQuietly( in );
+			}
+
+			String received = os.toString( "UTF-8" );
+			String expected = "{\"name\":\"" + IPreferencesMngr.WEB_EXTENSIONS + "\",\"value\":\"\",";
+			Assert.assertTrue( received.contains( expected ));
 
 		} finally {
 			container.stop();

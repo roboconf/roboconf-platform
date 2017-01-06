@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,40 +25,23 @@
 
 package net.roboconf.dm.internal.tasks;
 
-import java.util.TimerTask;
+import org.junit.Test;
+import org.mockito.Mockito;
 
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.api.IApplicationMngr;
-import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.internal.api.ITargetConfigurator;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CheckerHeartbeatsTask extends TimerTask {
+public class CheckerForTargetsConfigurationTaskTest {
 
-	private final IApplicationMngr appManager;
-	private final INotificationMngr notificationMngr;
+	@Test
+	public void testApiIsInvoked() {
 
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+		CheckerForTargetsConfigurationTask task = new CheckerForTargetsConfigurationTask( targetConfigurator );
+		task.run();
 
-	/**
-	 * Constructor.
-	 * @param appManager
-	 * @param notificationMngr
-	 */
-	public CheckerHeartbeatsTask( IApplicationMngr appManager, INotificationMngr notificationMngr ) {
-		this.appManager = appManager;
-		this.notificationMngr = notificationMngr;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.TimerTask#run()
-	 */
-	@Override
-	public void run() {
-		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
-			ma.checkStates( this.notificationMngr );
-		}
+		Mockito.verify( targetConfigurator, Mockito.only()).verifyCandidates();
 	}
 }

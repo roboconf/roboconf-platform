@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,12 +23,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management.events;
+package net.roboconf.webextension.kibana;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public enum EventType {
+public interface KibanaExtensionConstants {
 
-	CREATED, DELETED, CHANGED;
+	String CONTEXT = "/roboconf-web-extension/kibana";
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -41,10 +41,13 @@ public class EmbeddedHandlerTest {
 	@Test
 	public void testTargetEmbedded() throws Exception {
 
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+
 		EmbeddedHandler target = new EmbeddedHandler();
 		Assert.assertEquals( EmbeddedHandler.TARGET_ID, target.getTargetId());
 		target.terminateMachine( null, null );
-		target.terminateMachine( new HashMap<String,String>(), "anything" );
+		target.terminateMachine( parameters, "anything" );
 
 		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
@@ -53,19 +56,21 @@ public class EmbeddedHandlerTest {
 				.scopedInstancePath( "nothing" )));
 
 		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
-
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
 				.targetProperties( new HashMap<String,String>( 0 ))
 				.messagingProperties( new HashMap<String,String>( 0 ))));
 
+		Instance scopedInstance = new Instance();
+		Assert.assertEquals( 0, scopedInstance.data.size());
 		target.configureMachine(
 				new TargetHandlerParameters()
 					.targetProperties( new HashMap<String,String>( 0 ))
 					.messagingProperties( new HashMap<String,String>( 0 )),
 				null,
-				new Instance());
+				scopedInstance );
 
-		target.terminateMachine( new HashMap<String,String>( 0 ), null );
+		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
+		target.terminateMachine( parameters, null );
 		target.terminateMachine( null, "anything" );
 	}
 }

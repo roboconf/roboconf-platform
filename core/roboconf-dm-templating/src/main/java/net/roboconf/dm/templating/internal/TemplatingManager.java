@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -35,10 +35,10 @@ import java.util.logging.Logger;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.dm.templating.internal.templates.TemplateEntry;
 import net.roboconf.dm.templating.internal.templates.TemplateUtils;

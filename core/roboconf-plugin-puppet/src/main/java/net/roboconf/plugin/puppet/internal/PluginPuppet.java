@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -216,7 +216,7 @@ public class PluginPuppet implements PluginInterface {
 		Properties props = Utils.readPropertiesFile( modulesFile );
 		for( Map.Entry<Object,Object> entry : props.entrySet()) {
 
-			List<String> commands = new ArrayList<String> ();
+			List<String> commands = new ArrayList<> ();
 			commands.add( "puppet" );
 			commands.add( "module" );
 			commands.add( "install" );
@@ -272,8 +272,12 @@ public class PluginPuppet implements PluginInterface {
 		// Find the action to execute
 		// If not found, try init.pp
 		this.logger.info("Preparing the invocation of the script for " + action + " and instance " + instance.getName() + ".");
+		File[] subFiles = instanceDirectory.listFiles();
+		if( subFiles == null )
+			subFiles = new File[ 0 ];
+
 		File moduleDirectory = null;
-		for( File f : instanceDirectory.listFiles()) {
+		for( File f : subFiles ) {
 			if( f.isDirectory()
 					&& f.getName().toLowerCase().startsWith( "roboconf_" )) {
 				moduleDirectory = f;
@@ -298,7 +302,7 @@ public class PluginPuppet implements PluginInterface {
 		if( scriptFile.exists()) {
 
 			// Prepare the command and execute it
-			List<String> commands = new ArrayList<String> ();
+			List<String> commands = new ArrayList<> ();
 			commands.add( "puppet" );
 			commands.add( "apply" );
 			commands.add( "--verbose" );

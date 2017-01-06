@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+   Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
 
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
@@ -61,6 +61,20 @@
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-dm</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-scheduler</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-web-extension-for-kibana</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>

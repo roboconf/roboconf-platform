@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -48,5 +48,13 @@ public class PreferenceTest {
 			Assert.assertNotNull( cat.toString());
 			Assert.assertNotNull( cat.getDescription());
 		}
+	}
+
+	@Test
+	public void testWhich() {
+
+		Assert.assertEquals( PreferenceKeyCategory.EMAIL, PreferenceKeyCategory.which( "email" ));
+		Assert.assertEquals( PreferenceKeyCategory.EMAIL, PreferenceKeyCategory.which( "eMAil" ));
+		Assert.assertNull( PreferenceKeyCategory.which( "nawak" ));
 	}
 }

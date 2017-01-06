@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -67,9 +67,9 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 
 		// We copy an application template and we add it a command
 		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
-		File sourecApDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		File sourceAppDirectory = TestUtils.findApplicationDirectory( "lamp" );
 		File appDirectory = this.folder.newFolder();
-		Utils.copyDirectory( sourecApDirectory, appDirectory );
+		Utils.copyDirectory( sourceAppDirectory, appDirectory );
 
 		// Create a command that writes into a file
 		this.tmpFile = File.createTempFile( "roboconf-it-", "scheduler" );

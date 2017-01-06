@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -123,21 +123,23 @@ public class InMemoryHandler implements TargetHandler {
 	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
 
-		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
+		// It may require to be configured from the DM => add the right marker
+		scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
+		this.logger.fine( "Configuring machine '" + machineId + "'..." );
 	}
 
 
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		this.logger.fine( "Verifying the in-memory agent for " + machineId + " is running." );
-		targetProperties = preventNull( targetProperties );
+		Map<String,String> targetProperties = preventNull( parameters.getTargetProperties());
 
 		// No agent factory => no iPojo instance => not running
 		boolean result = false;
@@ -170,13 +172,13 @@ public class InMemoryHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 
 		this.logger.fine( "Terminating an in-memory agent." );
-		targetProperties = preventNull( targetProperties );
+		Map<String,String> targetProperties = preventNull( parameters.getTargetProperties());
 
 		// If we executed real recipes, undeploy everything first.
 		// That's because we do not really terminate the agent's machine, we just kill the agent.
@@ -206,6 +208,14 @@ public class InMemoryHandler implements TargetHandler {
 				}
 			}
 		}
+	}
+
+
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		// This method does not make sense for in-memory agents
+		return null;
 	}
 
 
@@ -299,6 +309,5 @@ public class InMemoryHandler implements TargetHandler {
 		} catch( Exception e ) {
 			throw new TargetException( "An in-memory agent could not be launched. Scoped instance path: " + scopedInstancePath, e );
 		}
-
 	}
 }

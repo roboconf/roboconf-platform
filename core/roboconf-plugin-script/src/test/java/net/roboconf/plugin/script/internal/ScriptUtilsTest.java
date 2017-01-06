@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,16 +28,16 @@ package net.roboconf.plugin.script.internal;
 import java.io.File;
 import java.util.Map;
 
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.plugin.script.internal.ScriptUtils.ActionFileFilter;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -81,18 +81,23 @@ public class ScriptUtilsTest {
 		Assert.assertTrue( new File( dir, "what" ).createNewFile());
 
 		File[] files = dir.listFiles( new ActionFileFilter( "" ));
+		Assert.assertNotNull( files );
 		Assert.assertEquals( 0, files.length );
 
 		files = dir.listFiles( new ActionFileFilter( null ));
+		Assert.assertNotNull( files );
 		Assert.assertEquals( 0, files.length );
 
 		files = dir.listFiles( new ActionFileFilter( "what" ));
+		Assert.assertNotNull( files );
 		Assert.assertEquals( 3, files.length );
 
 		files = dir.listFiles( new ActionFileFilter( "whatever" ));
+		Assert.assertNotNull( files );
 		Assert.assertEquals( 2, files.length );
 
 		files = dir.listFiles( new ActionFileFilter( "whatever-1" ));
+		Assert.assertNotNull( files );
 		Assert.assertEquals( 1, files.length );
 	}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -80,7 +80,7 @@ public class TestTargetResolver extends TargetHandlerResolverImpl {
 
 
 			@Override
-			public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+			public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 			throws TargetException {
 
 				// In this handler, the machine ID is the scoped instance's path
@@ -89,11 +89,17 @@ public class TestTargetResolver extends TargetHandlerResolverImpl {
 			}
 
 			@Override
-			public void terminateMachine( Map<String,String> targetProperties, String machineId )
+			public void terminateMachine( TargetHandlerParameters parameters, String machineId )
 			throws TargetException {
 
 				// In this handler, the machine ID is the scoped instance's path
 				TestTargetResolver.this.instancePathToRunningStatus.put( machineId, Boolean.FALSE );
+			}
+
+			@Override
+			public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+			throws TargetException {
+				return null;
 			}
 		};
 

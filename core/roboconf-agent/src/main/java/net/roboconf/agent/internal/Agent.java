@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -365,7 +365,16 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		this.messagingClient.setScopedInstancePath( this.scopedInstancePath );
 		this.messagingClient.setIpAddress( this.ipAddress );
 		this.messagingClient.setNeedsModel( needsModel());
+		this.messagingClient.setDomain( this.domain );
 		this.messagingClient.switchMessagingType( this.messagingType);
+
+		// Deal with injected configurations
+		AgentUtils.injectConfigurations(
+				this.karafEtc,
+				this.applicationName,
+				this.scopedInstancePath,
+				this.domain,
+				this.ipAddress );
 
 		this.logger.info( "The agent was successfully (re)configured." );
 	}
@@ -479,9 +488,6 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	 */
 	public void setDomain( String domain ) {
 		this.domain = domain;
-		this.logger.fine( "Domain set to " + domain );
-		if( this.messagingClient != null )
-			this.messagingClient.setDomain( domain );
 	}
 
 

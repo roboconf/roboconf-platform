@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -57,9 +57,11 @@ public class AbstractThreadedTargetHandlerTest {
 		try {
 			Assert.assertEquals( 0, configurators.size());
 			Assert.assertEquals( 0, th.getCpt());
+			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
 			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
+			Assert.assertEquals( 0, scopedInstance.data.size());
 			th.start();
 
 			Assert.assertEquals( 1, configurators.size());
@@ -80,6 +82,7 @@ public class AbstractThreadedTargetHandlerTest {
 		} finally {
 			th.stop();
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, scopedInstance.getStatus());
+			Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
 		}
 	}
 
@@ -101,6 +104,7 @@ public class AbstractThreadedTargetHandlerTest {
 		try {
 			Assert.assertEquals( 0, configurators.size());
 			Assert.assertEquals( 0, th.getCpt());
+			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
 			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
@@ -120,6 +124,7 @@ public class AbstractThreadedTargetHandlerTest {
 		} finally {
 			th.stop();
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, scopedInstance.getStatus());
+			Assert.assertEquals( 0, scopedInstance.data.size());
 		}
 	}
 
@@ -137,6 +142,7 @@ public class AbstractThreadedTargetHandlerTest {
 		try {
 			Assert.assertEquals( 0, configurators.size());
 			Assert.assertEquals( 0, th.getCpt());
+			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
 			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
@@ -156,6 +162,7 @@ public class AbstractThreadedTargetHandlerTest {
 		} finally {
 			th.stop();
 			Assert.assertEquals( InstanceStatus.PROBLEM, scopedInstance.getStatus());
+			Assert.assertFalse( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
 		}
 	}
 
@@ -181,12 +188,14 @@ public class AbstractThreadedTargetHandlerTest {
 		// 1001-2000 => configure has been invoked twice.
 		// 2001-3000 => configure has been invoked three times.
 
+		Instance scopedInstance = new Instance( "test" );
 		try {
 			Assert.assertEquals( 0, configurators.size());
 			Assert.assertEquals( 0, th.getCpt());
+			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( new TargetHandlerParameters(), "machine-id", null );
+			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
 			th.start();
 
 			Assert.assertEquals( 1, configurators.size());
@@ -202,6 +211,7 @@ public class AbstractThreadedTargetHandlerTest {
 
 		} finally {
 			th.stop();
+			Assert.assertEquals( 0, scopedInstance.data.size());
 		}
 	}
 }
