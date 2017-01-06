@@ -23,12 +23,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management.events;
+package net.roboconf.core.model.runtime;
+
+import org.junit.Assert;
+
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public enum EventType {
+public class EventTypeTest {
 
-	CREATED, DELETED, CHANGED;
+	@Test
+	public void testObvious() {
+
+		for( EventType et : EventType.values())
+			Assert.assertNotNull( et.toString());
+	}
 }

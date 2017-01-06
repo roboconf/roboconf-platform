@@ -39,7 +39,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.management.events.EventType;
+import net.roboconf.core.model.runtime.EventType;
 
 /**
  * @author Vincent Zurczak - Linagora

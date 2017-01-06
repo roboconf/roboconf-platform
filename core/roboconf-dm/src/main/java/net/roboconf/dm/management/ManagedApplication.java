@@ -40,8 +40,8 @@ import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.dm.management.api.INotificationMngr;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.messaging.api.messages.Message;
 
 /**

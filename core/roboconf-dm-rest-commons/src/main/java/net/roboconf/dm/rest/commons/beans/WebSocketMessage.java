@@ -28,7 +28,7 @@ package net.roboconf.dm.rest.commons.beans;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.management.events.EventType;
+import net.roboconf.core.model.runtime.EventType;
 
 /**
  * A class to serialize web sockets messages as JSon.

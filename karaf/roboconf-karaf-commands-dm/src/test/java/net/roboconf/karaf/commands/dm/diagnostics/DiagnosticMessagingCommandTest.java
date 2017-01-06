@@ -43,11 +43,11 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IDebugMngr;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.karaf.commands.dm.diagnostics.DiagnosticMessagingCommand.DiagnosticListener;
 
 /**

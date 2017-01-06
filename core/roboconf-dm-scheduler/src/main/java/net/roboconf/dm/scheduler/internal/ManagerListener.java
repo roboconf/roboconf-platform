@@ -28,15 +28,15 @@ package net.roboconf.dm.scheduler.internal;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.quartz.TriggerKey;
+import org.quartz.impl.matchers.GroupMatcher;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.events.IDmListener;
-
-import org.quartz.TriggerKey;
-import org.quartz.impl.matchers.GroupMatcher;
 
 /**
  * A listener that allows to delete scheduled jobs for a given application.
