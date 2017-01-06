@@ -432,6 +432,10 @@ public class OcciVMUtils {
 
 		System.out.println("Create VM: " +
 				createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
+						"", "e3161161-02a4-4685-ad99-8ac36b3e66ea", "UbuntuTest", "Ubuntu Test", null));
+		System.exit(0);
+		System.out.println("Create VM: " +
+				createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
 						"", "e906f16e-a3cb-414c-9a7e-c308dff4897d", "javaTest", "Java Test", userdata));
 			//createVM("172.16.225.91:8080", //VMWare
 			//createVM("localhost:8888",
