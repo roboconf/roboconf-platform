@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,9 +28,9 @@ package net.roboconf.dm.internal.utils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.INotificationMngr;
-import net.roboconf.dm.management.events.EventType;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -57,6 +57,7 @@ public final class DmUtils {
 		scopedInstance.data.remove( Instance.MACHINE_ID );
 		scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
 		scopedInstance.data.remove( Instance.RUNNING_FROM );
+		scopedInstance.data.remove( Instance.READY_FOR_CFG_MARKER );
 		for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
 			InstanceStatus oldstatus = i.getStatus();
 			i.setStatus( InstanceStatus.NOT_DEPLOYED );

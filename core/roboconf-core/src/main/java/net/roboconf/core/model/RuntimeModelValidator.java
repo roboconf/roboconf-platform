@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -208,7 +208,7 @@ public final class RuntimeModelValidator {
 				error.setDetails( "Component name: " + c.getName());
 				result.add( error );
 
-			} else if( InstanceHelpers.isTarget( new Instance().component( c ) )) {
+			} else if( ComponentHelpers.isTarget( c )) {
 				result.addAll( TargetValidator.parseTargetProperties( projectDirectory, c ));
 
 			} else {

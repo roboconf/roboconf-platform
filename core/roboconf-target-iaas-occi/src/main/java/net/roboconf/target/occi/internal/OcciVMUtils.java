@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -39,8 +39,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
-import net.roboconf.target.api.TargetException;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -114,7 +114,7 @@ public class OcciVMUtils {
 			in = new DataInputStream(httpURLConnection.getInputStream());
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			Utils.copyStreamSafely(in, out);
-			ret = out.toString();
+			ret = out.toString( "UTF-8" );
 
 		} catch (IOException e) {
 			throw new TargetException(e);
@@ -305,10 +305,11 @@ public class OcciVMUtils {
 			in = new DataInputStream(httpURLConnection.getInputStream());
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			Utils.copyStreamSafely(in, out);
-			ret = out.toString();
+			ret = out.toString( "UTF-8" );
 
 		} catch (IOException e) {
 			throw new TargetException(e);
+
 		}  finally {
 			Utils.closeQuietly(in);
 			if (httpURLConnection != null) {

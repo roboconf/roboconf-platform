@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -29,7 +29,9 @@ import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import net.roboconf.core.model.runtime.Preference;
@@ -57,6 +59,7 @@ public interface IPreferencesResource {
 	 * @HTTP 200 Everything went fine.
 	 */
 	@GET
+	@Produces( MediaType.APPLICATION_JSON )
 	List<Preference> getPreferences( @QueryParam("key") String key );
 
 

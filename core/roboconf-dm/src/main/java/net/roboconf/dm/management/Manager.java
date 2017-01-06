@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -47,12 +47,14 @@ import net.roboconf.dm.internal.api.impl.MessagingMngrImpl;
 import net.roboconf.dm.internal.api.impl.NotificationMngrImpl;
 import net.roboconf.dm.internal.api.impl.PreferencesMngrImpl;
 import net.roboconf.dm.internal.api.impl.RandomMngrImpl;
+import net.roboconf.dm.internal.api.impl.TargetConfiguratorImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.api.impl.TargetsMngrImpl;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
-import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
-import net.roboconf.dm.internal.tasks.CheckerMessagesTask;
+import net.roboconf.dm.internal.tasks.CheckerForHeartbeatsTask;
+import net.roboconf.dm.internal.tasks.CheckerForStoredMessagesTask;
+import net.roboconf.dm.internal.tasks.CheckerForTargetsConfigurationTask;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
 import net.roboconf.dm.management.api.IAutonomicMngr;
@@ -116,7 +118,6 @@ public class Manager implements IReconfigurable {
 	private final ApplicationMngrImpl applicationMngr;
 	private final InstancesMngrImpl instancesMngr;
 
-	private final IRandomMngr randomMngr;
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
 	private final ITargetsMngr targetsMngr;
@@ -125,6 +126,10 @@ public class Manager implements IReconfigurable {
 	private final IAutonomicMngr autonomicMngr;
 
 	private final TargetHandlerResolverImpl defaultTargetHandlerResolver;
+
+	// Private API
+	private final IRandomMngr randomMngr;
+	private final TargetConfiguratorImpl targetConfigurator;
 
 
 	/**
@@ -154,9 +159,13 @@ public class Manager implements IReconfigurable {
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
 		this.applicationMngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
-		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
+		this.targetConfigurator = new TargetConfiguratorImpl();
+		this.targetConfigurator.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
+
+		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr, this.targetConfigurator );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 		this.instancesMngr.setRuleBasedHandler( this.autonomicMngr );
+		this.instancesMngr.setDmDomain( this.domain );
 
 		// The manager is supposed to be an API.
 		// To make it simple to use in non-OSGi environments, we instantiate a default set of preferences.
@@ -184,11 +193,15 @@ public class Manager implements IReconfigurable {
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 		this.messagingMngr.setMessagingClient( this.messagingClient );
 
+		// Start the target configurator
+		this.targetConfigurator.start();
+
 		// Run the timer
 		this.timer = new Timer( "Roboconf's Management Timer", false );
-		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.applicationMngr, this.messagingMngr ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerForStoredMessagesTask( this.applicationMngr, this.messagingMngr ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerForTargetsConfigurationTask( this.targetConfigurator ), 0, TIMER_PERIOD );
 		this.timer.scheduleAtFixedRate(
-				new CheckerHeartbeatsTask( this.applicationMngr, this.notificationMngr ),
+				new CheckerForHeartbeatsTask( this.applicationMngr, this.notificationMngr ),
 				0, Constants.HEARTBEAT_PERIOD );
 
 		// Configure the messaging
@@ -225,6 +238,9 @@ public class Manager implements IReconfigurable {
 
 		// Disable notifications to listeners
 		this.notificationMngr.disableNotifications();
+
+		// Stop the target configurator
+		this.targetConfigurator.stop();
 
 		// Stops listening to the debug queue.
 		if( this.messagingClient != null ) {
@@ -314,6 +330,7 @@ public class Manager implements IReconfigurable {
 		// Update the messaging client
 		this.logger.info( "Reconfiguration requested in the DM." );
 		if( this.messagingClient != null ) {
+			this.messagingClient.setDomain( this.domain );
 			this.messagingClient.switchMessagingType( this.messagingType );
 			try {
 				if( this.messagingClient.isConnected())
@@ -346,12 +363,13 @@ public class Manager implements IReconfigurable {
 	public void setMessagingType( String messagingType ) {
 
 		// Properties are injected on every modification.
-		// so, we just want to track changes.
+		// So, we just want to track changes.
 
 		// We only want to reconfigure the messaging client
 		// when the messaging type changes.
 		if( ! Objects.equals( this.messagingType, messagingType )) {
 			this.messagingType = messagingType;
+			this.logger.fine( "Messaging type set to " + this.messagingType );
 
 			// Explicitly require a reconfiguration.
 			reconfigure();
@@ -364,10 +382,19 @@ public class Manager implements IReconfigurable {
 	 */
 	public void setDomain( String domain ) {
 
-		this.domain = domain;
-		this.logger.fine( "Domain set to " + domain );
-		if( this.messagingClient != null )
-			this.messagingClient.setDomain( domain );
+		// Properties are injected on every modification.
+		// So, we just want to track changes.
+
+		// We only want to reconfigure the messaging client
+		// when the domain changes.
+		if( ! Objects.equals( this.domain, domain )) {
+			this.domain = domain;
+			this.logger.fine( "Domain set to " + domain );
+			this.instancesMngr.setDmDomain( domain );
+
+			// Explicitly require a reconfiguration.
+			reconfigure();
+		}
 	}
 
 
@@ -387,10 +414,13 @@ public class Manager implements IReconfigurable {
 	 */
 	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
 
-		if( targetHandlerResolver == null )
+		if( targetHandlerResolver == null ) {
+			this.targetConfigurator.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 			this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
-		else
+		} else {
+			this.targetConfigurator.setTargetHandlerResolver( targetHandlerResolver );
 			this.instancesMngr.setTargetHandlerResolver( targetHandlerResolver );
+		}
 	}
 
 

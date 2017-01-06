@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -27,7 +27,6 @@ package net.roboconf.target.docker.internal;
 
 import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -154,15 +153,15 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		boolean result = false;
 		try {
-			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
+			DockerClient dockerClient = DockerUtils.createDockerClient( parameters.getTargetProperties());
 			ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
 			result = state != null && extractBoolean( state.getRunning());
 
@@ -176,17 +175,17 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandir.delete()
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId )
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		this.logger.fine( "Terminating machine " + machineId );
 		try {
 			cancelMachineConfigurator( machineId );
-			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
+			DockerClient dockerClient = DockerUtils.createDockerClient( parameters.getTargetProperties());
 			Container container = DockerUtils.findContainerByIdOrByName( machineId, dockerClient );
 
 			// The case "container == null" is possible.
@@ -204,5 +203,17 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		} catch( Exception e ) {
 			throw new TargetException( e );
 		}
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+		return "localhost";
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -53,8 +53,8 @@ import io.swagger.models.Tag;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.util.Json;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 import net.roboconf.dm.rest.services.internal.ServletRegistrationComponent;

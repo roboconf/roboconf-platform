@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -156,6 +157,15 @@ public class ManagerTest {
 
 		Assert.assertSame( impl2, this.manager.preferencesMngr());
 		Assert.assertNotSame( impl1, this.manager.preferencesMngr());
+
+		// Only public API are exported by the manager
+		for( Method m : Manager.class.getMethods()) {
+			if( ! m.getName().startsWith( "get" ))
+				continue;
+
+			String packageName = m.getReturnType().getPackage().getName();
+			Assert.assertFalse( m.getReturnType().getName() + " is internal!", packageName.toLowerCase().contains( "internal" ));
+		}
 	}
 
 

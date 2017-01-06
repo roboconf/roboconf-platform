@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -333,7 +333,7 @@ public class DockerHandlerWithPackagesTest {
 		Assert.assertNotNull(this.dockerContainerId);
 
 		// Ensure the machine is running
-		Assert.assertTrue(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
+		Assert.assertTrue(this.dockerHandler.isMachineRunning( parameters, this.dockerContainerId ));
 
 		// Now perform the tests...
 		checkAgentIsUnpacked();
@@ -343,8 +343,8 @@ public class DockerHandlerWithPackagesTest {
 			checkPackageIsInstalled(p);
 
 		// Terminate the container.
-		this.dockerHandler.terminateMachine(this.targetProperties, this.dockerContainerId);
-		Assert.assertFalse(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
+		this.dockerHandler.terminateMachine( parameters, this.dockerContainerId );
+		Assert.assertFalse(this.dockerHandler.isMachineRunning( parameters, this.dockerContainerId ));
 	}
 
 

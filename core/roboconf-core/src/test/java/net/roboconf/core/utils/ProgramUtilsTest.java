@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -32,9 +32,10 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
-
 import org.junit.Assume;
 import org.junit.Test;
+
+import net.roboconf.core.internal.tests.TestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,8 +45,7 @@ public class ProgramUtilsTest {
 	@Test
 	public void testNonNullMap_Windows() throws Exception {
 
-		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
-		Assume.assumeTrue( isWin );
+		Assume.assumeTrue( TestUtils.isWindows());
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
@@ -58,12 +58,7 @@ public class ProgramUtilsTest {
 	@Test
 	public void testNonNullMap_UnixFamily() throws Exception {
 
-		String osName = System.getProperty( "os.name" ).toLowerCase();
-		boolean isUnix = osName.contains( "linux" )
-				|| osName.contains( "unix" )
-				|| osName.contains( "freebsd" );
-
-		Assume.assumeTrue( isUnix );
+		Assume.assumeTrue( TestUtils.isUnix());
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
@@ -76,10 +71,8 @@ public class ProgramUtilsTest {
 	@Test
 	public void testNonEmptyMap_Windows() throws Exception {
 
-		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
-		Assume.assumeTrue( isWin );
-
-		Map<String,String> map = new HashMap<String,String> ();
+		Assume.assumeTrue( TestUtils.isWindows());
+		Map<String,String> map = new HashMap<> ();
 		map.put( null, "null key" );
 		map.put( "null value", null );
 		map.put( "key", "value" );
@@ -95,13 +88,8 @@ public class ProgramUtilsTest {
 	@Test
 	public void testNonEmptyMap_UnixFamily() throws Exception {
 
-		String osName = System.getProperty( "os.name" ).toLowerCase();
-		boolean isUnix = osName.contains( "linux" )
-				|| osName.contains( "unix" )
-				|| osName.contains( "freebsd" );
-
-		Assume.assumeTrue( isUnix );
-		Map<String,String> map = new HashMap<String,String> ();
+		Assume.assumeTrue( TestUtils.isUnix());
+		Map<String,String> map = new HashMap<> ();
 		map.put( null, "null key" );
 		map.put( "null value", null );
 		map.put( "key", "value" );
@@ -118,8 +106,7 @@ public class ProgramUtilsTest {
 	@Test
 	public void testNullMap_Windows() throws Exception {
 
-		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
-		Assume.assumeTrue( isWin );
+		Assume.assumeTrue( TestUtils.isWindows());
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
@@ -130,12 +117,7 @@ public class ProgramUtilsTest {
 	@Test
 	public void testNullMap_UnixFamily() throws Exception {
 
-		String osName = System.getProperty( "os.name" ).toLowerCase();
-		boolean isUnix = osName.contains( "linux" )
-				|| osName.contains( "unix" )
-				|| osName.contains( "freebsd" );
-
-		Assume.assumeTrue( isUnix );
+		Assume.assumeTrue( TestUtils.isUnix());
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
@@ -146,8 +128,7 @@ public class ProgramUtilsTest {
 	@Test
 	public void testExecutionFailure_Windows() throws Exception {
 
-		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
-		Assume.assumeTrue( isWin );
+		Assume.assumeTrue( TestUtils.isWindows());
 		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "help" ),
@@ -160,12 +141,7 @@ public class ProgramUtilsTest {
 	@Test
 	public void testExecutionFailure_UnixFamily() throws Exception {
 
-		String osName = System.getProperty( "os.name" ).toLowerCase();
-		boolean isUnix = osName.contains( "linux" )
-				|| osName.contains( "unix" )
-				|| osName.contains( "freebsd" );
-
-		Assume.assumeTrue( isUnix );
+		Assume.assumeTrue( TestUtils.isUnix());
 		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "apt-get-update" ),

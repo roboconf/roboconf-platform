@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -34,6 +34,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
 import net.roboconf.dm.rest.client.delegates.DebugWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
+import net.roboconf.dm.rest.client.delegates.PreferencesWsDelegate;
 import net.roboconf.dm.rest.client.delegates.SchedulerWsDelegate;
 import net.roboconf.dm.rest.client.delegates.TargetWsDelegate;
 import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
@@ -78,6 +79,7 @@ public class WsClient {
 	private final DebugWsDelegate debugDelegate;
 	private final TargetWsDelegate targetWsDelegate;
 	private final SchedulerWsDelegate schedulerDelegate;
+	private final PreferencesWsDelegate preferencesWsDelegate;
 
 	private final Client client;
 
@@ -101,6 +103,7 @@ public class WsClient {
 		this.debugDelegate = new DebugWsDelegate( resource );
 		this.targetWsDelegate = new TargetWsDelegate( resource );
 		this.schedulerDelegate = new SchedulerWsDelegate( resource );
+		this.preferencesWsDelegate = new PreferencesWsDelegate( resource );
 	}
 
 
@@ -145,6 +148,13 @@ public class WsClient {
 	 */
 	public SchedulerWsDelegate getSchedulerDelegate() {
 		return this.schedulerDelegate;
+	}
+
+	/**
+	 * @return the preferencesWsDelegate
+	 */
+	public PreferencesWsDelegate getPreferencesWsDelegate() {
+		return this.preferencesWsDelegate;
 	}
 
 	/**

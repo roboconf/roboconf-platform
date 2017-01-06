@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -146,7 +146,7 @@ public final class ItUtils {
 		// For some tests however, we must also be sure that the REST services are online.
 		// The most simple solution is to wait for the applications listing to work.
 
-		URI targetUri = UriUtils.urlToUri( "http://localhost:" + serverPort + "/applications" );
+		URI targetUri = UriUtils.urlToUri( "http://localhost:" + serverPort + "/roboconf-dm/applications" );
 		for( int i=0; i<20; i++ ) {
 			Thread.sleep( 1000 );
 			String s = "";

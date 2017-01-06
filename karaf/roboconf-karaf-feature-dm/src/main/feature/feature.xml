@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+   Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
 
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
@@ -44,13 +44,17 @@
 		<bundle>mvn:net.roboconf/roboconf-messaging-api/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-messaging-http/${project.version}</bundle>
-		<bundle>mvn:net.roboconf/roboconf-dm-scheduler/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-rest-commons/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-rest-services/${project.version}</bundle>
-		<bundle start-level="85">mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
-		
+
+		<!-- The DM should start after all the other bundles. See #158 -->
+		<bundle start-level="85">mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
+
+		<!-- Some other bundles should start after the DM (they NEED a manager instance to start - it is not optional). -->
+		<bundle start-level="90">mvn:net.roboconf/roboconf-dm-scheduler/${project.version}</bundle>
+
 		<!-- Karaf Commands -->
 		<bundle>mvn:net.roboconf/roboconf-karaf-commands-common/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-karaf-commands-dm/${project.version}</bundle>

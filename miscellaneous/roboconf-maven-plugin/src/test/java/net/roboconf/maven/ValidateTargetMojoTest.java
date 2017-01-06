@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -43,6 +43,14 @@ public class ValidateTargetMojoTest extends AbstractTest {
 	public void testValidTargetProject_single() throws Exception {
 
 		retrivePrepareAndExecuteMojo( "target-ok-single" );
+		// No exception thrown
+	}
+
+
+	@Test
+	public void testValidTargetProject_singleWithScripts() throws Exception {
+
+		retrivePrepareAndExecuteMojo( "target-ok-with-scripts" );
 		// No exception thrown
 	}
 
@@ -97,7 +105,7 @@ public class ValidateTargetMojoTest extends AbstractTest {
 
 		// Copy the resources
 		Utils.copyDirectory(
-				project.getBasedir(),
+				new File( project.getBasedir(), MavenPluginConstants.SOURCE_MAIN_RESOURCES ),
 				new File( project.getBuild().getOutputDirectory()));
 
 		// Execute

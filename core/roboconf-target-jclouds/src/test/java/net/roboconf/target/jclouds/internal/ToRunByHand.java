@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -70,17 +70,17 @@ public class ToRunByHand {
 		for( Map.Entry<Object,Object> entry : p.entrySet())
 			conf.put( entry.getKey().toString(), entry.getValue().toString());
 
+		Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( conf )
+				.messagingProperties( msgCfg )
+				.scopedInstancePath( "root" )
+				.applicationName( "app" )
+				.domain( "domain" );
+
 		JCloudsHandler target = new JCloudsHandler();
 		String serverId = null;
 		try {
-			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
-			TargetHandlerParameters parameters = new TargetHandlerParameters()
-					.targetProperties( conf )
-					.messagingProperties( msgCfg )
-					.scopedInstancePath( "root" )
-					.applicationName( "app" )
-					.domain( "domain" );
-
 			serverId = target.createMachine( parameters );
 			target.configureMachine( parameters, serverId, new Instance( "root" ));
 
@@ -88,7 +88,7 @@ public class ToRunByHand {
 			Thread.sleep( 60000 );
 
 			System.out.print( "Check about machine " + serverId );
-			if( target.isMachineRunning( conf, serverId ))
+			if( target.isMachineRunning( parameters, serverId ))
 				System.out.println( ": it is running." );
 			else
 				System.out.println( ": it does NOT run." );
@@ -98,7 +98,7 @@ public class ToRunByHand {
 
 		} finally {
 			if( serverId != null )
-				target.terminateMachine( conf, serverId );
+				target.terminateMachine( parameters, serverId );
 		}
 	}
 }

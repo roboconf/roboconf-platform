@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -46,13 +46,19 @@ public class DockerHandlerWithoutContainerTest {
 
 	@Test( expected = TargetException.class )
 	public void testTerminate_noConnection() throws Exception {
-		new DockerHandler().terminateMachine( new HashMap<String,String> (), "whatever" );
+
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		new DockerHandler().terminateMachine( parameters, "whatever" );
 	}
 
 
 	@Test
 	public void testIsRunning_noConnection() throws Exception {
-		boolean running = new DockerHandler().isMachineRunning( new HashMap<String,String> (), "whatever" );
+
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		boolean running = new DockerHandler().isMachineRunning( parameters, "whatever" );
 		Assert.assertFalse( running );
 	}
 

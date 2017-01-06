@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -43,10 +43,12 @@ import java.io.Writer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -145,6 +147,42 @@ public final class Utils {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Creates a new list and only keeps values that are not null or made up of white characters.
+	 * @param values a non-null list of items (can contain null and "empty" values)
+	 * @return a list of items (never null), with no null or "empty" values
+	 */
+	public static List<String> filterEmptyValues( List<String> values ) {
+
+		List<String> result = new ArrayList<> ();
+		for( String s : values ) {
+			if( ! Utils.isEmptyOrWhitespaces( s ))
+				result.add( s );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Formats a collection of elements as a string.
+	 * @param items a non-null list of items
+	 * @param separator a string to separate items
+	 * @return a non-null string
+	 */
+	public static String format( Collection<String> items, String separator ) {
+
+		StringBuilder sb = new StringBuilder();
+		for( Iterator<String> it = items.iterator(); it.hasNext(); ) {
+			sb.append( it.next());
+			if( it.hasNext())
+				sb.append( separator );
+		}
+
+		return sb.toString();
 	}
 
 
@@ -570,6 +608,46 @@ public final class Utils {
 
 
 	/**
+	 * Finds all the files directly contained in a directory and with a given extension.
+	 * <p>
+	 * Search is case-insensitive.
+	 * It means searching for properties or PROPERTIES extensions will give
+	 * the same result.
+	 * </p>
+	 *
+	 * @param directory an existing directory
+	 * @param fileExtension a file extension (null will not filter extensions)
+	 * <p>
+	 * If it does not start with a dot, then one will be inserted at the first position.
+	 * </p>
+	 *
+	 * @return a non-null list of files
+	 */
+	public static List<File> listDirectFiles( File directory, String fileExtension ) {
+
+		String ext = fileExtension;
+		if( ext != null ) {
+			ext = ext.toLowerCase();
+			if( ! ext.startsWith( "." ))
+				ext = "." + ext;
+		}
+
+		List<File> result = new ArrayList<> ();
+		File[] files = directory.listFiles();
+		if( files != null ) {
+			for( File f : files ) {
+				if( f.isFile() &&
+						(ext == null || f.getName().toLowerCase().endsWith( ext ))) {
+					result.add( f );
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
 	 * Lists directories located under a given file.
 	 * @param root a file
 	 * @return a non-null list of directories, sorted alphabetically by file names
@@ -617,6 +695,19 @@ public final class Utils {
 	 * @throws IOException if something went wrong while reading a file
 	 */
 	public static Map<String,byte[]> storeDirectoryResourcesAsBytes( File directory ) throws IOException {
+		return storeDirectoryResourcesAsBytes( directory, new ArrayList<String>( 0 ));
+	}
+
+
+	/**
+	 * Stores the resources from a directory into a map.
+	 * @param directory an existing directory
+	 * @param exclusionPatteners a non-null list of exclusion patterns for file names (e.g. ".*\\.properties")
+	 * @return a non-null map (key = the file location, relative to the directory, value = file content)
+	 * @throws IOException if something went wrong while reading a file
+	 */
+	public static Map<String,byte[]> storeDirectoryResourcesAsBytes( File directory, List<String> exclusionPatteners )
+	throws IOException {
 
 		if( ! directory.exists())
 			throw new IllegalArgumentException( "The resource directory was not found. " + directory.getAbsolutePath());
@@ -626,7 +717,12 @@ public final class Utils {
 
 		Map<String,byte[]> result = new HashMap<> ();
 		List<File> resourceFiles = listAllFiles( directory, false );
-		for( File file : resourceFiles ) {
+		fileLoop: for( File file : resourceFiles ) {
+
+			for( String exclusionPattern : exclusionPatteners ) {
+				if( file.getName().matches( exclusionPattern ))
+					continue fileLoop;
+			}
 
 			String key = computeFileRelativeLocation( directory, file );
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -837,13 +933,13 @@ public final class Utils {
 	 * which has better performances.
 	 * </p>
 	 *
-	 * @param e an exception (not null)
+	 * @param t an exception or a throwable (not null)
 	 * @return a string
 	 */
-	static String writeException( Exception e ) {
+	static String writeException( Throwable t ) {
 
 		StringWriter sw = new StringWriter();
-		e.printStackTrace( new PrintWriter( sw ));
+		t.printStackTrace( new PrintWriter( sw ));
 
 		return sw.toString();
 	}
@@ -858,23 +954,23 @@ public final class Utils {
 	 * </p>
 	 *
 	 * @param logger the logger
-	 * @param e an exception
+	 * @param t an exception or a throwable
 	 * @param logLevel the log level (see {@link Level})
 	 */
-	public static void logException( Logger logger, Level logLevel, Exception e ) {
+	public static void logException( Logger logger, Level logLevel, Throwable t ) {
 
 		if( logger.isLoggable( logLevel ))
-			logger.log( logLevel, writeException( e ));
+			logger.log( logLevel, writeException( t ));
 	}
 
 
 	/**
 	 * Logs an exception with the given logger and the FINEST level.
 	 * @param logger the logger
-	 * @param e an exception
+	 * @param t an exception or a throwable
 	 */
-	public static void logException( Logger logger, Exception e ) {
-		logException( logger, Level.FINEST, e );
+	public static void logException( Logger logger, Throwable t ) {
+		logException( logger, Level.FINEST, t );
 	}
 
 
@@ -943,13 +1039,14 @@ public final class Utils {
 		return new AbstractMap.SimpleEntry<>( address, port );
 	}
 
+
 	/**
 	 * Returns the value contained in a map of string if it exists using the key.
 	 * @param map a map of string
 	 * @param key a string
-	 * @param dvalue the default value
+	 * @param defaultValue the default value
 	 */
-	public static String getValue(Map<String,String> map, String key, String dvalue) {
-		return map.containsKey( key ) ? map.get( key ) : dvalue;
+	public static String getValue(Map<String,String> map, String key, String defaultValue) {
+		return map.containsKey( key ) ? map.get( key ) : defaultValue;
 	}
 }

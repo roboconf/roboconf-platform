@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -218,10 +218,13 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			}
 
 			// And associate it
-			if (availableIp != null)
+			if (availableIp != null) {
 				floatingIPApi.addToServer(availableIp, this.machineId);
-			else
+				this.scopedInstance.data.put( OpenstackIaasHandler.FLOATING_IP, availableIp );
+
+			} else {
 				this.logger.warning("No floating IP was available in Openstack (pool '" + floatingIpPool + "').");
+			}
 
 			done = true;
 

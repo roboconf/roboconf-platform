@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -32,7 +32,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
@@ -42,11 +47,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
-
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -77,7 +77,7 @@ public class PluginPuppetTest {
 
 		Assume.assumeTrue( this.running );
 		try {
-			List<String> command = new ArrayList<String> ();
+			List<String> command = new ArrayList<> ();
 			command.add( "puppet" );
 			command.add( "--version" );
 
@@ -132,6 +132,7 @@ public class PluginPuppetTest {
 		copyResources( "/with-version" );
 
 		File[] subFiles = this.instanceDirectory.listFiles();
+		Assert.assertNotNull( subFiles );
 		Assert.assertEquals( 1, subFiles.length );
 
 		File moduleDirectory = new File( this.instanceDirectory, "sysctl" );
@@ -240,7 +241,7 @@ public class PluginPuppetTest {
 		Assume.assumeTrue( isLinuxSystem());
 		copyResources( "/with-init" );
 
-		Map<String,String> variables = new HashMap<String,String> ();
+		Map<String,String> variables = new HashMap<> ();
 		variables.put( "ip", "127.0.0.1" );
 
 		this.plugin.update(
@@ -302,7 +303,7 @@ public class PluginPuppetTest {
 		Assume.assumeTrue( isLinuxSystem());
 		copyResources( "/with-operations" );
 
-		Map<String,String> variables = new HashMap<String,String> ();
+		Map<String,String> variables = new HashMap<> ();
 		variables.put( "ip", "127.0.0.1" );
 
 		this.plugin.update(
@@ -356,7 +357,7 @@ public class PluginPuppetTest {
 		Assume.assumeTrue( isLinuxSystem());
 		copyResources( "/with-init-invalid" );
 
-		Map<String,String> variables = new HashMap<String,String> ();
+		Map<String,String> variables = new HashMap<> ();
 		variables.put( "ip", "127.0.0.1" );
 
 		this.plugin.update(
@@ -428,7 +429,7 @@ public class PluginPuppetTest {
 		Assume.assumeTrue( isLinuxSystem());
 		copyResources( "/with-init-exit-1" );
 
-		Map<String,String> variables = new HashMap<String,String> ();
+		Map<String,String> variables = new HashMap<> ();
 		variables.put( "ip", "127.0.0.1" );
 
 		this.plugin.update(
@@ -458,6 +459,7 @@ public class PluginPuppetTest {
 		Assert.assertTrue( fromStatic.length() > 0 );
 
 		File[] subFiles = OUTPUT_DIR.listFiles();
+		Assert.assertNotNull( subFiles );
 		Assert.assertEquals( 2, subFiles.length );
 	}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -56,35 +56,35 @@ public class ToRunByHand {
 		for( Map.Entry<Object,Object> entry : p.entrySet())
 			conf.put( entry.getKey().toString(), entry.getValue().toString());
 
+		Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( conf )
+				.messagingProperties( msgCfg )
+				.scopedInstancePath( "root" )
+				.applicationName( "app" )
+				.domain( "def-domain" );
+
 		Ec2IaasHandler target = new Ec2IaasHandler();
 		String serverId = null;
 		try {
-			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
-			TargetHandlerParameters parameters = new TargetHandlerParameters()
-					.targetProperties( conf )
-					.messagingProperties( msgCfg )
-					.scopedInstancePath( "root" )
-					.applicationName( "app" )
-					.domain( "def-domain" );
-
 			serverId = target.createMachine( parameters );
 			target.configureMachine( parameters, serverId, new Instance( "root" ));
 
-			// 1 minute
-			Thread.sleep( 60000 );
+			// 2 minutes
+			Thread.sleep( 60000 * 2 );
 
 			System.out.print( "Check about machine " + serverId );
-			if( target.isMachineRunning( conf, serverId ))
-				System.out.println( ": it is running." );
+			if( target.isMachineRunning( parameters, serverId ))
+				System.out.println( ": it is running. IP = " + target.retrievePublicIpAddress( parameters, serverId ));
 			else
 				System.out.println( ": it does NOT run." );
 
-			// 4 minutes
-			Thread.sleep( 60000 * 4 );
+			// 2 minutes
+			Thread.sleep( 60000 * 2 );
 
 		} finally {
 			if( serverId != null )
-				target.terminateMachine( conf, serverId );
+				target.terminateMachine( parameters, serverId );
 		}
 	}
 }

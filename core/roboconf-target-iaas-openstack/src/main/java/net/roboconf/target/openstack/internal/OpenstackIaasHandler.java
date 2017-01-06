@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -31,21 +31,26 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
+import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
 import org.jclouds.openstack.nova.v2_0.domain.Volume;
 import org.jclouds.openstack.nova.v2_0.domain.VolumeAttachment;
+import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeAttachmentApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.v2_0.domain.Resource;
+
+import com.google.common.base.Predicate;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
@@ -62,6 +67,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
 public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-openstack";
+	static final String FLOATING_IP = TARGET_ID + ".floating-ip";
 
 	static final String TPL_VOLUME_NAME = "%NAME%";
 	static final String TPL_VOLUME_APP = "%APP%";
@@ -173,7 +179,12 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		metadata.put( "Created by", "Roboconf" );
 
 		try {
-			String userData = DataHelpers.writeUserDataAsString( parameters.getMessagingProperties(), parameters.getDomain(), parameters.getApplicationName(), rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString(
+					parameters.getMessagingProperties(),
+					parameters.getDomain(),
+					parameters.getApplicationName(),
+					rootInstanceName );
+
 			CreateServerOptions options = CreateServerOptions.Builder
 					.keyPairName( targetProperties.get( OpenstackIaasHandler.KEY_PAIR ))
 					.securityGroupNames( targetProperties.get( OpenstackIaasHandler.SECURITY_GROUP ))
@@ -199,14 +210,14 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 * #isMachineRunning(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
-		NovaApi novaApi = novaApi( targetProperties );
-		String zoneName = findZoneName( novaApi, targetProperties );
+		NovaApi novaApi = novaApi( parameters.getTargetProperties());
+		String zoneName = findZoneName( novaApi, parameters.getTargetProperties());
 		Server server = novaApi.getServerApiForZone( zoneName ).get( machineId );
 
 		boolean running = false;
@@ -231,17 +242,17 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.util.Map, java.lang.String)
+	 * #terminateMachine(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 
 		try {
 			this.logger.info( "Terminating Openstack machine. Machine ID: " + machineId );
 			cancelMachineConfigurator( machineId );
 
-			NovaApi novaApi = novaApi( targetProperties );
-			String zoneName = findZoneName( novaApi, targetProperties );
+			NovaApi novaApi = novaApi( parameters.getTargetProperties());
+			String zoneName = findZoneName( novaApi, parameters.getTargetProperties());
 
 			// List the attached volumes, if any.
 			Set<String> volumeIds = new HashSet<> ();
@@ -278,6 +289,58 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		} catch( IOException e ) {
 			throw new TargetException( e );
 		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #retrievePublicIpAddress(net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
+	 */
+	@Override
+	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
+	throws TargetException {
+
+		NovaApi novaApi = novaApi( parameters.getTargetProperties());
+		String zoneName = findZoneName( novaApi, parameters.getTargetProperties());
+
+		String result = null;
+		Server server = novaApi.getServerApiForZone( zoneName ).get( machineId );
+		if( server != null ) {
+			result = server.getAccessIPv4();
+
+			// Nothing found? Check floating IPs
+			if( result == null ) {
+				FloatingIPApi floatingIPApi = novaApi.getFloatingIPExtensionForZone( zoneName ).get();
+				List<FloatingIP> ips = floatingIPApi.list().filter( new InstancePredicate( machineId )).toList();
+				if( ips.size() > 0 )
+					result = ips.get( 0 ).getIp();
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * A predicate that finds the floating IPs associated with a given server.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	static class InstancePredicate implements Predicate<FloatingIP> {
+		private final String instanceId;
+
+		/**
+		 * Constructor.
+		 * @param instanceId
+		 */
+		public InstancePredicate( String instanceId ) {
+			this.instanceId = instanceId;
+		}
+
+		@Override
+		public boolean apply( FloatingIP input ) {
+			return Objects.equals( input.getInstanceId(), this.instanceId );
+		}
+
 	}
 
 

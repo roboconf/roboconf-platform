@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -34,6 +34,11 @@ public interface MavenPluginConstants {
 	 * The src/main/model directory.
 	 */
 	String SOURCE_MODEL_DIRECTORY = "src/main/model";
+
+	/**
+	 * The src/main/resources directory.
+	 */
+	String SOURCE_MAIN_RESOURCES = "src/main/resources";
 
 	/**
 	 * The Maven output of the model directory.

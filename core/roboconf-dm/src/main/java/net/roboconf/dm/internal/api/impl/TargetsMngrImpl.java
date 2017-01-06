@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,6 +28,8 @@ package net.roboconf.dm.internal.api.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -190,16 +192,24 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		String targetId = createTarget( sb.toString());
 
 		// Copy script files in target directory
-		File scriptsInDir = targetPropertiesFile.getParentFile();
-		File scriptsOutDir = findTargetDirectory( targetId );
-		String prefix = Utils.removeFileExtension(targetPropertiesFile.getName());
-		List<File> scripts = Utils.listAllFiles( scriptsInDir );
-		for( File f : scripts) {
-			String name = f.getName();
-			if( ! CREATED_BY.equals(name)
-					&& name.startsWith(prefix)
-					&& ! name.toLowerCase().endsWith(Constants.FILE_EXT_PROPERTIES))
-				Utils.copyStream(f, new File(scriptsOutDir, name));
+		String prefix = Utils.removeFileExtension( targetPropertiesFile.getName());
+		File scriptsInDir = new File( targetPropertiesFile.getParentFile(), prefix );
+		File scriptsOutDir = new File( findTargetDirectory( targetId ), Constants.PROJECT_SUB_DIR_SCRIPTS );
+
+		List<File> scriptFiles;
+		if( scriptsInDir.exists())
+			scriptFiles = Utils.listAllFiles( scriptsInDir );
+		else
+			scriptFiles = Collections.emptyList();
+
+		if( ! scriptFiles.isEmpty()) {
+			Utils.createDirectory( scriptsOutDir );
+			for( File inputFile : scriptFiles ) {
+				String relativePath = Utils.computeFileRelativeLocation( scriptsInDir, inputFile );
+				File outputFile = new File( scriptsOutDir, relativePath );
+				Utils.createDirectory( outputFile.getParentFile());
+				Utils.copyStream( inputFile, outputFile );
+			}
 		}
 
 		return targetId;
@@ -464,19 +474,17 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public Map<String,byte[]> findScriptResources( String targetId ) throws IOException {
+	public Map<String,byte[]> findScriptResourcesForAgent( String targetId ) throws IOException {
 
 		Map<String,byte[]> result = new HashMap<>( 0 );
-		File targetDir = findTargetDirectory( targetId );
+		File targetDir = new File( findTargetDirectory( targetId ), Constants.PROJECT_SUB_DIR_SCRIPTS );
 		if( targetDir.isDirectory()){
-			result.putAll( Utils.storeDirectoryResourcesAsBytes( targetDir ));
-			result.remove( CREATED_BY );
 
-			// Remove all the root properties files
-			for( File f : Utils.listAllFiles( targetDir )) {
-				if( f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
-					result.remove( f.getName());
-			}
+			List<String> exclusionPatterns = Arrays.asList(
+				"(?i).*" + Pattern.quote( Constants.LOCAL_RESOURCE_PREFIX ) + ".*"
+			);
+
+			result.putAll( Utils.storeDirectoryResourcesAsBytes( targetDir, exclusionPatterns ));
 		}
 
 		return result;
@@ -484,12 +492,33 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public Map<String, byte[]> findScriptResources( Application app, Instance scopedInstance ) throws IOException {
+	public Map<String,byte[]> findScriptResourcesForAgent( AbstractApplication app, Instance scopedInstance ) throws IOException {
 
 		Map<String,byte[]> result = new HashMap<> ();
 		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
 		if( targetId != null )
-			result = findScriptResources( targetId );
+			result = findScriptResourcesForAgent( targetId );
+
+		return result;
+	}
+
+
+	@Override
+	public File findScriptForDm( AbstractApplication app, Instance scopedInstance ) {
+
+		File result = null;
+		String targetId = findTargetId( app, InstanceHelpers.computeInstancePath( scopedInstance ));
+		if( targetId != null ) {
+			File targetDir = new File( findTargetDirectory( targetId ), Constants.PROJECT_SUB_DIR_SCRIPTS );
+			if( targetDir.isDirectory()){
+				for( File f : Utils.listAllFiles( targetDir )) {
+					if( f.getName().toLowerCase().contains( Constants.SCOPED_SCRIPT_AT_DM_CONFIGURE_SUFFIX )) {
+						result = f;
+						break;
+					}
+				}
+			}
+		}
 
 		return result;
 	}

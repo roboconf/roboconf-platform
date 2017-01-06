@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -83,6 +83,17 @@ public class Instance implements Serializable {
 	public static final String LAST_PROBLEM = "last.problem";
 
 	/**
+	 * A constant to indicate a scoped instance is ready for post-configuration.
+	 * <p>
+	 * To set only once a target handler has (successfully) completed its configuration process.
+	 * </p>
+	 * <p>
+	 * Storing this information in a scoped instance is enough.
+	 * </p>
+	 */
+	public static final String READY_FOR_CFG_MARKER = "ready.for.local.script.configuation";
+
+	/**
 	 * A constant to store the timestamp of the first heart beat received for this instance.
 	 * <p>
 	 * To be stored in {@link #data}.
@@ -101,11 +112,11 @@ public class Instance implements Serializable {
 	private String name;
 	private Component component;
 	private Instance parent;
-	private final Collection<Instance> children = new CopyOnWriteArraySet<Instance> ();
+	private final Collection<Instance> children = new CopyOnWriteArraySet<> ();
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 
-	public final Collection<String> channels = new HashSet<String> ();
-	public final Map<String,String> overriddenExports = new HashMap<String,String> ();
+	public final Collection<String> channels = new HashSet<> ();
+	public final Map<String,String> overriddenExports = new HashMap<> ();
 
 	// Data can be accessed through several threads and for various reasons.
 	// ConcurrentHashMap does not accept null values. We could wrap such a map
@@ -115,7 +126,7 @@ public class Instance implements Serializable {
 
 	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
-	private final Map<String,Collection<Import>> variablePrefixToImports = new TreeMap<String,Collection<Import>> ();
+	private final Map<String,Collection<Import>> variablePrefixToImports = new TreeMap<> ();
 
 
 	/**
