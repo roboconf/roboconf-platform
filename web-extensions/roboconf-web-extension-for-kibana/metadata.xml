@@ -38,9 +38,9 @@
 		<callback transition="validate" method="starting" />
 		<callback transition="invalidate" method="stopping" />
 
-		<properties pid="net.roboconf.dm.web-extension.kibana">
-			<property name="dashboard-url.applications" method="setAppDashBoardUrl" />
-			<property name="dashboard-url.agents" method="setAgentDashBoardUrl" />
+		<properties pid="net.roboconf.dm.web.extension.kibana">
+			<property name="dashboard-url-applications" method="setAppDashBoardUrl" />
+			<property name="dashboard-url-agents" method="setAgentDashBoardUrl" />
 		</properties>
 	</component>
 	

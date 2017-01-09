@@ -28,8 +28,6 @@ package net.roboconf.webextension.kibana;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -48,8 +46,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -100,7 +96,36 @@ public class KibanaExtensionServletTest {
 
 
 	@Test
-	public void testDoGet_baseRequest() throws Exception {
+	public void testDoGet_baseRequest_noApplication() throws Exception {
+
+		Manager manager = new Manager();
+		manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+
+		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
+		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
+
+		Mockito.when( req.getRequestURI()).thenReturn( "/roboconf-web-extension/kibana" );
+		Mockito.when( req.getServletPath()).thenReturn( "/roboconf-web-extension/kibana" );
+
+		TestServletOutputStream wrappedOs = new TestServletOutputStream();
+		Mockito.when( resp.getOutputStream()).thenReturn( wrappedOs );
+
+		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
+		servlet.appDashBoardUrl = "my-dashboard";
+		servlet.doGet( req, resp );
+
+		Mockito.verify( resp ).getOutputStream();
+		String s = wrappedOs.os.toString( "UTF-8" );
+		validateHtml( s );
+
+		Assert.assertTrue( s.contains( "\t<th>Agents List</th>\n" ));
+		Assert.assertTrue( s.contains( "=\"my-dashboard" ));
+		Assert.assertFalse( s.contains( "=\"#" + KibanaExtensionConstants.WEB_ADMIN_PATH ));
+	}
+
+
+	@Test
+	public void testDoGet_baseRequest_withApplications() throws Exception {
 
 		Manager manager = new Manager();
 		manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
@@ -119,11 +144,16 @@ public class KibanaExtensionServletTest {
 		Mockito.when( resp.getOutputStream()).thenReturn( wrappedOs );
 
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
+		servlet.appDashBoardUrl = "my-dashboard";
 		servlet.doGet( req, resp );
 
 		Mockito.verify( resp ).getOutputStream();
 		String s = wrappedOs.os.toString( "UTF-8" );
+		validateHtml( s );
+
 		Assert.assertTrue( s.contains( "\t<th>Agents List</th>\n" ));
+		Assert.assertTrue( s.contains( "=\"my-dashboard" ));
+		Assert.assertTrue( s.contains( "=\"#" + KibanaExtensionConstants.WEB_ADMIN_PATH ));
 	}
 
 
@@ -147,6 +177,7 @@ public class KibanaExtensionServletTest {
 
 		Mockito.verify( resp ).getOutputStream();
 		String s = wrappedOs.os.toString( "UTF-8" );
+		validateHtml( s );
 		Assert.assertTrue( s.contains( "\t<th>Agents List</th>\n" ));
 	}
 
@@ -171,12 +202,18 @@ public class KibanaExtensionServletTest {
 		Mockito.when( resp.getOutputStream()).thenReturn( wrappedOs );
 
 		KibanaExtensionServlet servlet = new KibanaExtensionServlet( manager );
+		servlet.agentDashBoardUrl = "my-dashboard";
 		servlet.doGet( req, resp );
 
 		Mockito.verify( resp ).getOutputStream();
 		String s = wrappedOs.os.toString( "UTF-8" );
-		Assert.assertFalse( s.contains( "\t<th>Agents List</th>\n" ));
+		validateHtml( s );
+
+		Assert.assertTrue( s.contains( "\t<th>Instance Path</th>\n" ));
 		Assert.assertTrue( s.contains( "\t<th>Associated Dashboard</th>\n" ));
+		Assert.assertTrue( s.contains( "=\"my-dashboard" ));
+		Assert.assertTrue( s.contains( "<td>/mysql-vm</td>" ));
+		Assert.assertTrue( s.contains( "=\"#" + KibanaExtensionConstants.WEB_ADMIN_PATH ));
 	}
 
 
@@ -196,33 +233,6 @@ public class KibanaExtensionServletTest {
 		validateHtml( "<a>boo</a>" );
 		validateHtml( "<p>boo<br /></p>" );
 		validateHtml( "<p>boo<br /></p> ok" );
-	}
-
-
-	@Test
-	public void testApplicationsTable() throws Exception {
-
-		List<Application> apps = new ArrayList<> ();
-		String s = KibanaExtensionServlet.applicationsTable( apps, "http://something" );
-		validateHtml( s );
-
-		apps.add( new TestApplication());
-		s = KibanaExtensionServlet.applicationsTable( apps, "http://something" );
-		validateHtml( s );
-	}
-
-
-	@Test
-	public void testAgentsTable() throws Exception {
-
-		TestApplication app = new TestApplication();
-		List<String> instancePaths = new ArrayList<> ();
-		String s = KibanaExtensionServlet.agentsTable( app, instancePaths, "http://something" );
-		validateHtml( s );
-
-		instancePaths.add( InstanceHelpers.computeInstancePath( app.getMySqlVm()));
-		s = KibanaExtensionServlet.agentsTable( app, instancePaths, "http://something" );
-		validateHtml( s );
 	}
 
 
