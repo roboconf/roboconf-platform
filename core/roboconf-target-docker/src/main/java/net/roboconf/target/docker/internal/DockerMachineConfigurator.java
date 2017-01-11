@@ -36,11 +36,13 @@ import static net.roboconf.target.docker.internal.DockerHandler.DOCKER_IMAGE_REG
 import static net.roboconf.target.docker.internal.DockerHandler.DOWNLOAD_BASE_IMAGE;
 import static net.roboconf.target.docker.internal.DockerHandler.GENERATE_IMAGE;
 import static net.roboconf.target.docker.internal.DockerHandler.IMAGE_ID;
+import static net.roboconf.target.docker.internal.DockerHandler.OPTION_PREFIX_ENV;
 import static net.roboconf.target.docker.internal.DockerHandler.OPTION_PREFIX_RUN;
 import static net.roboconf.target.docker.internal.DockerHandler.RUN_EXEC;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -177,6 +179,21 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			}
 		}
 
+		// Deal with environment variables
+		List<String> env = new ArrayList<> ();
+		for( Map.Entry<String,String> entry : this.targetProperties.entrySet()) {
+			if( entry.getKey().toLowerCase().startsWith( OPTION_PREFIX_ENV )) {
+
+				String key = entry.getKey().substring( OPTION_PREFIX_ENV.length());
+				String value = entry.getValue();
+
+				value = value.replace( "<application-name>", this.applicationName );
+				value = value.replace( "<scoped-instance-path>", this.scopedInstancePath );
+
+				env.add( key + "=" + value );
+			}
+		}
+
 		// Execute...
 		try {
 			String containerName = this.scopedInstancePath + "_from_" + this.applicationName;
@@ -188,6 +205,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId )
 					.withName( containerName )
+					.withEnv( env )
 					.withCmd( args.toArray( new String[ args.size()]));
 
 			DockerUtils.configureOptions( options, cmd );

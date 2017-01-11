@@ -188,7 +188,11 @@ public final class DockerUtils {
 
 		Image result = null;
 		for( Image img : images ) {
-			for( String s : img.getRepoTags()) {
+			String[] tags = img.getRepoTags();
+			if( tags == null )
+				continue;
+
+			for( String s : tags ) {
 				if( s.contains( imageTag )) {
 					result = img;
 					break;

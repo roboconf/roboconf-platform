@@ -31,4 +31,5 @@ package net.roboconf.webextension.kibana;
 public interface KibanaExtensionConstants {
 
 	String CONTEXT = "/roboconf-web-extension/kibana";
+	String WEB_ADMIN_PATH = "/web-extensions/kibana";
 }
