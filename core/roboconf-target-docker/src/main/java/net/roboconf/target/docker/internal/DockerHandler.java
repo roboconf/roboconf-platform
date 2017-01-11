@@ -85,6 +85,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	static final String OPTION_PREFIX = "docker.option.";
 	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
+	static final String OPTION_PREFIX_ENV = OPTION_PREFIX + "env.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
