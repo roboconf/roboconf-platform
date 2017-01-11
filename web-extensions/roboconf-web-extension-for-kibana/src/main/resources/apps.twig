@@ -24,7 +24,7 @@
 
 <tr>
 	<td>{{- app.getName() -}}</td>
-	<td><a href="{{- kibanaLocation -}}?query:(query_string:(analyze_wildcard:!t,query:source%3Dagent%20app%3D{{- app.getName() -}}))">here</a></td>
+	<td><a href="{{- kibanaLocation -}}?query:(query_string:(analyze_wildcard:!t,query:%27source%3Dagent%20AND%20app%3D{{- app.getName() -}}%27))">here</a></td>
 	<td><a href="#{{- baseLocation -}}/{{- app.getName() -}}">here</a></td>
 </tr>
 

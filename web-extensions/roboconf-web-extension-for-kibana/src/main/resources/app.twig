@@ -21,7 +21,7 @@
 
 <tr>
 	<td>{{- instancePath -}}</td>
-	<td><a href="{{- kibanaLocation -}}?query:(query_string:(analyze_wildcard:!t,query:source%3Dagent%20app%3D{{- app.getName() -}}%20path%3D{{- instancePath -}}))">here</a></td>
+	<td><a href="{{- kibanaLocation -}}?query:(query_string:(analyze_wildcard:!t,query:%27source%3Dagent%20AND%20app%3D{{- app.getName() -}}%20AND%20path%3D{{- instancePath -}}%27))">here</a></td>
 </tr>
 
 {% endfor %}
