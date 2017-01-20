@@ -70,15 +70,16 @@ public final class DockerTestUtils {
 
 	/**
 	 * Checks that Docker is installed and configures it if necessary.
-	 * @throws Exception
+	 * @throws InterruptedException
+	 * @throws IOException
 	 */
-	public static void checkDockerIsInstalled() throws Exception {
+	public static void checkDockerIsInstalled() throws IOException, InterruptedException {
 
 		Logger logger = Logger.getLogger( DockerTestUtils.class.getName());
 		List<String> command = Arrays.asList( "docker", "version" );
 		int exitCode = ProgramUtils.executeCommand( logger, command, null, null, null, null);
 		if( exitCode != 0 )
-			throw new Exception( "Docker is not installed." );
+			throw new IOException( "Docker is not installed." );
 
 		checkOrUpdateDockerTcpConfig( logger );
 	}
@@ -168,6 +169,7 @@ public final class DockerTestUtils {
 			}
 			Thread.sleep(1000);
 		} while (System.currentTimeMillis() < deadLine);
+
 		return !machineId.equals(containerId) ? containerId : null;
 	}
 }
