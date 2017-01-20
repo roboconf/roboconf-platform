@@ -25,6 +25,8 @@
 
 package net.roboconf.dm.rest.commons.json;
 
+import static net.roboconf.dm.rest.commons.json.JSonBindingUtils.AT_INSTANCE_PATH;
+
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -627,6 +629,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst, readInst );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
+		Assert.assertEquals( "/instance", readInst.data.get( AT_INSTANCE_PATH ));
 	}
 
 
@@ -647,6 +650,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
 		Assert.assertEquals( inst.channels, readInst.channels );
+		Assert.assertEquals( "/server", readInst.data.get( AT_INSTANCE_PATH ));
 	}
 
 
@@ -670,6 +674,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
 		Assert.assertEquals( inst.channels, readInst.channels );
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
+		Assert.assertEquals( "/vm/server", readInst.data.get( AT_INSTANCE_PATH ));
 	}
 
 
@@ -693,6 +698,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
 		Assert.assertEquals( inst.channels, readInst.channels );
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
+		Assert.assertEquals( "/server", readInst.data.get( AT_INSTANCE_PATH ));
 	}
 
 
@@ -732,6 +738,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, readInst.getStatus());
 		Assert.assertEquals( inst.channels, readInst.channels );
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
+		Assert.assertNull( readInst.data.get( AT_INSTANCE_PATH ));
 	}
 
 	@Test
@@ -759,6 +766,7 @@ public class JSonBindingUtilsTest {
 		Map<String, String> exports = InstanceHelpers.findAllExportedVariables(inst);
 		Map<String, String> readExports = InstanceHelpers.findAllExportedVariables(readInst);
 		Assert.assertEquals(exports, readExports); // Works on maps with non-mutable keys (here, String is fine)
+		Assert.assertEquals( "/instance", readInst.data.get( AT_INSTANCE_PATH ));
 	}
 
 	@Test
