@@ -51,7 +51,7 @@ public final class DmUtils {
 	 * @param ma the managed application
 	 * @param notificationMngr the notification manager (not null)
 	 */
-	public static void markScopedInstanceAsNotDeployed( Instance scopedInstance, ManagedApplication ma,INotificationMngr notificationMngr ) {
+	public static void markScopedInstanceAsNotDeployed( Instance scopedInstance, ManagedApplication ma, INotificationMngr notificationMngr ) {
 
 		scopedInstance.data.remove( Instance.IP_ADDRESS );
 		scopedInstance.data.remove( Instance.MACHINE_ID );
