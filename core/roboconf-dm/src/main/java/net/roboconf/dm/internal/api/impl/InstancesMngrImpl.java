@@ -250,8 +250,8 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 				// Otherwise, ask the agent to send back the states under its scoped instance
 				else {
-					scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-					// Do not propagate to listeners, the status set here is arbitrary.
+					// Keep the same status.
+					// Ask the agent to send the up-to-date status.
 					this.messagingMngr.sendMessageDirectly( ma, scopedInstance, new MsgCmdSendInstances());
 				}
 

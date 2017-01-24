@@ -525,15 +525,16 @@ public class InstancesMngrImplTest {
 
 		// One scoped instance has a machine ID (considered as running somewhere)
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 
 		// Try to restore instances
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 		Mockito.when( targetHandlerArgument.isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ))).thenReturn( true );
 
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
 		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
@@ -596,15 +597,16 @@ public class InstancesMngrImplTest {
 
 		// One scoped instance has a machine ID (considered as running somewhere)
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 
 		// Try to restore instances
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 		Mockito.when( targetHandlerArgument.isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ))).thenReturn( true );
 
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
 		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
