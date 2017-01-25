@@ -56,6 +56,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -100,11 +101,14 @@ public class RabbitMqTest extends AbstractMessagingTest {
 					RecipientKind.DM );
 
 			client.openConnection();
-			for( String domain : Arrays.asList( null, "domain0", "domain1", "domain2" )) {
+			for( String domain : Arrays.asList( null, "domain0", "domain1", "domain2", "domain" )) {
 				client.setOwnerProperties( RecipientKind.DM, domain, null, null );
 				client.deleteMessagingServerArtifacts( new Application( "app", null ));
 				client.deleteMessagingServerArtifacts( new Application( "app1", null ));
 				client.deleteMessagingServerArtifacts( new Application( "app2", null ));
+
+				client.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForTheDm( domain ));
+				client.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForInterApp( domain ));
 			}
 
 			client.closeConnection();
@@ -182,6 +186,14 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 		super.testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation();
+	}
+
+
+	@Test
+	@Override
+	public void test_applicationRegeneration() throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
+		super.test_applicationRegeneration();
 	}
 
 

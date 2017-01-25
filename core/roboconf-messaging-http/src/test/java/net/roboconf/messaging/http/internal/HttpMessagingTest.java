@@ -146,6 +146,14 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	}
 
 
+	@Test
+	@Override
+	public void test_applicationRegeneration() throws Exception {
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
+		super.test_applicationRegeneration();
+	}
+
+
 	@Override
 	@Test
 	public void testDmDebug() throws Exception {

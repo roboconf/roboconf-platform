@@ -25,12 +25,12 @@
 
 package net.roboconf.messaging.api.internal.client.in_memory;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
-
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -113,6 +113,13 @@ public class InMemoryMessagingTest extends AbstractMessagingTest {
 	public void testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation()
 	throws Exception {
 		super.testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation();
+	}
+
+
+	@Test
+	@Override
+	public void test_applicationRegeneration() throws Exception {
+		super.test_applicationRegeneration();
 	}
 
 
