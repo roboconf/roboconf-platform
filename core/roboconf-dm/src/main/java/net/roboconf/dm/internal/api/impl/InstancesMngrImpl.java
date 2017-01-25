@@ -499,8 +499,11 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 			// Restore the state and propagate the exception
 			scopedInstance.setStatus( initialStatus );
-			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
 			throw e;
+
+		} finally {
+			ConfigurationUtils.saveInstances( ma );
+			this.notificationMngr.instance( scopedInstance, ma.getApplication(), EventType.CHANGED );
 		}
 	}
 
@@ -563,6 +566,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 		} finally {
 			ma.removeAwaitingMessages( scopedInstance );
+			ConfigurationUtils.saveInstances( ma );
 		}
 	}
 
