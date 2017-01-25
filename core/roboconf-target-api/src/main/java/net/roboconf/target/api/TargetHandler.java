@@ -89,7 +89,11 @@ public interface TargetHandler {
 	 * Determines whether a machine is running or not.
 	 * <p>
 	 * This method is invoked by the DM when it is restarted, to retrieve the state
-	 * of the machines it used to know.
+	 * of the machines it used to know. States are persisted by the DM. If this method returns true,
+	 * the restored state is kept and a message is sent to the agent to refresh the current statuses.
+	 * If this method returns false, then the machine is considered as the associated instances are all
+	 * marked as "not deployed". This method cannot make any assumption about whether the agent is running
+	 * or not. It should only verify whether the machine is running or not.
 	 * </p>
 	 *
 	 * @param parameters the target parameters
