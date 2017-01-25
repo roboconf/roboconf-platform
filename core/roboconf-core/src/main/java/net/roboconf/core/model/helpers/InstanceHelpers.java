@@ -340,7 +340,7 @@ public final class InstanceHelpers {
 	 * Finds all the scoped instances from an application.
 	 * @return a non-null list
 	 */
-	public static List<Instance> findAllScopedInstances( Application app ) {
+	public static List<Instance> findAllScopedInstances( AbstractApplication app ) {
 
 		List<Instance> instanceList = new ArrayList<> ();
 		List<Instance> todo = new ArrayList<> ();

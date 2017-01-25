@@ -371,14 +371,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			}
 		}
 
+		// Once we have the target IDs, update the list of entries to remove
+		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app )) {
+			InstanceContext ctx = new InstanceContext( app, scopedInstance );
+			toClean.add( ctx );
+		}
+
 		// Update the target files
 		for( String targetId : targetIds ) {
 			File targetDirectory = findTargetDirectory( targetId );
 
-			// Update the association file
+			// Update the association and usage files
 			File[] files = new File[] {
-					new File( targetDirectory, TARGETS_ASSOC_FILE ),
-					new File( targetDirectory, TARGETS_HINTS_FILE )
+				new File( targetDirectory, TARGETS_ASSOC_FILE ),
+				new File( targetDirectory, TARGETS_HINTS_FILE ),
+				new File( targetDirectory, TARGETS_USAGE_FILE )
 			};
 
 			for( File f : files ) {

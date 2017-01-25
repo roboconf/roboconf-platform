@@ -29,6 +29,7 @@ import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -115,7 +116,7 @@ public class DockerHandlerWithPackagesTest {
 		try {
 			DockerTestUtils.checkDockerIsInstalled();
 
-		} catch (Exception e) {
+		} catch( IOException | InterruptedException e ) {
 			LOGGER.warning("Tests are skipped because Docker is not installed.");
 			Utils.logException(LOGGER, e);
 			Assume.assumeNoException(e);

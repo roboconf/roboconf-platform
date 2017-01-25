@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -194,6 +195,9 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		// Release random values, if any
 		this.randomMngr.releaseRandomValues( ma.getApplication(), instance );
 
+		// Deal with locked targets
+		releaseLockedTargets( ma.getApplication(), instance );
+
 		// Persist the model and notify
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
 		ConfigurationUtils.saveInstances( ma );
@@ -210,6 +214,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				String machineId = scopedInstance.data.get( Instance.MACHINE_ID );
 				if( machineId == null ) {
 					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
+					releaseLockedTargets( ma.getApplication(), scopedInstance );
 					continue;
 				}
 
@@ -240,12 +245,13 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				// Not a running VM? => Everything must be not deployed.
 				if( ! targetHandler.isMachineRunning( parameters, machineId )) {
 					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
+					releaseLockedTargets( ma.getApplication(), scopedInstance );
 				}
 
 				// Otherwise, ask the agent to send back the states under its scoped instance
 				else {
-					scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-					// Do not propagate to listeners, the status set here is arbitrary.
+					// Keep the same status.
+					// Ask the agent to send the up-to-date status.
 					this.messagingMngr.sendMessageDirectly( ma, scopedInstance, new MsgCmdSendInstances());
 				}
 
@@ -538,7 +544,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
 				targetHandler.terminateMachine( parameters, machineId );
 
-				this.targetsMngr.unlockTarget( ma.getApplication(), scopedInstance );
+				releaseLockedTargets( ma.getApplication(), scopedInstance );
 				this.messagingMngr.getMessagingClient().propagateAgentTermination( ma.getApplication(), scopedInstance );
 			}
 
@@ -557,6 +563,21 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 		} finally {
 			ma.removeAwaitingMessages( scopedInstance );
+		}
+	}
+
+
+	/**
+	 * Releases all the targets of the scoped instances under a given one.
+	 * @param app an application
+	 * @param instance a scoped instance
+	 * @throws IOException if something went wrong
+	 */
+	private void releaseLockedTargets( Application app, Instance instance ) throws IOException {
+
+		for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
+			if( InstanceHelpers.isTarget( i ))
+				this.targetsMngr.unlockTarget( app, i );
 		}
 	}
 
