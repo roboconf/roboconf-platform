@@ -132,7 +132,8 @@ public class KibanaExtensionServletTest {
 		TestManagerWrapper wrapper = new TestManagerWrapper( manager );
 
 		TestApplication app = new TestApplication();
-		wrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		app.setDirectory( this.folder.newFolder());
+		wrapper.addManagedApplication( new ManagedApplication( app ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
@@ -190,7 +191,8 @@ public class KibanaExtensionServletTest {
 		TestManagerWrapper wrapper = new TestManagerWrapper( manager );
 
 		TestApplication app = new TestApplication();
-		wrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		app.setDirectory( this.folder.newFolder());
+		wrapper.addManagedApplication( new ManagedApplication( app ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );

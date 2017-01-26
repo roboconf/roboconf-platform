@@ -97,6 +97,7 @@ public class InstancesMngrImplTest {
 
 		// Prepare stuff
 		final TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
 		INotificationMngr notificationMngr = new NotificationMngrImpl() {
 			@Override
@@ -165,6 +166,7 @@ public class InstancesMngrImplTest {
 
 		// Prepare stuff
 		final TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
 		INotificationMngr notificationMngr = new NotificationMngrImpl() {
 			@Override
@@ -247,6 +249,7 @@ public class InstancesMngrImplTest {
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// We want to make sure target locking is correctly invoked by the instances manager.
@@ -334,6 +337,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// We will try to create a machine. It will fail.
@@ -410,6 +414,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -465,6 +470,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -521,6 +527,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -593,6 +600,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -660,6 +668,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -704,6 +713,7 @@ public class InstancesMngrImplTest {
 		// Prepare stuff
 		IInstancesMngr mngr = new InstancesMngrImpl( null, null, null, null, null );
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		TargetHandler targetHandler = Mockito.mock( TargetHandler.class );

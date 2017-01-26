@@ -37,9 +37,9 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -146,7 +146,7 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, notif.instanceToStatusHistory.size());
 		List<InstanceStatus> statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED ), statusHistory );
+		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED ), statusHistory );
 
 		// Deploy, start and stop a child
 		Instance childInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
@@ -160,7 +160,7 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 2, notif.instanceToStatusHistory.size());
 		statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED ), statusHistory );
+		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED ), statusHistory );
 
 		statusHistory = notif.instanceToStatusHistory.get( childInstance );
 		Assert.assertNotNull( statusHistory );
@@ -173,7 +173,7 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 2, notif.instanceToStatusHistory.size());
 		statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED ), statusHistory );
+		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED ), statusHistory );
 
 		statusHistory = notif.instanceToStatusHistory.get( childInstance );
 		Assert.assertNotNull( statusHistory );
@@ -186,7 +186,7 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 
 		statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, UNDEPLOYING, NOT_DEPLOYED ), statusHistory );
+		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED, UNDEPLOYING, NOT_DEPLOYED ), statusHistory );
 
 		statusHistory = notif.instanceToStatusHistory.get( childInstance );
 		Assert.assertNotNull( statusHistory );
@@ -198,7 +198,7 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	private static class NotificationCounter implements IDmListener {
-		private final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
+		private final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new ConcurrentHashMap<> ();
 
 		@Override
 		public String getId() {

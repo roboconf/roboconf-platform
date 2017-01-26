@@ -162,10 +162,11 @@ public class TargetResourceTest {
 	public void testDeleteTarget_targetIsUsed() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nprop: ok\nhandler: h", null ).getEntity();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		this.resource.associateTarget( app.getName(), null, null, targetId, true );
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
@@ -224,11 +225,13 @@ public class TargetResourceTest {
 		String t2 = (String) this.resource.createOrUpdateTarget( "id: t2nprop: ok\nhandler: h", null ).getEntity();
 
 		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
 		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
 		app2.name( "myApp2" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app1.getName(), new ManagedApplication( app1 ));
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app1 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		Assert.assertEquals( 2, this.resource.listTargets( app1.getName(), null ).size());
 		Assert.assertEquals( 2, this.resource.listTargets( app2.getName(), null ).size());
@@ -250,11 +253,13 @@ public class TargetResourceTest {
 		String t2 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
 
 		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
 		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
 		app2.name( "myApp2" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app1.getName(), new ManagedApplication( app1 ));
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app1 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		Response resp = this.resource.updateHint( "invalid", null, t2, true );
 		Assert.assertEquals( Status.BAD_REQUEST.getStatusCode(), resp.getStatus());
@@ -270,11 +275,13 @@ public class TargetResourceTest {
 		String t2 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
 
 		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
 		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
 		app2.name( "myApp2" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app1.getName(), new ManagedApplication( app1 ));
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app1 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		Response resp = this.resource.associateTarget( "invalid", null, null, t2, true );
 		Assert.assertEquals( Status.BAD_REQUEST.getStatusCode(), resp.getStatus());
@@ -289,8 +296,9 @@ public class TargetResourceTest {
 
 		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\nprop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		try {
 			this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
@@ -314,8 +322,9 @@ public class TargetResourceTest {
 
 		String targetId = (String) this.resource.createOrUpdateTarget( "id: tid\nhandler: h\nprop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		// Initial check: no associated target
 		try {
@@ -357,8 +366,9 @@ public class TargetResourceTest {
 
 		String targetId = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -408,7 +418,8 @@ public class TargetResourceTest {
 		Assert.assertNotNull( t3 );
 
 		TestApplication app = new TestApplication();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		app.setDirectory( this.folder.newFolder());
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app ));
 
 		this.resource.associateTarget( app.getName(), null, InstanceHelpers.computeInstancePath( app.getMySqlVm()), t1, true );
 		this.resource.associateTarget( app.getName(), null, null, t2, true );

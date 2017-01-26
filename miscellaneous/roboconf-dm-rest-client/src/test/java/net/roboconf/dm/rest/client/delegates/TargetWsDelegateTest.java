@@ -109,8 +109,10 @@ public class TargetWsDelegateTest {
 
 		// Load an application
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
+
 		this.ma = new ManagedApplication( this.app );
-		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.managerWrapper.addManagedApplication( this.ma );
 
 		this.client = new WsClient( REST_URI );
 	}
@@ -155,8 +157,8 @@ public class TargetWsDelegateTest {
 		TestApplication app2 = new TestApplication();
 		app2.name( "myApp2" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app1.getName(), new ManagedApplication( app1 ));
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app1 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		this.client.getTargetWsDelegate().associateTarget( new Application( "invalid", app1.getTemplate()), null, t2, true );
 	}
@@ -167,8 +169,10 @@ public class TargetWsDelegateTest {
 
 		String targetId = this.client.getTargetWsDelegate().createTarget( "id : tid\nhandler: h" );
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		try {
 			this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
@@ -191,8 +195,10 @@ public class TargetWsDelegateTest {
 
 		String targetId = this.client.getTargetWsDelegate().createTarget( "id: tid\nhandler: h" );
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		try {
 			this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );

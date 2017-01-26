@@ -28,6 +28,7 @@ package net.roboconf.integration.tests.dm;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -194,8 +195,9 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Make like if the DM had already deployed an application's part
 		TestApplication app = new TestApplication();
+		app.setDirectory( new File( this.manager.configurationMngr().getWorkingDirectory(), "tmp-test" ));
 		ManagedApplication ma = new ManagedApplication( app );
-		managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		managerWrapper.addManagedApplication( ma );
 
 		// Check the DM
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
@@ -215,7 +217,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Manager#reconfigure() reloads all the applications from its configuration.
 		// Since we loaded one in-memory, we must restore it ourselves.
-		managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		managerWrapper.addManagedApplication( ma );
 
 		// Force the agent to send a heart beat message.
 		this.agentItf.forceHeartbeatSending();

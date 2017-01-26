@@ -104,7 +104,7 @@ public class InMemoryHandlerWithRealManagerTest {
 		this.app.setDirectory( this.folder.newFolder());
 
 		ManagedApplication ma = new ManagedApplication( this.app );
-		managerWrapper.getNameToManagedApplication().put( this.app.getName(), ma );
+		managerWrapper.addManagedApplication( ma );
 	}
 
 

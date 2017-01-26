@@ -82,7 +82,7 @@ public class CommandsExecutorTest {
 
 		// Reconfigure the manager
 		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
-		wrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		wrapper.addManagedApplication( new ManagedApplication( this.app ));
 		wrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 

@@ -119,7 +119,7 @@ public class SchedulerWsDelegateTest {
 		this.app.setDirectory( this.folder.newFolder());
 
 		this.ma = new ManagedApplication( this.app );
-		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.managerWrapper.addManagedApplication( this.ma );
 
 		// Create a command
 		this.manager.commandsMngr().createOrUpdateCommand( this.app, "write 1", "Write this into " + this.targetFile.getAbsolutePath());
