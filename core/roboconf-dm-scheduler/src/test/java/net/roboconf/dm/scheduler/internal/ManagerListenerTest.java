@@ -90,8 +90,8 @@ public class ManagerListenerTest {
 		final Application app2 = new TestApplication().name( "app2" ).directory( this.folder.newFolder());
 
 		TestManagerWrapper wrapper = new TestManagerWrapper( manager );
-		wrapper.getNameToManagedApplication().put( app1.getName(), new ManagedApplication( app1 ));
-		wrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		wrapper.addManagedApplication( new ManagedApplication( app1 ));
+		wrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		// Register commands
 		manager.commandsMngr().createOrUpdateCommand( app1, cmdName, "" );

@@ -122,7 +122,8 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 0, apps.size());
 
 		TestApplication app = new TestApplication();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		app.setDirectory( this.folder.newFolder());
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app ));
 
 		// Get ALL the applications
 		apps = this.client.getManagementDelegate().listApplications();
@@ -232,7 +233,8 @@ public class ManagementWsDelegateTest {
 	public void testShutdownApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		app.setDirectory( this.folder.newFolder());
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app ));
 		this.client.getManagementDelegate().shutdownApplication( app.getName());
 	}
 
@@ -247,7 +249,8 @@ public class ManagementWsDelegateTest {
 	public void testDeleteApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		app.setDirectory( this.folder.newFolder());
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app ));
 
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
 		this.client.getManagementDelegate().deleteApplication( app.getName());

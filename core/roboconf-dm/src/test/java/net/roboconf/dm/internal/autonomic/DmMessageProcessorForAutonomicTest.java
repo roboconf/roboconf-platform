@@ -25,6 +25,12 @@
 
 package net.roboconf.dm.internal.autonomic;
 
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
@@ -32,12 +38,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -49,6 +49,7 @@ public class DmMessageProcessorForAutonomicTest {
 
 	private Manager manager;
 	private IAutonomicMngr autonomicMngr;
+	private TestApplication app;
 
 
 
@@ -63,6 +64,10 @@ public class DmMessageProcessorForAutonomicTest {
 		this.autonomicMngr = Mockito.mock( IAutonomicMngr.class );
 		this.manager = Mockito.spy( this.manager );
 		Mockito.when( this.manager.autonomicMngr()).thenReturn( this.autonomicMngr );
+
+		// Prepare an application all the tests can use
+		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
 	}
 
 
@@ -70,13 +75,12 @@ public class DmMessageProcessorForAutonomicTest {
 	public void testAutonomicMessage_appIsRegistered() throws Exception {
 
 		// Register the application
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( this.app );
 		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
-		wrapper.getNameToManagedApplication().put( ma.getName(), ma );
+		wrapper.addManagedApplication( ma );
 
 		// Simulate a first message to delete an instance
-		MsgNotifAutonomic msg = new MsgNotifAutonomic( app.getName(), app.getTomcatVm().getName(), "whatever", "we do not care" );
+		MsgNotifAutonomic msg = new MsgNotifAutonomic( this.app.getName(), this.app.getTomcatVm().getName(), "whatever", "we do not care" );
 		DmMessageProcessor processor = new DmMessageProcessor( this.manager );
 		processor.processMessage( msg );
 
@@ -87,8 +91,7 @@ public class DmMessageProcessorForAutonomicTest {
 	@Test
 	public void testAutonomicMessage_appIsNotRegistered() throws Exception {
 
-		TestApplication app = new TestApplication();
-		MsgNotifAutonomic msg = new MsgNotifAutonomic( app.getName(), app.getTomcatVm().getName(), "whatever", "we do not care" );
+		MsgNotifAutonomic msg = new MsgNotifAutonomic( this.app.getName(), this.app.getTomcatVm().getName(), "whatever", "we do not care" );
 		DmMessageProcessor processor = new DmMessageProcessor( this.manager );
 		processor.processMessage( msg );
 
@@ -99,12 +102,11 @@ public class DmMessageProcessorForAutonomicTest {
 	@Test
 	public void testAutonomicMessage_invalidAgentIdentifier() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( this.app );
 		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
-		wrapper.getNameToManagedApplication().put( ma.getName(), ma );
+		wrapper.addManagedApplication( ma );
 
-		MsgNotifAutonomic msg = new MsgNotifAutonomic( app.getName(), "/invalid/id", "whatever", "we do not care" );
+		MsgNotifAutonomic msg = new MsgNotifAutonomic( this.app.getName(), "/invalid/id", "whatever", "we do not care" );
 		DmMessageProcessor processor = new DmMessageProcessor( this.manager );
 		processor.processMessage( msg );
 

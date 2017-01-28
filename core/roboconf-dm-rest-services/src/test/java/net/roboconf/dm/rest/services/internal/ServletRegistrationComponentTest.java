@@ -81,8 +81,10 @@ public class ServletRegistrationComponentTest {
 		this.manager.start();
 
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
+
 		this.managerWrapper = new TestManagerWrapper( this.manager );
-		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( this.app ));
 	}
 
 

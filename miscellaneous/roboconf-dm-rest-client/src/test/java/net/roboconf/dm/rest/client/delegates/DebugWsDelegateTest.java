@@ -69,6 +69,7 @@ public class DebugWsDelegateTest {
 	private Manager manager;
 	private TestManagerWrapper managerWrapper;
 	private HttpServer httpServer;
+	private TestApplication app;
 
 
 	@After
@@ -101,6 +102,10 @@ public class DebugWsDelegateTest {
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class).cancel();
 
+		// Configure a single application to be used by the tests
+		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
+
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );
 		this.httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );;
@@ -115,15 +120,14 @@ public class DebugWsDelegateTest {
 		List<Diagnostic> diags = this.client.getDebugDelegate().diagnoseApplication( "invalid" );
 		Assert.assertEquals( 0, diags.size());
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
-		diags = this.client.getDebugDelegate().diagnoseApplication( app.getName());
-		Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), diags.size());
+		diags = this.client.getDebugDelegate().diagnoseApplication( this.app.getName());
+		Assert.assertEquals( InstanceHelpers.getAllInstances( this.app ).size(), diags.size());
 
 		for( Diagnostic diag : diags ) {
-			Instance inst = InstanceHelpers.findInstanceByPath( app, diag.getInstancePath());
+			Instance inst = InstanceHelpers.findInstanceByPath( this.app, diag.getInstancePath());
 			Assert.assertNotNull( inst );
 
 			for( DependencyInformation info : diag.getDependenciesInformation()) {
@@ -136,12 +140,11 @@ public class DebugWsDelegateTest {
 	@Test
 	public void testDiagnoseInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		String path = InstanceHelpers.computeInstancePath( app.getWar());
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		String path = InstanceHelpers.computeInstancePath( this.app.getWar());
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
-		Diagnostic diag = this.client.getDebugDelegate().diagnoseInstance( app.getName(), path );
+		Diagnostic diag = this.client.getDebugDelegate().diagnoseInstance( this.app.getName(), path );
 		Assert.assertNotNull( diag );
 		Assert.assertEquals( path, diag.getInstancePath());
 		Assert.assertEquals( 1, diag.getDependenciesInformation().size());
@@ -151,21 +154,19 @@ public class DebugWsDelegateTest {
 	@Test( expected = DebugWsException.class )
 	public void testDiagnoseInstance_inexistingInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
-		this.client.getDebugDelegate().diagnoseInstance( app.getName(), "/inexisting" );
+		this.client.getDebugDelegate().diagnoseInstance( this.app.getName(), "/inexisting" );
 	}
 
 
 	@Test( expected = DebugWsException.class )
 	public void testDiagnoseInstance_inexistingApplication() throws Exception {
 
-		TestApplication app = new TestApplication();
-		String path = InstanceHelpers.computeInstancePath( app.getWar());
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		String path = InstanceHelpers.computeInstancePath( this.app.getWar());
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		this.client.getDebugDelegate().diagnoseInstance( "inexisting", path );
 	}

@@ -122,7 +122,8 @@ public class ApplicationMngrImplTest {
 		Assert.assertFalse( this.mngr.isTemplateUsed( tpl ));
 
 		ManagedApplication ma = new ManagedApplication( new Application( "app", tpl ));
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( "app", ma );
+		ma.getApplication().setDirectory( this.folder.newFolder());
+		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 		Assert.assertTrue( this.mngr.isTemplateUsed( tpl ));
 
 		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).qualifier( "v2" );
@@ -155,7 +156,7 @@ public class ApplicationMngrImplTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.mngr.deleteApplication( ma );
 	}
@@ -168,7 +169,7 @@ public class ApplicationMngrImplTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 		Assert.assertEquals( 1, this.mngr.getManagedApplications().size());
 		this.mngr.deleteApplication( ma );
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
@@ -258,7 +259,7 @@ public class ApplicationMngrImplTest {
 		app.setDirectory( this.folder.newFolder());
 
 		ManagedApplication ma = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 
 		String newDesc = "new description";
 		Assert.assertEquals( 0, app.getDirectory().listFiles().length );
@@ -277,7 +278,7 @@ public class ApplicationMngrImplTest {
 		app.setDirectory( this.folder.newFile());
 
 		ManagedApplication ma = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 
 		String newDesc = "new description";
 		this.mngr.updateApplication( ma, newDesc );
@@ -485,7 +486,7 @@ public class ApplicationMngrImplTest {
 		app.setDirectory( this.folder.newFolder());
 
 		ManagedApplication ma = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 
 		this.mngr.bindOrUnbindApplication( ma, ma.getApplication().getTemplate().getName(), "invalid", true );
 	}
@@ -497,7 +498,7 @@ public class ApplicationMngrImplTest {
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma1 = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		app = new TestApplication();
 		app.getTemplate().setName( "tpl-other" );
@@ -505,7 +506,7 @@ public class ApplicationMngrImplTest {
 
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma2 = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		// ma1 and ma2 do not have the same template name
 		this.mngr.bindOrUnbindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName(), true );
@@ -520,13 +521,13 @@ public class ApplicationMngrImplTest {
 		app.getTemplate().setExternalExportsPrefix( "prefix" );
 
 		ManagedApplication ma1 = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 
 		ManagedApplication ma2 = new ManagedApplication( app );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		// ma1 and ma2 do not have the same template name
 		this.mngr.bindOrUnbindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName(), true );
@@ -541,7 +542,7 @@ public class ApplicationMngrImplTest {
 		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
 
 		ManagedApplication ma1 = new ManagedApplication( app1 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		TestApplication app2 = new TestApplication();
 		app2.getTemplate().setName( "tpl-other" );
@@ -556,7 +557,7 @@ public class ApplicationMngrImplTest {
 
 		app2.setDirectory( this.folder.newFolder());
 		ManagedApplication ma2 = new ManagedApplication( app2 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
@@ -602,7 +603,7 @@ public class ApplicationMngrImplTest {
 		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
 
 		ManagedApplication ma1 = new ManagedApplication( app1 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		TestApplication app2 = new TestApplication();
 		app2.getTemplate().setName( "tpl-other" );
@@ -617,7 +618,7 @@ public class ApplicationMngrImplTest {
 
 		app2.setDirectory( this.folder.newFolder());
 		ManagedApplication ma2 = new ManagedApplication( app2 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
@@ -666,7 +667,7 @@ public class ApplicationMngrImplTest {
 		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
 
 		ManagedApplication ma1 = new ManagedApplication( app1 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		TestApplication app2 = new TestApplication();
 		app2.getTemplate().setName( "tpl-other" );
@@ -681,7 +682,7 @@ public class ApplicationMngrImplTest {
 
 		app2.setDirectory( this.folder.newFolder());
 		ManagedApplication ma2 = new ManagedApplication( app2 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
@@ -705,7 +706,7 @@ public class ApplicationMngrImplTest {
 		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
 
 		ManagedApplication ma1 = new ManagedApplication( app1 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		TestApplication app2 = new TestApplication();
 		app2.setDirectory( this.folder.newFolder());
@@ -720,7 +721,7 @@ public class ApplicationMngrImplTest {
 		app2.getTomcatVm().setName( "other-tomcat" );
 
 		ManagedApplication ma2 = new ManagedApplication( app2 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
@@ -793,7 +794,7 @@ public class ApplicationMngrImplTest {
 		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
 
 		ManagedApplication ma1 = new ManagedApplication( app1 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		Mockito.verifyZeroInteractions( this.messagingMngr );
@@ -809,13 +810,13 @@ public class ApplicationMngrImplTest {
 		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
 
 		ManagedApplication ma1 = new ManagedApplication( app1 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma1 );
 
 		TestApplication app2 = new TestApplication();
 		app2.setDirectory( this.folder.newFolder());
 
 		ManagedApplication ma2 = new ManagedApplication( app2 );
-		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+		TestManagerWrapper.addManagedApplication( this.mngr, ma2 );
 
 		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		Mockito.verifyZeroInteractions( this.messagingMngr );

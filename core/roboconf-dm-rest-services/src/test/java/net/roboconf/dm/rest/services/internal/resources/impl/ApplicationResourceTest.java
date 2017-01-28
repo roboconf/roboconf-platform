@@ -125,7 +125,7 @@ public class ApplicationResourceTest {
 		this.app.setDirectory( this.folder.newFolder());
 
 		this.ma = new ManagedApplication( this.app );
-		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.managerWrapper.addManagedApplication( this.ma );
 	}
 
 
@@ -998,7 +998,7 @@ public class ApplicationResourceTest {
 		app2.getTemplate().setName( "tpl-other" );
 		app2.setName( "app-other" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		// ma and app2 do not have the same template name
 		Response resp = this.resource.bindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), app2.getName());
@@ -1015,7 +1015,7 @@ public class ApplicationResourceTest {
 		app2.getTemplate().setName( "tpl-other" );
 		app2.setName( "app-other" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		// ma and app2 do not have the same template name
 		Response resp = this.resource.unbindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), app2.getName());
@@ -1034,7 +1034,7 @@ public class ApplicationResourceTest {
 		app2.getTemplate().setExternalExportsPrefix( "eep" );
 		app2.setName( "app-other" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		// Bind and check
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
@@ -1091,7 +1091,7 @@ public class ApplicationResourceTest {
 		app2.getTemplate().setExternalExportsPrefix( "eep" );
 		app2.setName( "app-other" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		// Bind and check
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
@@ -1179,7 +1179,7 @@ public class ApplicationResourceTest {
 		app2.getTemplate().setName( "tpl-other" );
 		app2.setName( "app-other" );
 
-		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+		this.managerWrapper.addManagedApplication( new ManagedApplication( app2 ));
 
 		// ma and app2 do not have the same template name
 		Response resp = this.resource.replaceApplicationBindings(
@@ -1238,9 +1238,10 @@ public class ApplicationResourceTest {
 
 			// Register
 			TestApplication ta = new TestApplication();
+			ta.setDirectory( this.folder.newFolder());
 			ta.setName( entry.getKey());
 			ta.getTemplate().setExternalExportsPrefix( entry.getValue());
-			this.managerWrapper.getNameToManagedApplication().put( ta.getName(), new ManagedApplication( ta ));
+			this.managerWrapper.addManagedApplication( new ManagedApplication( ta ));
 
 			// Bind
 			if( entry.getValue() != null )

@@ -31,7 +31,13 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -47,12 +53,6 @@ import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -66,6 +66,7 @@ public class DebugResourceTest {
 	private TestManagerWrapper managerWrapper;
 	private TestClient msgClient;
 	private DebugResource resource;
+	private TestApplication app;
 
 
 	@Before
@@ -89,6 +90,10 @@ public class DebugResourceTest {
 
 		// Register the REST resource
 		this.resource = new DebugResource( this.manager );
+
+		// Create an application all the tests can use
+		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
 	}
 
 
@@ -102,18 +107,17 @@ public class DebugResourceTest {
 	@Test
 	public void testDiagnoseApplication() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		List<Diagnostic> diags = this.resource.diagnoseApplication( "inexisting" );
 		Assert.assertEquals( 0, diags.size());
 
-		diags = this.resource.diagnoseApplication( app.getName());
-		Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), diags.size());
+		diags = this.resource.diagnoseApplication( this.app.getName());
+		Assert.assertEquals( InstanceHelpers.getAllInstances( this.app ).size(), diags.size());
 
 		for( Diagnostic diag : diags ) {
-			Instance inst = InstanceHelpers.findInstanceByPath( app, diag.getInstancePath());
+			Instance inst = InstanceHelpers.findInstanceByPath( this.app, diag.getInstancePath());
 			Assert.assertNotNull( inst );
 
 			for( DependencyInformation info : diag.getDependenciesInformation()) {
@@ -126,18 +130,17 @@ public class DebugResourceTest {
 	@Test
 	public void testDiagnoseInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		String path = InstanceHelpers.computeInstancePath( app.getWar());
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		String path = InstanceHelpers.computeInstancePath( this.app.getWar());
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Response resp = this.resource.diagnoseInstance( "inexisting", path );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 
-		resp = this.resource.diagnoseInstance( app.getName(), "/inexisting" );
+		resp = this.resource.diagnoseInstance( this.app.getName(), "/inexisting" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 
-		resp = this.resource.diagnoseInstance( app.getName(), path );
+		resp = this.resource.diagnoseInstance( this.app.getName(), path );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
 		Diagnostic diag = (Diagnostic) resp.getEntity();
@@ -179,13 +182,12 @@ public class DebugResourceTest {
 	@Test
 	public void testCheckMessagingConnectionWithAgent_success() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		UUID uuid = UUID.randomUUID();
-		String path = "/" + app.getMySqlVm().getName();
+		String path = "/" + this.app.getMySqlVm().getName();
 
 		InstanceStatus[] statuses = new InstanceStatus[] {
 				InstanceStatus.DEPLOYED_STARTED,
@@ -195,8 +197,8 @@ public class DebugResourceTest {
 		};
 
 		for( InstanceStatus status : statuses ) {
-			app.getMySqlVm().setStatus( status );
-			Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), path, uuid.toString());
+			this.app.getMySqlVm().setStatus( status );
+			Response resp = this.resource.checkMessagingConnectionWithAgent( this.app.getName(), path, uuid.toString());
 
 			Assert.assertEquals( status.toString(), Status.OK.getStatusCode(), resp.getStatus());
 			Assert.assertEquals( status.toString(), 1, this.msgClient.allSentMessages.size());
@@ -212,15 +214,14 @@ public class DebugResourceTest {
 	@Test
 	public void testCheckMessagingConnectionWithAgent_agentNotStarted() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		UUID uuid = UUID.randomUUID();
-		String path = "/" + app.getMySqlVm().getName();
+		String path = "/" + this.app.getMySqlVm().getName();
 
-		Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), path, uuid.toString());
+		Response resp = this.resource.checkMessagingConnectionWithAgent( this.app.getName(), path, uuid.toString());
 		Assert.assertEquals( Status.BAD_REQUEST.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 	}
@@ -229,18 +230,17 @@ public class DebugResourceTest {
 	@Test
 	public void testCheckMessagingConnectionWithAgent_noMessaging() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		this.msgClient.failMessageSending.set( true );
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		UUID uuid = UUID.randomUUID();
-		String path = "/" + app.getMySqlVm().getName();
+		String path = "/" + this.app.getMySqlVm().getName();
 
-		Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), path, uuid.toString());
+		Response resp = this.resource.checkMessagingConnectionWithAgent( this.app.getName(), path, uuid.toString());
 		Assert.assertEquals( Status.INTERNAL_SERVER_ERROR.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 	}
@@ -249,13 +249,12 @@ public class DebugResourceTest {
 	@Test
 	public void testCheckMessagingConnectionWithAgent_invalidApplication() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		UUID uuid = UUID.randomUUID();
-		String path = "/" + app.getMySqlVm().getName();
+		String path = "/" + this.app.getMySqlVm().getName();
 
 		Response resp = this.resource.checkMessagingConnectionWithAgent( "whatever", path, uuid.toString());
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
@@ -266,14 +265,13 @@ public class DebugResourceTest {
 	@Test
 	public void testCheckMessagingConnectionWithAgent_invalidInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		UUID uuid = UUID.randomUUID();
 
-		Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), "oops", uuid.toString());
+		Response resp = this.resource.checkMessagingConnectionWithAgent( this.app.getName(), "oops", uuid.toString());
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 	}

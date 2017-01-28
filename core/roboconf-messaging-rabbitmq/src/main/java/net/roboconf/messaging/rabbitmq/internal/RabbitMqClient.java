@@ -225,9 +225,8 @@ public class RabbitMqClient implements IMessagingClient {
 	throws IOException {
 
 		// We delete the application exchanges. There is only one now.
+		// The DM and inter-applications stuff have each one a single exchange, shared by all the applications.
 		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForAgent( this.domain, application.getName()));
-		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForTheDm( this.domain ));
-		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForInterApp( this.domain ));
 		this.logger.fine( "Messaging artifacts were deleted for application " + application );
 		// Queues are deleted automatically by RabbitMQ.
 	}

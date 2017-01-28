@@ -60,10 +60,11 @@ public class AssociateTargetCommandInstructionTest {
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( this.app );
 
 		this.managerWrapper = new TestManagerWrapper( this.manager );
-		this.managerWrapper.getNameToManagedApplication().put( ma.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 	}
 
 
@@ -98,7 +99,7 @@ public class AssociateTargetCommandInstructionTest {
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
-		this.managerWrapper.getNameToManagedApplication().clear();
+		this.managerWrapper.clearManagedApplications();
 		executor.execute();
 	}
 
