@@ -57,7 +57,7 @@ public class OcciVMUtils {
 	 * @param summary VM summary
 	 * @return The VM ID
 	 */
-	public static String createVM(String hostIpPort, String id, String template, String title, String summary, String userData) throws TargetException {
+	public static String createVM(String hostIpPort, String id, String template, String title, String summary, String userData, String user, String password) throws TargetException {
 
 		//TODO This is a HACK for CloudAutomation APIs (there should be no CA mixin for images).
 		if(hostIpPort.contains("multi-language-connector")) {
@@ -87,8 +87,12 @@ public class OcciVMUtils {
 			if(template != null) {
 				//TODO This is a HACK for VMWare API (there should be no "vmware" mixin for images).
 				category.append(", medium; scheme=\"http://schemas.ogf.org/occi/infrastructure/compute/template/1.1#\"; class=\"mixin\""
-						+ ", vmaddon; scheme=\"http://occiware.org/occi/vmwarecrtp#\"; class=\"mixin\""
-						+ ", vmwarefolders; scheme=\"http://occiware.org/occi/vmwarecrtp#\"; class=\"mixin\"");
+						+ ", vmimage; scheme=\"http://occiware.org/occi/infrastructure/crtp/backend#vmimage\"; class=\"mixin\""
+						+ ", vmwarefolders; scheme=\"http://occiware.org/occi/infrastructure/crtp/backend#vmwarefolders\"; class=\"mixin\""
+						+ ", user_data; scheme=\"http://occiware.org/occi/infrastructure/compute#user_data\"; class=\"mixin\""
+						+ ", credential; scheme=\"http://occiware.org/occi/infrastructure/crtp/backend#credential\"; class=\"mixin\"");
+						//+ ", vmaddon; scheme=\"http://occiware.org/occi/vmwarecrtp#\"; class=\"mixin\""
+						//+ ", vmwarefolders; scheme=\"http://occiware.org/occi/vmwarecrtp#\"; class=\"mixin\"");
 			}
 			category.append(";");
 			httpURLConnection.setRequestProperty("Category", category.toString());
@@ -109,6 +113,21 @@ public class OcciVMUtils {
 			if(template != null) {
 				httpURLConnection.addRequestProperty("X-OCCI-Attribute",
 						"imagename=\"" + template + "\"");
+			}
+			if(! Utils.isEmptyOrWhitespaces(userData)) {
+				String userDataScript = "printf \'"
+						+ userData.replaceAll("\n\r", "\\\\n")
+							.replaceAll("\n", "\\\\n")
+							.replaceAll(System.lineSeparator(), "\\\\n")
+							+ "\' > /tmp/roboconf.properties";
+				httpURLConnection.addRequestProperty("X-OCCI-Attribute",
+						"occi.compute.userdata=\"" + userDataScript + "\"");
+				if(Utils.isEmptyOrWhitespaces(user)) user="";
+				httpURLConnection.addRequestProperty("X-OCCI-Attribute",
+						"user=\"" + user + "\"");
+				if(Utils.isEmptyOrWhitespaces(password)) password="";
+				httpURLConnection.addRequestProperty("X-OCCI-Attribute",
+						"password=\"" + password + "\"");
 			}
 
 			in = new DataInputStream(httpURLConnection.getInputStream());
@@ -433,11 +452,11 @@ public class OcciVMUtils {
 
 		System.out.println("Create VM: " +
 				createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
-						"", "e3161161-02a4-4685-ad99-8ac36b3e66ea", "UbuntuTest", "Ubuntu Test", null));
+						"", "e3161161-02a4-4685-ad99-8ac36b3e66ea", "UbuntuTest", "Ubuntu Test", null, null, null));
 		System.exit(0);
 		System.out.println("Create VM: " +
 				createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
-						"", "e906f16e-a3cb-414c-9a7e-c308dff4897d", "javaTest", "Java Test", userdata));
+						"", "e906f16e-a3cb-414c-9a7e-c308dff4897d", "javaTest", "Java Test", userdata, null, null));
 			//createVM("172.16.225.91:8080", //VMWare
 			//createVM("localhost:8888",
 				//"6157c4d2-08b3-4204-be85-d1828df74c22", "RoboconfAgent180116", "javaTest", "Java Test", null));

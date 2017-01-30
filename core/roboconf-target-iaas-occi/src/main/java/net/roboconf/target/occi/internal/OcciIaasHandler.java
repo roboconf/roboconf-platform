@@ -25,7 +25,6 @@
 
 package net.roboconf.target.occi.internal;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -34,7 +33,6 @@ import java.util.logging.Logger;
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
@@ -50,6 +48,8 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	static final String IMAGE = "occi.image";
 	static final String TITLE = "occi.title";
 	static final String SUMMARY = "occi.summary";
+	static final String USER = "occi.user";
+	static final String PASSWORD = "occi.password";
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -77,8 +77,6 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 		if( InstanceHelpers.countInstances( parameters.getScopedInstancePath()) > 1 )
 			throw new TargetException( "Only root instances can be passed in arguments." );
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath(parameters.getScopedInstancePath());
-
 		// Deal with the creation
 		try {
 			UUID id = UUID.randomUUID();
@@ -95,7 +93,9 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 					targetProperties.get(IMAGE),
 					targetProperties.get(TITLE),
 					targetProperties.get(SUMMARY),
-					userData);
+					userData,
+					targetProperties.get(USER),
+					targetProperties.get(PASSWORD));
 		} catch( Exception e ) {
 			throw new TargetException(e);
 		}
@@ -133,7 +133,7 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
-		return OcciVMUtils.isVMRunning(targetProperties.get(SERVER_IP_PORT), machineId);
+		return OcciVMUtils.isVMRunning(parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
 	}
 
 
@@ -144,7 +144,11 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	 */
 	@Override
 	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
-		OcciVMUtils.deleteVM( parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
+		try {
+			OcciVMUtils.deleteVM( parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
+		} catch(TargetException ignore) {
+			//ignore
+		}
 	}
 
 
