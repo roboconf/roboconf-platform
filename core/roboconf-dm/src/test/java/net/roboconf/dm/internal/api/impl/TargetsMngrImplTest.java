@@ -795,6 +795,9 @@ public class TargetsMngrImplTest {
 		this.mngr.addHint( t2, app1 );
 		this.mngr.addHint( t2, app2 );
 
+		// #744: also test locks
+		this.mngr.lockAndGetTarget( app2, app2.getTomcatVm());
+
 		// Verify preconditions
 		Assert.assertEquals( t1, this.mngr.findTargetId( app1, null ));
 		Assert.assertEquals( t2, this.mngr.findTargetId( app1, path ));
@@ -859,6 +862,10 @@ public class TargetsMngrImplTest {
 
 		Assert.assertNull( this.mngr.findTargetId( app1.getTemplate(), path ));
 		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// We should be able to delete both targets as they are neither associated nor LOCKED
+		this.mngr.deleteTarget( t1 );
+		this.mngr.deleteTarget( t2 );
 	}
 
 

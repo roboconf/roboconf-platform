@@ -76,6 +76,9 @@ import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
  */
 public final class JSonBindingUtils {
 
+	// Annotations set by the deserializers
+	public static final String AT_INSTANCE_PATH = "@instance_path";
+
 	// We use global maps to verify some little things in tests.
 	static final Map<Class<?>,JsonSerializer<?>> SERIALIZERS = new HashMap<> ();
 	static final Map<Class<?>,JsonDeserializer<?>> DESERIALIZERS = new HashMap<> ();
@@ -1089,15 +1092,20 @@ public final class JSonBindingUtils {
 			ObjectMapper mapper = createObjectMapper();
 
 			// Consider all exports as overridden. This will be fixed later
-			// (eg. by comparison with component exports).
+			// (e.g. by comparison with component exports).
 			if(( n = node.get( INST_EXPORTS )) != null ) {
-				Map<String, String> exports = mapper.readValue(n.toString(), new TypeReference<HashMap<String,String>>(){});
+				Map<String, String> exports = mapper.readValue( n.toString(), new TypeReference<HashMap<String,String>>(){});
 				instance.overriddenExports.putAll(exports);
 			}
 
 			if(( n = node.get( INST_COMPONENT )) != null ) {
 				Component instanceComponent = mapper.readValue( n.toString(), Component.class );
 				instance.setComponent( instanceComponent );
+			}
+
+			// Add meta-data
+			if(( n = node.get( PATH )) != null ) {
+				instance.data.put( AT_INSTANCE_PATH, n.textValue());
 			}
 
 			return instance;

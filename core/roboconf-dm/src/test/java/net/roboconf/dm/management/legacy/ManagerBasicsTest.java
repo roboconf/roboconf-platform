@@ -190,7 +190,7 @@ public class ManagerBasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String existingInstanceName = app.getMySqlVm().getName();
 		this.manager.instancesMngr().addInstance( ma, null, new Instance( existingInstanceName ));
@@ -204,7 +204,7 @@ public class ManagerBasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String existingInstanceName = app.getMySql().getName();
 		this.manager.instancesMngr().addInstance( ma, app.getMySqlVm(), new Instance( existingInstanceName ));
@@ -218,7 +218,7 @@ public class ManagerBasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
@@ -242,7 +242,7 @@ public class ManagerBasicsTest {
 		this.manager = new Manager();
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 		this.manager.instancesMngr().addInstance( ma, null, newInstance );
 	}
 
@@ -254,7 +254,7 @@ public class ManagerBasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		// Insert a MySQL instance under the Tomcat VM
 		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
@@ -272,7 +272,7 @@ public class ManagerBasicsTest {
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.manager.instancesMngr().removeInstance( ma, app.getMySqlVm());
@@ -285,7 +285,7 @@ public class ManagerBasicsTest {
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
@@ -311,7 +311,7 @@ public class ManagerBasicsTest {
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
@@ -344,7 +344,7 @@ public class ManagerBasicsTest {
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 		this.manager.instancesMngr().removeInstance( ma, app.getTomcat());
 	}
 
@@ -719,7 +719,7 @@ public class ManagerBasicsTest {
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		this.msgClient.allSentMessages.clear();
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
@@ -743,7 +743,7 @@ public class ManagerBasicsTest {
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		this.msgClient.allSentMessages.clear();
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
@@ -781,7 +781,7 @@ public class ManagerBasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
 		try {
@@ -804,8 +804,9 @@ public class ManagerBasicsTest {
 		Assert.assertNull( this.manager.applicationMngr().findApplicationByName( "invalid" ));
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( app, this.manager.applicationMngr().findApplicationByName( app.getName()));
 	}
@@ -819,7 +820,7 @@ public class ManagerBasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.addManagedApplication( ma );
 		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: h" );
 		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
 

@@ -1030,7 +1030,7 @@ public abstract class AbstractMessagingTest {
 
 
 	/**
-	 * Verify agent termination is correctly propagated by the DM.
+	 * Verifies agent termination is correctly propagated by the DM.
 	 * @throws Exception
 	 */
 	public void testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation() throws Exception {
@@ -1143,6 +1143,36 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( "tpl2", msg3.getComponentOrFacetName());
 		Assert.assertEquals( "/mysql-vm/mysql-server", msg3.getRemovedInstancePath());
 		Assert.assertEquals( "app2", msg3.getApplicationOrContextName());
+	}
+
+
+	/**
+	 * Mimics the DM's behavior when it creates, deletes and recreates a same application.
+	 * <p>
+	 * This class prevents regressions for #749.
+	 * </p>
+	 *
+	 * @throws Exception
+	 */
+	public void test_applicationRegeneration() throws Exception {
+
+		TestApplication app = new TestApplication();
+		List<Message> dmMessages = new ArrayList<>();
+
+		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
+		dmClient.setRegistry( this.registry );
+		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
+		dmClient.switchMessagingType( getMessagingType());
+		this.clients.add( dmClient );
+
+		dmClient.listenToAgentMessages( app, ListenerCommand.START );
+		dmClient.listenToAgentMessages( app, ListenerCommand.STOP );
+		dmClient.deleteMessagingServerArtifacts( app );
+		Thread.sleep( getDelay());
+
+		dmClient.listenToAgentMessages( app, ListenerCommand.START );
+		dmClient.listenToAgentMessages( app, ListenerCommand.STOP );
+		dmClient.deleteMessagingServerArtifacts( app );
 	}
 
 

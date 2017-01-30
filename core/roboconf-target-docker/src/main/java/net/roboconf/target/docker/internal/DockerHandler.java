@@ -37,6 +37,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState
 import com.github.dockerjava.api.model.Container;
 
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
@@ -85,6 +86,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	static final String OPTION_PREFIX = "docker.option.";
 	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
+	static final String OPTION_PREFIX_ENV = OPTION_PREFIX + "env.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
@@ -167,6 +169,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 		} catch( Exception e ) {
 			// nothing, we consider it is not running
+			Utils.logException( this.logger, e );
 		}
 
 		return result;

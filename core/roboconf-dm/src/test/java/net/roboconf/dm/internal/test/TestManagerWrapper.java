@@ -25,7 +25,10 @@
 
 package net.roboconf.dm.internal.test;
 
+import java.util.Collections;
 import java.util.Map;
+
+import org.junit.Assert;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -101,6 +104,32 @@ public final class TestManagerWrapper {
 
 
 	/**
+	 * @param ma a managed application with a non-null directory
+	 * @throws IllegalAccessException
+	 */
+	public void addManagedApplication( ManagedApplication ma ) throws IllegalAccessException {
+		addManagedApplication( this.manager.applicationMngr(), ma );
+	}
+
+
+	/**
+	 * @param appName an application name
+	 * @throws IllegalAccessException
+	 */
+	public void removeManagedApplication( String appName ) throws IllegalAccessException {
+		getApplicationMap( this.manager.applicationMngr()).remove( appName );
+	}
+
+
+	/**
+	 * @throws IllegalAccessException
+	 */
+	public void clearManagedApplications() throws IllegalAccessException {
+		getApplicationMap( this.manager.applicationMngr()).clear();
+	}
+
+
+	/**
 	 * @return the non-null map that registers application templates.
 	 * @throws IllegalAccessException
 	 */
@@ -137,11 +166,30 @@ public final class TestManagerWrapper {
 
 	/**
 	 * @param mngr an application manager
-	 * @return the non-null map that registers applications
+	 * @return the non-null map that registers applications (unmodifiable)
 	 * @throws IllegalAccessException
 	 */
-	@SuppressWarnings( "unchecked" )
 	public static Map<String,ManagedApplication> getNameToManagedApplication( IApplicationMngr mngr )
+	throws IllegalAccessException {
+		return Collections.unmodifiableMap( getApplicationMap( mngr ));
+	}
+
+
+	/**
+	 * @param mngr an application manager
+	 * @param ma a managed application with a non-null directory
+	 * @throws IllegalAccessException
+	 */
+	public static void addManagedApplication( IApplicationMngr mngr, ManagedApplication ma ) throws IllegalAccessException {
+
+		// Verify there is a directory, to prevent tests from writing
+		// state files in the source directories.
+		Assert.assertNotNull( ma.getDirectory());
+		getApplicationMap( mngr ).put( ma.getName(), ma );
+	}
+
+	@SuppressWarnings( "unchecked" )
+	private static Map<String,ManagedApplication> getApplicationMap( IApplicationMngr mngr )
 	throws IllegalAccessException {
 		return TestUtils.getInternalField( mngr, "nameToManagedApplication", Map.class );
 	}

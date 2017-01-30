@@ -271,7 +271,7 @@ public class ManagerTest {
 
 			// Bindings must have been saved.
 			// Remove the application from the cache and restore it.
-			managerWrapper.getNameToManagedApplication().remove( ma.getName());
+			managerWrapper.removeManagedApplication( ma.getName());
 			Assert.assertNull( this.manager.applicationMngr().findApplicationByName( ma.getName()));
 
 			this.manager.applicationMngr().restoreApplications();
@@ -287,7 +287,7 @@ public class ManagerTest {
 
 			// Bindings must have been saved.
 			// Remove the application from the cache and restore it.
-			managerWrapper.getNameToManagedApplication().remove( ma.getName());
+			managerWrapper.removeManagedApplication( ma.getName());
 			Assert.assertNull( this.manager.applicationMngr().findApplicationByName( ma.getName()));
 
 			this.manager.applicationMngr().restoreApplications();
@@ -325,7 +325,7 @@ public class ManagerTest {
 			// Clear the applications and restore them.
 			// Even with no life cycle action, instances were saved and restored.
 			Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
-			managerWrapper.getNameToManagedApplication().clear();
+			managerWrapper.clearManagedApplications();
 			this.manager.applicationMngr().restoreApplications();
 
 			ma = this.manager.applicationMngr().findManagedApplicationByName( "test" );
@@ -395,7 +395,7 @@ public class ManagerTest {
 			// Clear the applications and restore them.
 			// Even with no life cycle action, instances were saved and restored.
 			Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
-			managerWrapper.getNameToManagedApplication().clear();
+			managerWrapper.clearManagedApplications();
 
 			// Restart the DM then.
 			this.manager.stop();

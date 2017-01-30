@@ -1,0 +1,32 @@
+
+<p>
+	This page lists all the Kibana Dashboards for Roboconf applications.<br />
+	Notice that all the agents are considered as having Decanter installed and configured to work 
+	with Elastic Search and Kibana. Please, refer to 
+	<a href="http://roboconf.net/en/user-guide-snapshot/tutorial-monitoring-roboconf-with-apache-decanter.html">this page</a>
+	for more details.
+</p>
+<br />
+
+<table class="table table-hover table-rbcf">
+<tr>
+	<th>Application Name</th>
+	<th>Application's Dashboard</th>
+	<th>Agents List</th>
+</tr>
+
+<tr>
+	<td>DM</td>
+	<td><a href="{{- kibanaLocation -}}?query:(query_string:(analyze_wildcard:!t,query:source%3DDM))">here</a></td>
+	<td>-</td>
+</tr>
+{% for app in apps %}
+
+<tr>
+	<td>{{- app.getName() -}}</td>
+	<td><a href="{{- kibanaLocation -}}?query:(query_string:(analyze_wildcard:!t,query:%27source%3Dagent%20AND%20app%3D{{- app.getName() -}}%27))">here</a></td>
+	<td><a href="#{{- baseLocation -}}/{{- app.getName() -}}">here</a></td>
+</tr>
+
+{% endfor %}
+</table>

@@ -81,7 +81,7 @@ public class RoboconfSchedulerTest {
 		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
 		Application app = new TestApplication().name( "app" );
 		app.setDirectory( this.folder.newFolder());
-		wrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		wrapper.addManagedApplication( new ManagedApplication( app ));
 
 		// Register commands
 		this.manager.commandsMngr().createOrUpdateCommand( app, "cmd", "" );
@@ -296,7 +296,7 @@ public class RoboconfSchedulerTest {
 		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
 		Application app = new TestApplication().name( "new app" );
 		app.setDirectory( this.folder.newFolder());
-		wrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		wrapper.addManagedApplication( new ManagedApplication( app ));
 
 		// ... as well as the command.
 		this.manager.commandsMngr().createOrUpdateCommand( app, "cmd", "" );

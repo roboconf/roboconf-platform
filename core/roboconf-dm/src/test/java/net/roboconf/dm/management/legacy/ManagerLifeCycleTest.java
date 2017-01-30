@@ -73,6 +73,7 @@ public class ManagerLifeCycleTest {
 	private TestManagerWrapper managerWrapper;
 	private TestClient msgClient;
 	private TestTargetResolver targetResolver;
+	private TestApplication app;
 
 
 	@Before
@@ -99,6 +100,10 @@ public class ManagerLifeCycleTest {
 
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class ).cancel();
+
+		// Create an application all the tests can use
+		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
 	}
 
 
@@ -111,67 +116,66 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testChangeInstanceState_root() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 
 		// Switch a root instance only works if the state is DEPLOYED_STARTED...
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STOPPED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STOPPED );
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.DEPLOYING, this.app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
+		Assert.assertEquals( this.app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 
 		// ... or NOT_DEPLOYED (the current state is DEPLOYING)
-		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.STARTING );
-		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, this.app.getMySqlVm().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.STARTING );
+		Assert.assertEquals( InstanceStatus.DEPLOYING, this.app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertFalse( this.targetResolver.isRunning( this.app.getMySqlVm()));
 
 		verifyAgentTerminationPropagation();
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// ... Same thing if the current state is DEPLOYED_STARTED
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.STARTING );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.STARTING );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertFalse( this.targetResolver.isRunning( this.app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Make sure data are cleared correctly
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.IP_ADDRESS ));
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.RUNNING_FROM ));
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.TARGET_ACQUIRED ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.IP_ADDRESS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.RUNNING_FROM ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.TARGET_ACQUIRED ));
 	}
 
 
@@ -179,41 +183,39 @@ public class ManagerLifeCycleTest {
 	public void testChangeInstanceState_rootWithProbeConfiguration() throws Exception {
 
 		// Prepare the application
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 
 		// Add a probe file
 		File probeDir = new File( ma.getDirectory(), Constants.PROJECT_DIR_PROBES );
 		Assert.assertTrue( probeDir.mkdir());
 
-		String filename = app.getMySqlVm().getComponent().getName() + Constants.FILE_EXT_MEASURES;
+		String filename = this.app.getMySqlVm().getComponent().getName() + Constants.FILE_EXT_MEASURES;
 		File probeFile = new File( probeDir, filename );
 		Utils.writeStringInto( "whatever", probeFile );
 
 		// Deploy
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.DEPLOYING, this.app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
+		Assert.assertEquals( this.app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 
-		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 1 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 1 );
 		Assert.assertEquals( MsgCmdUpdateProbeConfiguration.class, msg.getClass());
-		Assert.assertEquals( "/" + app.getMySqlVm(), ((MsgCmdUpdateProbeConfiguration) msg).getInstancePath());
+		Assert.assertEquals( "/" + this.app.getMySqlVm(), ((MsgCmdUpdateProbeConfiguration) msg).getInstancePath());
 		Assert.assertEquals( 1, ((MsgCmdUpdateProbeConfiguration) msg).getProbeResources().size());
 		Assert.assertNotNull(((MsgCmdUpdateProbeConfiguration) msg).getProbeResources().get( filename ));
 	}
@@ -222,52 +224,51 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testChangeInstanceState_childWithDeployedRoot() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 
 		// The DM only propagates requests for child instances
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
 		Message msg = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Try other states
 		this.msgClient.allSentMessages.clear();
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
 		msg = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Not_DEPLOYED
 		this.msgClient.allSentMessages.clear();
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.NOT_DEPLOYED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.NOT_DEPLOYED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
 		msg = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 	}
@@ -276,56 +277,55 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testChangeInstanceState_childWithDeployingRoot() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 
 		// The DM only propagates requests for child instances.
 		// But since the root is deploying, messages are stored.
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Try other states
 		ma.getScopedInstanceToAwaitingMessages().clear();
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 
-		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Not_DEPLOYED
 		ma.getScopedInstanceToAwaitingMessages().clear();
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.NOT_DEPLOYED );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.NOT_DEPLOYED );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 
-		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 	}
@@ -334,39 +334,37 @@ public class ManagerLifeCycleTest {
 	@Test( expected = IOException.class )
 	public void testChangeInstanceState_invalidConfiguration() throws Exception {
 
-		TestApplication app = new TestApplication();
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		ManagedApplication ma = new ManagedApplication( app );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		ManagedApplication ma = new ManagedApplication( this.app );
 
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
+		this.managerWrapper.addManagedApplication( ma );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
 	}
 
 
 	@Test
 	public void testDeployRoot() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getMySqlVm()));
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm());
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
+		Assert.assertEquals( this.app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 	}
 
 
@@ -376,14 +374,13 @@ public class ManagerLifeCycleTest {
 		// This is a unit test for #80.
 		// More than concurrent accesses, it tests the fact the DM can filter
 		// redundant requests about root instances deployment.
-		TestApplication app = new TestApplication();
-		final ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		final ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
-		final Instance instance = app.getMySqlVm();
+		final Instance instance = this.app.getMySqlVm();
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertNull( this.targetResolver.count( instance ));
@@ -412,37 +409,36 @@ public class ManagerLifeCycleTest {
 
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertNotNull( instance.data.get( Instance.TARGET_ACQUIRED ));
-		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getMySqlVm()));
 
 		// 2 requests to deploy a root instance, but one is filtered by the DM.
 		Assert.assertEquals((Integer) 1, this.targetResolver.count( instance ));
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm());
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
+		Assert.assertEquals( this.app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 	}
 
 
 	@Test
 	public void testDeployRoot_alreadyDeployed() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// A root instance is considered to be deployed if it has a machine ID.
-		app.getMySqlVm().data.put( Instance.MACHINE_ID, "something" );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		this.app.getMySqlVm().data.put( Instance.MACHINE_ID, "something" );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
@@ -453,12 +449,11 @@ public class ManagerLifeCycleTest {
 	@Test( expected = TargetException.class )
 	public void testDeployRoot_targetException() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
 			@Override
@@ -472,51 +467,48 @@ public class ManagerLifeCycleTest {
 
 		// Nothing happens with children instances
 		try {
-			this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
+			this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
 
 		} catch( Exception e ) {
 			Assert.fail( "Nothing should have happened here." );
 		}
 
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 	}
 
 
 	@Test( expected = IOException.class )
 	public void testDeployRoot_invalidConfiguration() throws Exception {
-
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( this.app );
 
 		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		this.managerWrapper.addManagedApplication( ma );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 	}
 
 
 	@Test
 	public void testUndeployRoot() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		app.getMySqlVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.app.getMySqlVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertFalse( this.targetResolver.isRunning( this.app.getMySqlVm()));
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		verifyAgentTerminationPropagation();
@@ -526,19 +518,18 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testUndeployRoot_noMachineId() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
@@ -548,33 +539,32 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testUndeployRoot_notDeployed() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// The state means nothing in fact, the machine ID does
 		ma.getScopedInstanceToAwaitingMessages().clear();
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		app.getMySqlVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.app.getMySqlVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertFalse( this.targetResolver.isRunning( this.app.getMySqlVm()));
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 
@@ -584,12 +574,11 @@ public class ManagerLifeCycleTest {
 	@Test( expected = TargetException.class )
 	public void testUndeployRoot_targetException() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
 			@Override
@@ -599,75 +588,73 @@ public class ManagerLifeCycleTest {
 			}
 		};
 
-		app.getMySqlVm().data.put( Instance.MACHINE_ID, "we need one" );
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.app.getMySqlVm().data.put( Instance.MACHINE_ID, "we need one" );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		this.manager.setTargetResolver( newResolver );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 	}
 
 
 	@Test( expected = IOException.class )
 	public void testUndeployRoot_invalidConfiguration() throws Exception {
 
-		TestApplication app = new TestApplication();
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		ManagedApplication ma = new ManagedApplication( app );
+		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		ManagedApplication ma = new ManagedApplication( this.app );
 
 		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
+		this.managerWrapper.addManagedApplication( ma );
+		this.manager.instancesMngr().changeInstanceState( ma, this.app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 	}
 
 
 	@Test
 	public void testDeployAndStartAll_application() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.instancesMngr().deployAndStartAll( ma, null );
 
-		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertTrue( this.targetResolver.isRunning( app.getTomcatVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getMySqlVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getTomcatVm()));
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// MySQL
-		List<Message> mySqlMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> mySqlMessages = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm());
 		Assert.assertEquals( 2, mySqlMessages.size());
 
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, mySqlMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) mySqlMessages.get( 0 )).getScopedInstance());
+		Assert.assertEquals( this.app.getMySqlVm(), ((MsgCmdSetScopedInstance) mySqlMessages.get( 0 )).getScopedInstance());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, mySqlMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) mySqlMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()), ((MsgCmdChangeInstanceState) mySqlMessages.get( 1 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) mySqlMessages.get( 1 )).getNewState());
 
 		// Tomcat
-		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm());
 		Assert.assertEquals( 3, tomcatMessages.size());
 
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdSetScopedInstance) tomcatMessages.get( 0 )).getScopedInstance());
+		Assert.assertEquals( this.app.getTomcatVm(), ((MsgCmdSetScopedInstance) tomcatMessages.get( 0 )).getScopedInstance());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getNewState());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getNewState());
 	}
 
@@ -675,36 +662,35 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testDeployAndStartAll_rootInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.instancesMngr().deployAndStartAll( ma, app.getTomcatVm());
+		this.manager.instancesMngr().deployAndStartAll( ma, this.app.getTomcatVm());
 
-		Assert.assertNull( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertTrue( this.targetResolver.isRunning( app.getTomcatVm()));
+		Assert.assertNull( this.targetResolver.isRunning( this.app.getMySqlVm()));
+		Assert.assertTrue( this.targetResolver.isRunning( this.app.getTomcatVm()));
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Tomcat
-		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm());
 		Assert.assertEquals( 3, tomcatMessages.size());
 
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdSetScopedInstance) tomcatMessages.get( 0 )).getScopedInstance());
+		Assert.assertEquals( this.app.getTomcatVm(), ((MsgCmdSetScopedInstance) tomcatMessages.get( 0 )).getScopedInstance());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getNewState());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getNewState());
 	}
 
@@ -712,29 +698,28 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testDeployAndStartAll_intermediateInstance_vmDeployed() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.instancesMngr().deployAndStartAll( ma, app.getTomcat());
+		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().deployAndStartAll( ma, this.app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 2, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.allSentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 0 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 0 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 0 )).getNewState());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.allSentMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 1 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 1 )).getNewState());
 	}
 
@@ -742,59 +727,55 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testDeployAndStartAll_intermediateInstance_vmDeploying() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nprop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYING );
-		this.manager.instancesMngr().deployAndStartAll( ma, app.getTomcat());
+		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYING );
+		this.manager.instancesMngr().deployAndStartAll( ma, this.app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Tomcat
-		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm());
 		Assert.assertEquals( 2, tomcatMessages.size());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 0 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 0 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) tomcatMessages.get( 0 )).getNewState());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getNewState());
 	}
 
 
 	@Test( expected = IOException.class )
 	public void testDeployAndStartAll_invalidConfiguration() throws Exception {
-
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( this.app );
 
 		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
-		this.manager.targetsMngr().associateTargetWith( targetId, app, null );
+		this.manager.targetsMngr().associateTargetWith( targetId, this.app, null );
 
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.instancesMngr().deployAndStartAll( ma, app.getMySqlVm());
+		this.managerWrapper.addManagedApplication( ma );
+		this.manager.instancesMngr().deployAndStartAll( ma, this.app.getMySqlVm());
 	}
 
 
 	@Test
 	public void testStopAll_application() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
@@ -804,17 +785,17 @@ public class ManagerLifeCycleTest {
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()),((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getMySql()),((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 
-		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 	}
 
@@ -822,23 +803,22 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testStopAll_rootInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.instancesMngr().stopAll( ma, app.getTomcatVm());
+		this.manager.instancesMngr().stopAll( ma, this.app.getTomcatVm());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 	}
 
@@ -846,59 +826,55 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testStopAll_intermediateInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.instancesMngr().stopAll( ma, app.getTomcat());
+		this.manager.instancesMngr().stopAll( ma, this.app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 	}
 
 
 	@Test( expected = IOException.class )
 	public void testStopAll_invalidConfiguration() throws Exception {
-
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( this.app );
 
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.instancesMngr().stopAll( ma, app.getMySqlVm());
+		this.managerWrapper.addManagedApplication( ma );
+		this.manager.instancesMngr().stopAll( ma, this.app.getMySqlVm());
 	}
 
 
 	@Test
 	public void testUndeployAll_application() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		app.getTomcatVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( app.getTomcatVm()));
+		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		this.app.getTomcatVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( this.app.getTomcatVm()));
 		this.manager.instancesMngr().undeployAll( ma, null );
 
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcatVm().getStatus());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getTomcatVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 
-		Assert.assertNull( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertFalse( this.targetResolver.isRunning( app.getTomcatVm()));
+		Assert.assertNull( this.targetResolver.isRunning( this.app.getMySqlVm()));
+		Assert.assertFalse( this.targetResolver.isRunning( this.app.getTomcatVm()));
 
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		verifyAgentTerminationPropagation();
@@ -908,22 +884,21 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testUndeployAll_rootInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		app.getTomcatVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( app.getTomcatVm()));
-		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYING );
-		this.manager.instancesMngr().undeployAll( ma, app.getTomcatVm());
+		this.app.getTomcatVm().data.put( Instance.MACHINE_ID, InstanceHelpers.computeInstancePath( this.app.getTomcatVm()));
+		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYING );
+		this.manager.instancesMngr().undeployAll( ma, this.app.getTomcatVm());
 
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcatVm().getStatus());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getTomcatVm().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 
-		Assert.assertNull( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertFalse( this.targetResolver.isRunning( app.getTomcatVm()));
+		Assert.assertNull( this.targetResolver.isRunning( this.app.getMySqlVm()));
+		Assert.assertFalse( this.targetResolver.isRunning( this.app.getTomcatVm()));
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		verifyAgentTerminationPropagation();
@@ -933,37 +908,34 @@ public class ManagerLifeCycleTest {
 	@Test
 	public void testUndeployAll_intermediateInstance() throws Exception {
 
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( this.app );
+		this.managerWrapper.addManagedApplication( ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.instancesMngr().undeployAll( ma, app.getTomcat());
+		this.manager.instancesMngr().undeployAll( ma, this.app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).size());
 
-		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( this.app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) msg).getNewState());
 	}
 
 
 	@Test( expected = IOException.class )
 	public void testUndeployAll_invalidConfiguration() throws Exception {
-
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( this.app );
 
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.instancesMngr().undeployAll( ma, app.getMySqlVm());
+		this.managerWrapper.addManagedApplication( ma );
+		this.manager.instancesMngr().undeployAll( ma, this.app.getMySqlVm());
 	}
 
 

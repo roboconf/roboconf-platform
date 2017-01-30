@@ -111,8 +111,9 @@ public class TemplatingManagerTest {
 
 		// Create a new application
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		TestManagerWrapper managerWrapper = new TestManagerWrapper( dm );
-		managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		managerWrapper.addManagedApplication( new ManagedApplication( app ));
 
 		mngr.application( app, EventType.CREATED );
 		Thread.sleep( 700 );

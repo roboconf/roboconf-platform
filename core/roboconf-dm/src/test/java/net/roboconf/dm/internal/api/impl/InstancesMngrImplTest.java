@@ -97,6 +97,7 @@ public class InstancesMngrImplTest {
 
 		// Prepare stuff
 		final TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
 		INotificationMngr notificationMngr = new NotificationMngrImpl() {
 			@Override
@@ -165,6 +166,7 @@ public class InstancesMngrImplTest {
 
 		// Prepare stuff
 		final TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		final Map<Instance,List<InstanceStatus>> instanceToStatusHistory = new HashMap<> ();
 		INotificationMngr notificationMngr = new NotificationMngrImpl() {
 			@Override
@@ -247,6 +249,7 @@ public class InstancesMngrImplTest {
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// We want to make sure target locking is correctly invoked by the instances manager.
@@ -334,6 +337,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// We will try to create a machine. It will fail.
@@ -410,6 +414,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -419,7 +424,9 @@ public class InstancesMngrImplTest {
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 
 		// The handler's ID did not match => no restoration and no use of other mocks
-		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
+		Mockito.verifyNoMoreInteractions( targetsMngr );
 
 		Mockito.verifyZeroInteractions( targetHandlerArgument );
 		Mockito.verifyZeroInteractions( messagingMngr );
@@ -463,6 +470,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -472,7 +480,10 @@ public class InstancesMngrImplTest {
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 
 		// The handler's ID did not match => no restoration and no use of other mocks
-		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
+		Mockito.verifyNoMoreInteractions( targetsMngr );
+
 		Mockito.verify( targetHandler, Mockito.only()).getTargetId();
 		Mockito.verify( targetHandlerArgument, Mockito.only()).getTargetId();
 
@@ -516,22 +527,27 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 
 		// Try to restore instances
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 		Mockito.when( targetHandlerArgument.isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ))).thenReturn( true );
 
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
-		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
+		Mockito.verifyNoMoreInteractions( targetsMngr );
+
 		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ));
@@ -584,22 +600,27 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 
 		// Try to restore instances
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 		Mockito.when( targetHandlerArgument.isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ))).thenReturn( true );
 
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
-		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
+		Mockito.verifyNoMoreInteractions( targetsMngr );
+
 		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ));
@@ -647,6 +668,7 @@ public class InstancesMngrImplTest {
 		});
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		// One scoped instance has a machine ID (considered as running somewhere)
@@ -664,7 +686,11 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is NOT running => no message was sent.
-		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
+		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
+		Mockito.verifyNoMoreInteractions( targetsMngr );
+
 		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ));
@@ -687,6 +713,7 @@ public class InstancesMngrImplTest {
 		// Prepare stuff
 		IInstancesMngr mngr = new InstancesMngrImpl( null, null, null, null, null );
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		TargetHandler targetHandler = Mockito.mock( TargetHandler.class );

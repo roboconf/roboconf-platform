@@ -55,6 +55,7 @@ import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.internal.tasks.CheckerForHeartbeatsTask;
 import net.roboconf.dm.internal.tasks.CheckerForStoredMessagesTask;
 import net.roboconf.dm.internal.tasks.CheckerForTargetsConfigurationTask;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
 import net.roboconf.dm.management.api.IAutonomicMngr;
@@ -235,6 +236,10 @@ public class Manager implements IReconfigurable {
 			this.timer.cancel();
 			this.timer =  null;
 		}
+
+		// Save the instances
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			ConfigurationUtils.saveInstances( ma );
 
 		// Disable notifications to listeners
 		this.notificationMngr.disableNotifications();
