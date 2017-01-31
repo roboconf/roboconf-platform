@@ -49,13 +49,13 @@
 
 	<!-- Get the last snapshot -->
 	<target name="target.get.snapshot" if="roboconf.snapshot" description="Downloading the last built distribution...">
-		<get src="https://dl.bintray.com/roboconf/roboconf-web-administration/all/roboconf-web-administration-snapshot.zip" dest="target/" />
+		<get src="https://dl.bintray.com/roboconf/roboconf-web-administration/snapshot/roboconf-web-administration-snapshot.zip" dest="target/" />
 		<unzip src="target/roboconf-web-administration-snapshot.zip" dest="target/roboconf-web-administration-dist/" />
 	</target>
 
 	<!-- Get a release -->
 	<target name="target.get.release" unless="roboconf.snapshot" description="Downloading a released distribution...">
-		<get src="https://dl.bintray.com/roboconf/roboconf-web-administration/all/roboconf-web-administration-${project.version}.zip" dest="target/" />
+		<get src="https://dl.bintray.com/roboconf/roboconf-web-administration/${project.version}/roboconf-web-administration-${project.version}.zip" dest="target/" />
 		<unzip src="target/roboconf-web-administration-${project.version}.zip" dest="target/roboconf-web-administration-dist/" />
 	</target>
 
