@@ -159,7 +159,7 @@ public class ServletRegistrationComponent {
 	/**
 	 * @param httpService the httpService to set
 	 */
-	void setHttpService( HttpService httpService ) {
+	public void setHttpService( HttpService httpService ) {
 		this.httpService = httpService;
 	}
 

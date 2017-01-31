@@ -59,8 +59,8 @@ public abstract class AbstractLifeCycleManager {
 	private static final String FORCE = "force";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final String appName;
-	private final IAgentClient messagingClient;
+	protected final String appName;
+	protected final IAgentClient messagingClient;
 
 
 	/**
