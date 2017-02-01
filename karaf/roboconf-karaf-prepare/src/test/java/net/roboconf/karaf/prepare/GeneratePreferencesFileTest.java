@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.dist.dm;
+package net.roboconf.karaf.prepare;
 
 import java.io.File;
 

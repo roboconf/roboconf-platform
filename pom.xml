@@ -303,6 +303,7 @@
 				<module>core/roboconf-agent-monitoring-docker</module>
 		
 				<!-- Distributions -->
+				<module>karaf/roboconf-karaf-prepare</module>
 				<module>karaf/roboconf-karaf-commands-common</module>
 				<module>karaf/roboconf-karaf-commands-agent</module>
 				<module>karaf/roboconf-karaf-commands-dm</module>

@@ -69,27 +69,15 @@
 			<scope>runtime</scope>
 		</dependency>
 		
-		<!-- Test dependencies, to generate the configuration file for the preferences -->
+		<!-- 
+			Provided dependencies => Neither installed, nor referenced by Karaf.
+		 	To generate the configuration file for the preferences.
+		-->
 		<dependency>
 			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-core</artifactId>
+			<artifactId>roboconf-karaf-prepare</artifactId>
 			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-dm</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-dm</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		
 	</dependencies>
@@ -172,9 +160,9 @@
 						<configuration>
 							<failOnError>true</failOnError>
 							<target>
-								<property name="test_classpath" refid="maven.test.classpath"/>
+								<property name="maven_classpath" refid="maven.compile.classpath"/>
 								<property name="project_location" value="${project.basedir}" />
-								<java classname="net.roboconf.karaf.dist.dm.GeneratePreferencesFile" classpath="${test_classpath}" failonerror="true">
+								<java classname="net.roboconf.karaf.prepare.GeneratePreferencesFile" classpath="${maven_classpath}" failonerror="true">
 									<arg value="${project_location}/target/assembly/etc/net.roboconf.dm.preferences.cfg" />
 								</java>
 							</target>	
