@@ -80,6 +80,20 @@
 			<scope>provided</scope>
 		</dependency>
 		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-core</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
 	</dependencies>
 
 	<build>
@@ -160,9 +174,20 @@
 						<configuration>
 							<failOnError>true</failOnError>
 							<target>
-								<property name="maven_classpath" refid="maven.runtime.classpath" />
+							
+								<!-- Create the class path for the execution -->
+								<path id="maven_classpath">
+									<pathelement path="${net.roboconf:roboconf-core:jar}" />
+									<pathelement path="${net.roboconf:roboconf-dm:jar}" />
+									<pathelement path="${net.roboconf:roboconf-karaf-prepare:jar}" />
+								</path>
+								
+								<!-- Covert the class path as a property -->
+								<pathconvert property="classpath_prop" refid="maven_classpath"/>
+
+								<!-- Prepare and start the execution -->								
 								<property name="project_location" value="${project.basedir}" />
-								<java classname="net.roboconf.karaf.prepare.GeneratePreferencesFile" classpath="${maven_classpath}" failonerror="true">
+								<java classname="net.roboconf.karaf.prepare.GeneratePreferencesFile" classpath="${classpath_prop}" failonerror="true">
 									<arg value="${project_location}/target/assembly/etc/net.roboconf.dm.preferences.cfg" />
 								</java>
 							</target>	
