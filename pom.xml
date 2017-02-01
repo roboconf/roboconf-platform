@@ -313,6 +313,7 @@
 		
 				<!-- Miscellaneous -->
 				<module>miscellaneous/roboconf-dm-rest-client</module>
+				<module>miscellaneous/roboconf-swagger</module>
 				
 				<!-- Web Extensions -->
 				<module>web-extensions/roboconf-web-extension-for-kibana</module>

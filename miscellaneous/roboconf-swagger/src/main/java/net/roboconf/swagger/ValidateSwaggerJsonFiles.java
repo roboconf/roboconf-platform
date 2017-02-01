@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.swagger;
+package net.roboconf.swagger;
 
 import java.io.File;
 

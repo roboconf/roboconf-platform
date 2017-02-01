@@ -23,13 +23,14 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.swagger;
+package net.roboconf.swagger;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,11 +40,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
@@ -109,8 +114,11 @@ public class UpdateSwaggerJson {
 		StringWriter writer = new StringWriter();
 		JsonObject newDef = new JsonObject();
 
+		// Copy the test application here as test-jars cannot be referenced
+		// in compile scope.
+		Application app = newTestApplication();
+
 		// Create a model, as complete as possible
-		TestApplication app = new TestApplication();
 		app.bindWithApplication( "externalExportPrefix1", "application 1" );
 		app.bindWithApplication( "externalExportPrefix1", "application 2" );
 		app.bindWithApplication( "externalExportPrefix2", "application 3" );
@@ -134,14 +142,17 @@ public class UpdateSwaggerJson {
 		convertToTypes( s, ApplicationTemplate.class, newDef );
 
 		// (*) Component
+		Instance war = InstanceHelpers.findInstanceByPath( app, "/tomcat-vm/tomcat-server/hello-world" );
+		Objects.requireNonNull( war );
+
 		writer = new StringWriter();
-		mapper.writeValue( writer, app.getWar().getComponent());
+		mapper.writeValue( writer, war.getComponent());
 		s = writer.toString();
 		convertToTypes( s, Component.class, newDef );
 
 		// (*) Instance
 		writer = new StringWriter();
-		mapper.writeValue( writer, app.getWar());
+		mapper.writeValue( writer, war );
 		s = writer.toString();
 		convertToTypes( s, Instance.class, newDef );
 
@@ -314,5 +325,55 @@ public class UpdateSwaggerJson {
 
 		// Update our global definition
 		newDef.add( "json_" + className, innerObject );
+	}
+
+
+	/**
+	 * @return a new test application
+	 */
+	static Application newTestApplication() {
+
+		ApplicationTemplate tpl = new ApplicationTemplate();
+		tpl.setName( "test-app" );
+		tpl.setQualifier( "test" );
+
+		// Root instances
+		Component vmComponent = new Component( "vm" ).installerName( Constants.TARGET_INSTALLER );
+		Instance tomcatVm = new Instance( "tomcat-vm" ).component( vmComponent );
+		Instance mySqlVm = new Instance( "mysql-vm" ).component( vmComponent );
+
+		// Children instances
+		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" );
+		Instance tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
+
+		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" );
+		mySqlComponent.addExportedVariable( new ExportedVariable( "port", "3306" ));
+		mySqlComponent.addExportedVariable( new ExportedVariable( "ip", null ));
+		Instance mySql = new Instance( "mysql-server" ).component( mySqlComponent );
+
+		Component warComponent = new Component( "war" ).installerName( "script" );
+		warComponent.addExportedVariable( new ExportedVariable( "port", "8080" ));
+		warComponent.addExportedVariable( new ExportedVariable( "ip", null ));
+		warComponent.addImportedVariable( new ImportedVariable( "mysql.port", false, false ));
+		warComponent.addImportedVariable( new ImportedVariable( "mysql.ip", false, false ));
+		Instance war = new Instance( "hello-world" ).component( warComponent );
+
+		// Make the glue
+		InstanceHelpers.insertChild( tomcatVm, tomcat );
+		InstanceHelpers.insertChild( tomcat, war );
+		InstanceHelpers.insertChild( mySqlVm, mySql );
+
+		vmComponent.addChild( mySqlComponent );
+		vmComponent.addChild( tomcatComponent );
+		tomcatComponent.addChild( warComponent );
+
+		tpl.setGraphs( new Graphs());
+		tpl.getGraphs().getRootComponents().add( vmComponent );
+		tpl.getRootInstances().add( mySqlVm );
+		tpl.getRootInstances().add( tomcatVm );
+
+		// Create the application
+		Application app = new Application( "test", tpl );
+		return app;
 	}
 }

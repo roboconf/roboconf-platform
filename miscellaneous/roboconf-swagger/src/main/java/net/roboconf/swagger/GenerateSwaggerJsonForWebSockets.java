@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.swagger;
+package net.roboconf.swagger;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +31,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import javax.ws.rs.core.MediaType;
@@ -52,7 +53,9 @@ import io.swagger.models.Swagger;
 import io.swagger.models.Tag;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.util.Json;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
@@ -231,10 +234,13 @@ public class GenerateSwaggerJsonForWebSockets {
 		StringWriter writer = new StringWriter();
 
 		// Create a model, as complete as possible
-		TestApplication app = new TestApplication();
+		Application app = UpdateSwaggerJson.newTestApplication();
 
 		// Serialize things and generate the examples
-		WebSocketMessage msg = new WebSocketMessage( app.getTomcat(), app, EventType.CHANGED );
+		Instance tomcat = InstanceHelpers.findInstanceByPath( app, "/tomcat-vm/tomcat-server" );
+		Objects.requireNonNull( tomcat );
+
+		WebSocketMessage msg = new WebSocketMessage( tomcat, app, EventType.CHANGED );
 		writer = new StringWriter();
 		mapper.writeValue( writer, msg );
 		result.put( INSTANCE, writer.toString());
