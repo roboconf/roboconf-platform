@@ -156,11 +156,11 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
-						<phase>test-compile</phase>
+						<phase>compile</phase>
 						<configuration>
 							<failOnError>true</failOnError>
 							<target>
-								<property name="maven_classpath" refid="maven.compile.classpath"/>
+								<property name="maven_classpath" refid="maven.runtime.classpath" />
 								<property name="project_location" value="${project.basedir}" />
 								<java classname="net.roboconf.karaf.prepare.GeneratePreferencesFile" classpath="${maven_classpath}" failonerror="true">
 									<arg value="${project_location}/target/assembly/etc/net.roboconf.dm.preferences.cfg" />
