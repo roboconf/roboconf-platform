@@ -182,7 +182,7 @@
 				<executions>
 					<execution>
 						<id>build-classpath</id>
-						<phase>process-classes</phase>
+						<phase>compile</phase>
 						<goals>
 							<goal>build-classpath</goal>
 						</goals>
