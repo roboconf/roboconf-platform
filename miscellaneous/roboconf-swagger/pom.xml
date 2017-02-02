@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>-SNAPSHOT</version>
+		<version>0.9-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	
@@ -217,7 +217,6 @@
 								
 								<!-- Covert the class path as a property -->
 								<pathconvert property="classpath_prop" refid="maven_classpath" />
-								<echo message="${classpath_prop}" />
 								
 								<!-- Prepare the execution parameters -->
 								<property name="project_location" value="${project.basedir}" />
