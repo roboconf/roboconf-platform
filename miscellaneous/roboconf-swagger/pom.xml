@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.8-SNAPSHOT</version>
+		<version>0.8</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	
@@ -216,7 +216,7 @@
 								</path>
 								
 								<!-- Covert the class path as a property -->
-								<pathconvert property="classpath_prop" refid="maven_classpath"/>
+								<pathconvert property="classpath_prop" refid="maven_classpath" />
 								<echo message="${classpath_prop}" />
 								
 								<!-- Prepare the execution parameters -->
