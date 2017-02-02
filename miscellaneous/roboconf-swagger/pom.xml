@@ -176,7 +176,7 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
-						<phase>compile</phase>
+						<phase>process-classes</phase>
 						<configuration>
 							<failOnError>true</failOnError>
 							<target>
