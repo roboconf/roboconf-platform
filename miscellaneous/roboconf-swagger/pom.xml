@@ -180,23 +180,35 @@
 						<configuration>
 							<failOnError>true</failOnError>
 							<target>
-								<property name="maven_classpath" refid="maven.runtime.classpath" />
+							
+								<!-- Create the class path for the execution -->
+								<property name="compile.classpath" refid="maven.compile.classpath" />
+								<property name="runtime.classpath" refid="maven.runtime.classpath" />
+								<path id="maven_classpath">
+									<pathelement path="${compile.classpath}" />
+									<pathelement path="${runtime.classpath}" />
+								</path>
+								
+								<!-- Covert the class path as a property -->
+								<pathconvert property="classpath_prop" refid="maven_classpath"/>
+								
+								<!-- Prepare the execution parameters -->
 								<property name="project_location" value="${project.basedir}" />
 								<property name="roboconf_version" value="${project.version}" />
 
 								<!-- Update the swagger.json file for the REST API. -->
-								<java classname="net.roboconf.swagger.UpdateSwaggerJson" classpath="${maven_classpath}" failonerror="true">
+								<java classname="net.roboconf.swagger.UpdateSwaggerJson" classpath="${classpath_prop}" failonerror="true">
 									<arg value="${project_location}" />
 								</java>
 
 								<!-- Generate the swagger.json file for the Web Socket API. -->
-								<java classname="net.roboconf.swagger.GenerateSwaggerJsonForWebSockets" classpath="${maven_classpath}" failonerror="true">
+								<java classname="net.roboconf.swagger.GenerateSwaggerJsonForWebSockets" classpath="${classpath_prop}" failonerror="true">
 									<arg value="${project_location}" />
 									<arg value="${roboconf_version}" />
 								</java>
 
 								<!-- Validate all the swagger.json files. -->
-								<java classname="net.roboconf.swagger.ValidateSwaggerJsonFiles" classpath="${maven_classpath}" failonerror="true">
+								<java classname="net.roboconf.swagger.ValidateSwaggerJsonFiles" classpath="${classpath_prop}" failonerror="true">
 									<arg value="${project_location}" />
 								</java>
 							</target>	
