@@ -270,16 +270,17 @@
 				<module>core/roboconf-messaging-rabbitmq</module>
 				<module>core/roboconf-messaging-http</module>
 		
-				<!-- Agent -->
-				<module>core/roboconf-agent</module>
-				<module>core/roboconf-agent-default</module>
-		
 				<!-- DM modules -->
 				<module>core/roboconf-dm</module>
 				<module>core/roboconf-dm-templating</module>
 				<module>core/roboconf-dm-scheduler</module>
 				<module>core/roboconf-dm-rest-commons</module>
 				<module>core/roboconf-dm-rest-services</module>
+				<module>miscellaneous/roboconf-swagger</module>
+		
+				<!-- Agent -->
+				<module>core/roboconf-agent</module>
+				<module>core/roboconf-agent-default</module>
 		
 				<!-- Target Handlers -->
 				<module>core/roboconf-target-in-memory</module>
@@ -314,7 +315,6 @@
 		
 				<!-- Miscellaneous -->
 				<module>miscellaneous/roboconf-dm-rest-client</module>
-				<module>miscellaneous/roboconf-swagger</module>
 				
 				<!-- Web Extensions -->
 				<module>web-extensions/roboconf-web-extension-for-kibana</module>

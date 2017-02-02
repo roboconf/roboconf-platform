@@ -191,6 +191,7 @@
 								
 								<!-- Covert the class path as a property -->
 								<pathconvert property="classpath_prop" refid="maven_classpath"/>
+								<echo message="${classpath_prop}" />
 								
 								<!-- Prepare the execution parameters -->
 								<property name="project_location" value="${project.basedir}" />
