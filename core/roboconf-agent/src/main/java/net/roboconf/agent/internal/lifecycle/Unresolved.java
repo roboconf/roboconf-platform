@@ -33,6 +33,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.api.business.IAgentClient;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -66,14 +67,17 @@ class Unresolved extends AbstractLifeCycleManager {
 		// Stop is only a status change, no script or notification run
 		else if( newStatus == InstanceStatus.DEPLOYED_STOPPED ) {
 			instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			List<Instance> childrenInstances = InstanceHelpers.buildHierarchicalList( instance );
 			childrenInstances.remove( instance );
 
 			for( Instance childInstance : childrenInstances ) {
 				// Unresolved can only have "deployed stopped", "not deployed" and "waiting for ancestor" child status.
-				if( childInstance.getStatus() == InstanceStatus.WAITING_FOR_ANCESTOR )
+				if( childInstance.getStatus() == InstanceStatus.WAITING_FOR_ANCESTOR ) {
 					childInstance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
+					this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, childInstance ));
+				}
 			}
 		}
 	}

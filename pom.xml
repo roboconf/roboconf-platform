@@ -36,7 +36,7 @@
 
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-platform-parent</artifactId>
-	<version>0.8-SNAPSHOT</version>
+	<version>0.9-SNAPSHOT</version>
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
@@ -55,7 +55,7 @@
 		<pax.url.aether.version>2.4.5</pax.url.aether.version>
 		
 		<!-- To update on every release -->
-		<version.range>[${project.version},0.9)</version.range>
+		<version.range>[${project.version},0.10)</version.range>
 		
 		<!-- 
 			We should not embed any SLF4J library in bundles.
@@ -270,16 +270,17 @@
 				<module>core/roboconf-messaging-rabbitmq</module>
 				<module>core/roboconf-messaging-http</module>
 		
-				<!-- Agent -->
-				<module>core/roboconf-agent</module>
-				<module>core/roboconf-agent-default</module>
-		
 				<!-- DM modules -->
 				<module>core/roboconf-dm</module>
 				<module>core/roboconf-dm-templating</module>
 				<module>core/roboconf-dm-scheduler</module>
 				<module>core/roboconf-dm-rest-commons</module>
 				<module>core/roboconf-dm-rest-services</module>
+				<module>miscellaneous/roboconf-swagger</module>
+		
+				<!-- Agent -->
+				<module>core/roboconf-agent</module>
+				<module>core/roboconf-agent-default</module>
 		
 				<!-- Target Handlers -->
 				<module>core/roboconf-target-in-memory</module>
@@ -303,6 +304,7 @@
 				<module>core/roboconf-agent-monitoring-docker</module>
 		
 				<!-- Distributions -->
+				<module>karaf/roboconf-karaf-prepare</module>
 				<module>karaf/roboconf-karaf-commands-common</module>
 				<module>karaf/roboconf-karaf-commands-agent</module>
 				<module>karaf/roboconf-karaf-commands-dm</module>

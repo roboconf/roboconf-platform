@@ -146,7 +146,9 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, notif.instanceToStatusHistory.size());
 		List<InstanceStatus> statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED ), statusHistory );
+		Assert.assertEquals( 3, statusHistory.size());
+		Assert.assertEquals( DEPLOYING, statusHistory.get( 0 ));
+		Assert.assertEquals( DEPLOYED_STARTED, statusHistory.get( 2 ));
 
 		// Deploy, start and stop a child
 		Instance childInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
@@ -160,7 +162,9 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 2, notif.instanceToStatusHistory.size());
 		statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED ), statusHistory );
+		Assert.assertEquals( 3, statusHistory.size());
+		Assert.assertEquals( DEPLOYING, statusHistory.get( 0 ));
+		Assert.assertEquals( DEPLOYED_STARTED, statusHistory.get( 2 ));
 
 		statusHistory = notif.instanceToStatusHistory.get( childInstance );
 		Assert.assertNotNull( statusHistory );
@@ -173,7 +177,9 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 2, notif.instanceToStatusHistory.size());
 		statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED ), statusHistory );
+		Assert.assertEquals( 3, statusHistory.size());
+		Assert.assertEquals( DEPLOYING, statusHistory.get( 0 ));
+		Assert.assertEquals( DEPLOYED_STARTED, statusHistory.get( 2 ));
 
 		statusHistory = notif.instanceToStatusHistory.get( childInstance );
 		Assert.assertNotNull( statusHistory );
@@ -186,7 +192,11 @@ public class DmNotificationsAboutInstancesTest extends DmWithAgentInMemoryTest {
 
 		statusHistory = notif.instanceToStatusHistory.get( rootInstance );
 		Assert.assertNotNull( statusHistory );
-		Assert.assertEquals( Arrays.asList( DEPLOYING, DEPLOYED_STARTED, DEPLOYED_STARTED, UNDEPLOYING, NOT_DEPLOYED ), statusHistory );
+		Assert.assertEquals( 5, statusHistory.size());
+		Assert.assertEquals( DEPLOYING, statusHistory.get( 0 ));
+		Assert.assertEquals( DEPLOYED_STARTED, statusHistory.get( 2 ));
+		Assert.assertEquals( UNDEPLOYING, statusHistory.get( 3 ));
+		Assert.assertEquals( NOT_DEPLOYED, statusHistory.get( 4 ));
 
 		statusHistory = notif.instanceToStatusHistory.get( childInstance );
 		Assert.assertNotNull( statusHistory );

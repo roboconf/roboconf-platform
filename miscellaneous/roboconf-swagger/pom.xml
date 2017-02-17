@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Copyright 2013-2017 Linagora, Université Joseph Fourier, Floralis
+
+   The present code is developed in the scope of the joint LINAGORA -
+   Université Joseph Fourier - Floralis research program and is designated
+   as a "Result" pursuant to the terms and conditions of the LINAGORA
+   - Université Joseph Fourier - Floralis research program. Each copyright
+   holder of Results enumerated here above fully & independently holds complete
+   ownership of the complete Intellectual Property rights applicable to the whole
+   of said Results, and may freely exploit it in any manner which does not infringe
+   the moral rights of the other copyright holders.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>net.roboconf</groupId>
+		<artifactId>roboconf-platform-parent</artifactId>
+		<version>0.9-SNAPSHOT</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+	
+	<groupId>net.roboconf</groupId>
+	<artifactId>roboconf-swagger</artifactId>
+	<name>Roboconf :: Swagger</name>
+	<packaging>jar</packaging>
+	
+	<properties>
+		<enunciate.version>2.6.0</enunciate.version>
+	</properties>
+	
+	<dependencies>
+	
+		<!-- Dependencies to compile -->
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-core</artifactId>
+  			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-rest-commons</artifactId>
+  			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-rest-services</artifactId>
+  			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-core</artifactId>
+			<version>${jersey.stack.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.2.2</version>
+		</dependency>
+	
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-parser</artifactId>
+			<version>1.0.23</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-annotations</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.stack.version}</version>
+		</dependency>
+
+		<!-- Tests -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- Dependencies required during Enunciate's build -->
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm</artifactId>
+  			<version>${project.version}</version>
+  			<scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-scheduler</artifactId>
+  			<version>${project.version}</version>
+  			<scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-target-api</artifactId>
+  			<version>${project.version}</version>
+  			<scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.sun.jersey.contribs</groupId>
+			<artifactId>jersey-multipart</artifactId>
+			<version>${jersey.stack.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+	</dependencies>
+	
+	<build>
+		<plugins>
+		
+			<!-- Generate Swagger files with Enunciate -->
+			<plugin>
+				<groupId>com.webcohesion.enunciate</groupId>
+				<artifactId>enunciate-maven-plugin</artifactId>
+				<version>${enunciate.version}</version>
+				<executions>
+					<execution>
+						<id>rest-api</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>docs</goal>
+						</goals>
+						<configuration>
+							<docsDir>${project.build.directory}/docs</docsDir>
+							<configFile>${project.basedir}/enunciate.xml</configFile>
+							<sourcepath-includes>
+								<include>
+									<groupId>net.roboconf</groupId>
+									<artifactId>roboconf-dm-rest-services</artifactId>
+								</include>
+							</sourcepath-includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!--
+				Extract the class path into a property.
+				Do not rely on Maven class paths (see #764).
+				The Javadoc Maven plug-in makes everything messy.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>build-classpath</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>build-classpath</goal>
+						</goals>
+						<configuration>
+							<outputProperty>maven_dependencies</outputProperty>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Patch our Swagger files -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>ant-swagger</id>
+						<phase>process-classes</phase>
+						<configuration>
+							<failOnError>true</failOnError>
+							<target>
+							
+								<!--
+									Create the class path for the execution.
+									Do not rely on Maven class paths (see #764).
+									The Javadoc Maven plug-in makes everything messy.
+								-->
+								<path id="maven_classpath">
+									<pathelement path="${project.basedir}/target/classes" />
+									<pathelement path="${maven_dependencies}" />
+								</path>
+								
+								<!-- Covert the class path as a property -->
+								<pathconvert property="classpath_prop" refid="maven_classpath" />
+								
+								<!-- Prepare the execution parameters -->
+								<property name="project_location" value="${project.basedir}" />
+								<property name="roboconf_version" value="${project.version}" />
+
+								<!-- Update the swagger.json file for the REST API. -->
+								<java classname="net.roboconf.swagger.UpdateSwaggerJson" classpath="${classpath_prop}" failonerror="true">
+									<arg value="${project_location}" />
+								</java>
+
+								<!-- Generate the swagger.json file for the Web Socket API. -->
+								<java classname="net.roboconf.swagger.GenerateSwaggerJsonForWebSockets" classpath="${classpath_prop}" failonerror="true">
+									<arg value="${project_location}" />
+									<arg value="${roboconf_version}" />
+								</java>
+
+								<!-- Validate all the swagger.json files. -->
+								<java classname="net.roboconf.swagger.ValidateSwaggerJsonFiles" classpath="${classpath_prop}" failonerror="true">
+									<arg value="${project_location}" />
+								</java>
+							</target>	
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Attach our Swagger files as Maven artifacts -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.12</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>attach-artifact</goal>
+						</goals>
+						<configuration>
+							<artifacts>
+								<artifact>
+									<file>${project.build.directory}/docs/apidocs/ui/swagger.json</file>
+									<type>json</type>
+									<classifier>swagger-rest-api</classifier>
+								</artifact>
+								<artifact>
+									<file>${project.build.directory}/docs/apidocs/ui/swagger-websocket.json</file>
+									<type>json</type>
+									<classifier>swagger-web-socket</classifier>
+								</artifact>
+							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

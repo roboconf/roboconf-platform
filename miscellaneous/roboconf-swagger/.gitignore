@@ -1,0 +1,21 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Maven related elements or those that can be generated from the POM
+.project
+.classpath
+/.externalToolBuilders
+/target
+/maven-eclipse.xml
+/.settings
+
+# Linux
+*~
+
+#idea
+*.iml
+.idea/

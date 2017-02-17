@@ -31,10 +31,10 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.8-SNAPSHOT</version>
+		<version>0.9-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
-	
+
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-dm-rest-services</artifactId>
 	<name>Roboconf :: Deployment Manager :: REST Services</name>
@@ -209,35 +209,11 @@
   			<version>${project.version}</version>
   			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.2.2</version>
-			<scope>test</scope>
-		</dependency>
-	
-		<dependency>
-			<groupId>io.swagger</groupId>
-			<artifactId>swagger-parser</artifactId>
-			<version>1.0.23</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-annotations</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 	</dependencies>
 	
@@ -318,86 +294,18 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			<plugin>
-				<groupId>com.webcohesion.enunciate</groupId>
-				<artifactId>enunciate-maven-plugin</artifactId>
-				<version>${enunciate.version}</version>
-				<executions>
-					<execution>
-						<id>rest-api</id>
-						<phase>process-sources</phase>
-						<goals>
-							<goal>docs</goal>
-						</goals>
-						<configuration>
-							<docsDir>${project.build.directory}/docs</docsDir>
-							<configFile>${project.basedir}/enunciate.xml</configFile>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
+
+			<!-- Always attach the sources JAR, so that "roboconf-swagger" can generate Swagger files. -->			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.3</version>
 				<executions>
 					<execution>
-						<phase>test-compile</phase>
-						<configuration>
-							<failOnError>true</failOnError>
-							<target>
-								<property name="test_classpath" refid="maven.test.classpath" />
-								<property name="project_location" value="${project.basedir}" />
-								<property name="roboconf_version" value="${project.version}" />
-
-								<!-- Update the swagger.json file for the REST API. -->
-								<java classname="net.roboconf.dm.rest.services.swagger.UpdateSwaggerJson" classpath="${test_classpath}" failonerror="true">
-									<arg value="${project_location}" />
-								</java>
-
-								<!-- Generate the swagger.json file for the Web Socket API. -->
-								<java classname="net.roboconf.dm.rest.services.swagger.GenerateSwaggerJsonForWebSockets" classpath="${test_classpath}" failonerror="true">
-									<arg value="${project_location}" />
-									<arg value="${roboconf_version}" />
-								</java>
-
-								<!-- Validate all the swagger.json files. -->
-								<java classname="net.roboconf.dm.rest.services.swagger.ValidateSwaggerJsonFiles" classpath="${test_classpath}" failonerror="true">
-									<arg value="${project_location}" />
-								</java>
-							</target>	
-						</configuration>
+						<id>attach-sources</id>
 						<goals>
-							<goal>run</goal>
+							<goal>jar-no-fork</goal>
 						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.12</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>attach-artifact</goal>
-						</goals>
-						<configuration>
-							<artifacts>
-								<artifact>
-									<file>${project.build.directory}/docs/apidocs/ui/swagger.json</file>
-									<type>json</type>
-									<classifier>swagger-rest-api</classifier>
-								</artifact>
-								<artifact>
-									<file>${project.build.directory}/docs/apidocs/ui/swagger-websocket.json</file>
-									<type>json</type>
-									<classifier>swagger-web-socket</classifier>
-								</artifact>
-							</artifacts>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>

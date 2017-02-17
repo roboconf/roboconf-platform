@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.8-SNAPSHOT</version>
+		<version>0.9-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
@@ -69,27 +69,29 @@
 			<scope>runtime</scope>
 		</dependency>
 		
-		<!-- Test dependencies, to generate the configuration file for the preferences -->
+		<!-- 
+			Provided dependencies => Neither installed, nor referenced by Karaf.
+		 	To generate the configuration file for the preferences.
+		-->
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-karaf-prepare</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
 			<version>${project.version}</version>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-dm</artifactId>
 			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-dm</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		
 	</dependencies>
@@ -168,13 +170,24 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
-						<phase>test-compile</phase>
+						<phase>compile</phase>
 						<configuration>
 							<failOnError>true</failOnError>
 							<target>
-								<property name="test_classpath" refid="maven.test.classpath"/>
+							
+								<!-- Create the class path for the execution -->
+								<path id="maven_classpath">
+									<pathelement path="${net.roboconf:roboconf-core:jar}" />
+									<pathelement path="${net.roboconf:roboconf-dm:jar}" />
+									<pathelement path="${net.roboconf:roboconf-karaf-prepare:jar}" />
+								</path>
+								
+								<!-- Covert the class path as a property -->
+								<pathconvert property="classpath_prop" refid="maven_classpath" />
+
+								<!-- Prepare and start the execution -->								
 								<property name="project_location" value="${project.basedir}" />
-								<java classname="net.roboconf.karaf.dist.dm.GeneratePreferencesFile" classpath="${test_classpath}" failonerror="true">
+								<java classname="net.roboconf.karaf.prepare.GeneratePreferencesFile" classpath="${classpath_prop}" failonerror="true">
 									<arg value="${project_location}/target/assembly/etc/net.roboconf.dm.preferences.cfg" />
 								</java>
 							</target>	

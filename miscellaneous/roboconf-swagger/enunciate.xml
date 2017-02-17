@@ -32,6 +32,10 @@
 	<title>REST API</title>
 	<description>The REST API for Roboconf's Administration</description>
 	<contact name="the Roboconf team" url="http://roboconf.net" />
+	
+	<api-classes>
+		<include pattern="net.roboconf.dm.rest.services.internal.resources.**" />
+	</api-classes>
 
 	<modules>
 		<!-- Disabled modules: almost all -->
