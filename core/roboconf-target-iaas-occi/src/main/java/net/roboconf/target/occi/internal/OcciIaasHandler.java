@@ -50,6 +50,7 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	static final String SUMMARY = "occi.summary";
 	static final String USER = "occi.user";
 	static final String PASSWORD = "occi.password";
+	static final String RENDERING = "occi.rendering"; // http or json, default http
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -88,7 +89,8 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 					parameters.getApplicationName(),
 					parameters.getScopedInstancePath());
 
-			return OcciVMUtils.createVM(targetProperties.get(SERVER_IP_PORT),
+			if("json".equalsIgnoreCase(targetProperties.get(RENDERING))) {
+				return OcciVMUtils.createVMJson(targetProperties.get(SERVER_IP_PORT),
 					id.toString(),
 					targetProperties.get(IMAGE),
 					targetProperties.get(TITLE),
@@ -96,6 +98,16 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 					userData,
 					targetProperties.get(USER),
 					targetProperties.get(PASSWORD));
+			} else {
+				return OcciVMUtils.createVM(targetProperties.get(SERVER_IP_PORT),
+						id.toString(),
+						targetProperties.get(IMAGE),
+						targetProperties.get(TITLE),
+						targetProperties.get(SUMMARY),
+						userData,
+						targetProperties.get(USER),
+						targetProperties.get(PASSWORD));
+			}
 		} catch( Exception e ) {
 			throw new TargetException(e);
 		}
