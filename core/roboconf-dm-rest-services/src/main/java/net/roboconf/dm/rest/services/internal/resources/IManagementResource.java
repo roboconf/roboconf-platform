@@ -65,7 +65,7 @@ public interface IManagementResource {
 
 
 	/**
-	 * Loads an application template from a ZIP file.
+	 * Loads an application template from an uploaded ZIP file.
 	 * @param uploadedInputStream the uploaded archive
 	 * @param fileDetail the file details
 	 * @return a response
@@ -77,9 +77,35 @@ public interface IManagementResource {
 	@Path("/templates")
 	@Consumes( MediaType.MULTIPART_FORM_DATA )
 	@Produces( MediaType.APPLICATION_JSON )
-	Response loadApplicationTemplate(
+	Response loadUploadedZippedApplicationTemplate(
 			@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail );
+
+
+	/**
+	 * Loads a zipped application template from an URL.
+	 * <p>
+	 * Local (file:/) and standard remote (http:/) URLs are supported.
+	 * Maven URLs are also supported. Please, refer to PAX URL's web site for more details:
+	 * https://ops4j1.jira.com/wiki/display/paxurl/Mvn+Protocol
+	 * </p>
+	 * <p>
+	 * This operation can be invoked as an example in the scope of continuous deployments.
+	 * </p>
+	 *
+	 * @param url the URL of an application template archive (ZIP file)
+	 * @return a response
+	 *
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 406 Invalid application template.
+	 * @HTTP 403 An application template with this name already exists.
+	 * @HTTP 401 The application template could not be registered (e.g. DM not ready).
+	 */
+	@POST
+	@Path("/templates/url")
+	@Consumes( MediaType.APPLICATION_JSON )
+	@Produces( MediaType.APPLICATION_JSON )
+	Response loadZippedApplicationTemplate( @QueryParam( "url" ) String url );
 
 
 	/**
@@ -108,7 +134,7 @@ public interface IManagementResource {
 	@Path("/templates/local")
 	@Consumes( MediaType.APPLICATION_JSON )
 	@Produces( MediaType.APPLICATION_JSON )
-	Response loadApplicationTemplate( @QueryParam( "local-file-path" ) String localFilePath );
+	Response loadUnzippedApplicationTemplate( @QueryParam( "local-file-path" ) String localFilePath );
 
 
 	/**

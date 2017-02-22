@@ -59,8 +59,8 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.dm.rest.commons.beans.TargetAssociation;
-import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
+import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 import net.roboconf.target.api.TargetException;
 
 /**

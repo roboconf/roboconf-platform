@@ -132,6 +132,10 @@ public class ServletRegistrationComponentTest {
 		register.schedulerAppears();
 		register.schedulerDisappears();
 
+		// Update the URL resolver
+		register.mavenResolverAppears();
+		register.mavenResolverDisappears();
+
 		// Stop...
 		register.stopping();
 		Assert.assertEquals( 0, httpService.pathToServlet.size());

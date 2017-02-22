@@ -39,6 +39,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -53,7 +55,6 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
 
@@ -67,7 +68,7 @@ public class ManagementResourceTest {
 
 	private Manager manager;
 	private TestManagerWrapper managerWrapper;
-	private IManagementResource resource;
+	private ManagementResource resource;
 	private TestClient msgClient;
 
 
@@ -287,7 +288,7 @@ public class ManagementResourceTest {
 
 
 	@Test
-	public void testLoadApplicationTemplate_localPath_success() throws Exception {
+	public void testUnzippedLoadApplicationTemplate_success() throws Exception {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
@@ -295,14 +296,14 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.OK.getStatusCode(),
-				this.resource.loadApplicationTemplate( directory.getAbsolutePath()).getStatus());
+				this.resource.loadUnzippedApplicationTemplate( directory.getAbsolutePath()).getStatus());
 
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplicationTemplate_localPath_alreadyExisting() throws Exception {
+	public void testLoadUnzippedApplicationTemplate_alreadyExisting() throws Exception {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
@@ -311,52 +312,65 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.FORBIDDEN.getStatusCode(),
-				this.resource.loadApplicationTemplate( directory.getAbsolutePath()).getStatus());
+				this.resource.loadUnzippedApplicationTemplate( directory.getAbsolutePath()).getStatus());
 
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplicationTemplate_localPath_invalidApplication() throws Exception {
+	public void testLoadUnzippedApplicationTemplate_invalidApplication() throws Exception {
 
 		File directory = new File( "not/existing/file" );
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.NOT_ACCEPTABLE.getStatusCode(),
-				this.resource.loadApplicationTemplate( directory.getAbsolutePath()).getStatus());
+				this.resource.loadUnzippedApplicationTemplate( directory.getAbsolutePath()).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplicationTemplate_localPath_nullLocation() throws Exception {
+	public void testLoadUnzippedApplicationTemplate_nullLocation() throws Exception {
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.NOT_ACCEPTABLE.getStatusCode(),
-				this.resource.loadApplicationTemplate( null ).getStatus());
+				this.resource.loadUnzippedApplicationTemplate( null ).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplicationTemplate_localPath_fileLocation() throws Exception {
+	public void testLoadUnzippedApplicationTemplate_fileLocation() throws Exception {
 
 		File targetDirectory = this.folder.newFile( "roboconf_app.zip" );
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.NOT_ACCEPTABLE.getStatusCode(),
-				this.resource.loadApplicationTemplate( targetDirectory.getAbsolutePath()).getStatus());
+				this.resource.loadUnzippedApplicationTemplate( targetDirectory.getAbsolutePath()).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplicationTemplate_zip_success() throws Exception {
+	public void testUnzippedLoadApplicationTemplate_failure() throws Exception {
+
+		this.msgClient.connected.set( false );
+		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
+		Assert.assertEquals(
+				Status.NOT_ACCEPTABLE.getStatusCode(),
+				this.resource.loadUnzippedApplicationTemplate( "some-file" ).getStatus());
+
+		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
+	}
+
+
+	@Test
+	public void testLoadUploadedZippedApplicationTemplate_success() throws Exception {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
@@ -376,7 +390,7 @@ public class ManagementResourceTest {
 			in = new FileInputStream( targetFile );
 			Assert.assertEquals(
 					Status.OK.getStatusCode(),
-					this.resource.loadApplicationTemplate( in, fd ).getStatus());
+					this.resource.loadUploadedZippedApplicationTemplate( in, fd ).getStatus());
 
 			Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 
@@ -387,13 +401,62 @@ public class ManagementResourceTest {
 
 
 	@Test
-	public void testLoadApplicationTemplate_zip_failure() throws Exception {
+	public void testLoadZippedApplicationTemplate_mvnUrl_withMavenResolver() throws Exception {
 
-		this.msgClient.connected.set( false );
+		// Create a ZIP file
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( directory.exists());
+		Map<String,String> entryToContent = Utils.storeDirectoryResourcesAsString( directory );
+
+		File targetFile = this.folder.newFile( "roboconf_app.zip" );
+		TestUtils.createZipFile( entryToContent, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Mock a Maven resolver
+		MavenResolver mavenResolver = Mockito.mock( MavenResolver.class );
+		Mockito.when( mavenResolver.resolve( Mockito.anyString())).thenReturn( targetFile );
+		this.resource.setMavenResolver( mavenResolver );
+
+		// No matter the URL, we should not even reach this part
+		final String mavenUrl = "mvn:net/roboconf/app/1.0";
+		Assert.assertEquals(
+				Status.OK.getStatusCode(),
+				this.resource.loadZippedApplicationTemplate( mavenUrl ).getStatus());
+
+		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
+		Mockito.verify( mavenResolver ).resolve( mavenUrl );
+	}
+
+
+	@Test
+	public void testLoadZippedApplicationTemplate_mvnUrl_withoutMavenResolver() throws Exception {
+
+		this.resource.setMavenResolver( null );
+		Assert.assertEquals(
+				Status.UNAUTHORIZED.getStatusCode(),
+				this.resource.loadZippedApplicationTemplate( "mvn:net/roboconf/app/1.0" ).getStatus());
+
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
+	}
+
+
+	@Test
+	public void testLoadZippedApplicationTemplate_nullUrl() throws Exception {
+
 		Assert.assertEquals(
 				Status.NOT_ACCEPTABLE.getStatusCode(),
-				this.resource.loadApplicationTemplate( "some-file" ).getStatus());
+				this.resource.loadZippedApplicationTemplate( null ).getStatus());
+
+		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
+	}
+
+
+	@Test
+	public void testLoadZippedApplicationTemplate_notAZip() throws Exception {
+
+		Assert.assertEquals(
+				Status.UNAUTHORIZED.getStatusCode(),
+				this.resource.loadZippedApplicationTemplate( this.folder.newFile().toURI().toURL().toString()).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 	}
@@ -421,7 +484,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.OK.getStatusCode(),
-				this.resource.loadApplicationTemplate( directory.getAbsolutePath()).getStatus());
+				this.resource.loadUnzippedApplicationTemplate( directory.getAbsolutePath()).getStatus());
 
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 

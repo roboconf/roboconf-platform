@@ -52,8 +52,8 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
-import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
+import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
