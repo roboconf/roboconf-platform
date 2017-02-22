@@ -55,6 +55,7 @@ import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
@@ -735,5 +736,51 @@ public class InstancesMngrImplTest {
 
 		// We did not go very far, and the mock was not even checked.
 		Mockito.verifyZeroInteractions( targetHandler );
+	}
+
+
+	@Test
+	public void testConfigurationError() throws Exception {
+
+		// Prepare stuff
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandler.createMachine( Mockito.any( TargetHandlerParameters.class ))).thenReturn( "this-id" );
+		Mockito.doThrow( new TargetException( "for test" )).when( targetHandler ).configureMachine(
+				Mockito.any( TargetHandlerParameters.class ),
+				Mockito.anyString(),
+				Mockito.any( Instance.class ));
+
+		ITargetHandlerResolver targetHandlerResolver = Mockito.mock( ITargetHandlerResolver.class );
+		Mockito.when( targetHandlerResolver.findTargetHandler( Mockito.anyMap())).thenReturn( targetHandler );
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( targetHandlerResolver );
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma = new ManagedApplication( app );
+
+		// Preconditions
+		Assert.assertEquals( 0, app.getMySqlVm().data.size());
+
+		// Deploy
+		mngr.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+
+		// Postconditions
+		Assert.assertEquals( InstanceStatus.PROBLEM, app.getMySqlVm().getStatus());
+		Assert.assertEquals( "this-id", app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertNotNull( app.getMySqlVm().data.get( Instance.LAST_PROBLEM ));
+		Assert.assertNotNull( app.getMySqlVm().data.get( Instance.TARGET_ACQUIRED ));
 	}
 }

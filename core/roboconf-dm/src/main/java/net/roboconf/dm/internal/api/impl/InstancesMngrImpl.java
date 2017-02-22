@@ -465,9 +465,19 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
-			// If the configuration fails, keep the lock on the target.
-			// This will prevent us from having ghost VMs with no target.
-			targetHandler.configureMachine( parameters, machineId, scopedInstance );
+			// If the configuration fails, we do not want to mark it as not deployed.
+			// And we want to keep the machine ID.
+			try {
+				targetHandler.configureMachine( parameters, machineId, scopedInstance );
+
+			} catch( Exception e ) {
+				this.logger.severe( "Configuration for scoped instance '" + path + "' failed in " + ma.getName() + ". " + e.getMessage());
+				Utils.logException( this.logger, e );
+
+				scopedInstance.setStatus( InstanceStatus.PROBLEM );
+				scopedInstance.data.put( Instance.LAST_PROBLEM, "Machine configuration failed. Reason: " + e.getMessage());
+			}
+
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 
 			// Schedule post-configuration (script)
@@ -477,7 +487,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			this.logger.severe( "Failed to deploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 
-			// The creation failed, remove the lock for another retry
+			// Remove the lock
 			synchronized( LOCK ) {
 				scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
 			}
