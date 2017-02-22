@@ -504,8 +504,10 @@ public class InstancesMngrImplTest {
 
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
-		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -545,6 +547,7 @@ public class InstancesMngrImplTest {
 
 		// The handler's ID matched and the VM is running => a message was sent.
 		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findScriptForDm( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
 
@@ -552,10 +555,12 @@ public class InstancesMngrImplTest {
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ));
 
-		Mockito.verify( messagingMngr, Mockito.only()).sendMessageDirectly(
+		Mockito.verify( messagingMngr ).getMessagingClient();
+		Mockito.verify( messagingMngr ).sendMessageDirectly(
 				Mockito.eq( ma ),
 				Mockito.eq( app.getMySqlVm() ),
 				Mockito.any( MsgCmdSendInstances.class ));
+		Mockito.verifyNoMoreInteractions( messagingMngr );
 
 		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
@@ -580,6 +585,7 @@ public class InstancesMngrImplTest {
 				Mockito.anyString())).thenReturn( targetProperties );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
 		Mockito.doThrow( new IOException( "for test" )).when( messagingMngr ).sendMessageDirectly(
 				Mockito.any( ManagedApplication.class ),
 				Mockito.any( Instance.class ),
@@ -618,6 +624,7 @@ public class InstancesMngrImplTest {
 
 		// The handler's ID matched and the VM is running => a message was sent.
 		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findScriptForDm( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
 
@@ -625,10 +632,12 @@ public class InstancesMngrImplTest {
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ));
 
-		Mockito.verify( messagingMngr, Mockito.only()).sendMessageDirectly(
+		Mockito.verify( messagingMngr ).getMessagingClient();
+		Mockito.verify( messagingMngr ).sendMessageDirectly(
 				Mockito.eq( ma ),
 				Mockito.eq( app.getMySqlVm() ),
 				Mockito.any( MsgCmdSendInstances.class ));
+		Mockito.verifyNoMoreInteractions( messagingMngr );
 
 		// No notification was sent since there was no change on Tomcat instances
 		Mockito.verifyZeroInteractions( notificationMngr );
@@ -645,8 +654,10 @@ public class InstancesMngrImplTest {
 
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
-		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when( targetsMngr.findRawTargetProperties(
@@ -689,13 +700,14 @@ public class InstancesMngrImplTest {
 		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
+		Mockito.verify( targetsMngr ).findScriptForDm( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
 
 		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning(
 				Mockito.any( TargetHandlerParameters.class ),
 				Mockito.eq( "machine-id" ));
 
-		Mockito.verifyZeroInteractions( messagingMngr );
+		Mockito.verify( messagingMngr, Mockito.only()).getMessagingClient();
 		Mockito.verifyZeroInteractions( randomMngr );
 		Mockito.verifyZeroInteractions( targetConfigurator );
 

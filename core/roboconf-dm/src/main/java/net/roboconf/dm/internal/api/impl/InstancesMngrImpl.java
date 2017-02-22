@@ -223,12 +223,6 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
-				TargetHandlerParameters parameters = new TargetHandlerParameters()
-						.targetProperties( targetProperties )
-						.scopedInstancePath( scopedInstancePath )
-						.applicationName( ma.getName())
-						.domain( this.dmDomain );
-
 				TargetHandler readTargetHandler = null;
 				try {
 					readTargetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
@@ -243,6 +237,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 					continue;
 
 				// Not a running VM? => Everything must be not deployed.
+				TargetHandlerParameters parameters = parameters( ma, scopedInstance, targetProperties );
 				if( ! targetHandler.isMachineRunning( parameters, machineId )) {
 					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
 					releaseLockedTargets( ma.getApplication(), scopedInstance );
@@ -455,17 +450,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			targetProperties.putAll( scopedInstance.data );
 
 			TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
-			Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
-			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-
-			File localExecutionScript = this.targetsMngr.findScriptForDm( ma.getApplication(), scopedInstance );
-			TargetHandlerParameters parameters = new TargetHandlerParameters()
-					.targetProperties( targetProperties )
-					.messagingProperties( messagingConfiguration )
-					.scopedInstancePath( scopedInstancePath )
-					.applicationName( ma.getName())
-					.domain( this.dmDomain )
-					.targetConfigurationScript( localExecutionScript );
+			TargetHandlerParameters parameters = parameters( ma, scopedInstance, targetProperties );
 
 			// FIXME: there can be many problems here.
 			// Not sure we handle all the possible problems correctly.
@@ -534,13 +519,8 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
-				TargetHandlerParameters parameters = new TargetHandlerParameters()
-						.targetProperties( targetProperties )
-						.scopedInstancePath( scopedInstancePath )
-						.applicationName( ma.getName())
-						.domain( this.dmDomain );
-
 				// Cancel post-configuration
+				TargetHandlerParameters parameters = parameters( ma, scopedInstance, targetProperties );
 				this.targetConfigurator.cancelCandidate( parameters, scopedInstance );
 
 				// Terminate the machine and release the lock
@@ -583,6 +563,34 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			if( InstanceHelpers.isTarget( i ))
 				this.targetsMngr.unlockTarget( app, i );
 		}
+	}
+
+
+	/**
+	 * Makes the creation of target parameters similar for all situations.
+	 * @param ma the managed application
+	 * @param scopedInstance the scoped instance
+	 * @param targetProperties the target properties
+	 * @return a non-null parameters wrapper
+	 */
+	private TargetHandlerParameters parameters(
+			ManagedApplication ma,
+			Instance scopedInstance,
+			Map<String,String> targetProperties ) {
+
+		Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
+		String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+
+		File localExecutionScript = this.targetsMngr.findScriptForDm( ma.getApplication(), scopedInstance );
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( targetProperties )
+				.messagingProperties( messagingConfiguration )
+				.scopedInstancePath( scopedInstancePath )
+				.applicationName( ma.getName())
+				.domain( this.dmDomain )
+				.targetConfigurationScript( localExecutionScript );
+
+		return parameters;
 	}
 
 
