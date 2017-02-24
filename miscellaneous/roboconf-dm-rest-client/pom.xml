@@ -101,6 +101,12 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.ops4j.pax.url</groupId>
+			<artifactId>pax-url-aether</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-dm</artifactId>
   			<version>${project.version}</version>
@@ -187,5 +193,16 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<!-- To solve issues with dependency convergence -->	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 </project>

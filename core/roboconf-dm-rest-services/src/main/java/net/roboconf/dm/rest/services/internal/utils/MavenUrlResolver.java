@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,46 +23,50 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.internal;
+package net.roboconf.dm.rest.services.internal.utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
 
-import javax.ws.rs.core.Response.Status;
+import org.ops4j.pax.url.mvn.MavenResolver;
 
-import org.junit.Assert;
-
-import org.junit.Test;
+import net.roboconf.core.urlresolvers.DefaultUrlResolver;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RestServicesUtilsTest {
+public class MavenUrlResolver extends DefaultUrlResolver {
 
-	@Test
-	public void testHandleException_withSpacesAtTheMessageEnd() {
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final MavenResolver mavenResolver;
 
-		Exception e = new Exception( "Oops!" );
-		Logger logger = Logger.getLogger( getClass().getName());
-		RestServicesUtils.handleException( logger, Status.OK, "This is an error message.  ", e );
+
+	/**
+	 * Constructor.
+	 * @param mavenResolver
+	 */
+	public MavenUrlResolver( MavenResolver mavenResolver ) {
+		this.mavenResolver = mavenResolver;
 	}
 
 
-	@Test
-	public void testHandleException_withNoMessage() {
+	@Override
+	public ResolvedFile resolve( String url ) throws IOException {
 
-		Exception e = new Exception( "Oops!" );
-		Logger logger = Logger.getLogger( getClass().getName());
-		RestServicesUtils.handleException( logger, Status.OK, null, e );
-	}
+		ResolvedFile resolvedFile;
+		if( url.toLowerCase().startsWith( "mvn:" )) {
+			if( this.mavenResolver == null )
+				throw new IOException( "No Maven resolver was available." );
 
+			this.logger.fine( "Resolving a Maven URL: " + url );
+			File f = this.mavenResolver.resolve( url );
+			resolvedFile = new ResolvedFile( f, false );
 
-	@Test
-	public void testFormatEnd() {
+		} else {
+			resolvedFile = super.resolve( url );
+		}
 
-		Assert.assertEquals( "Cool. ", RestServicesUtils.formatEnd( "Cool." ));
-		Assert.assertEquals( "Even better! ", RestServicesUtils.formatEnd( "Even better! " ));
-		Assert.assertEquals( "   This should work. ", RestServicesUtils.formatEnd( "   This should work. \n \t " ));
-		Assert.assertNull( RestServicesUtils.formatEnd( null ));
-		Assert.assertNull( RestServicesUtils.formatEnd( "  " ));
+		return resolvedFile;
 	}
 }

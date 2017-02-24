@@ -105,7 +105,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 		// Load an application template
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplicationTemplates().size());
-		client.getManagementDelegate().loadApplicationTemplate( appLocation );
+		client.getManagementDelegate().loadUnzippedApplicationTemplate( appLocation );
 		List<ApplicationTemplate> templates = client.getManagementDelegate().listApplicationTemplates();
 		Assert.assertEquals( 1, templates.size());
 

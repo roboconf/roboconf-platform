@@ -36,8 +36,8 @@ import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
-import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.ISchedulerResource;
+import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 import net.roboconf.dm.scheduler.IScheduler;
 
 /**

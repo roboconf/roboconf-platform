@@ -29,6 +29,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.logging.Logger;
 
+import org.ops4j.pax.url.mvn.MavenResolver;
 import org.osgi.service.http.HttpService;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
@@ -59,6 +60,7 @@ public class ServletRegistrationComponent {
 	private HttpService httpService;
 	private Manager manager;
 	private IScheduler scheduler;
+	private MavenResolver mavenResolver;
 	private boolean enableCors = false;
 
 	// Internal fields
@@ -83,6 +85,7 @@ public class ServletRegistrationComponent {
 		// The scheduler may be null, it is optional.
 		this.app = new RestApplication( this.manager );
 		this.app.setScheduler( this.scheduler );
+		this.app.setMavenResolver( this.mavenResolver );
 		this.app.enableCors( this.enableCors );
 
 		Dictionary<String,String> initParams = new Hashtable<> ();
@@ -157,6 +160,32 @@ public class ServletRegistrationComponent {
 
 
 	/**
+	 * Invoked by iPojo when the Maven resolver appears.
+	 * @throws Exception in case of error
+	 */
+	public void mavenResolverAppears() throws Exception {
+
+		// We simply update the "urlResolver" resource.
+		this.logger.fine( "Roboconf's URL resolver is here. Updating the REST resource." );
+		if( this.app != null )
+			this.app.setMavenResolver( this.mavenResolver );
+	}
+
+
+	/**
+	 * Invoked by iPojo when the Maven resolver disappears.
+	 * @throws Exception in case of error
+	 */
+	public void mavenResolverDisappears() throws Exception {
+
+		// We simply update the "urlResolver" resource.
+		this.logger.fine( "Roboconf's URL resolver vanished. Updating the REST resource." );
+		if( this.app != null )
+			this.app.setMavenResolver( null );
+	}
+
+
+	/**
 	 * @param httpService the httpService to set
 	 */
 	public void setHttpService( HttpService httpService ) {
@@ -194,10 +223,22 @@ public class ServletRegistrationComponent {
 	}
 
 
+	// These setters are not used by iPojo.
+	// But they may be useful when using this class outside OSGi.
+
+
 	/**
 	 * @param scheduler the scheduler to set
 	 */
 	public void setScheduler( IScheduler scheduler ) {
 		this.scheduler = scheduler;
+	}
+
+
+	/**
+	 * @param mavenResolver the Maven resolver to set
+	 */
+	public void setMavenResolver( MavenResolver mavenResolver ) {
+		this.mavenResolver = mavenResolver;
 	}
 }
