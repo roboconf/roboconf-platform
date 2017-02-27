@@ -97,7 +97,9 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 					targetProperties.get(SUMMARY),
 					userData,
 					targetProperties.get(USER),
-					targetProperties.get(PASSWORD));
+					targetProperties.get(PASSWORD),
+					targetProperties,
+					false);
 			} else {
 				return OcciVMUtils.createVM(targetProperties.get(SERVER_IP_PORT),
 						id.toString(),
@@ -106,7 +108,8 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 						targetProperties.get(SUMMARY),
 						userData,
 						targetProperties.get(USER),
-						targetProperties.get(PASSWORD));
+						targetProperties.get(PASSWORD),
+						targetProperties);
 			}
 		} catch( Exception e ) {
 			throw new TargetException(e);
