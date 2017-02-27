@@ -32,8 +32,18 @@
 
 	<!-- Servlets registration -->
 	<component classname="net.roboconf.dm.rest.services.internal.ServletRegistrationComponent" name="roboconf-dm-rest-component" immediate="true" public="false">
+		
+		<!-- Mandatory -->
 		<requires field="manager" optional="false" />
 		<requires field="httpService" optional="false" />
+		
+		<!-- Optional: Maven resolver -->
+		<requires field="mavenResolver" optional="true">
+			<callback type="bind" method="mavenResolverAppears" />
+			<callback type="unbind" method="mavenResolverDisappears" />
+		</requires>
+		
+		<!-- Optional: scheduler -->
 		<requires field="scheduler" optional="true">
 			<callback type="bind" method="schedulerAppears" />
 			<callback type="unbind" method="schedulerDisappears" />

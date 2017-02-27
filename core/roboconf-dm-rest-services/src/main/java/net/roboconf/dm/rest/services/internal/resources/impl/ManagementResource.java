@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,19 +42,25 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.ops4j.pax.url.mvn.MavenResolver;
+
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.urlresolvers.DefaultUrlResolver;
+import net.roboconf.core.urlresolvers.IUrlResolver;
+import net.roboconf.core.urlresolvers.IUrlResolver.ResolvedFile;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
+import net.roboconf.dm.rest.services.internal.utils.MavenUrlResolver;
+import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -80,6 +87,7 @@ public class ManagementResource implements IManagementResource {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
+	private MavenResolver mavenResolver;
 
 
 	/**
@@ -91,29 +99,31 @@ public class ManagementResource implements IManagementResource {
 	}
 
 
+	/**
+	 * @param mavenResolver the mavenResolver to set
+	 */
+	public void setMavenResolver( MavenResolver mavenResolver ) {
+		this.mavenResolver = mavenResolver;
+	}
+
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
-	 * #loadApplicationTemplate(java.io.InputStream, com.sun.jersey.core.header.FormDataContentDisposition)
+	 * #loadUploadedZippedApplicationTemplate(java.io.InputStream, com.sun.jersey.core.header.FormDataContentDisposition)
 	 */
 	@Override
-	public Response loadApplicationTemplate( InputStream uploadedInputStream, FormDataContentDisposition fileDetail ) {
+	public Response loadUploadedZippedApplicationTemplate( InputStream uploadedInputStream, FormDataContentDisposition fileDetail ) {
 
 		this.logger.fine( "Request: load application from an uploaded ZIP file (" + fileDetail.getFileName() + ")." );
 		File tempZipFile = new File( System.getProperty( "java.io.tmpdir" ), fileDetail.getFileName());
-		File dir = null;
 		Response response;
 		try {
 			// Copy the uploaded ZIP file on the disk
 			Utils.copyStream( uploadedInputStream, tempZipFile );
 
-			// Extract the ZIP content
-			String appName = fileDetail.getFileName().replace( ".zip", "" );
-			dir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf/" + appName );
-			Utils.extractZipArchive( tempZipFile, dir );
-
 			// Load the application
-			response = loadApplicationTemplate( dir.getAbsolutePath());
+			response = loadZippedApplicationTemplate( tempZipFile.toURI().toURL().toString());
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application template could not be loaded.", e ).build();
@@ -121,27 +131,75 @@ public class ManagementResource implements IManagementResource {
 		} finally {
 			Utils.closeQuietly( uploadedInputStream );
 
-			// We do not need the extracted application anymore.
+			// We do not need the uploaded file anymore.
 			// In case of success, it was copied in the DM's configuration.
-			Utils.deleteFilesRecursivelyAndQuietly( dir );
 			Utils.deleteFilesRecursivelyAndQuietly( tempZipFile );
 		}
 
 		return response;
 	}
 
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
-	 * #loadApplicationTemplate(java.lang.String)
+	 * #loadZippedApplicationTemplate(java.lang.String)
 	 */
 	@Override
-	public Response loadApplicationTemplate( String localFilePath ) {
+	public Response loadZippedApplicationTemplate( String url ) {
+
+		this.logger.fine( "Request: load application from URL " + url + "." );
+		ResolvedFile resolvedFile = null;
+		File extractionDir = null;
+		Response response;
+		try {
+			// Retrieve the file as a local one
+			if( Utils.isEmptyOrWhitespaces( url ))
+				throw new InvalidApplicationException( "Null or empty URLs are forbidden." );
+
+			// Get a resolver...
+			IUrlResolver resolver = this.mavenResolver != null ? new MavenUrlResolver( this.mavenResolver ) : new DefaultUrlResolver();
+			resolvedFile = resolver.resolve( url );
+
+			// Extract the ZIP content
+			extractionDir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf/" + UUID.randomUUID().toString());
+			Utils.extractZipArchive( resolvedFile.getFile(), extractionDir );
+
+			// Load the application template
+			response = loadUnzippedApplicationTemplate( extractionDir.getAbsolutePath());
+
+		} catch( InvalidApplicationException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application template could not be loaded.", e ).build();
+
+		} catch( IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.UNAUTHORIZED, "A new application template could not be loaded.", e ).build();
+
+		} finally {
+			// We do not need the extracted application anymore.
+			// In case of success, it was copied in the DM's configuration.
+			Utils.deleteFilesRecursivelyAndQuietly( extractionDir );
+
+			// If the resolved file did not exist before, delete it as we do not need it anymore
+			if( resolvedFile != null && ! resolvedFile.existedBefore())
+				Utils.deleteFilesRecursivelyAndQuietly( resolvedFile.getFile());
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
+	 * #loadUnzippedApplicationTemplate(java.lang.String)
+	 */
+	@Override
+	public Response loadUnzippedApplicationTemplate( String localFilePath ) {
 
 		if( localFilePath == null )
 			localFilePath = "null";
 
-		this.logger.fine( "Request: load application from " + localFilePath + "." );
+		this.logger.fine( "Request: load application from a local file (" + localFilePath + ")." );
 		Response response;
 		try {
 			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( localFilePath ));

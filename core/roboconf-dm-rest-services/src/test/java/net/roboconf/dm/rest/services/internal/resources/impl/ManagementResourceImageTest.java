@@ -34,6 +34,16 @@ import java.io.RandomAccessFile;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.sun.jersey.core.header.FormDataContentDisposition;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.AbstractApplication;
@@ -44,16 +54,6 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.messaging.api.MessagingConstants;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import com.sun.jersey.core.header.FormDataContentDisposition;
 
 /**
  * Tests for the {@link IManagementResource#setImage(String, String, InputStream, FormDataContentDisposition)} method.
@@ -133,7 +133,7 @@ public class ManagementResourceImageTest {
 		this.resource = new ManagementResource(this.manager);
 
 		// Deploy an application template.
-		this.resource.loadApplicationTemplate(TestUtils.findApplicationDirectory("lamp").getAbsolutePath());
+		this.resource.loadUnzippedApplicationTemplate(TestUtils.findApplicationDirectory("lamp").getAbsolutePath());
 		this.template = this.manager.applicationTemplateMngr().findTemplate(TEMPLATE_NAME, TEMPLATE_QUALIFIER);
 
 		// Create an application.

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.internal;
+package net.roboconf.dm.rest.services.internal.utils;
 
 import java.util.logging.Logger;
 

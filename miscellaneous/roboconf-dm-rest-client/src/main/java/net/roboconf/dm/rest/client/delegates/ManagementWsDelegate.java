@@ -74,7 +74,7 @@ public class ManagementWsDelegate {
 	 * @throws ManagementWsException if a problem occurred with the applications management
 	 * @throws IOException if the file was not found or is invalid
 	 */
-	public void loadApplicationTemplate( File applicationFile ) throws ManagementWsException, IOException {
+	public void uploadZippedApplicationTemplate( File applicationFile ) throws ManagementWsException, IOException {
 
 		if( applicationFile == null
 				|| ! applicationFile.exists()
@@ -102,16 +102,39 @@ public class ManagementWsDelegate {
 
 
 	/**
-	 * Loads an application template from a file which was already uploaded (and unzipped) on the DM's machine.
-	 * @param remoteFilePath the file path of a directory containing the application on the DM's machine
+	 * Loads an application template from a directory located on the DM's file system.
+	 * @param localFilePath the file path of a directory containing the application on the DM's machine
 	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public void loadApplicationTemplate( String remoteFilePath ) throws ManagementWsException {
-		this.logger.finer( "Loading an already-uploaded application. " + remoteFilePath );
+	public void loadUnzippedApplicationTemplate( String localFilePath ) throws ManagementWsException {
+		this.logger.finer( "Loading an application from a local directory: " + localFilePath );
 
 		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "templates" ).path( "local" );
-		if( remoteFilePath != null )
-			path = path.queryParam( "local-file-path", remoteFilePath );
+		if( localFilePath != null )
+			path = path.queryParam( "local-file-path", localFilePath );
+
+		ClientResponse response = path.type( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), value );
+		}
+
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
+	}
+
+
+	/**
+	 * Loads an application template from an URL.
+	 * @param url an URL pointing to a ZIP file
+	 * @throws ManagementWsException if a problem occurred with the applications management
+	 */
+	public void loadZippedApplicationTemplate( String url ) throws ManagementWsException {
+		this.logger.finer( "Loading an application from an URL: " + url );
+
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "templates" ).path( "url" );
+		if( url != null )
+			path = path.queryParam( "url", url );
 
 		ClientResponse response = path.type( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {

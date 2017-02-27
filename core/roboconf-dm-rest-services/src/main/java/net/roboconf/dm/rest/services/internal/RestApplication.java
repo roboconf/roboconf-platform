@@ -28,6 +28,8 @@ package net.roboconf.dm.rest.services.internal;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.ops4j.pax.url.mvn.MavenResolver;
+
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 
@@ -35,7 +37,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
-import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
@@ -52,10 +53,10 @@ import net.roboconf.dm.scheduler.IScheduler;
 public class RestApplication extends DefaultResourceConfig {
 
 	private final IApplicationResource applicationResource;
-	private final IManagementResource managementResource;
 	private final IDebugResource debugResource;
 	private final ITargetResource targetResource;
 	private final IPreferencesResource preferencesResource;
+	private final ManagementResource managementResource;
 	private final SchedulerResource schedulerResource;
 
 
@@ -110,6 +111,15 @@ public class RestApplication extends DefaultResourceConfig {
 	 */
 	public void setScheduler( IScheduler scheduler ) {
 		this.schedulerResource.setScheduler( scheduler );
+	}
+
+
+	/**
+	 * Sets the Maven resolver.
+	 * @param mavenResolver the Maven resolver (can be null)
+	 */
+	public void setMavenResolver( MavenResolver mavenResolver ) {
+		this.managementResource.setMavenResolver( mavenResolver );
 	}
 
 

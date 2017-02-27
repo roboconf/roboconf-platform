@@ -60,6 +60,14 @@ public class InvalidApplicationException extends Exception {
 	}
 
 	/**
+	 * Constructor.
+	 * @param message
+	 */
+	public InvalidApplicationException( String message ) {
+		super( message );
+	}
+
+	/**
 	 * @param errors a non-null list of errors
 	 * @return a detailed string
 	 */

@@ -35,8 +35,8 @@ import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
+import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
