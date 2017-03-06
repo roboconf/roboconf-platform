@@ -147,7 +147,6 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
-
 		return OcciVMUtils.isVMRunning(parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
 	}
 

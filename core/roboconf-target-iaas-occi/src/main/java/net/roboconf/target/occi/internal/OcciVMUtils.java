@@ -29,7 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -38,7 +37,6 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -71,7 +69,7 @@ public class OcciVMUtils {
 	 */
 	public static String createVM(String hostIpPort, String id, String template, String title, String summary, String userData, String user, String password, Map<String, String> config) throws TargetException {
 
-		//TODO This is a HACK for CloudAutomation APIs
+		//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
 		if(hostIpPort.contains("multi-language-connector")) {
 			return createCloudAutomationVM(hostIpPort, template, title, userData, config, false);
 		}
@@ -185,7 +183,7 @@ public class OcciVMUtils {
 	 */
 	public static String createVMJson(String hostIpPort, String id, String template, String title, String summary, String userData, String user, String password, Map<String, String> config, boolean waitForActive) throws TargetException {
 
-		//TODO This is a HACK for CloudAutomation APIs.
+		//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
 		if(hostIpPort.contains("multi-language-connector")) {
 			return createCloudAutomationVM(hostIpPort, template, title, userData, config, false);
 		} else {
@@ -452,7 +450,7 @@ public class OcciVMUtils {
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
-			//TODO This is a HACK for CloudAutomation APIs.
+			//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
 			if(hostIpPort.contains("multi-language-connector")) {
 				url = new URL("http://" + hostIpPort + "/compute/" + id);
 			} else {
@@ -563,25 +561,22 @@ public class OcciVMUtils {
 	 * @param args
 	 * @throws InterruptedException
 	 */
+	/*
 	public static void main(String[] args) throws Exception {
 
 		//String id = createCloudAutomationVM("81.200.35.140:8080/multi-language-connector/occi", "aab7ea48-0585-44b2-afd4-19e99b6581e7", "testCAjava", true);
 		//System.out.println("Created VM on CA:" + id);
 
-		/*
-		//System.out.println("VM IP:" + getVMIP("81.200.35.140:8080/multi-language-connector/occi", id));
-		System.out.println("VM IP:" + getVMIP("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
-		System.out.println("VM status:" + getVMStatus("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
+		//System.out.println("VM IP:" + getVMIP("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
+		//System.out.println("VM status:" + getVMStatus("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
 		//System.out.println("Delete VM: " + deleteVM("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
-		System.exit(0);
-		*/
 
-		Properties p = new Properties();
+		java.util.Properties p = new java.util.Properties();
 		p.setProperty("key1", "value1");
 		p.setProperty("key2", "value2");
 		p.setProperty("key3", "value3");
 		p.setProperty("key4", "value4");
-		StringWriter writer = new StringWriter();
+		java.io.StringWriter writer = new java.io.StringWriter();
 		p.store( writer, "" );
 		String s = writer.toString();
 		//System.out.println(s);
@@ -596,23 +591,22 @@ public class OcciVMUtils {
 		//System.out.println("IP: " + getVMIP("172.16.225.80:8080", "6157c4d2-08b3-4204-be85-d1828df74c25"));
 		// curl -v -X DELETE http://172.16.225.80:8080/6157c4d2-08b3-4204-be85-d1828df74c25
 		System.exit(0);
-		/*
-		System.out.println("Create VM: " +
-				createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
-						"", "e3161161-02a4-4685-ad99-8ac36b3e66ea", "UbuntuTest", "Ubuntu Test", null, null, null));
-		System.exit(0);*/
-		System.out.println("Create VM: " +
+
+		//System.out.println("Create VM: " +
+			//	createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
+				//		"", "e3161161-02a4-4685-ad99-8ac36b3e66ea", "UbuntuTest", "Ubuntu Test", null, null, null));
+		//System.out.println("Create VM: " +
 				//createVM("81.200.35.140:8080/multi-language-connector/occi", //CA/OW2Stack
 					//	"", "e906f16e-a3cb-414c-9a7e-c308dff4897d", "javaTest", "Java Test", userdata, null, null));
-			createVM("172.16.225.91:8080", //VMWare
-			//createVM("localhost:8888",
-				"6157c4d2-08b3-4204-be85-d1828df74c22", "RoboconfAgentOcciware090117", "javaTest", "Java Test", null, "occiware", "Occiware1234", null));
+			//createVM("172.16.225.91:8080", //VMWare
+				//"6157c4d2-08b3-4204-be85-d1828df74c22", "RoboconfAgentOcciware090117", "javaTest", "Java Test", null, "occiware", "Occiware1234", null));
 		//Thread.sleep(40000);
 		//System.out.println("Delete VM: " + deleteVM("81.200.35.151:8080", "8e0cb600-4478-4687-9fa4-135f5985efdf"));
 		//System.out.println("Delete VM: " + deleteVM("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
 	}
-
+	*/
 }
+
 
 /**
  * Bean for JSON parsing (Jackson ObjectMapper).

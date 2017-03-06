@@ -56,11 +56,7 @@ public class OcciMachineConfigurator implements MachineConfigurator {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String machineId;
 	private final Map<String,String> targetProperties;
-	private final Properties userData;
-	private final String rootInstanceName;
 	private final Instance scopedInstance;
-
-	private int userdataCheckCount = 0; // Hack (expecting user-data implementation)
 
 	/**
 	 * Constructor.
@@ -74,8 +70,6 @@ public class OcciMachineConfigurator implements MachineConfigurator {
 
 		this.machineId = machineId;
 		this.targetProperties = targetProperties;
-		this.userData = userData;
-		this.rootInstanceName = rootInstanceName;
 		this.scopedInstance = scopedInstance;
 	}
 
@@ -106,18 +100,13 @@ public class OcciMachineConfigurator implements MachineConfigurator {
 			}
 
 			if(this.state == State.RUNNING_VM) {
-				//TODO If yes, write user data.
+				logger.info("VM up and running, configuration complete !");
 				this.state = State.COMPLETE;
 			}
 
 			return this.state == State.COMPLETE;
 
 		} catch( Exception e ) {
-			/*
-			if(++ this.userdataCheckCount < 240) { // Hack (temporary ?)
-				this.logger.fine("VM Agent not yet started... check #" + this.userdataCheckCount + " failed");
-				return false;
-			}*/
 			throw new TargetException( e );
 		}
 
