@@ -27,6 +27,7 @@ package net.roboconf.target.occi.internal;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
@@ -39,23 +40,36 @@ import net.roboconf.target.api.TargetException;
  */
 public class OcciMachineConfigurator implements MachineConfigurator {
 
+	/**
+	 * The steps of a workflow.
+	 * <ul>
+	 * <li>STARTING_VM: initial state.</li>
+	 * <li>RUNNING_VM: the VM must be running (started).</li>
+	 * <li>COMPLETE: there is nothing to do anymore.</li>
+	 * </ul>
+	 */
+	public enum State {
+		STARTING_VM, RUNNING_VM, COMPLETE
+	}
+	private State state = State.STARTING_VM;
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final String machineId;
 	private final Map<String,String> targetProperties;
-	private final String userData, rootInstanceName;
 	private final Instance scopedInstance;
 
 	/**
 	 * Constructor.
 	 */
 	public OcciMachineConfigurator(
+			String machineId,
 			Map<String,String> targetProperties,
-			String userData,
+			Properties userData,
 			String rootInstanceName,
 			Instance scopedInstance ) {
 
+		this.machineId = machineId;
 		this.targetProperties = targetProperties;
-		this.userData = userData;
-		this.rootInstanceName = rootInstanceName;
 		this.scopedInstance = scopedInstance;
 	}
 
@@ -75,18 +89,26 @@ public class OcciMachineConfigurator implements MachineConfigurator {
 	@Override
 	public boolean configure() throws TargetException {
 
-/*
 		try {
+
 			// Is the VM up?
+			if(this.state == State.STARTING_VM) {
+				if(OcciVMUtils.isVMRunning(
+						targetProperties.get(OcciIaasHandler.SERVER_IP_PORT), machineId)) {
+					this.state = State.RUNNING_VM;
+				}
+			}
 
-			// If yes, write user data.
+			if(this.state == State.RUNNING_VM) {
+				logger.info("VM up and running, configuration complete !");
+				this.state = State.COMPLETE;
+			}
 
-			return true;
+			return this.state == State.COMPLETE;
 
 		} catch( Exception e ) {
 			throw new TargetException( e );
 		}
-*/
-		return true;
+
 	}
 }

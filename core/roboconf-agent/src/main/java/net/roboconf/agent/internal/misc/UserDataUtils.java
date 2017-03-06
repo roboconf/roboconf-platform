@@ -189,7 +189,43 @@ public final class UserDataUtils {
 				}
 			}
 
-			return AgentProperties.readIaasProperties(Utils.readPropertiesFile(propertiesFile));
+			AgentProperties result = AgentProperties.readIaasProperties(Utils.readPropertiesFile(propertiesFile));
+
+			/*
+			 * HACK for specific IaaS configurations (using properties file in a VMWare-like manner)
+			 * Try to pick IP address... in the case we are on OpenStack or any IaaS with amazon-compatible API
+			 * Some configurations (with floating IPs) do not provide network interfaces exposing public IPs !
+			 */
+			InputStream in = null;
+			try {
+				URL userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/public-ipv4" );
+				in = userDataUrl.openStream();
+				ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+				Utils.copyStreamSafely( in, os );
+				String ip = os.toString( "UTF-8" );
+				if(! AgentUtils.isValidIP( ip )) {
+					// Failed retrieving public IP: try private one instead
+					Utils.closeQuietly( in );
+					userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/local-ipv4" );
+					in = userDataUrl.openStream();
+					os = new ByteArrayOutputStream();
+
+					Utils.copyStreamSafely( in, os );
+					ip = os.toString( "UTF-8" );
+				}
+
+				if(AgentUtils.isValidIP( ip ))
+					result.setIpAddress( os.toString( "UTF-8" ));
+
+			} catch( IOException e ) {
+				Utils.logException( logger, e );
+			} finally {
+				Utils.closeQuietly( in );
+			}
+			/* HACK ends here (see comment above). Removing it is harmless on classical VMWare configurations. */
+
+			return result;
 
 		} catch(IOException e) {
 			logger.fine("Agent failed to read properties file " + propertiesFile);
