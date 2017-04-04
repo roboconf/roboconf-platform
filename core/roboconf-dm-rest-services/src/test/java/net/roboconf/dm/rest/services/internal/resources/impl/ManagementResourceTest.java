@@ -30,6 +30,9 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response.Status;
 
@@ -152,6 +155,11 @@ public class ManagementResourceTest {
 
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
+
+		// Improve code coverage by setting the log level to finest
+		Logger logger = Logger.getLogger( ManagementResource.class.getName());
+		LogManager.getLogManager().addLogger( logger );
+		logger.setLevel( Level.FINEST );
 
 		// Get ALL the templates
 		templates = this.resource.listApplicationTemplates();

@@ -120,10 +120,10 @@ public class AuthenticationManager {
 	/**
 	 * Determines whether a session is valid.
 	 * @param token a token
-	 * @param validityPeriod the validity period for a session (in seconds)
+	 * @param validityPeriod the validity period for a session (in seconds, < 0 for unbound)
 	 * @return true if the session is valid, false otherwise
 	 */
-	public boolean isSessionValid( final String token, int validityPeriod ) {
+	public boolean isSessionValid( final String token, long validityPeriod ) {
 
 		boolean valid = false;
 		Long loginTime = null;
@@ -152,7 +152,7 @@ public class AuthenticationManager {
 	 * No error is thrown if the session was already invalid.
 	 * </p>
 	 *
-	 * @param token a token
+	 * @param token a token (can be null)
 	 */
 	public void logout( String token ) {
 		if( token != null )

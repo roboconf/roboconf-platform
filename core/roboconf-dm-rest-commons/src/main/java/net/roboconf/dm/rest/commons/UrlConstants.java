@@ -36,4 +36,5 @@ public interface UrlConstants {
 	String TARGETS = "targets";
 	String PREFERENCES = "preferences";
 	String SCHEDULER = "scheduler";
+	String AUTHENTICATION = "auth";
 }
