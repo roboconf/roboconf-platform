@@ -25,6 +25,8 @@
 
 package net.roboconf.dm.rest.client;
 
+import javax.ws.rs.core.Cookie;
+
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
@@ -32,11 +34,13 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 
 import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
+import net.roboconf.dm.rest.client.delegates.AuthenticationWsDelegate;
 import net.roboconf.dm.rest.client.delegates.DebugWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
 import net.roboconf.dm.rest.client.delegates.PreferencesWsDelegate;
 import net.roboconf.dm.rest.client.delegates.SchedulerWsDelegate;
 import net.roboconf.dm.rest.client.delegates.TargetWsDelegate;
+import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
 
 /**
@@ -80,8 +84,10 @@ public class WsClient {
 	private final TargetWsDelegate targetWsDelegate;
 	private final SchedulerWsDelegate schedulerDelegate;
 	private final PreferencesWsDelegate preferencesWsDelegate;
+	private final AuthenticationWsDelegate authenticationWsDelegate;
 
 	private final Client client;
+	private String sessionId;
 
 
 	/**
@@ -98,12 +104,13 @@ public class WsClient {
 		this.client.setFollowRedirects( true );
 
 		WebResource resource = this.client.resource( rootUrl );
-		this.applicationDelegate = new ApplicationWsDelegate( resource );
-		this.managementDelegate = new ManagementWsDelegate( resource );
-		this.debugDelegate = new DebugWsDelegate( resource );
-		this.targetWsDelegate = new TargetWsDelegate( resource );
-		this.schedulerDelegate = new SchedulerWsDelegate( resource );
-		this.preferencesWsDelegate = new PreferencesWsDelegate( resource );
+		this.applicationDelegate = new ApplicationWsDelegate( resource, this );
+		this.managementDelegate = new ManagementWsDelegate( resource, this );
+		this.debugDelegate = new DebugWsDelegate( resource, this );
+		this.targetWsDelegate = new TargetWsDelegate( resource, this );
+		this.schedulerDelegate = new SchedulerWsDelegate( resource, this );
+		this.preferencesWsDelegate = new PreferencesWsDelegate( resource, this );
+		this.authenticationWsDelegate = new AuthenticationWsDelegate( resource, this );
 	}
 
 
@@ -158,9 +165,47 @@ public class WsClient {
 	}
 
 	/**
+	 * @return the authenticationWsDelegate
+	 */
+	public AuthenticationWsDelegate getAuthenticationWsDelegate() {
+		return this.authenticationWsDelegate;
+	}
+
+	/**
 	 * @return the Jersey client (useful to configure it)
 	 */
 	public Client getJerseyClient() {
 		return this.client;
+	}
+
+	/**
+	 * Sets the session ID to use when authenticated.
+	 * @param sessionId
+	 */
+	public void setSessionId( String sessionId ) {
+		this.sessionId = sessionId;
+	}
+
+	/**
+	 * @return the sessionId
+	 */
+	public String getSessionId() {
+		return this.sessionId;
+	}
+
+
+	/**
+	 * @param resource a web resource
+	 * @return a builder with an optional cookie (for authentication)
+	 */
+	public WebResource.Builder createBuilder( WebResource resource ) {
+
+		WebResource.Builder result;
+		if( this.sessionId != null )
+			result = resource.cookie( new Cookie( UrlConstants.SESSION_ID, this.sessionId ));
+		else
+			result = resource.getRequestBuilder();
+
+		return result;
 	}
 }

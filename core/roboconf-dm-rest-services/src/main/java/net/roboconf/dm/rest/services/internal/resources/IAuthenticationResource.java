@@ -40,7 +40,7 @@ import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 public interface IAuthenticationResource {
 
 	String PATH = "/" + UrlConstants.AUTHENTICATION;
-	String LOGIN_PATH = PATH + "/e";
+	String LOGIN_PATH = "/e";
 
 
 	/**
@@ -67,5 +67,5 @@ public interface IAuthenticationResource {
 	 */
 	@POST
 	@Path("/s")
-	Response logout( @CookieParam( AuthenticationFilter.SESSION_ID ) String sessionId );
+	Response logout( @CookieParam( UrlConstants.SESSION_ID ) String sessionId );
 }

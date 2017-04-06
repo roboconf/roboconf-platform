@@ -37,4 +37,6 @@ public interface UrlConstants {
 	String PREFERENCES = "preferences";
 	String SCHEDULER = "scheduler";
 	String AUTHENTICATION = "auth";
+
+	String SESSION_ID = "sid";
 }

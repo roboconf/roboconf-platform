@@ -111,6 +111,7 @@ public class ServletRegistrationComponent {
 		this.app.setScheduler( this.scheduler );
 		this.app.setMavenResolver( this.mavenResolver );
 		this.app.enableCors( this.enableCors );
+		this.app.setAuthenticationManager( this.authenticationMngr );
 
 		Dictionary<String,String> initParams = new Hashtable<> ();
 		initParams.put( "servlet-name", "Roboconf DM (REST)" );
@@ -135,12 +136,17 @@ public class ServletRegistrationComponent {
 		// Register a filter for authentication
 		this.authenticationFilter = new AuthenticationFilter();
 		this.authenticationFilter.setAuthenticationEnabled( this.enableAuthentication );
-		this.authenticationFilter.setAuthenticationMngr( this.authenticationMngr );
+		this.authenticationFilter.setAuthenticationManager( this.authenticationMngr );
 		this.authenticationFilter.setSessionPeriod( this.sessionPeriod );
 
 		initParams = new Hashtable<> ();
 		initParams.put( "urlPatterns", "*" );
-		this.filterServiceRegistration = this.bundleContext.registerService( Filter.class, this.authenticationFilter, initParams );
+
+		// Consider the bundle context can be null (e.g. when used outside of OSGi)
+		if( this.bundleContext != null )
+			this.filterServiceRegistration = this.bundleContext.registerService( Filter.class, this.authenticationFilter, initParams );
+		else
+			this.logger.warning( "No bundle context was available, the authentication filter was not registered." );
 	}
 
 
@@ -289,7 +295,7 @@ public class ServletRegistrationComponent {
 
 		// Propagate the change
 		if( this.authenticationFilter != null )
-			this.authenticationFilter.setAuthenticationMngr( this.authenticationMngr );
+			this.authenticationFilter.setAuthenticationManager( this.authenticationMngr );
 
 		if( this.app != null )
 			this.app.setAuthenticationManager( this.authenticationMngr );

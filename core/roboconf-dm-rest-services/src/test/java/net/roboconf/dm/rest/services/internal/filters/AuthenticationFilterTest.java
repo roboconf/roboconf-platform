@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 
@@ -76,6 +77,7 @@ public class AuthenticationFilterTest {
 		filter.setAuthenticationEnabled( true );
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
+		Mockito.when( req.getRequestURI()).thenReturn( "/whatever" );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
@@ -101,14 +103,15 @@ public class AuthenticationFilterTest {
 
 		AuthenticationManager authMngr = Mockito.mock( AuthenticationManager.class );
 		Mockito.when( authMngr.isSessionValid( sessionId, sessionPeriod )).thenReturn( true );
-		filter.setAuthenticationMngr( authMngr );
+		filter.setAuthenticationManager( authMngr );
 
 		FilterChain chain = Mockito.mock( FilterChain.class );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
+		Mockito.when( req.getRequestURI()).thenReturn( "/whatever" );
 		Mockito.when( req.getCookies()).thenReturn( new Cookie[] {
 			new Cookie( "as", "as" ),
-			new Cookie( AuthenticationFilter.SESSION_ID, sessionId )
+			new Cookie( UrlConstants.SESSION_ID, sessionId )
 		});
 
 		filter.doFilter( req, resp, chain );
@@ -134,14 +137,15 @@ public class AuthenticationFilterTest {
 
 		AuthenticationManager authMngr = Mockito.mock( AuthenticationManager.class );
 		Mockito.when( authMngr.isSessionValid( sessionId, sessionPeriod )).thenReturn( false );
-		filter.setAuthenticationMngr( authMngr );
+		filter.setAuthenticationManager( authMngr );
 
 		FilterChain chain = Mockito.mock( FilterChain.class );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
+		Mockito.when( req.getRequestURI()).thenReturn( "/whatever" );
 		Mockito.when( req.getCookies()).thenReturn( new Cookie[] {
 			new Cookie( "as", "as" ),
-			new Cookie( AuthenticationFilter.SESSION_ID, sessionId )
+			new Cookie( UrlConstants.SESSION_ID, sessionId )
 		});
 
 		filter.doFilter( req, resp, chain );
@@ -162,7 +166,7 @@ public class AuthenticationFilterTest {
 		filter.setAuthenticationEnabled( true );
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
-		Mockito.when( req.getRequestURI()).thenReturn( IAuthenticationResource.LOGIN_PATH );
+		Mockito.when( req.getRequestURI()).thenReturn( IAuthenticationResource.PATH + IAuthenticationResource.LOGIN_PATH );
 		Mockito.when( req.getCookies()).thenReturn( new Cookie[ 0 ]);
 
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );

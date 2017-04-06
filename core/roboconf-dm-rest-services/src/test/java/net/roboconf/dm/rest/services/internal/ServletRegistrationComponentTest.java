@@ -321,7 +321,7 @@ public class ServletRegistrationComponentTest {
 		this.register.authenticationFilter = Mockito.mock( AuthenticationFilter.class );
 
 		this.register.setAuthenticationRealm( "realm2" );
-		Mockito.verify( this.register.authenticationFilter, Mockito.only()).setAuthenticationMngr( Mockito.any( AuthenticationManager.class ));
+		Mockito.verify( this.register.authenticationFilter, Mockito.only()).setAuthenticationManager( Mockito.any( AuthenticationManager.class ));
 
 		// Stop...
 		this.register.stopping();

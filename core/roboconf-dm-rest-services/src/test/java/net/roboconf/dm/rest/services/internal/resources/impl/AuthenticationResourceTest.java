@@ -34,9 +34,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager.IAuthService;
-import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -68,7 +68,7 @@ public class AuthenticationResourceTest {
 
 		NewCookie cookie = (NewCookie) resp.getMetadata().getFirst( "Set-Cookie" );
 		Assert.assertNotNull( cookie );
-		Assert.assertEquals( AuthenticationFilter.SESSION_ID, cookie.getName());
+		Assert.assertEquals( UrlConstants.SESSION_ID, cookie.getName());
 		Assert.assertNotNull( cookie.getValue());
 		Assert.assertTrue( authMngr.isSessionValid( cookie.getValue(), -1 ));
 

@@ -72,6 +72,14 @@ public class AuthenticationManager {
 	private IAuthService authService;
 
 
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static enum REST_ROLES {
+		ADM, TPL_RW, APP_RW, APP_R
+	}
+
+
 
 	/**
 	 * Constructor.

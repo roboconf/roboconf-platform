@@ -32,8 +32,8 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
-import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 
 /**
@@ -52,12 +52,18 @@ public class AuthenticationResource implements IAuthenticationResource {
 
 		String sessionId;
 		Response response;
-		if( this.authenticationManager == null )
+		if( this.authenticationManager == null ) {
 			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( "No authentication manager was available." ).build();
-		else if(( sessionId = this.authenticationManager.login( username, password )) == null )
+			this.logger.fine( "No authentication manager was available. User was " + username );
+
+		} else if(( sessionId = this.authenticationManager.login( username, password )) == null ) {
 			response = Response.status( Status.FORBIDDEN ).entity( "Authentication failed." ).build();
-		else
-			response = Response.ok().cookie( new NewCookie( AuthenticationFilter.SESSION_ID, sessionId )).build();
+			this.logger.fine( "Authentication failed. User was " + username );
+
+		} else {
+			response = Response.ok().cookie( new NewCookie( UrlConstants.SESSION_ID, sessionId )).build();
+			this.logger.fine( "Authentication succeeded. User was " + username );
+		}
 
 		// NewCookie's implementation uses NewCookie.DEFAULT_MAX_AGE as the default
 		// validity for a cookie, which means it is valid until the browser is closed.

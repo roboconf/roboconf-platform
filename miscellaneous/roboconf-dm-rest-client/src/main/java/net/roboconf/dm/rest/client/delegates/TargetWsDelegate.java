@@ -39,6 +39,7 @@ import com.sun.jersey.api.client.WebResource;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.TargetWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
@@ -50,14 +51,17 @@ public class TargetWsDelegate {
 
 	private final WebResource resource;
 	private final Logger logger;
+	private final WsClient wsClient;
 
 
 	/**
 	 * Constructor.
 	 * @param resource a web resource
+	 * @param the WS client
 	 */
-	public TargetWsDelegate( WebResource resource ) {
+	public TargetWsDelegate( WebResource resource, WsClient wsClient ) {
 		this.resource = resource;
+		this.wsClient = wsClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -71,7 +75,8 @@ public class TargetWsDelegate {
 		this.logger.finer( "Listing all the available targets." );
 		WebResource path = this.resource.path( UrlConstants.TARGETS );
 		List<TargetWrapperDescriptor> result =
-				path.accept( MediaType.APPLICATION_JSON )
+				this.wsClient.createBuilder( path )
+				.accept( MediaType.APPLICATION_JSON )
 				.type( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<TargetWrapperDescriptor>> () {});
 
@@ -95,7 +100,7 @@ public class TargetWsDelegate {
 		this.logger.finer( "Creating a new target."  );
 
 		WebResource path = this.resource.path( UrlConstants.TARGETS );
-		ClientResponse response = path.post( ClientResponse.class, targetContent );
+		ClientResponse response = this.wsClient.createBuilder( path ).post( ClientResponse.class, targetContent );
 		handleResponse( response );
 
 		return response.getEntity( String.class );
@@ -112,7 +117,10 @@ public class TargetWsDelegate {
 		this.logger.finer( "Deleting target " + targetId  );
 
 		WebResource path = this.resource.path( UrlConstants.TARGETS ).path( targetId );
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).delete( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.delete( ClientResponse.class );
+
 		handleResponse( response );
 	}
 
@@ -144,7 +152,10 @@ public class TargetWsDelegate {
 		if( app instanceof ApplicationTemplate )
 			path = path.queryParam( "qualifier", ((ApplicationTemplate) app).getQualifier());
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
+
 		handleResponse( response );
 	}
 

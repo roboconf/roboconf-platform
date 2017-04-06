@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 
@@ -55,7 +56,6 @@ import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
  */
 public class AuthenticationFilter implements Filter {
 
-	public static final String SESSION_ID = "sid";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private AuthenticationManager authenticationMngr;
@@ -81,7 +81,7 @@ public class AuthenticationFilter implements Filter {
 			Cookie[] cookies = request.getCookies();
 			if( cookies != null ) {
 				for( Cookie cookie : cookies ) {
-					if( SESSION_ID.equals( cookie.getName())) {
+					if( UrlConstants.SESSION_ID.equals( cookie.getName())) {
 						sessionId = cookie.getValue();
 						break;
 					}
@@ -99,7 +99,7 @@ public class AuthenticationFilter implements Filter {
 
 			// Valid session, go on. Send an error otherwise.
 			// No redirection, we mainly deal with our web socket and REST API.
-			boolean loginRequest = IAuthenticationResource.LOGIN_PATH.equals( requestedPath );
+			boolean loginRequest = requestedPath.endsWith( IAuthenticationResource.PATH + IAuthenticationResource.LOGIN_PATH );
 			if( loggedIn || loginRequest ) {
 				chain.doFilter( request, response );
 			} else {
@@ -132,7 +132,7 @@ public class AuthenticationFilter implements Filter {
 	/**
 	 * @param authenticationMngr the authenticationMngr to set
 	 */
-	public void setAuthenticationMngr( AuthenticationManager authenticationMngr ) {
+	public void setAuthenticationManager( AuthenticationManager authenticationMngr ) {
 		this.authenticationMngr = authenticationMngr;
 	}
 
