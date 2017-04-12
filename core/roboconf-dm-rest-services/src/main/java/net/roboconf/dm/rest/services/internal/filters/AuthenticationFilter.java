@@ -148,9 +148,6 @@ public class AuthenticationFilter implements Filter {
 
 		// TODO; check the permissions
 
-		// TODO: documentation (+ authentication)
-		// TODO: web admin
-
 		// Audit
 		String ipAddress = request.getRemoteAddr();
 		String user = this.authenticationMngr.findUsername( sessionId );
