@@ -29,13 +29,19 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.logging.Logger;
 
+import javax.servlet.Filter;
+
 import org.ops4j.pax.url.mvn.MavenResolver;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpService;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.commons.security.AuthenticationManager;
+import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 import net.roboconf.dm.rest.services.internal.icons.IconServlet;
 import net.roboconf.dm.rest.services.internal.websocket.RoboconfWebSocketServlet;
 import net.roboconf.dm.scheduler.IScheduler;
@@ -61,12 +67,30 @@ public class ServletRegistrationComponent {
 	private Manager manager;
 	private IScheduler scheduler;
 	private MavenResolver mavenResolver;
+
 	private boolean enableCors = false;
+	private boolean enableAuthentication = false;
+	private long sessionPeriod;
 
 	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final BundleContext bundleContext;
+
 	RestApplication app;
 	ServletContainer jerseyServlet;
+
+	ServiceRegistration<Filter> filterServiceRegistration;
+	AuthenticationFilter authenticationFilter;
+	AuthenticationManager authenticationMngr;
+
+
+	/**
+	 * Constructor.
+	 * @param bundleContext
+	 */
+	public ServletRegistrationComponent( BundleContext bundleContext ) {
+		this.bundleContext = bundleContext;
+	}
 
 
 	/**
@@ -87,6 +111,7 @@ public class ServletRegistrationComponent {
 		this.app.setScheduler( this.scheduler );
 		this.app.setMavenResolver( this.mavenResolver );
 		this.app.enableCors( this.enableCors );
+		this.app.setAuthenticationManager( this.authenticationMngr );
 
 		Dictionary<String,String> initParams = new Hashtable<> ();
 		initParams.put( "servlet-name", "Roboconf DM (REST)" );
@@ -107,6 +132,21 @@ public class ServletRegistrationComponent {
 
 		RoboconfWebSocketServlet websocketServlet = new RoboconfWebSocketServlet();
 		this.httpService.registerServlet( WEBSOCKET_CONTEXT, websocketServlet, initParams, null );
+
+		// Register a filter for authentication
+		this.authenticationFilter = new AuthenticationFilter();
+		this.authenticationFilter.setAuthenticationEnabled( this.enableAuthentication );
+		this.authenticationFilter.setAuthenticationManager( this.authenticationMngr );
+		this.authenticationFilter.setSessionPeriod( this.sessionPeriod );
+
+		initParams = new Hashtable<> ();
+		initParams.put( "urlPatterns", "*" );
+
+		// Consider the bundle context can be null (e.g. when used outside of OSGi)
+		if( this.bundleContext != null )
+			this.filterServiceRegistration = this.bundleContext.registerService( Filter.class, this.authenticationFilter, initParams );
+		else
+			this.logger.warning( "No bundle context was available, the authentication filter was not registered." );
 	}
 
 
@@ -115,6 +155,10 @@ public class ServletRegistrationComponent {
 	 * @throws Exception in case of critical error
 	 */
 	public void stopping() throws Exception {
+
+		// Remove the filter
+		if( this.filterServiceRegistration != null )
+			this.filterServiceRegistration.unregister();
 
 		// Update the HTTP service
 		this.logger.fine( "iPojo unregisters REST and icons servlets related to Roboconf's DM." );
@@ -130,6 +174,8 @@ public class ServletRegistrationComponent {
 		// Reset the application
 		this.app = null;
 		this.jerseyServlet = null;
+		this.filterServiceRegistration = null;
+		this.authenticationFilter = null;
 	}
 
 
@@ -220,6 +266,52 @@ public class ServletRegistrationComponent {
 		} catch( Exception e ) {
 			Utils.logException( this.logger, e );
 		}
+	}
+
+
+	/**
+	 * Invoked by iPojo.
+	 * @param enableAuthentication the enableAuthentication to set
+	 */
+	public void setEnableAuthentication( boolean enableAuthentication ) {
+
+		this.logger.fine( "Authentication is now " + (enableAuthentication ? "enabled" : "disabled") + ". Updating the REST resource." );
+		this.enableAuthentication = enableAuthentication;
+
+		if( this.authenticationFilter != null )
+			this.authenticationFilter.setAuthenticationEnabled( enableAuthentication );
+	}
+
+
+	/**
+	 * @param authenticationRealm the authenticationRealm to set
+	 */
+	public void setAuthenticationRealm( String authenticationRealm ) {
+
+		// Given the way sessions are stored in AuthenticationManager (private map),
+		// changing the realm will invalidate all the current sessions
+		this.logger.fine( "New authentication realm: " + authenticationRealm );
+		this.authenticationMngr = new AuthenticationManager( authenticationRealm );
+
+		// Propagate the change
+		if( this.authenticationFilter != null )
+			this.authenticationFilter.setAuthenticationManager( this.authenticationMngr );
+
+		if( this.app != null )
+			this.app.setAuthenticationManager( this.authenticationMngr );
+	}
+
+
+	/**
+	 * @param sessionPeriod the sessionPeriod to set
+	 */
+	public void setSessionPeriod( long sessionPeriod ) {
+
+		this.logger.fine( "New session period: " + sessionPeriod );
+		this.sessionPeriod = sessionPeriod;
+
+		if( this.authenticationFilter != null )
+			this.authenticationFilter.setSessionPeriod( sessionPeriod );
 	}
 
 

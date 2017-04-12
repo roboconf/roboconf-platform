@@ -39,6 +39,7 @@ import com.sun.jersey.api.client.WebResource;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
@@ -49,14 +50,17 @@ public class ApplicationWsDelegate {
 
 	private final WebResource resource;
 	private final Logger logger;
+	private final WsClient wsClient;
 
 
 	/**
 	 * Constructor.
 	 * @param resource a web resource
+	 * @param the WS client
 	 */
-	public ApplicationWsDelegate( WebResource resource ) {
+	public ApplicationWsDelegate( WebResource resource, WsClient wsClient ) {
 		this.resource = resource;
+		this.wsClient = wsClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -86,7 +90,10 @@ public class ApplicationWsDelegate {
 		if( newStatus != null )
 			path = path.queryParam( "new-state", newStatus.toString());
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+					.accept( MediaType.APPLICATION_JSON )
+					.post( ClientResponse.class );
+
 		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
@@ -104,7 +111,9 @@ public class ApplicationWsDelegate {
 		this.logger.finer( "Updating the description of application " + applicationName + "." );
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "description" );
-		ClientResponse response = path.accept( MediaType.TEXT_PLAIN ).post( ClientResponse.class, newDesc );
+		ClientResponse response = this.wsClient.createBuilder( path )
+					.accept( MediaType.TEXT_PLAIN )
+					.post( ClientResponse.class, newDesc );
 
 		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -126,7 +135,10 @@ public class ApplicationWsDelegate {
 		if( instancePath != null )
 			path = path.queryParam( "instance-path", instancePath );
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
+
 		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
@@ -147,7 +159,10 @@ public class ApplicationWsDelegate {
 		if( instancePath != null )
 			path = path.queryParam( "instance-path", instancePath );
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
+
 		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
@@ -168,7 +183,10 @@ public class ApplicationWsDelegate {
 		if( instancePath != null )
 			path = path.queryParam( "instance-path", instancePath );
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
+
 		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
@@ -192,7 +210,8 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "instance-path", instancePath );
 
 		List<Instance> result =
-				path.accept( MediaType.APPLICATION_JSON )
+				this.wsClient.createBuilder( path )
+				.accept( MediaType.APPLICATION_JSON )
 				.type( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Instance>> () {});
 
@@ -221,7 +240,7 @@ public class ApplicationWsDelegate {
 		if( parentInstancePath != null )
 			path = path.queryParam( "instance-path", parentInstancePath );
 
-		ClientResponse response = path
+		ClientResponse response = this.wsClient.createBuilder( path )
 				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
 				.post( ClientResponse.class, instance );
 
@@ -240,13 +259,13 @@ public class ApplicationWsDelegate {
 		this.logger.finer( String.format( "Removing instance \"%s\" from application \"%s\"...",
 				instancePath, applicationName ) );
 
-		this.resource
+		WebResource path = this.resource
 				.path( UrlConstants.APP )
 				.path( applicationName )
 				.path( "instances" )
-				.queryParam( "instance-path", instancePath )
-				.delete();
+				.queryParam( "instance-path", instancePath );
 
+		this.wsClient.createBuilder( path ).delete();
 		this.logger.finer( String.format( "Instance \"%s\" has been removed from application \"%s\"",
 				instancePath, applicationName ) );
 	}
@@ -260,12 +279,12 @@ public class ApplicationWsDelegate {
 	public void resynchronize( String applicationName ) {
 		this.logger.finer( String.format( "Resynchronizing application \"%s\"...", applicationName ) );
 
-		this.resource
+		WebResource path = this.resource
 				.path( UrlConstants.APP )
 				.path( applicationName )
-				.path( "resynchronize" )
-				.post();
+				.path( "resynchronize" );
 
+		this.wsClient.createBuilder( path ).post();
 		this.logger.finer( String.format( "Application \"%s\" has been resynchronized", applicationName ) );
 	}
 
@@ -278,8 +297,9 @@ public class ApplicationWsDelegate {
 	public List<Component> listAllComponents( String applicationName ) {
 		this.logger.finer( "Listing components for application " + applicationName + "..." );
 
-		List<Component> result = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( "components" )
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "components" );
+		List<Component> result =
+				this.wsClient.createBuilder( path )
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Component>> () {});
 
@@ -307,7 +327,10 @@ public class ApplicationWsDelegate {
 		if( componentName != null )
 			path = path.queryParam( "component-name", componentName );
 
-		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
+		List<Component> result = this.wsClient.createBuilder( path )
+					.accept( MediaType.APPLICATION_JSON )
+					.get( new GenericType<List<Component>> () {});
+
 		if( result != null ) {
 			this.logger.finer( result.size() + " possible children was or were found for " + componentName + "." );
 		} else {
@@ -332,7 +355,10 @@ public class ApplicationWsDelegate {
 		if( componentName != null )
 			path = path.queryParam( "component-name", componentName );
 
-		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
+		List<Component> result = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.get( new GenericType<List<Component>> () {});
+
 		if( result != null ) {
 			this.logger.finer( result.size() + " possible parents was or were found for " + componentName + "." );
 		} else {
@@ -361,7 +387,7 @@ public class ApplicationWsDelegate {
 				.queryParam( "bound-tpl", boundTplName )
 				.queryParam( "bound-app", boundApp );
 
-		ClientResponse response = path.post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path ).post( ClientResponse.class );
 		handleResponse( response );
 	}
 
@@ -378,7 +404,10 @@ public class ApplicationWsDelegate {
 		WebResource path = this.resource.path( UrlConstants.APP )
 				.path( applicationName ).path( "commands" );
 
-		List<String> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<String>> () {});
+		List<String> result = this.wsClient.createBuilder( path )
+					.accept( MediaType.APPLICATION_JSON )
+					.get( new GenericType<List<String>> () {});
+
 		if( result != null ) {
 			this.logger.finer( result.size() + " command(s) were found for " + applicationName + "." );
 		} else {

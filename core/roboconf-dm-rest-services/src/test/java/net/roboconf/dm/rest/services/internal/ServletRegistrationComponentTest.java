@@ -31,6 +31,7 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.Filter;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -44,6 +45,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -58,6 +61,8 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
+import net.roboconf.dm.rest.commons.security.AuthenticationManager;
+import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 import net.roboconf.messaging.api.MessagingConstants;
 
 /**
@@ -72,8 +77,12 @@ public class ServletRegistrationComponentTest {
 	private TestManagerWrapper managerWrapper;
 	private TestApplication app;
 
+	private ServletRegistrationComponent register;
+	private BundleContext bundleContext;
+
 
 	@Before
+	@SuppressWarnings( "unchecked" )
 	public void initializeManager() throws Exception {
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
@@ -85,6 +94,14 @@ public class ServletRegistrationComponentTest {
 
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 		this.managerWrapper.addManagedApplication( new ManagedApplication( this.app ));
+
+		this.bundleContext = Mockito.mock( BundleContext.class );
+		Mockito.when( this.bundleContext.registerService(
+				Mockito.eq( Filter.class ),
+				Mockito.any( Filter.class ),
+				Mockito.any( Dictionary.class ))).thenReturn( Mockito.mock( ServiceRegistration.class ));
+
+		this.register = new ServletRegistrationComponent( this.bundleContext );
 	}
 
 
@@ -97,27 +114,35 @@ public class ServletRegistrationComponentTest {
 	@Test
 	public void testStop_httpServiceIsNull() throws Exception {
 
-		ServletRegistrationComponent register = new ServletRegistrationComponent();
-		register.stopping();
+		this.register.stopping();
+		Mockito.verifyZeroInteractions( this.bundleContext );
 	}
 
 
 	@Test
+	@SuppressWarnings( "unchecked" )
 	public void testStartAndStop() throws Exception {
 
-		ServletRegistrationComponent register = new ServletRegistrationComponent();
-
 		// No error if these methods are called before the component is started.
-		register.schedulerAppears();
-		register.schedulerDisappears();
+		this.register.schedulerAppears();
+		this.register.schedulerDisappears();
+
+		this.register.mavenResolverAppears();
+		this.register.mavenResolverDisappears();
 
 		// Deal with the HTTP service.
 		HttpServiceForTest httpService = new HttpServiceForTest();
-		register.setHttpService( httpService );
+		this.register.setHttpService( httpService );
 
 		Assert.assertEquals( 0, httpService.pathToServlet.size());
-		register.starting();
+		Mockito.verifyZeroInteractions( this.bundleContext );
+		this.register.starting();
+
 		Assert.assertEquals( 3, httpService.pathToServlet.size());
+		Mockito.verify( this.bundleContext, Mockito.only()).registerService(
+				Mockito.eq( Filter.class ),
+				Mockito.any( AuthenticationFilter.class ),
+				Mockito.any( Dictionary.class ));
 
 		ServletContainer jerseyServlet = (ServletContainer) httpService.pathToServlet.get( ServletRegistrationComponent.REST_CONTEXT );
 		Assert.assertNotNull( jerseyServlet );
@@ -128,17 +153,28 @@ public class ServletRegistrationComponentTest {
 		HttpServlet websocketServlet = (HttpServlet) httpService.pathToServlet.get( ServletRegistrationComponent.WEBSOCKET_CONTEXT );
 		Assert.assertNotNull( websocketServlet );
 
+		// Check there is no authentication manager
+		Assert.assertNull( this.register.authenticationMngr );
+		this.register.setAuthenticationRealm( "realm" );
+		Assert.assertNotNull( this.register.authenticationMngr );
+
 		// Update the scheduler...
-		register.schedulerAppears();
-		register.schedulerDisappears();
+		this.register.schedulerAppears();
+		this.register.schedulerDisappears();
 
 		// Update the URL resolver
-		register.mavenResolverAppears();
-		register.mavenResolverDisappears();
+		this.register.mavenResolverAppears();
+		this.register.mavenResolverDisappears();
 
 		// Stop...
-		register.stopping();
+		this.register.stopping();
+
 		Assert.assertEquals( 0, httpService.pathToServlet.size());
+		Assert.assertNull( this.register.app );
+		Assert.assertNull( this.register.authenticationFilter );
+		Assert.assertNull( this.register.jerseyServlet );
+		Assert.assertNull( this.register.filterServiceRegistration );
+		Assert.assertNotNull( this.register.authenticationMngr );
 	}
 
 
@@ -205,31 +241,93 @@ public class ServletRegistrationComponentTest {
 	public void testSetEnableCors() throws Exception {
 
 		// No NPE
-		ServletRegistrationComponent register = new ServletRegistrationComponent();
-		register.setEnableCors( true );
-		register.setEnableCors( false );
+		this.register.setEnableCors( true );
+		this.register.setEnableCors( false );
 
 		// Act like if the component had been started
-		register.app = Mockito.spy( new RestApplication( this.manager ));
-		register.jerseyServlet = Mockito.mock( ServletContainer.class );
+		this.register.app = Mockito.spy( new RestApplication( this.manager ));
+		this.register.jerseyServlet = Mockito.mock( ServletContainer.class );
 
-		register.setEnableCors( true );
-		Mockito.verify( register.app, Mockito.times( 1 )).enableCors( true );
-		Mockito.verify( register.jerseyServlet, Mockito.only()).reload();
+		this.register.setEnableCors( true );
+		Mockito.verify( this.register.app, Mockito.times( 1 )).enableCors( true );
+		Mockito.verify( this.register.jerseyServlet, Mockito.only()).reload();
 
-		Mockito.reset( register.app );
-		Mockito.reset( register.jerseyServlet );
+		Mockito.reset( this.register.app );
+		Mockito.reset( this.register.jerseyServlet );
 
-		register.setEnableCors( false );
-		Mockito.verify( register.app, Mockito.times( 1 )).enableCors( false );
-		Mockito.verify( register.jerseyServlet, Mockito.only()).reload();
+		this.register.setEnableCors( false );
+		Mockito.verify( this.register.app, Mockito.times( 1 )).enableCors( false );
+		Mockito.verify( this.register.jerseyServlet, Mockito.only()).reload();
 
 		// Stop...
-		register.stopping();
+		this.register.stopping();
 
 		// No NPE
-		register.setEnableCors( true );
-		register.setEnableCors( false );
+		this.register.setEnableCors( true );
+		this.register.setEnableCors( false );
+	}
+
+
+	@Test
+	public void testSetSessionPeriod() throws Exception {
+
+		// No NPE
+		this.register.setSessionPeriod( 50 );
+
+		// Act like if the component had been started
+		this.register.authenticationFilter = Mockito.mock( AuthenticationFilter.class );
+
+		this.register.setSessionPeriod( 500 );
+		Mockito.verify( this.register.authenticationFilter, Mockito.only()).setSessionPeriod( 500 );
+
+		// Stop...
+		this.register.stopping();
+
+		// No NPE
+		this.register.setSessionPeriod( -1 );
+	}
+
+
+	@Test
+	public void testSetEnableAuthentication() throws Exception {
+
+		// No NPE
+		this.register.setEnableAuthentication( true );
+		this.register.setEnableAuthentication( false );
+
+		// Act like if the component had been started
+		this.register.authenticationFilter = Mockito.mock( AuthenticationFilter.class );
+
+		this.register.setEnableAuthentication( true );
+		Mockito.verify( this.register.authenticationFilter, Mockito.only()).setAuthenticationEnabled( true );
+
+		// Stop...
+		this.register.stopping();
+
+		// No NPE
+		this.register.setEnableAuthentication( false );
+	}
+
+
+	@Test
+	public void testSetAuthenticationRealm() throws Exception {
+
+		// No NPE
+		Assert.assertNull( this.register.authenticationMngr );
+		this.register.setAuthenticationRealm( "realm" );
+		Assert.assertNotNull( this.register.authenticationMngr );
+
+		// Act like if the component had been started
+		this.register.authenticationFilter = Mockito.mock( AuthenticationFilter.class );
+
+		this.register.setAuthenticationRealm( "realm2" );
+		Mockito.verify( this.register.authenticationFilter, Mockito.only()).setAuthenticationManager( Mockito.any( AuthenticationManager.class ));
+
+		// Stop...
+		this.register.stopping();
+
+		// No NPE
+		this.register.setAuthenticationRealm( "realm" );
 	}
 
 

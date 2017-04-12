@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,20 +23,49 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.dm.rest.services.internal.resources;
+
+import javax.ws.rs.CookieParam;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+
+import net.roboconf.dm.rest.commons.UrlConstants;
+import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public interface IAuthenticationResource {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
-	String SCHEDULER = "scheduler";
-	String AUTHENTICATION = "auth";
+	String PATH = "/" + UrlConstants.AUTHENTICATION;
+	String LOGIN_PATH = "/e";
 
-	String SESSION_ID = "sid";
+
+	/**
+	 * Authenticates a user.
+	 * @param username a user name
+	 * @param password a password
+	 * @return a response (the session ID is returned as a cookie)
+	 * @see AuthenticationFilter#SESSION_ID for the cookie's name
+	 *
+	 * @HTTP 200 Login succeeded.
+	 * @HTTP 403 Login failed.
+	 * @HTTP 500 Invalid server configuration.
+	 */
+	@POST
+	@Path( LOGIN_PATH )
+	Response login( @HeaderParam("u") String username, @HeaderParam("p") String password );
+
+
+	/**
+	 * Terminates a user session.
+	 * @param sessionId a session ID
+	 * @return a response
+	 * @HTTP 200 Always successful.
+	 */
+	@POST
+	@Path("/s")
+	Response logout( @CookieParam( UrlConstants.SESSION_ID ) String sessionId );
 }

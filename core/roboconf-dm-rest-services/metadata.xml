@@ -54,6 +54,9 @@
 		
 		<properties pid="net.roboconf.dm.rest.services.configuration">
 			<property name="enable-cors" method="setEnableCors" value="false" />
+			<property name="enable-authentication" method="setEnableAuthentication" value="false" />
+			<property name="authentication-realm" method="setAuthenticationRealm" value="karaf" />
+			<property name="session-period" method="setSessionPeriod" value="-1" />
 		</properties>
 	</component>
 	

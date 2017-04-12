@@ -34,12 +34,14 @@ import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
+import net.roboconf.dm.rest.services.internal.resources.impl.AuthenticationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.PreferencesResource;
@@ -58,6 +60,7 @@ public class RestApplication extends DefaultResourceConfig {
 	private final IPreferencesResource preferencesResource;
 	private final ManagementResource managementResource;
 	private final SchedulerResource schedulerResource;
+	private final AuthenticationResource authenticationResource;
 
 
 	/**
@@ -73,6 +76,7 @@ public class RestApplication extends DefaultResourceConfig {
 		this.targetResource = new TargetResource( manager );
 		this.preferencesResource = new PreferencesResource( manager );
 		this.schedulerResource = new SchedulerResource();
+		this.authenticationResource = new AuthenticationResource();
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -100,6 +104,7 @@ public class RestApplication extends DefaultResourceConfig {
 		set.add( this.targetResource );
 		set.add( this.preferencesResource );
 		set.add( this.schedulerResource );
+		set.add( this.authenticationResource );
 
 		return set;
 	}
@@ -120,6 +125,15 @@ public class RestApplication extends DefaultResourceConfig {
 	 */
 	public void setMavenResolver( MavenResolver mavenResolver ) {
 		this.managementResource.setMavenResolver( mavenResolver );
+	}
+
+
+	/**
+	 * Sets the authentication manager.
+	 * @param authenticationMngr the authentication manager (can be null)
+	 */
+	public void setAuthenticationManager( AuthenticationManager authenticationMngr ) {
+		this.authenticationResource.setAuthenticationManager( authenticationMngr );
 	}
 
 
