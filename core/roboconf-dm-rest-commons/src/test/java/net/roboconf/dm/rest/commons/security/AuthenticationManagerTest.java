@@ -51,14 +51,19 @@ public class AuthenticationManagerTest {
 		IAuthService authService = Mockito.mock( IAuthService.class );
 		mngr.setAuthService( authService );
 
+		Assert.assertNull( mngr.findUsername( "whatever" ));
+		Assert.assertNull( mngr.findUsername( null ));
+
 		String token = mngr.login( "me", "my password" );
 		Assert.assertNotNull( token );
 		Assert.assertTrue( mngr.isSessionValid( token, 1 ));
 		Assert.assertTrue( mngr.isSessionValid( token, -1 ));
+		Assert.assertEquals( "me", mngr.findUsername( token ));
 
 		mngr.logout( token );
 		Assert.assertFalse( mngr.isSessionValid( token, 1 ));
 		Assert.assertFalse( mngr.isSessionValid( token, -1 ));
+		Assert.assertNull( mngr.findUsername( token ));
 	}
 
 

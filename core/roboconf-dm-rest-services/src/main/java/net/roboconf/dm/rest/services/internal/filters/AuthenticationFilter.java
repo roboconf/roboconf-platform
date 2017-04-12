@@ -41,6 +41,10 @@ import javax.servlet.http.HttpServletResponse;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
+import net.roboconf.dm.rest.services.internal.ServletRegistrationComponent;
+import net.roboconf.dm.rest.services.internal.annotations.RestIndexer;
+import net.roboconf.dm.rest.services.internal.annotations.RestIndexer.RestOperationBean;
+import net.roboconf.dm.rest.services.internal.audit.AuditLogRecord;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 
 /**
@@ -58,9 +62,18 @@ public class AuthenticationFilter implements Filter {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
+	private final RestIndexer restIndexer;
 	private AuthenticationManager authenticationMngr;
 	private boolean authenticationEnabled;
 	private long sessionPeriod;
+
+
+	/**
+	 * Constructor.
+	 */
+	public AuthenticationFilter() {
+		this.restIndexer = new RestIndexer();
+	}
 
 
 	@Override
@@ -88,6 +101,9 @@ public class AuthenticationFilter implements Filter {
 				}
 			}
 
+			// Audit
+			audit( request, sessionId );
+
 			// Is there a valid session?
 			boolean loggedIn = false;
 			if( ! Utils.isEmptyOrWhitespaces( sessionId )) {
@@ -106,6 +122,43 @@ public class AuthenticationFilter implements Filter {
 				response.sendError( 403, "Authentication is required." );
 			}
 		}
+	}
+
+
+	/**
+	 * @param request
+	 * @param sessionId
+	 */
+	private void audit( HttpServletRequest request, String sessionId ) {
+
+		// Find the right method
+		RestOperationBean rightBean = null;
+		String restVerb = request.getMethod();
+		String uri = request.getRequestURI();
+		String path = cleanPath( uri );
+		for( RestOperationBean rmb : this.restIndexer.restMethods ) {
+			if( path != null
+					&& path.matches( rmb.getUrlPattern())
+					&& rmb.getRestVerb().equalsIgnoreCase( restVerb )) {
+
+				rightBean = rmb;
+				break;
+			}
+		}
+
+		// TODO; check the permissions
+
+		// TODO: documentation (+ authentication)
+		// TODO: web admin
+
+		// Audit
+		String ipAddress = request.getRemoteAddr();
+		String user = this.authenticationMngr.findUsername( sessionId );
+		boolean authorized = user != null;
+		if( rightBean != null )
+			this.logger.log( new AuditLogRecord( user, rightBean.getJerseyPath(), uri, rightBean.getRestVerb(), ipAddress, authorized ));
+		else
+			this.logger.log( new AuditLogRecord( user, null, uri, restVerb, ipAddress, authorized ));
 	}
 
 
@@ -142,5 +195,19 @@ public class AuthenticationFilter implements Filter {
 	 */
 	public void setSessionPeriod( long sessionPeriod ) {
 		this.sessionPeriod = sessionPeriod;
+	}
+
+
+	/**
+	 * Cleans the path by removing the servlet paths and URL parameters.
+	 * @param path a non-null path
+	 * @return a non-null path
+	 */
+	static String cleanPath( String path ) {
+
+		return path
+				.replaceFirst( "^" + ServletRegistrationComponent.REST_CONTEXT + "/", "/" )
+				.replaceFirst( "^" + ServletRegistrationComponent.WEBSOCKET_CONTEXT + "/", "/" )
+				.replaceFirst( "\\?.*", "" );
 	}
 }
