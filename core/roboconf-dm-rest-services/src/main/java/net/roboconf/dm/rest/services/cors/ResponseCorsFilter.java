@@ -28,6 +28,8 @@ package net.roboconf.dm.rest.services.cors;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
@@ -55,28 +57,45 @@ import net.roboconf.core.utils.Utils;
  */
 public class ResponseCorsFilter implements ContainerResponseFilter {
 
+	public static final String REQ_CORS_HEADER = "Access-Control-Request-Headers";
+
+
 	@Override
 	public ContainerResponse filter( ContainerRequest req, ContainerResponse contResp ) {
 
 		ResponseBuilder resp = Response.fromResponse( contResp.getResponse());
-		resp
-		.header( "Access-Control-Allow-Origin", "*" )
-		.header( "Access-Control-Allow-Methods", "GET, DELETE, POST, OPTIONS" );
+		for( Map.Entry<String,String> h : buildHeaders( req.getHeaderValue( REQ_CORS_HEADER )).entrySet())
+			resp.header( h.getKey(), h.getValue());
 
-		String reqHead = req.getHeaderValue( "Access-Control-Request-Headers" );
+		contResp.setResponse( resp.build());
+		return contResp;
+	}
+
+
+	/**
+	 * Finds the right headers to set on the response to prevent CORS issues.
+	 * @param reqCorsHeader the headers related to CORS
+	 * @return a non-null map
+	 */
+	public static Map<String,String> buildHeaders( String reqCorsHeader ) {
+
+		Map<String,String> result = new LinkedHashMap<> ();
+		result.put( "Access-Control-Allow-Origin", "*" );
+		result.put( "Access-Control-Allow-Methods", "GET, DELETE, POST, OPTIONS" );
+
+		String reqHead = reqCorsHeader;
 		if( ! Utils.isEmptyOrWhitespaces( reqHead )) {
 			try {
 				reqHead = URLEncoder.encode( reqHead, StandardCharsets.UTF_8.displayName());
 
 			} catch( UnsupportedEncodingException e ) {
-				Logger logger = Logger.getLogger( getClass().getName());
+				Logger logger = Logger.getLogger( ResponseCorsFilter.class.getName());
 				Utils.logException( logger, e );
 			}
 
-			resp.header( "Access-Control-Allow-Headers", reqHead );
+			result.put( "Access-Control-Allow-Headers", reqHead );
 		}
 
-		contResp.setResponse( resp.build());
-		return contResp;
+		return result;
 	}
 }

@@ -25,7 +25,11 @@
 
 package net.roboconf.dm.rest.services.internal.filters;
 
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.REQ_CORS_HEADER;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.buildHeaders;
+
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.Filter;
@@ -64,7 +68,7 @@ public class AuthenticationFilter implements Filter {
 
 	private final RestIndexer restIndexer;
 	private AuthenticationManager authenticationMngr;
-	private boolean authenticationEnabled;
+	private boolean authenticationEnabled, enableCors;
 	private long sessionPeriod;
 
 
@@ -118,7 +122,15 @@ public class AuthenticationFilter implements Filter {
 			boolean loginRequest = requestedPath.endsWith( IAuthenticationResource.PATH + IAuthenticationResource.LOGIN_PATH );
 			if( loggedIn || loginRequest ) {
 				chain.doFilter( request, response );
+
 			} else {
+				// CORS?
+				if( this.enableCors ) {
+					for( Map.Entry<String,String> h : buildHeaders( request.getHeader( REQ_CORS_HEADER )).entrySet())
+						response.setHeader( h.getKey(), h.getValue());
+				}
+
+				// Send an error
 				response.sendError( 403, "Authentication is required." );
 			}
 		}
@@ -192,6 +204,14 @@ public class AuthenticationFilter implements Filter {
 	 */
 	public void setSessionPeriod( long sessionPeriod ) {
 		this.sessionPeriod = sessionPeriod;
+	}
+
+
+	/**
+	 * @param enableCors the enableCors to set
+	 */
+	public void setEnableCors( boolean enableCors ) {
+		this.enableCors = enableCors;
 	}
 
 

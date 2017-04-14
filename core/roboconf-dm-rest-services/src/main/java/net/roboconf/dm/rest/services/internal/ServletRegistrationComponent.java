@@ -138,6 +138,7 @@ public class ServletRegistrationComponent {
 		this.authenticationFilter.setAuthenticationEnabled( this.enableAuthentication );
 		this.authenticationFilter.setAuthenticationManager( this.authenticationMngr );
 		this.authenticationFilter.setSessionPeriod( this.sessionPeriod );
+		this.authenticationFilter.setEnableCors( this.enableCors );
 
 		initParams = new Hashtable<> ();
 		initParams.put( "urlPatterns", "*" );
@@ -258,6 +259,9 @@ public class ServletRegistrationComponent {
 
 		if( this.app != null )
 			this.app.enableCors( enableCors );
+
+		if( this.authenticationFilter != null )
+			this.authenticationFilter.setEnableCors( enableCors );
 
 		try {
 			if( this.jerseyServlet != null )
