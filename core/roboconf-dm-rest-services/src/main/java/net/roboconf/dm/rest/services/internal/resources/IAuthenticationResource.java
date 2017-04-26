@@ -29,6 +29,8 @@ import javax.ws.rs.CookieParam;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import net.roboconf.dm.rest.commons.UrlConstants;
@@ -56,6 +58,7 @@ public interface IAuthenticationResource {
 	 */
 	@POST
 	@Path( LOGIN_PATH )
+	@Produces( MediaType.TEXT_PLAIN )
 	Response login( @HeaderParam("u") String username, @HeaderParam("p") String password );
 
 

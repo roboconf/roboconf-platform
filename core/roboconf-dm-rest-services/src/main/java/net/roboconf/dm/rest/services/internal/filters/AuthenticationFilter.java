@@ -25,7 +25,8 @@
 
 package net.roboconf.dm.rest.services.internal.filters;
 
-import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.REQ_CORS_HEADER;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.ORIGIN;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_REQ_HEADERS;
 import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.buildHeaders;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.internal.ServletRegistrationComponent;
@@ -50,6 +52,7 @@ import net.roboconf.dm.rest.services.internal.annotations.RestIndexer;
 import net.roboconf.dm.rest.services.internal.annotations.RestIndexer.RestOperationBean;
 import net.roboconf.dm.rest.services.internal.audit.AuditLogRecord;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
+import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 
 /**
  * A filter to determine and request (if necessary) authentication.
@@ -91,7 +94,7 @@ public class AuthenticationFilter implements Filter {
 			HttpServletRequest request = (HttpServletRequest) req;
 			HttpServletResponse response = (HttpServletResponse) resp;
 			String requestedPath = request.getRequestURI();
-			this.logger.info( "Path for auth: " + requestedPath );
+			String restVerb = request.getMethod();
 
 			// Find the session ID in the cookies
 			String sessionId = null;
@@ -119,14 +122,32 @@ public class AuthenticationFilter implements Filter {
 
 			// Valid session, go on. Send an error otherwise.
 			// No redirection, we mainly deal with our web socket and REST API.
+
+			// Exceptions:
+			// * We want to reach the login API.
+			// * We want to get the user language preference.
+			// * We received an OPTIONS request.
+
+			// POST requests with CORS are always preceded by an OPTIONS request.
+			// OPTIONS requests never come with a cookie. So, we do not filter them.
 			boolean loginRequest = requestedPath.endsWith( IAuthenticationResource.PATH + IAuthenticationResource.LOGIN_PATH );
-			if( loggedIn || loginRequest ) {
+			boolean optionsRequest = "options".equalsIgnoreCase( restVerb );
+			boolean languagePreference =
+					requestedPath.endsWith( IPreferencesResource.PATH )
+					&& "get".equalsIgnoreCase( restVerb )
+					&& ("key=" + IPreferencesMngr.USER_LANGUAGE).equals( request.getQueryString());
+
+			if( loggedIn || loginRequest || languagePreference || optionsRequest ) {
 				chain.doFilter( request, response );
 
 			} else {
 				// CORS?
 				if( this.enableCors ) {
-					for( Map.Entry<String,String> h : buildHeaders( request.getHeader( REQ_CORS_HEADER )).entrySet())
+					Map<String,String> headers = buildHeaders(
+							request.getHeader( CORS_REQ_HEADERS ),
+							request.getHeader( ORIGIN ));
+
+					for( Map.Entry<String,String> h : headers.entrySet())
 						response.setHeader( h.getKey(), h.getValue());
 				}
 

@@ -38,5 +38,5 @@ public interface UrlConstants {
 	String SCHEDULER = "scheduler";
 	String AUTHENTICATION = "auth";
 
-	String SESSION_ID = "sid";
+	String SESSION_ID = "roboconf-sid";
 }

@@ -28,6 +28,7 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -61,7 +62,8 @@ public class AuthenticationResource implements IAuthenticationResource {
 			this.logger.fine( "Authentication failed. User was " + username );
 
 		} else {
-			response = Response.ok().cookie( new NewCookie( UrlConstants.SESSION_ID, sessionId )).build();
+			Cookie cookie = new Cookie( UrlConstants.SESSION_ID, sessionId, "/", null );
+			response = Response.ok().cookie( new NewCookie( cookie )).build();
 			this.logger.fine( "Authentication succeeded. User was " + username );
 		}
 
