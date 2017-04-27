@@ -38,48 +38,52 @@ public class AuditLogRecordTest {
 	@Test
 	public void testFormatting() {
 
-		AuditLogRecord log = new AuditLogRecord( "me", "/target", "/roboconf-dm/target", "get", "127.0.0.1", true );
+		AuditLogRecord log = new AuditLogRecord( "me", "/target", "/roboconf-dm/target", "get", "127.0.0.1", "Gecko", true );
 		Assert.assertEquals( Level.INFO, log.getLevel());
 		Assert.assertEquals( AuditLogRecord.LOGGER_NAME, log.getLoggerName());
 		Assert.assertTrue( log.getMessage().contains( " me | " ));
 		Assert.assertTrue( log.getMessage().contains( " /target | " ));
-		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target" ));
+		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target | " ));
 		Assert.assertTrue( log.getMessage().contains( " 127.0.0.1 | " ));
 		Assert.assertTrue( log.getMessage().contains( " |    get | " ));
 		Assert.assertTrue( log.getMessage().contains( " |      " + AuditLogRecord.ALLOWED + " | " ));
+		Assert.assertTrue( log.getMessage().contains( " | Gecko" ));
 
-		log = new AuditLogRecord( null, "/target2", "/roboconf-dm/target2", "post", "192.168.1.1", false );
+		log = new AuditLogRecord( null, "/target2", "/roboconf-dm/target2", "post", "192.168.1.1", "Gecko", false );
 		Assert.assertEquals( Level.SEVERE, log.getLevel());
 		Assert.assertEquals( AuditLogRecord.LOGGER_NAME, log.getLoggerName());
 		Assert.assertTrue( log.getMessage().contains( " " + AuditLogRecord.ANONYMOUS + " | " ));
 		Assert.assertTrue( log.getMessage().contains( " /target2 | " ));
-		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target2" ));
+		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target2 | " ));
 		Assert.assertTrue( log.getMessage().contains( " 192.168.1.1 | " ));
 		Assert.assertTrue( log.getMessage().contains( " |   post | " ));
 		Assert.assertTrue( log.getMessage().contains( " | " + AuditLogRecord.BLOCKED + " | " ));
+		Assert.assertTrue( log.getMessage().contains( " | Gecko" ));
 
-		log = new AuditLogRecord( "me", null, "/roboconf-dm/target2", "delete", "255.255.255.255", true );
+		log = new AuditLogRecord( "me", null, "/roboconf-dm/target2", "delete", "255.255.255.255", null, true );
 		Assert.assertEquals( Level.WARNING, log.getLevel());
 		Assert.assertEquals( AuditLogRecord.LOGGER_NAME, log.getLoggerName());
 		Assert.assertTrue( log.getMessage().contains( " me | " ));
 		Assert.assertTrue( log.getMessage().contains( " - | " ));
-		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target2" ));
+		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target2 | " ));
 		Assert.assertTrue( log.getMessage().contains( " 255.255.255.255 | " ));
 		Assert.assertTrue( log.getMessage().contains( " | delete | " ));
 		Assert.assertTrue( log.getMessage().contains( " |      " + AuditLogRecord.ALLOWED + " | " ));
+		Assert.assertTrue( log.getMessage().contains( " | -" ));
 
-		log = new AuditLogRecord( "me too", "/target", "/roboconf-dm/target", "get", "127.0.0.1", false );
+		log = new AuditLogRecord( "me too", "/target", "/roboconf-dm/target", "get", "127.0.0.1", "Gecko", false );
 		Assert.assertEquals( Level.SEVERE, log.getLevel());
 		Assert.assertEquals( AuditLogRecord.LOGGER_NAME, log.getLoggerName());
 		Assert.assertTrue( log.getMessage().contains( " me too | " ));
 		Assert.assertTrue( log.getMessage().contains( " /target | " ));
-		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target" ));
+		Assert.assertTrue( log.getMessage().contains( " | /roboconf-dm/target | " ));
 		Assert.assertTrue( log.getMessage().contains( " 127.0.0.1 | " ));
 		Assert.assertTrue( log.getMessage().contains( " |    get | " ));
 		Assert.assertTrue( log.getMessage().contains( " | " + AuditLogRecord.BLOCKED + " | " ));
+		Assert.assertTrue( log.getMessage().contains( " | Gecko" ));
 
 		// SEVERE > WARNING
-		log = new AuditLogRecord( "me", null, "/roboconf-dm/target2", "delete", "255.255.255.255", false );
+		log = new AuditLogRecord( "me", null, "/roboconf-dm/target2", "delete", "255.255.255.255", "Gecko2", false );
 		Assert.assertEquals( Level.SEVERE, log.getLevel());
 		Assert.assertEquals( AuditLogRecord.LOGGER_NAME, log.getLoggerName());
 		Assert.assertTrue( log.getMessage().contains( " me | " ));
@@ -88,5 +92,6 @@ public class AuditLogRecordTest {
 		Assert.assertTrue( log.getMessage().contains( " 255.255.255.255 | " ));
 		Assert.assertTrue( log.getMessage().contains( " | delete | " ));
 		Assert.assertTrue( log.getMessage().contains( " | " + AuditLogRecord.BLOCKED + " | " ));
+		Assert.assertTrue( log.getMessage().contains( " | Gecko2" ));
 	}
 }

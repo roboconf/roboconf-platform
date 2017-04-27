@@ -95,6 +95,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( resp, Mockito.only()).sendError( 403, "Authentication is required." );
@@ -122,8 +124,10 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
 		Mockito.verify( req ).getHeader( ResponseCorsFilter.CORS_REQ_HEADERS );
 		Mockito.verify( req ).getHeader( ResponseCorsFilter.ORIGIN );
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( resp, Mockito.times( 3 )).setHeader( Mockito.anyString(), Mockito.anyString());
@@ -161,6 +165,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( authMngr ).isSessionValid( sessionId, sessionPeriod );
@@ -197,6 +203,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( authMngr ).isSessionValid( sessionId, sessionPeriod );
@@ -225,6 +233,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
@@ -253,7 +263,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
-		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req, Mockito.times( 2 )).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
@@ -281,6 +292,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
@@ -309,6 +322,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
+		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verifyZeroInteractions( chain );
@@ -337,7 +352,8 @@ public class AuthenticationFilterTest {
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
 		Mockito.verify( req ).getRemoteAddr();
-		Mockito.verify( req ).getQueryString();
+		Mockito.verify( req, Mockito.times( 2 )).getQueryString();
+		Mockito.verify( req ).getHeader( AuthenticationFilter.USER_AGENT );
 		Mockito.verifyNoMoreInteractions( req );
 
 		Mockito.verifyZeroInteractions( chain );

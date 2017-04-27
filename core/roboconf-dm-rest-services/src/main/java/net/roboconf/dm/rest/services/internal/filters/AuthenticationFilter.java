@@ -25,8 +25,8 @@
 
 package net.roboconf.dm.rest.services.internal.filters;
 
-import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.ORIGIN;
 import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_REQ_HEADERS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.ORIGIN;
 import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.buildHeaders;
 
 import java.io.IOException;
@@ -67,6 +67,7 @@ import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
  */
 public class AuthenticationFilter implements Filter {
 
+	static final String USER_AGENT = "User-Agent";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private final RestIndexer restIndexer;
@@ -168,6 +169,10 @@ public class AuthenticationFilter implements Filter {
 		RestOperationBean rightBean = null;
 		String restVerb = request.getMethod();
 		String uri = request.getRequestURI();
+		String queryString = request.getQueryString();
+		if( queryString != null )
+			uri += "?" + queryString;
+
 		String path = cleanPath( uri );
 		for( RestOperationBean rmb : this.restIndexer.restMethods ) {
 			if( path != null
@@ -179,16 +184,17 @@ public class AuthenticationFilter implements Filter {
 			}
 		}
 
-		// TODO; check the permissions
+		// TODO; check the permissions?
 
 		// Audit
 		String ipAddress = request.getRemoteAddr();
+		String userAgent = request.getHeader( USER_AGENT );
 		String user = this.authenticationMngr.findUsername( sessionId );
 		boolean authorized = user != null;
 		if( rightBean != null )
-			this.logger.log( new AuditLogRecord( user, rightBean.getJerseyPath(), uri, rightBean.getRestVerb(), ipAddress, authorized ));
+			this.logger.log( new AuditLogRecord( user, rightBean.getJerseyPath(), uri, restVerb, ipAddress, userAgent, authorized ));
 		else
-			this.logger.log( new AuditLogRecord( user, null, uri, restVerb, ipAddress, authorized ));
+			this.logger.log( new AuditLogRecord( user, null, uri, restVerb, ipAddress, userAgent, authorized ));
 	}
 
 

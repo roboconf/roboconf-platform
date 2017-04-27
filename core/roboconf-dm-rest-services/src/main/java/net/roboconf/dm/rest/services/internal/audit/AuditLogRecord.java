@@ -74,6 +74,7 @@ public class AuditLogRecord extends LogRecord {
 	 * @param targetPath the real URI path
 	 * @param ipAddress the IP address of the client
 	 * @param restVerb the REST verb (get, post, put, delete)
+	 * @param userAgent the user agent
 	 * @param authorized true if the access is authorized, false otherwise
 	 */
 	public AuditLogRecord(
@@ -82,10 +83,11 @@ public class AuditLogRecord extends LogRecord {
 			String targetPath,
 			String restVerb,
 			String ipAddress,
+			String userAgent,
 			boolean authorized ) {
 		super(
 				findLevel( user, targetResource, authorized ),
-				buildMessage( user, targetResource, targetPath, restVerb, ipAddress, authorized ));
+				buildMessage( user, targetResource, targetPath, restVerb, ipAddress, userAgent, authorized ));
 
 		setLoggerName( LOGGER_NAME );
 		setSourceClassName( null );
@@ -99,6 +101,7 @@ public class AuditLogRecord extends LogRecord {
 	 * @param restVerb
 	 * @param ipAddress
 	 * @param targetPath
+	 * @param userAgent the user agent
 	 * @param authorized
 	 * @return a non-null and formatted message
 	 */
@@ -108,6 +111,7 @@ public class AuditLogRecord extends LogRecord {
 			String targetPath,
 			String restVerb,
 			String ipAddress,
+			String userAgent,
 			boolean authorized ) {
 
 		StringBuilder sb = new StringBuilder();
@@ -124,6 +128,8 @@ public class AuditLogRecord extends LogRecord {
 
 		// Left-aligned, no limit of size
 		sb.append( targetPath );
+		sb.append( SEPARATOR );
+		sb.append( userAgent == null ? "-" : userAgent );
 
 		return sb.toString();
 	}

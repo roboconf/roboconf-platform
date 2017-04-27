@@ -43,7 +43,6 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.beans.TargetAssociation;
-import net.roboconf.dm.rest.services.internal.annotations.Auth;
 
 /**
  * The REST API to manipulate instances on the DM.
@@ -72,7 +71,6 @@ public interface IApplicationResource {
 	 */
 	@POST
 	@Path( "/change-state" )
-	@Auth
 	Response changeInstanceState( @PathParam("name") String applicationName, @QueryParam("new-state") String newState, @QueryParam("instance-path") String instancePath );
 
 
