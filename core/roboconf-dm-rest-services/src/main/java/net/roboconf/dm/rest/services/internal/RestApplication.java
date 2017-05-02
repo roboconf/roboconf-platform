@@ -94,6 +94,24 @@ public class RestApplication extends DefaultResourceConfig {
 	}
 
 
+	/**
+	 * @return a non-null set with all the resource classes
+	 */
+	public static Set<Class<?>> getResourceClasses() {
+
+		Set<Class<?>> result = new HashSet<> ();
+		result.add( ApplicationResource.class );
+		result.add( ManagementResource.class );
+		result.add( DebugResource.class );
+		result.add( TargetResource.class );
+		result.add( PreferencesResource.class );
+		result.add( SchedulerResource.class );
+		result.add( AuthenticationResource.class );
+
+		return result;
+	}
+
+
 	@Override
 	public Set<Object> getSingletons() {
 

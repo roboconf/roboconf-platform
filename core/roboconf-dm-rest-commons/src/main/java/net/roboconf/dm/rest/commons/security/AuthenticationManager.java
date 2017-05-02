@@ -66,18 +66,11 @@ import javax.security.auth.login.LoginException;
 public class AuthenticationManager {
 
 	private final ConcurrentHashMap<String,Long> tokenToLoginTime = new ConcurrentHashMap<> ();
+	private final ConcurrentHashMap<String,String> tokenToUsername = new ConcurrentHashMap<> ();
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String realm;
 
 	private IAuthService authService;
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public static enum REST_ROLES {
-		ADM, TPL_RW, APP_RW, APP_R
-	}
 
 
 
@@ -116,6 +109,7 @@ public class AuthenticationManager {
 			token = UUID.randomUUID().toString();
 			Long now = new Date().getTime();
 			this.tokenToLoginTime.put( token, now );
+			this.tokenToUsername.put( token, user );
 
 		} catch( LoginException e ) {
 			this.logger.severe( "Invalid login attempt by user " + user );
@@ -163,8 +157,20 @@ public class AuthenticationManager {
 	 * @param token a token (can be null)
 	 */
 	public void logout( String token ) {
-		if( token != null )
+		if( token != null ) {
 			this.tokenToLoginTime.remove( token );
+			this.tokenToUsername.remove( token );
+		}
+	}
+
+
+	/**
+	 * Finds the user name associated with a given token (e.g. for audit).
+	 * @param token a token
+	 * @return a user name, or null if the otken did not match anything
+	 */
+	public String findUsername( String token ) {
+		return token == null ? null : this.tokenToUsername.get( token );
 	}
 
 

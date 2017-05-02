@@ -25,7 +25,12 @@
 
 package net.roboconf.dm.rest.services.internal.filters;
 
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_REQ_HEADERS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.ORIGIN;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.buildHeaders;
+
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.servlet.Filter;
@@ -39,9 +44,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
+import net.roboconf.dm.rest.services.internal.ServletRegistrationComponent;
+import net.roboconf.dm.rest.services.internal.annotations.RestIndexer;
+import net.roboconf.dm.rest.services.internal.annotations.RestIndexer.RestOperationBean;
+import net.roboconf.dm.rest.services.internal.audit.AuditLogRecord;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
+import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 
 /**
  * A filter to determine and request (if necessary) authentication.
@@ -56,11 +67,21 @@ import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
  */
 public class AuthenticationFilter implements Filter {
 
+	static final String USER_AGENT = "User-Agent";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
+	private final RestIndexer restIndexer;
 	private AuthenticationManager authenticationMngr;
-	private boolean authenticationEnabled;
+	private boolean authenticationEnabled, enableCors;
 	private long sessionPeriod;
+
+
+	/**
+	 * Constructor.
+	 */
+	public AuthenticationFilter() {
+		this.restIndexer = new RestIndexer();
+	}
 
 
 	@Override
@@ -74,7 +95,7 @@ public class AuthenticationFilter implements Filter {
 			HttpServletRequest request = (HttpServletRequest) req;
 			HttpServletResponse response = (HttpServletResponse) resp;
 			String requestedPath = request.getRequestURI();
-			this.logger.info( "Path for auth: " + requestedPath );
+			String restVerb = request.getMethod();
 
 			// Find the session ID in the cookies
 			String sessionId = null;
@@ -88,6 +109,9 @@ public class AuthenticationFilter implements Filter {
 				}
 			}
 
+			// Audit
+			audit( request, sessionId );
+
 			// Is there a valid session?
 			boolean loggedIn = false;
 			if( ! Utils.isEmptyOrWhitespaces( sessionId )) {
@@ -99,13 +123,78 @@ public class AuthenticationFilter implements Filter {
 
 			// Valid session, go on. Send an error otherwise.
 			// No redirection, we mainly deal with our web socket and REST API.
+
+			// Exceptions:
+			// * We want to reach the login API.
+			// * We want to get the user language preference.
+			// * We received an OPTIONS request.
+
+			// POST requests with CORS are always preceded by an OPTIONS request.
+			// OPTIONS requests never come with a cookie. So, we do not filter them.
 			boolean loginRequest = requestedPath.endsWith( IAuthenticationResource.PATH + IAuthenticationResource.LOGIN_PATH );
-			if( loggedIn || loginRequest ) {
+			boolean optionsRequest = "options".equalsIgnoreCase( restVerb );
+			boolean languagePreference =
+					requestedPath.endsWith( IPreferencesResource.PATH )
+					&& "get".equalsIgnoreCase( restVerb )
+					&& ("key=" + IPreferencesMngr.USER_LANGUAGE).equals( request.getQueryString());
+
+			if( loggedIn || loginRequest || languagePreference || optionsRequest ) {
 				chain.doFilter( request, response );
+
 			} else {
+				// CORS?
+				if( this.enableCors ) {
+					Map<String,String> headers = buildHeaders(
+							request.getHeader( CORS_REQ_HEADERS ),
+							request.getHeader( ORIGIN ));
+
+					for( Map.Entry<String,String> h : headers.entrySet())
+						response.setHeader( h.getKey(), h.getValue());
+				}
+
+				// Send an error
 				response.sendError( 403, "Authentication is required." );
 			}
 		}
+	}
+
+
+	/**
+	 * @param request
+	 * @param sessionId
+	 */
+	private void audit( HttpServletRequest request, String sessionId ) {
+
+		// Find the right method
+		RestOperationBean rightBean = null;
+		String restVerb = request.getMethod();
+		String uri = request.getRequestURI();
+		String queryString = request.getQueryString();
+		if( queryString != null )
+			uri += "?" + queryString;
+
+		String path = cleanPath( uri );
+		for( RestOperationBean rmb : this.restIndexer.restMethods ) {
+			if( path != null
+					&& path.matches( rmb.getUrlPattern())
+					&& rmb.getRestVerb().equalsIgnoreCase( restVerb )) {
+
+				rightBean = rmb;
+				break;
+			}
+		}
+
+		// TODO; check the permissions?
+
+		// Audit
+		String ipAddress = request.getRemoteAddr();
+		String userAgent = request.getHeader( USER_AGENT );
+		String user = this.authenticationMngr.findUsername( sessionId );
+		boolean authorized = user != null;
+		if( rightBean != null )
+			this.logger.log( new AuditLogRecord( user, rightBean.getJerseyPath(), uri, restVerb, ipAddress, userAgent, authorized ));
+		else
+			this.logger.log( new AuditLogRecord( user, null, uri, restVerb, ipAddress, userAgent, authorized ));
 	}
 
 
@@ -142,5 +231,27 @@ public class AuthenticationFilter implements Filter {
 	 */
 	public void setSessionPeriod( long sessionPeriod ) {
 		this.sessionPeriod = sessionPeriod;
+	}
+
+
+	/**
+	 * @param enableCors the enableCors to set
+	 */
+	public void setEnableCors( boolean enableCors ) {
+		this.enableCors = enableCors;
+	}
+
+
+	/**
+	 * Cleans the path by removing the servlet paths and URL parameters.
+	 * @param path a non-null path
+	 * @return a non-null path
+	 */
+	static String cleanPath( String path ) {
+
+		return path
+				.replaceFirst( "^" + ServletRegistrationComponent.REST_CONTEXT + "/", "/" )
+				.replaceFirst( "^" + ServletRegistrationComponent.WEBSOCKET_CONTEXT + "/", "/" )
+				.replaceFirst( "\\?.*", "" );
 	}
 }

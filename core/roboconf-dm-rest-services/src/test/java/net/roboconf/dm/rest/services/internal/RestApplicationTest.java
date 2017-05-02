@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,20 +23,28 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.dm.rest.services.internal;
+
+import java.util.Set;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class RestApplicationTest {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
-	String SCHEDULER = "scheduler";
-	String AUTHENTICATION = "auth";
+	@Test
+	public void testCoherence() {
 
-	String SESSION_ID = "roboconf-sid";
+		Set<Class<?>> resourceClasses = RestApplication.getResourceClasses();
+		RestApplication app = new RestApplication( null );
+		Set<Object> resourceInstances = app.getSingletons();
+
+		Assert.assertEquals( resourceClasses.size(), resourceInstances.size());
+		for( Object o : resourceInstances ) {
+			Assert.assertTrue( o.getClass().getSimpleName(), resourceClasses.contains( o.getClass()));
+		}
+	}
 }
