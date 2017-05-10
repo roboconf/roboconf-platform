@@ -239,12 +239,13 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 
 	@Override
-	public void removeMessagingClientFactory( final IMessagingClientFactory factory ) {
+	public void removeMessagingClientFactory( IMessagingClientFactory factory ) {
 
+		String factoryType = factory != null ? factory.getType() : null;
 		IMessagingClient oldClient = null;
 		synchronized( this ) {
 			if( this.messagingClient != null
-					&& this.messagingClient.getMessagingType().equals(this.messagingType)) {
+					&& this.messagingClient.getMessagingType().equals( factoryType )) {
 
 				// This is the messaging factory we were using...
 				// We must release our messaging client right now.
@@ -254,7 +255,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		}
 
 		closeConnection( oldClient, "The previous client could not be terminated correctly.", this.logger );
-		this.logger.fine( "A messaging factory was removed: " + factory != null ? factory.getType() : null );
+		this.logger.fine( "A messaging factory was removed: " + factoryType );
 	}
 
 

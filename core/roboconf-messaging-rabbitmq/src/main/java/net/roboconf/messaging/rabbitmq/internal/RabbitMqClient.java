@@ -25,9 +25,20 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
+
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -61,7 +72,7 @@ import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 public class RabbitMqClient implements IMessagingClient {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final String messageServerIp, messageServerUsername, messageServerPassword;
+	private final Map<String,String> configuration;
 	private final WeakReference<ReconfigurableClient<?>> reconfigurable;
 
 	private LinkedBlockingQueue<Message> messageQueue;
@@ -75,29 +86,26 @@ public class RabbitMqClient implements IMessagingClient {
 	/**
 	 * Constructor.
 	 * @param reconfigurable
-	 * @param ip
-	 * @param username
-	 * @param password
+	 * @param messagingProperties
 	 */
-	protected RabbitMqClient( ReconfigurableClient<?> reconfigurable, String ip, String username, String password ) {
-		this( reconfigurable, ip, username, password, reconfigurable.getOwnerKind());
+	protected RabbitMqClient( ReconfigurableClient<?> reconfigurable, Map<String,String> messagingProperties ) {
+		this( reconfigurable, messagingProperties, reconfigurable.getOwnerKind());
 	}
 
 
 	/**
 	 * Constructor.
 	 * @param reconfigurable
-	 * @param ip
-	 * @param username
-	 * @param password
+	 * @param messagingProperties
 	 * @param ownerKind
 	 */
-	protected RabbitMqClient( ReconfigurableClient<?> reconfigurable, String ip, String username, String password, RecipientKind ownerKind ) {
+	protected RabbitMqClient( ReconfigurableClient<?> reconfigurable, Map<String,String> messagingProperties, RecipientKind ownerKind ) {
 		this.reconfigurable = new WeakReference<ReconfigurableClient<?>>( reconfigurable );
-		this.messageServerIp = ip;
-		this.messageServerUsername = username;
-		this.messageServerPassword = password;
 		this.ownerKind = ownerKind;
+
+		Map<String,String> copy = new LinkedHashMap<>( messagingProperties );
+		copy.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, RabbitMqConstants.FACTORY_RABBITMQ );
+		this.configuration = Collections.unmodifiableMap( copy );
 	}
 
 
@@ -128,15 +136,25 @@ public class RabbitMqClient implements IMessagingClient {
 
 
 	@Override
-	public final Map<String, String> getConfiguration() {
+	public final Map<String,String> getConfiguration() {
 
-		final Map<String, String> configuration = new LinkedHashMap<>();
-		configuration.put(MessagingConstants.MESSAGING_TYPE_PROPERTY, RabbitMqConstants.FACTORY_RABBITMQ);
-		configuration.put(RabbitMqConstants.RABBITMQ_SERVER_IP, this.messageServerIp);
-		configuration.put(RabbitMqConstants.RABBITMQ_SERVER_USERNAME, this.messageServerUsername);
-		configuration.put(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD, this.messageServerPassword);
+		// Filter SSL parameters so that there are not
+		// written in user data if the configuration says so.
+		Map<String,String> result = new HashMap<>( this.configuration );
+		if( "false".equalsIgnoreCase( this.configuration.get( RABBITMQ_SSL_AS_USER_DATA ))) {
+			result.remove( RABBITMQ_SSL_KEY_STORE_PASSPHRASE );
+			result.remove( RABBITMQ_SSL_KEY_STORE_PATH );
+			result.remove( RABBITMQ_SSL_KEY_STORE_TYPE );
+			result.remove( RABBITMQ_SSL_KEY_MNGR_FACTORY );
+			result.remove( RABBITMQ_SSL_TRUST_MNGR_FACTORY );
+			result.remove( RABBITMQ_SSL_TRUST_STORE_PASSPHRASE );
+			result.remove( RABBITMQ_SSL_TRUST_STORE_PATH );
+			result.remove( RABBITMQ_SSL_TRUST_STORE_TYPE );
+		} else {
+			result.put( RABBITMQ_SSL_AS_USER_DATA, "true" );
+		}
 
-		return Collections.unmodifiableMap(configuration);
+		return result;
 	}
 
 
@@ -164,7 +182,7 @@ public class RabbitMqClient implements IMessagingClient {
 
 		// Initialize the connection
 		ConnectionFactory factory = new ConnectionFactory();
-		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
+		RabbitMqUtils.configureFactory( factory, this.configuration );
 		this.channel = factory.newConnection().createChannel();
 		this.logger.info( getId() + " established a new connection with RabbitMQ. Channel # " + this.channel.getChannelNumber());
 

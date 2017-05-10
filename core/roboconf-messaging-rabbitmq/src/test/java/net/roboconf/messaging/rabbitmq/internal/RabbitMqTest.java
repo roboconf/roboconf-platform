@@ -25,8 +25,13 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,9 +87,7 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	public void registerRabbitMqFactory() {
 
 		final RabbitMqClientFactory factory = new RabbitMqClientFactory();
-		factory.setMessageServerIp(getMessagingIp());
-		factory.setMessageServerUsername(getMessagingUsername());
-		factory.setMessageServerPassword(getMessagingPassword());
+		factory.configuration = getMessagingConfiguration();
 		this.registry.addMessagingClientFactory(factory);
 	}
 
@@ -93,11 +96,11 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	public void cleanRabbitMq() throws Exception {
 
 		if( rabbitMqIsRunning ) {
+
+
 			RabbitMqClient client = new RabbitMqClient(
 					null,
-					getMessagingIp(),
-					getMessagingUsername(),
-					getMessagingPassword(),
+					getMessagingConfiguration(),
 					RecipientKind.DM );
 
 			client.openConnection();
@@ -113,6 +116,20 @@ public class RabbitMqTest extends AbstractMessagingTest {
 
 			client.closeConnection();
 		}
+	}
+
+
+	/**
+	 * @return the messaging configuration to use during the tests
+	 */
+	protected Map<String,String> getMessagingConfiguration() {
+
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, getMessagingIp());
+		configuration.put( RABBITMQ_SERVER_USERNAME, getMessagingUsername());
+		configuration.put( RABBITMQ_SERVER_PASSWORD, getMessagingPassword());
+
+		return configuration;
 	}
 
 

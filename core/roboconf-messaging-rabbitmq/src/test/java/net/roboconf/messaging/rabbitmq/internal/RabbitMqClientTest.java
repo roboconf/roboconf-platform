@@ -25,6 +25,23 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.FACTORY_RABBITMQ;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_PROTOCOL;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.Assert;
@@ -36,6 +53,7 @@ import com.rabbitmq.client.Channel;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
@@ -58,7 +76,12 @@ public class RabbitMqClientTest {
 	public void testConnectAndDisconnect() throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 
-		RabbitMqClient client = new RabbitMqClient( null, "localhost", "guest", "guest", RecipientKind.DM );
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, "localhost" );
+		configuration.put( RABBITMQ_SERVER_USERNAME, "guest" );
+		configuration.put( RABBITMQ_SERVER_PASSWORD, "guest" );
+
+		RabbitMqClient client = new RabbitMqClient( null, configuration, RecipientKind.DM );
 		client.setOwnerProperties( RecipientKind.DM, "domain", "app", "/root" );
 
 		Assert.assertEquals( RabbitMqConstants.FACTORY_RABBITMQ, client.getMessagingType());
@@ -93,7 +116,12 @@ public class RabbitMqClientTest {
 	@Test
 	public void testGetQueueName() throws Exception {
 
-		RabbitMqClient client = new RabbitMqClient( null, "localhost", "guest", "guest", RecipientKind.DM );
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, "localhost" );
+		configuration.put( RABBITMQ_SERVER_USERNAME, "guest" );
+		configuration.put( RABBITMQ_SERVER_PASSWORD, "guest" );
+
+		RabbitMqClient client = new RabbitMqClient( null, configuration, RecipientKind.DM );
 		client.setOwnerProperties( RecipientKind.DM, "domain", "app", "/root" );
 		Assert.assertEquals( "domain.roboconf-dm", client.getQueueName());
 
@@ -102,5 +130,54 @@ public class RabbitMqClientTest {
 
 		client.setOwnerProperties( RecipientKind.AGENTS, "domain1", "app", "/root" );
 		Assert.assertEquals( "domain1.app.root", client.getQueueName());
+	}
+
+
+	@Test
+	public void testFilteringOfSslProperties() throws Exception {
+
+		// No value for the "pass.as.user.data"
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, "localhost" );
+		configuration.put( RABBITMQ_SERVER_USERNAME, "guest" );
+		configuration.put( RABBITMQ_SERVER_PASSWORD, "guest" );
+
+		configuration.put( RABBITMQ_SSL_KEY_STORE_PASSPHRASE, "1" );
+		configuration.put( RABBITMQ_SSL_KEY_STORE_TYPE, "2" );
+		configuration.put( RABBITMQ_SSL_KEY_STORE_PATH, "3" );
+		configuration.put( RABBITMQ_SSL_KEY_MNGR_FACTORY, "4" );
+		configuration.put( RABBITMQ_SSL_TRUST_MNGR_FACTORY, "5" );
+		configuration.put( RABBITMQ_SSL_TRUST_STORE_PASSPHRASE, "6" );
+		configuration.put( RABBITMQ_SSL_TRUST_STORE_PATH, "7" );
+		configuration.put( RABBITMQ_SSL_TRUST_STORE_TYPE, "8" );
+		configuration.put( RABBITMQ_SSL_PROTOCOL, "9" );
+
+		final int beforeCpt = configuration.size();
+
+		// Remember we add the messaging type as a new property.
+		// We also set the value for "pass.as.user.data".
+		RabbitMqClient client = new RabbitMqClient( null, configuration, RecipientKind.DM );
+		Assert.assertEquals( beforeCpt + 2, client.getConfiguration().size());
+
+		// "pass.as.user.data" is true => same behavior
+		configuration.put( RABBITMQ_SSL_AS_USER_DATA, "true" );
+		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
+		Assert.assertEquals( beforeCpt + 2, client.getConfiguration().size());
+
+		// "pass.as.user.data" is false => only the SSL protocol is kept
+		configuration.put( RABBITMQ_SSL_AS_USER_DATA, "false" );
+		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
+		Assert.assertEquals( 4 + 2, client.getConfiguration().size());
+		Assert.assertEquals( "localhost", client.getConfiguration().get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( "guest", client.getConfiguration().get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( "guest", client.getConfiguration().get( RABBITMQ_SERVER_PASSWORD ));
+		Assert.assertEquals( "9", client.getConfiguration().get( RABBITMQ_SSL_PROTOCOL ));
+		Assert.assertEquals( FACTORY_RABBITMQ, client.getConfiguration().get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
+
+		// "pass.as.user.data" has an invalid value => same as "true"
+		configuration.put( RABBITMQ_SSL_AS_USER_DATA, "oops" );
+		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
+		Assert.assertEquals( beforeCpt + 2, client.getConfiguration().size());
+		Assert.assertEquals( "true", client.getConfiguration().get( RABBITMQ_SSL_AS_USER_DATA ));
 	}
 }

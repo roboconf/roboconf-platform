@@ -26,13 +26,20 @@
 package net.roboconf.messaging.rabbitmq.internal;
 
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.FACTORY_RABBITMQ;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.GUEST;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_USE_SSL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -53,39 +60,19 @@ import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 	// The connection properties.
-	String messageServerIp;
-	String messageServerUsername;
-	String messageServerPassword;
+	Map<String,String> configuration = Collections.emptyMap();
 
 	// The created clients.
 	// References to the clients are *weak*, so we never prevent their garbage collection.
 	final Set<RabbitMqClient> clients = Collections.newSetFromMap( new WeakHashMap<RabbitMqClient,Boolean> ());
 
 	// The logger
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+	private final Logger logger = Logger.getLogger( this.getClass().getName());
 
-
-
-	public synchronized void setMessageServerIp( final String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-		this.logger.finer("Server IP set to " + messageServerIp);
-	}
-
-
-	public synchronized void setMessageServerUsername( final String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
-		this.logger.finer("Server username set to " + messageServerUsername);
-	}
-
-
-	public synchronized void setMessageServerPassword( final String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
-		this.logger.finer("Server password set to " + messageServerPassword);
-	}
 
 
 	/**
-	 * Reconfigures the client (invoked by iPojo).
+	 * Reconfigures the client.
 	 */
 	public void reconfigure() {
 		this.logger.fine( "Rabbit MQ clients are about to be reconfigured." );
@@ -107,7 +94,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 		// Make fresh snapshots of the clients, as we don't want to reconfigure them while holding the lock.
 		final ArrayList<RabbitMqClient> clients;
-		synchronized (this) {
+		synchronized( this ) {
 
 			// Get the snapshot.
 			clients = new ArrayList<>( this.clients );
@@ -128,7 +115,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 				else
 					reconfigurable.switchMessagingType( RabbitMqConstants.FACTORY_RABBITMQ );
 
-			} catch (Throwable t) {
+			} catch( Throwable t ) {
 				// Warn but continue to reconfigure the next clients!
 				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
 				Utils.logException(this.logger, new RuntimeException(t));
@@ -149,7 +136,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 		// The parent cannot be null. A NPE MUST be thrown otherwise.
 		// That's what the RabbitMqClient constructor does. There is unit test for this.
-		final RabbitMqClient client = new RabbitMqClient( parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
+		final RabbitMqClient client = new RabbitMqClient( parent, this.configuration );
 		synchronized( this ) {
 			this.clients.add( client );
 		}
@@ -159,43 +146,75 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 	}
 
 
+	/**
+	 * Invoked by iPojo when one or several properties were updated from Config Admin.
+	 * @param properties
+	 */
+	public void setConfiguration( Dictionary<?,?> properties ) {
+
+		// Ignore iPojo properties
+		final List<String> propertiesToSkip = Arrays.asList(
+				"component",
+				"felix.fileinstall.filename" );
+
+		// Convert the dictionary into a map
+		Map<String,String> map = new LinkedHashMap<> ();
+		for( Enumeration<?> en = properties.keys(); en.hasMoreElements(); ) {
+
+			Object key = en.nextElement();
+			String keyAsString = String.valueOf( key );
+			if( propertiesToSkip.contains( keyAsString ))
+				continue;
+
+			// "null" are not acceptable values in dictionaries
+			// (OSGi often use Hash tables)
+			Object value = properties.get( key );
+			map.put( keyAsString, String.valueOf( value ));
+		}
+
+		// Invoked by iPojo => the messaging type is the right one in this method
+		map.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, FACTORY_RABBITMQ );
+		setConfiguration( map );
+	}
+
+
 	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
+	public boolean setConfiguration( final Map<String,String> configuration ) {
 
-		boolean result = false;;
+		boolean result = false;
 		final String type = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ) ;
-		if(( result = RabbitMqConstants.FACTORY_RABBITMQ.equals( type ))) {
+		if(( result = FACTORY_RABBITMQ.equals( type ))) {
 
-			// Get the new values
-			String ip = Utils.getValue( configuration, RABBITMQ_SERVER_IP, DEFAULT_IP );
-			String username = Utils.getValue( configuration, RABBITMQ_SERVER_USERNAME, GUEST );
-			String password = Utils.getValue( configuration, RABBITMQ_SERVER_PASSWORD, GUEST );
+			Map<String,String> configurationWithDefaults = new LinkedHashMap<> ();
+			configurationWithDefaults.put( RABBITMQ_SERVER_IP, DEFAULT_IP );
+			configurationWithDefaults.put( RABBITMQ_SERVER_USERNAME, GUEST );
+			configurationWithDefaults.put( RABBITMQ_SERVER_PASSWORD, GUEST );
+			configurationWithDefaults.put( RABBITMQ_USE_SSL, Boolean.FALSE.toString());
+			configurationWithDefaults.putAll( configuration );
 
 			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
 			// First we detect for changes, and set the parameters accordingly.
 			boolean hasChanged = false;
-			synchronized (this) {
+			synchronized( this ) {
 
-				if (!Objects.equals(this.messageServerIp, ip)) {
-					setMessageServerIp(ip);
-					hasChanged = true;
+				for( Map.Entry<String,String> configEntry : configurationWithDefaults.entrySet()) {
+					String value = this.configuration.get( configEntry.getKey());
+					if( ! Objects.equals( value, configEntry.getValue())) {
+						hasChanged = true;
+						break;
+					}
 				}
 
-				if (!Objects.equals(this.messageServerUsername, username)) {
-					setMessageServerUsername(username);
-					hasChanged = true;
-				}
-
-				if (!Objects.equals(this.messageServerPassword, password)) {
-					setMessageServerPassword(password);
-					hasChanged = true;
+				if( hasChanged ) {
+					this.configuration = configurationWithDefaults;
+					this.logger.finer( "Updating the messaging properties." );
 				}
 			}
 
 			// Then, if changes has occurred, we reconfigure the factory. This will invalidate every created client.
 			// Otherwise, if nothing has changed, we do nothing. Thus we avoid invalidating clients uselessly, and
 			// prevent any message loss.
-			if (hasChanged)
+			if( hasChanged )
 				reconfigure();
 		}
 
