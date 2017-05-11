@@ -25,25 +25,24 @@
 
 package net.roboconf.agent.internal;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -69,7 +68,7 @@ public class AgentMessageProcessorStateChangeTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class ).clearMessages();
+		AgentTestUtils.getInternalClient( this.agent.getMessagingClient()).clearMessages();
 	}
 
 

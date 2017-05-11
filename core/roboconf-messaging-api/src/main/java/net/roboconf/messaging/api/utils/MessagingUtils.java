@@ -28,6 +28,7 @@ package net.roboconf.messaging.api.utils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -77,5 +78,36 @@ public final class MessagingUtils {
 			result = instancePath.replaceFirst( "^/*", "" ).replaceFirst( "/*$", "" ).replaceAll( "/+", "." );
 
 		return result;
+	}
+
+
+	/**
+	 * Builds a string identifying a messaging client.
+	 * @param ownerKind {@link RecipientKind#DM} or {@link RecipientKind#AGENTS}
+	 * @param domain the domain
+	 * @param applicationName the application name (only makes sense for agents)
+	 * @param scopedInstancePath the scoped instance path  (only makes sense for agents)
+	 * @return a non-null string
+	 */
+	public static String buildId(
+			RecipientKind ownerKind,
+			String domain,
+			String applicationName,
+			String scopedInstancePath ) {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( "[ " );
+		sb.append( domain );
+		sb.append( " ] " );
+
+		if( ownerKind ==  RecipientKind.DM ) {
+			sb.append( "DM" );
+		} else {
+			sb.append( scopedInstancePath );
+			sb.append( " @ " );
+			sb.append( applicationName );
+		}
+
+		return sb.toString();
 	}
 }

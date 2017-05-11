@@ -26,12 +26,7 @@
 package net.roboconf.messaging.rabbitmq.internal.impl;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-
-import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.utils.SerializationUtils;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -40,6 +35,11 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownSignalException;
 
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.utils.SerializationUtils;
+
 /**
  * Notice: QueueingConsumer is deprecated, hence this implementation that allows recovery.
  * @author Vincent Zurczak - Linagora
@@ -47,7 +47,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 public class RoboconfConsumer extends DefaultConsumer implements Consumer {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final LinkedBlockingQueue<Message> messageQueue;
+	private final RoboconfMessageQueue messageQueue;
 	private final String sourceName;
 
 
@@ -57,7 +57,7 @@ public class RoboconfConsumer extends DefaultConsumer implements Consumer {
 	 * @param sourceName
 	 * @param messageQueue
 	 */
-	public RoboconfConsumer( String sourceName, Channel channel, LinkedBlockingQueue<Message> messageQueue ) {
+	public RoboconfConsumer( String sourceName, Channel channel, RoboconfMessageQueue messageQueue ) {
 		super( channel );
 		this.messageQueue = messageQueue;
 		this.sourceName = sourceName;
@@ -78,6 +78,7 @@ public class RoboconfConsumer extends DefaultConsumer implements Consumer {
 		} catch( ClassNotFoundException | IOException e ) {
 			this.logger.severe( this.sourceName + ": a message could not be deserialized. => " + e.getClass().getSimpleName());
 			Utils.logException( this.logger, e );
+			this.messageQueue.errorWhileReceivingMessage();
 		}
 	}
 

@@ -26,10 +26,17 @@
 package net.roboconf.messaging.api.reconfigurables;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
@@ -41,13 +48,12 @@ import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.dismiss.DismissClient;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
+import net.roboconf.messaging.api.internal.jmx.JmxWrapperForMessagingClient;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.processors.AbstractMessageProcessorTest.EmptyTestDmMessageProcessor;
-
-import org.junit.Assert;
-import org.junit.Test;
+import net.roboconf.messaging.api.utils.OsgiHelper;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -55,29 +61,38 @@ import org.junit.Test;
 public class ReconfigurableClientTest {
 
 	@Test
-	public void testCloseConnection() throws Exception {
+	public void testTerminateClient_1() throws Exception {
 
 		Logger logger = Logger.getLogger( getClass().getName());
-		IMessagingClient client = new TestClient();
-		Assert.assertFalse( client.isConnected());
-		ReconfigurableClient.closeConnection( client, "", logger );
+		IMessagingClient client = Mockito.mock( IMessagingClient.class );
+		ReconfigurableClient.terminateClient( client, "", logger );
+		Mockito.verify( client, Mockito.only()).closeConnection();
+	}
 
-		client = new TestClient();
-		client.openConnection();
-		Assert.assertTrue( client.isConnected());
-		ReconfigurableClient.closeConnection( client, "", logger );
-		Assert.assertFalse( client.isConnected());
 
-		client = new TestClient() {
-			@Override
-			public void closeConnection() throws IOException {
-				throw new IOException( "For test purpose" );
-			}
-		};
+	@Test
+	public void testTerminateClient_2() throws Exception {
 
-		client.openConnection();
-		Assert.assertTrue( client.isConnected());
-		ReconfigurableClient.closeConnection( client, "", logger );
+		Logger logger = Logger.getLogger( getClass().getName());
+		JmxWrapperForMessagingClient client = Mockito.mock( JmxWrapperForMessagingClient.class );
+		ReconfigurableClient.terminateClient( client, "", logger );
+		Mockito.verify( client ).closeConnection();
+		Mockito.verify( client ).unregisterService();;
+		Mockito.verifyNoMoreInteractions( client );
+	}
+
+
+	@Test
+	public void testTerminateClient_3() throws Exception {
+
+		Logger logger = Logger.getLogger( getClass().getName());
+		JmxWrapperForMessagingClient client = Mockito.mock( JmxWrapperForMessagingClient.class );
+		Mockito.doThrow( new IOException( "for test" )).when( client ).closeConnection();
+
+		ReconfigurableClient.terminateClient( client, "", logger );
+		Mockito.verify( client ).closeConnection();
+		Mockito.verify( client ).unregisterService();;
+		Mockito.verifyNoMoreInteractions( client );
 	}
 
 
@@ -121,7 +136,7 @@ public class ReconfigurableClientTest {
 		Assert.assertNotNull( client.getMessagingClient());
 
 		// Invoke other method, no matter in which order
-		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
+		client.setMessageQueue( new RoboconfMessageQueue());
 		Assert.assertFalse( client.hasValidClient());
 		Assert.assertFalse( client.isConnected());
 
@@ -138,7 +153,7 @@ public class ReconfigurableClientTest {
 		Assert.assertNotNull( client.getMessagingClient());
 
 		// Invoke other method, no matter in which order
-		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
+		client.setMessageQueue( new RoboconfMessageQueue());
 		Assert.assertFalse( client.hasValidClient());
 		Assert.assertFalse( client.isConnected());
 	}
@@ -193,7 +208,7 @@ public class ReconfigurableClientTest {
 
 
 	@Test
-	public void testRegistryCallbacks() {
+	public void testRegistryCallbacks() throws Exception {
 
 		// Instead of creating a messaging client explicitly, we rely
 		// on the registry callbacks. At runtime, this can happen
@@ -203,31 +218,41 @@ public class ReconfigurableClientTest {
 		MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 		client.setRegistry( registry );
 
-		client.associateMessageProcessor( new AbstractMessageProcessor<IDmClient>("dummy.messageProcessor") {
+		client.associateMessageProcessor( new AbstractMessageProcessor<IDmClient>( "dummy.messageProcessor" ) {
 			@Override
 			protected void processMessage( final Message message ) {
 				// nothing
 			}
 		});
 
-		client.switchMessagingType("foo");
-		Assert.assertEquals( DismissClient.class, client.getMessagingClient().getClass());
+		client.switchMessagingType( "foo" );
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertTrue(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
 
 		// Make a new factory appear.
-		DummyMessagingClientFactory factory = new DummyMessagingClientFactory("foo");
+		DummyMessagingClientFactory factory = new DummyMessagingClientFactory( "foo" );
 		registry.addMessagingClientFactory( factory );
 
 		// Verify a new client was instantiated, with the right type.
-		Assert.assertEquals( DummyMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertFalse(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
 
-		// Now, remove the factory (e.g. we remove the messaging bundle associated with "foo").
+		Object internalClient = TestUtils.getInternalField(
+				(client.getMessagingClient()),
+				"messagingClient",
+				IMessagingClient.class );
+
+		Assert.assertEquals( DummyMessagingClient.class, internalClient.getClass());
+
+		// Now, remove the factory (e.g. we remove the messaging bundle associated with "foo" ).
 		registry.removeMessagingClientFactory( factory );
-		Assert.assertEquals( DismissClient.class, client.getMessagingClient().getClass());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertTrue(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
 	}
 
 
 	@Test
-	public void testFactorySwitchClientDm() {
+	public void testFactorySwitchClientDm() throws Exception {
 
 		// Here, the factories are created BEFORE the registry is
 		// associated with the reconfigurable client. It is a different scenario
@@ -235,57 +260,82 @@ public class ReconfigurableClientTest {
 
 		// Create the messaging client factory registry, and register the "foo" and "bar" dummy factories.
 		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
-		registry.addMessagingClientFactory( new DummyMessagingClientFactory("foo"));
-		registry.addMessagingClientFactory( new DummyMessagingClientFactory("bar"));
+		registry.addMessagingClientFactory( new DummyMessagingClientFactory( "foo" ));
+		registry.addMessagingClientFactory( new DummyMessagingClientFactory( "bar" ));
 
 		// Create the client DM
 		final ReconfigurableClientDm client = new ReconfigurableClientDm();
-		client.associateMessageProcessor(new AbstractMessageProcessor<IDmClient>("dummy.messageProcessor") {
+		client.associateMessageProcessor(new AbstractMessageProcessor<IDmClient>( "dummy.messageProcessor" ) {
 			@Override
 			protected void processMessage( final Message message ) {
 				// nothing
 			}
 		});
 
-		client.setRegistry(registry);
+		client.setRegistry( registry );
+		client.console = Mockito.mock( PrintStream.class );
 
 		// Check initial state.
-		Assert.assertNull(client.getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DismissClient);
-		Assert.assertSame(registry, client.getRegistry());
+		Assert.assertNull( client.getMessagingType());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertTrue(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+		Assert.assertSame( registry, client.getRegistry());
 
 		// Switch to foo!
-		client.switchMessagingType("foo");
-		Assert.assertEquals("foo", client.getMessagingType());
-		Assert.assertEquals("foo", client.getMessagingClient().getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingClient);
+		client.switchMessagingType( "foo" );
+		Assert.assertEquals( "foo", client.getMessagingType());
+		Assert.assertEquals( "foo", client.getMessagingClient().getMessagingType());
+
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertFalse(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+
+		Object internalClient = TestUtils.getInternalField(
+				(client.getMessagingClient()),
+				"messagingClient",
+				IMessagingClient.class );
+
+		Assert.assertEquals( DummyMessagingClient.class, internalClient.getClass());
 
 		// Switch to bar!
-		client.switchMessagingType("bar");
-		Assert.assertEquals("bar", client.getMessagingType());
-		Assert.assertEquals("bar", client.getMessagingClient().getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingClient);
+		client.switchMessagingType( "bar" );
+		Assert.assertEquals( "bar", client.getMessagingType());
+		Assert.assertEquals( "bar", client.getMessagingClient().getMessagingType());
+
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertFalse(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+
+		internalClient = TestUtils.getInternalField(
+				(client.getMessagingClient()),
+				"messagingClient",
+				IMessagingClient.class );
+
+		Assert.assertEquals( DummyMessagingClient.class, internalClient.getClass());
 
 		// Switch to null!
-		client.switchMessagingType(null);
-		Assert.assertNull(client.getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DismissClient);
+		client.switchMessagingType( null );
+		Assert.assertNull( client.getMessagingType());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertTrue(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+
+		// No error was output
+		Mockito.verifyNoMoreInteractions( client.console );
 	}
 
 
 	@Test
-	public void testFactorySwitchClientAgent() {
+	public void testFactorySwitchClientAgent() throws Exception {
 
 		// Create the messaging client factory registry, and register the "foo" and "bar" dummy factories.
 		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
-		registry.addMessagingClientFactory( new DummyMessagingClientFactory("foo"));
-		registry.addMessagingClientFactory( new DummyMessagingClientFactory("bar"));
+		registry.addMessagingClientFactory( new DummyMessagingClientFactory( "foo" ));
+		registry.addMessagingClientFactory( new DummyMessagingClientFactory( "bar" ));
 
 		// Create the client DM
 		final ReconfigurableClientAgent client = new ReconfigurableClientAgent();
+		client.console = Mockito.mock( PrintStream.class );
 		client.setApplicationName( "app" );
 		client.setScopedInstancePath( "/root" );
-		client.associateMessageProcessor(new AbstractMessageProcessor<IAgentClient>("dummy.messageProcessor") {
+		client.associateMessageProcessor( new AbstractMessageProcessor<IAgentClient>( "dummy.messageProcessor" ) {
 			@Override
 			protected void processMessage( final Message message ) {
 				// nothing
@@ -295,28 +345,137 @@ public class ReconfigurableClientTest {
 		client.setRegistry(registry);
 
 		// Check initial state.
-		Assert.assertNull(client.getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DismissClient);
-		Assert.assertSame(registry, client.getRegistry());
+		Assert.assertNull( client.getMessagingType());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertTrue(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+		Assert.assertSame( registry, client.getRegistry());
 
 		// Switch to foo!
-		client.switchMessagingType("foo");
-		Assert.assertEquals("foo", client.getMessagingType());
-		Assert.assertEquals("foo", client.getMessagingClient().getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingClient);
+		client.switchMessagingType( "foo" );
+		Assert.assertEquals( "foo", client.getMessagingType());
+		Assert.assertEquals( "foo", client.getMessagingClient().getMessagingType());
+
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertFalse(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+
+		Object internalClient = TestUtils.getInternalField(
+				(client.getMessagingClient()),
+				"messagingClient",
+				IMessagingClient.class );
+
+		Assert.assertEquals( DummyMessagingClient.class, internalClient.getClass());
 
 		// Switch to bar!
-		client.switchMessagingType("bar");
-		Assert.assertEquals("bar", client.getMessagingType());
-		Assert.assertEquals("bar", client.getMessagingClient().getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingClient);
+		client.switchMessagingType( "bar" );
+		Assert.assertEquals( "bar", client.getMessagingType());
+		Assert.assertEquals( "bar", client.getMessagingClient().getMessagingType());
+
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertFalse(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+
+		internalClient = TestUtils.getInternalField(
+				(client.getMessagingClient()),
+				"messagingClient",
+				IMessagingClient.class );
+
+		Assert.assertEquals( DummyMessagingClient.class, internalClient.getClass());
 		Assert.assertEquals( MessagingConstants.FACTORY_TEST, client.getConfiguration().get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
 
 		// Switch to null!
-		client.switchMessagingType(null);
-		Assert.assertNull(client.getMessagingType());
-		Assert.assertTrue(client.getMessagingClient() instanceof DismissClient);
+		client.switchMessagingType( null );
+		Assert.assertNull( client.getMessagingType());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
 		Assert.assertEquals( 0, client.getConfiguration().size());
+
+		// No error was output
+		Mockito.verifyNoMoreInteractions( client.console );
+	}
+
+
+	@Test
+	public void testFactorySwitch_connectionError() throws Exception {
+
+		// Two things to check here:
+		// - There must always be a wrapper client.
+		// - An error must be output in the console.
+
+		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		registry.addMessagingClientFactory( new DummyMessagingClientFactory( "foo" ) {
+			@Override
+			public IMessagingClient createClient( ReconfigurableClient<?> parent ) {
+				return new DummyMessagingClient(this.type) {
+
+					@Override
+					public void openConnection() throws IOException {
+						throw new IOException( "for test" );
+					}
+				};
+			}
+		});
+
+		// Create the client DM
+		final ReconfigurableClientDm client = new ReconfigurableClientDm();
+		client.associateMessageProcessor(new AbstractMessageProcessor<IDmClient>( "dummy.messageProcessor" ) {
+			@Override
+			protected void processMessage( final Message message ) {
+				// nothing
+			}
+		});
+
+		client.setRegistry( registry );
+		client.console = Mockito.mock( PrintStream.class );
+
+		// Switch to foo!
+		client.switchMessagingType( "foo" );
+		Assert.assertEquals( "foo", client.getMessagingType());
+		Assert.assertEquals( "foo", client.getMessagingClient().getMessagingType());
+
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertFalse(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+
+		ArgumentCaptor<String> errorMsgCapture = ArgumentCaptor.forClass( String.class );
+		Mockito.verify( client.console, Mockito.only()).println( errorMsgCapture.capture());
+		Assert.assertTrue( errorMsgCapture.getValue().startsWith( "\n\n**** WARNING ****\n" ));
+
+		// Switch to null!
+		Mockito.reset( client.console );
+		client.switchMessagingType( null );
+		Assert.assertNull( client.getMessagingType());
+		Assert.assertEquals( JmxWrapperForMessagingClient.class, client.getMessagingClient().getClass());
+		Assert.assertTrue(((JmxWrapperForMessagingClient) client.getMessagingClient()).isDismissClient());
+		Mockito.verifyNoMoreInteractions( client.console );
+	}
+
+
+	@Test
+	public void testLookupMessagingClientFactoryRegistryService_noReference() {
+
+		BundleContext bundleCtx = Mockito.mock( BundleContext.class );
+		OsgiHelper osgiHelper = Mockito.mock( OsgiHelper.class );
+		Mockito.when( osgiHelper.findBundleContext()).thenReturn( bundleCtx );
+
+		MessagingClientFactoryRegistry registry = ReconfigurableClient.lookupMessagingClientFactoryRegistryService( osgiHelper );
+		Assert.assertNull( registry );
+	}
+
+
+	@Test
+	@SuppressWarnings( "unchecked" )
+	public void testLookupMessagingClientFactoryRegistryService_withReference() {
+
+		BundleContext bundleCtx = Mockito.mock( BundleContext.class );
+		OsgiHelper osgiHelper = Mockito.mock( OsgiHelper.class );
+		Mockito.when( osgiHelper.findBundleContext()).thenReturn( bundleCtx );
+
+		ServiceReference<MessagingClientFactoryRegistry> reference = Mockito.mock( ServiceReference.class );
+		Mockito.when( bundleCtx.getServiceReference( MessagingClientFactoryRegistry.class )).thenReturn( reference );
+
+		MessagingClientFactoryRegistry registryMock = Mockito.mock( MessagingClientFactoryRegistry.class );
+		Mockito.when( bundleCtx.getService( reference )).thenReturn( registryMock );
+
+		MessagingClientFactoryRegistry registry = ReconfigurableClient.lookupMessagingClientFactoryRegistryService( osgiHelper );
+		Assert.assertNotNull( registry );
+		Assert.assertEquals( registryMock, registry );
 	}
 
 

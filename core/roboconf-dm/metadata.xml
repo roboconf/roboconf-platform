@@ -49,6 +49,9 @@
 
 		<provides specifications="net.roboconf.core.runtime.IReconfigurable" />
 		<provides specifications="net.roboconf.dm.management.Manager" />
+		<provides specifications="net.roboconf.dm.jmx.ManagerMBean">
+			<property name="jmx.objectname" value="net.roboconf:type=dm" type="java.lang.String" />
+		</provides>
 
 		<properties pid="net.roboconf.dm.configuration">
 			<property name="messaging-type" method="setMessagingType" />

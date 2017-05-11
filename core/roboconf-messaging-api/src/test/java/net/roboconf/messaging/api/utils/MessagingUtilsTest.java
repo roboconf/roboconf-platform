@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -73,5 +74,19 @@ public class MessagingUtilsTest {
 		Assert.assertEquals( "", MessagingUtils.escapeInstancePath( " " ));
 		Assert.assertEquals( "root", MessagingUtils.escapeInstancePath( "/root" ));
 		Assert.assertEquals( "root.server.app", MessagingUtils.escapeInstancePath( "/root/server/app" ));
+	}
+
+
+	@Test
+	public void testBuildId() {
+
+		String id = MessagingUtils.buildId( RecipientKind.DM, "domain", "app", "/root" );
+		Assert.assertEquals( "[ domain ] DM", id );
+
+		id = MessagingUtils.buildId( RecipientKind.AGENTS, "domain", "app", "/root" );
+		Assert.assertEquals( "[ domain ] /root @ app", id );
+
+		id = MessagingUtils.buildId( RecipientKind.INTER_APP, "domain", "app", "/root" );
+		Assert.assertEquals( "[ domain ] /root @ app", id );
 	}
 }

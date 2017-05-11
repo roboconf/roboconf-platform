@@ -42,7 +42,7 @@ import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
  * @author Vincent Zurczak - Linagora
  */
 @Ignore
-public class RabbitMqTestWithSsl extends RabbitMqTest {
+public class RabbitMqWithSslTest extends RabbitMqTest {
 
 	@Override
 	protected Map<String,String> getMessagingConfiguration() {

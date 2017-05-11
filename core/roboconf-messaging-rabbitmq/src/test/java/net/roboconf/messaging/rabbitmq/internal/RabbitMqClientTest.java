@@ -30,19 +30,18 @@ import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_PROTOCOL;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_PROTOCOL;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -55,7 +54,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
-import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
@@ -88,7 +87,7 @@ public class RabbitMqClientTest {
 		Assert.assertFalse( client.isConnected());
 		Assert.assertNull( client.channel );
 
-		LinkedBlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
+		RoboconfMessageQueue messagesQueue = new RoboconfMessageQueue();
 		client.setMessageQueue( messagesQueue );
 		client.openConnection();
 		Assert.assertNotNull( client.channel );

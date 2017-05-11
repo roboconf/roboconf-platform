@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.roboconf.core.model.beans.Application;
@@ -41,6 +40,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -104,7 +104,7 @@ public class TestClient implements IMessagingClient {
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		// nothing
 	}
 

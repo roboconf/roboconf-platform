@@ -30,7 +30,6 @@ import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.api.Session;
@@ -42,6 +41,7 @@ import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.http.HttpConstants;
@@ -60,7 +60,7 @@ public class HttpAgentClient implements IMessagingClient {
 	private final String dmIp;
 	private final int dmPort;
 
-	private LinkedBlockingQueue<Message> messageQueue;
+	private RoboconfMessageQueue messageQueue;
 	private String applicationName, scopedInstancePath;
 
 	private AgentWebSocket socket;
@@ -91,7 +91,7 @@ public class HttpAgentClient implements IMessagingClient {
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		this.messageQueue = messageQueue;
 	}
 

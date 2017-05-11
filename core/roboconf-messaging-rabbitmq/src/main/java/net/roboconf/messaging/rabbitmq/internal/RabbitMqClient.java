@@ -26,14 +26,14 @@
 package net.roboconf.messaging.rabbitmq.internal;
 
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -54,6 +53,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.utils.MessagingUtils;
@@ -75,7 +75,7 @@ public class RabbitMqClient implements IMessagingClient {
 	private final Map<String,String> configuration;
 	private final WeakReference<ReconfigurableClient<?>> reconfigurable;
 
-	private LinkedBlockingQueue<Message> messageQueue;
+	private RoboconfMessageQueue messageQueue;
 	private RecipientKind ownerKind;
 	private String applicationName, scopedInstancePath, domain;
 
@@ -118,7 +118,7 @@ public class RabbitMqClient implements IMessagingClient {
 
 
 	@Override
-	public final void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public final void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		this.messageQueue = messageQueue;
 	}
 
@@ -333,20 +333,6 @@ public class RabbitMqClient implements IMessagingClient {
 
 
 	String getId() {
-
-		StringBuilder sb = new StringBuilder();
-		sb.append( "[ " );
-		sb.append( this.domain );
-		sb.append( " ] " );
-
-		if( this.ownerKind ==  RecipientKind.DM ) {
-			sb.append( "DM" );
-		} else {
-			sb.append( this.scopedInstancePath );
-			sb.append( " @ " );
-			sb.append( this.applicationName );
-		}
-
-		return sb.toString();
+		return MessagingUtils.buildId( this.ownerKind, this.domain, this.applicationName, this.scopedInstancePath );
 	}
 }

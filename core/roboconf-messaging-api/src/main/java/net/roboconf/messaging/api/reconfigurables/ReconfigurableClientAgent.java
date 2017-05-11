@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -43,6 +42,7 @@ import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
@@ -94,7 +94,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		getMessagingClient().setMessageQueue( messageQueue );
 	}
 

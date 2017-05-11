@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http.internal.sockets;
+package net.roboconf.messaging.api.utils;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 
 /**
+ * This class does not contain static methods, so that we can mock it.
  * @author Vincent Zurczak - Linagora
  */
-public class AgentWebSocketTest {
+public class OsgiHelper {
 
-	@Test
-	public void testBasics() {
+	/**
+	 * @return the bundle context, if we run in an OSGi environment, null otherwise
+	 */
+	public BundleContext findBundleContext() {
 
-		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
-		AgentWebSocket socket = new AgentWebSocket( messageQueue );
-		socket.onWebSocketError( null );
-		socket.onWebSocketText( "ignored" );
-
-		Assert.assertEquals( 0, messageQueue.size());
-	}
-
-
-	@Test
-	public void testBinaryMessageInError() {
-
-		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
-		AgentWebSocket socket = new AgentWebSocket( messageQueue );
-		socket.onWebSocketBinary( new byte[1], 0, 1 );
-
-		Assert.assertEquals( 0, messageQueue.size());
+		final Bundle bundle = FrameworkUtil.getBundle( getClass());
+		return bundle != null ? bundle.getBundleContext() : null;
 	}
 }
