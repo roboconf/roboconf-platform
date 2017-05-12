@@ -38,6 +38,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.internal.client.in_memory.InMemoryClient.InMemoryRoutingContext;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 
@@ -106,7 +107,7 @@ public class InMemoryClientTest {
 	public void testScenarios_publications() throws Exception {
 
 		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
-		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue queue = new RoboconfMessageQueue();
 		client.setMessageQueue( queue );
 
 		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "app" );
@@ -162,7 +163,7 @@ public class InMemoryClientTest {
 
 		// Init...
 		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
-		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue queue = new RoboconfMessageQueue();
 		client.setMessageQueue( queue );
 		client.openConnection();
 

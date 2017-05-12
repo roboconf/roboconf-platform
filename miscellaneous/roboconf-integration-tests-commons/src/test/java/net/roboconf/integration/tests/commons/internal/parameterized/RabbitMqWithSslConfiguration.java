@@ -25,6 +25,15 @@
 
 package net.roboconf.integration.tests.commons.internal.parameterized;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.FACTORY_RABBITMQ;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_USE_SSL;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
 import java.util.ArrayList;
@@ -33,13 +42,11 @@ import java.util.List;
 import org.ops4j.pax.exam.Option;
 
 import net.roboconf.core.Constants;
-import net.roboconf.integration.tests.commons.internal.runners.RoboconfPaxRunner;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqNonLocalConfiguration implements IMessagingConfiguration {
+public class RabbitMqWithSslConfiguration implements IMessagingConfiguration {
 
 	@Override
 	public List<Option> options() {
@@ -49,23 +56,49 @@ public class RabbitMqNonLocalConfiguration implements IMessagingConfiguration {
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
 				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+				FACTORY_RABBITMQ ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.dm.configuration.cfg",
 				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+				FACTORY_RABBITMQ ));
 
 		// Update the configuration for RabbitMQ clients
+		// (taken from net.roboconf.messaging.rabbitmq.internal.RabbitMqTestWithSsl)
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.messaging.rabbitmq.cfg",
-				RabbitMqConstants.RABBITMQ_SERVER_USERNAME,
-				RoboconfPaxRunner.RBCF_USER ));
+				RABBITMQ_USE_SSL,
+				"true" ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.messaging.rabbitmq.cfg",
-				RabbitMqConstants.RABBITMQ_SERVER_PASSWORD,
-				RoboconfPaxRunner.RBCF_USER ));
+				RABBITMQ_SSL_KEY_STORE_PASSPHRASE,
+				"roboconf" ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				RABBITMQ_SSL_TRUST_STORE_PASSPHRASE,
+				"roboconf" ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				RABBITMQ_SSL_TRUST_STORE_TYPE,
+				DEFAULT_SSL_KEY_STORE_TYPE ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				RABBITMQ_SSL_TRUST_STORE_PATH,
+				"/tmp/docker-test/trust-store.p12" ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				RABBITMQ_SSL_KEY_STORE_PATH,
+				"/tmp/docker-test/key-store.p12" ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				RABBITMQ_SERVER_IP,
+				"127.0.0.1:12000" ));
 
 		return options;
 	}

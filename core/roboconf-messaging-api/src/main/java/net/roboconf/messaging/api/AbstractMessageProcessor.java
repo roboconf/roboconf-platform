@@ -25,11 +25,12 @@
 
 package net.roboconf.messaging.api;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import net.roboconf.messaging.api.business.IClient;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
@@ -50,7 +51,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
  */
 public abstract class AbstractMessageProcessor<T extends IClient> extends Thread {
 
-	private final LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<Message> ();
+	private final RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
 	private final AtomicBoolean running = new AtomicBoolean( false );
 	protected T messagingClient;
 
@@ -77,7 +78,7 @@ public abstract class AbstractMessageProcessor<T extends IClient> extends Thread
 	/**
 	 * @return the messageQueue
 	 */
-	public LinkedBlockingQueue<Message> getMessageQueue() {
+	public RoboconfMessageQueue getMessageQueue() {
 		return this.messageQueue;
 	}
 

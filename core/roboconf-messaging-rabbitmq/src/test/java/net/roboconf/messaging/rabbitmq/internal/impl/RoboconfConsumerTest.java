@@ -25,14 +25,8 @@
 
 package net.roboconf.messaging.rabbitmq.internal.impl;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.internal.tests.TestUtils.StringHandler;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.messages.Message;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,6 +36,11 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownSignalException;
 
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.internal.tests.TestUtils.StringHandler;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -50,7 +49,7 @@ public class RoboconfConsumerTest {
 	@Test
 	public void testBasicLogging_forCodeCoverage() throws Exception {
 
-		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
 		Channel channel = Mockito.mock( Channel.class );
 		RoboconfConsumer rc = new RoboconfConsumer( "DM", channel, messageQueue );
 
@@ -62,7 +61,7 @@ public class RoboconfConsumerTest {
 	@Test
 	public void testShutdownSignal() throws Exception {
 
-		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
 		Channel channel = Mockito.mock( Channel.class );
 		RoboconfConsumer rc = new RoboconfConsumer( "DM", channel, messageQueue );
 
@@ -109,7 +108,7 @@ public class RoboconfConsumerTest {
 	@Test
 	public void testHandleDeliveryWithDeserializationError() throws Exception {
 
-		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
 		Channel channel = Mockito.mock( Channel.class );
 		RoboconfConsumer rc = new RoboconfConsumer( "DM", channel, messageQueue );
 

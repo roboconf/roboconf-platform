@@ -28,13 +28,13 @@ package net.roboconf.messaging.http.internal.sockets;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketListener;
+
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.http.internal.HttpClientFactory;
 import net.roboconf.messaging.http.internal.messages.HttpSerializationUtils;
-
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketListener;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -68,6 +68,7 @@ public class DmWebSocket implements WebSocketListener {
 		} catch( ClassNotFoundException | IOException e ) {
 			this.logger.severe( "A message could not be deserialized. => " + e.getClass().getSimpleName());
 			Utils.logException( this.logger, e );
+			this.httpClientFactory.getDmClient().errorWhileReceivingMessage();
 		}
 	}
 

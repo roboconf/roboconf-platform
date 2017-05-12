@@ -28,10 +28,10 @@ package net.roboconf.messaging.api.internal.client.test;
 import java.util.HashMap;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -43,7 +43,7 @@ public class TestClientFactoryTest {
 
 		TestClientFactory factory = new TestClientFactory();
 		Assert.assertEquals( MessagingConstants.FACTORY_TEST, factory.getType());
-		factory.setConfiguration( new HashMap<String,String>( 0 ));
+		Assert.assertFalse( factory.setConfiguration( new HashMap<String,String>( 0 )));
 
 		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
 		Assert.assertEquals( TestClient.class, factory.createClient( parentDm ).getClass());

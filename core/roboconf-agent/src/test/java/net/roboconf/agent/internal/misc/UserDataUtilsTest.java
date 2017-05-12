@@ -115,29 +115,52 @@ public class UserDataUtilsTest {
 		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
+		msgData.put("test", "issue #779");
 
 		Assert.assertFalse( msgConf.exists());
 		Assert.assertTrue( agentConf.exists());
 
-		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
+		UserDataUtils.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
 
 		// Check
 		Assert.assertTrue( msgConf.exists());
 		Assert.assertTrue( agentConf.exists());
 
-		Properties p = Utils.readPropertiesFile(msgConf);
+		Properties p = Utils.readPropertiesFile( msgConf );
+		Assert.assertEquals( 4, p.keySet().size());
+
 		String val = p.getProperty("net.roboconf.messaging.rabbitmq.server.ip");
 		Assert.assertEquals(val, "rabbit-server");
 		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.username");
 		Assert.assertEquals(val, "user1");
 		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.password");
 		Assert.assertEquals(val, "password1");
+		val = p.getProperty("test");
+		Assert.assertEquals(val, "issue #779");
 
 		p = Utils.readPropertiesFile( agentConf );
 		Assert.assertEquals( 3, p.size());
 		Assert.assertEquals( "rabbitmq", p.get( Constants.MESSAGING_TYPE ));
 		Assert.assertEquals( "else", p.get( "something" ));
 		Assert.assertEquals( "value", p.get( "key" ));
+
+		// Verify we do not remove all the properties when we write new ones (#779)
+		msgData.remove( "test" );
+		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user2");
+
+		UserDataUtils.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
+
+		p = Utils.readPropertiesFile( msgConf );
+		Assert.assertEquals( 4, p.keySet().size());
+
+		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.ip");
+		Assert.assertEquals(val, "rabbit-server");
+		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.username");
+		Assert.assertEquals(val, "user2");
+		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.password");
+		Assert.assertEquals(val, "password1");
+		val = p.getProperty("test");
+		Assert.assertEquals(val, "issue #779");
 	}
 
 

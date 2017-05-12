@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http.internal.sockets;
+package net.roboconf.agent.internal.test;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentWebSocketTest {
+public final class AgentTestUtils {
 
-	@Test
-	public void testBasics() {
-
-		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
-		AgentWebSocket socket = new AgentWebSocket( messageQueue );
-		socket.onWebSocketError( null );
-		socket.onWebSocketText( "ignored" );
-
-		Assert.assertEquals( 0, messageQueue.size());
+	/**
+	 * Private empty constructor.
+	 */
+	private AgentTestUtils() {
+		// nothing
 	}
 
 
-	@Test
-	public void testBinaryMessageInError() {
+	/**
+	 * Finds the test client.
+	 * @param agentClient the agent's client (reconfigurable client)
+	 * @return the internal client
+	 * @throws Exception
+	 */
+	public static TestClient getInternalClient( ReconfigurableClientAgent agentClient ) throws Exception {
 
-		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
-		AgentWebSocket socket = new AgentWebSocket( messageQueue );
-		socket.onWebSocketBinary( new byte[1], 0, 1 );
-
-		Assert.assertEquals( 0, messageQueue.size());
+		IMessagingClient wrapperClient = TestUtils.getInternalField( agentClient, "messagingClient", IMessagingClient.class );
+		return TestUtils.getInternalField( wrapperClient, "messagingClient", TestClient.class );
 	}
 }

@@ -163,6 +163,10 @@ public class ManagerTest {
 			if( ! m.getName().startsWith( "get" ))
 				continue;
 
+			// Ignore primitive types
+			if( m.getReturnType().isPrimitive())
+				continue;
+
 			String packageName = m.getReturnType().getPackage().getName();
 			Assert.assertFalse( m.getReturnType().getName() + " is internal!", packageName.toLowerCase().contains( "internal" ));
 		}

@@ -26,15 +26,13 @@
 package net.roboconf.messaging.api.reconfigurables;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
 import net.roboconf.core.utils.Utils;
@@ -46,7 +44,8 @@ import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryListener;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.dismiss.DismissClient;
+import net.roboconf.messaging.api.internal.jmx.JmxWrapperForMessagingClient;
+import net.roboconf.messaging.api.utils.OsgiHelper;
 
 /**
  * A class that can switch dynamically between messaging types.
@@ -56,24 +55,24 @@ import net.roboconf.messaging.api.internal.client.dismiss.DismissClient;
 public abstract class ReconfigurableClient<T extends IClient> implements IClient, MessagingClientFactoryListener {
 
 	protected final Logger logger = Logger.getLogger( getClass().getName());
-	private final DismissClient dismissClient;
 
 	private AbstractMessageProcessor<T> messageProcessor;
 	private String messagingType;
-	private IMessagingClient messagingClient;
+	private JmxWrapperForMessagingClient messagingClient;
 	private MessagingClientFactoryRegistry registry;
 
 	protected String domain;
+	PrintStream console = System.out;
 
 
 	/**
 	 * Constructor.
 	 */
 	protected ReconfigurableClient() {
-		this.dismissClient = new DismissClient();
+		resetInternalClient();
 
 		// Try to find the MessagingClientFactoryRegistry service.
-		setRegistry( lookupMessagingClientFactoryRegistryService());
+		setRegistry( lookupMessagingClientFactoryRegistryService( new OsgiHelper()));
 	}
 
 
@@ -103,7 +102,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 */
 	public synchronized void setRegistry( MessagingClientFactoryRegistry registry ) {
 
-		if (this.registry != null)
+		if( this.registry != null )
 			this.registry.removeListener(this);
 
 		this.registry = registry;
@@ -121,28 +120,23 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * @return the located {@code MessagingClientFactoryRegistry} service, or {@code null} if the service cannot be
 	 * found, or if there is no OSGi execution context.
 	 */
-	public static MessagingClientFactoryRegistry lookupMessagingClientFactoryRegistryService() {
+	public static MessagingClientFactoryRegistry lookupMessagingClientFactoryRegistryService( OsgiHelper osgiHelper ) {
 
 		MessagingClientFactoryRegistry result = null;
-		final Bundle bundle = FrameworkUtil.getBundle(ReconfigurableClient.class);
 		final Logger logger = Logger.getLogger( ReconfigurableClient.class.getName());
 
-		if( bundle != null ) {
+		BundleContext bundleCtx = osgiHelper.findBundleContext();
+		if( bundleCtx != null ) {
 			logger.info( "The messaging registry is used in an OSGi environment." );
-			final BundleContext bundleContext = bundle.getBundleContext();
 
-			if (bundleContext != null) {
-				logger.fine( "The bundle context was found." );
+			// There must be only *one* MessagingClientFactoryRegistry service.
+			final ServiceReference<MessagingClientFactoryRegistry> reference =
+					bundleCtx.getServiceReference( MessagingClientFactoryRegistry.class );
 
-				// There must be only *one* MessagingClientFactoryRegistry service.
-				final ServiceReference<MessagingClientFactoryRegistry> reference =
-						bundleContext.getServiceReference(MessagingClientFactoryRegistry.class);
-
-				// The service will be unget when this bundle stops. No need to worry!
-				if (reference != null) {
-					logger.fine( "The service reference was found." );
-					result = bundleContext.getService(reference);
-				}
+			// The service will be unget when this bundle stops. No need to worry!
+			if( reference != null ) {
+				logger.fine( "The service reference was found." );
+				result = bundleCtx.getService( reference );
 			}
 
 		} else {
@@ -167,12 +161,13 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		// Create a new client
 		this.logger.fine( "The messaging is requested to switch its type to " + factoryName + "." );
-		IMessagingClient newMessagingClient = null;
+		JmxWrapperForMessagingClient newMessagingClient = null;
 		try {
-			newMessagingClient = createMessagingClient( factoryName );
-			if( newMessagingClient != null ) {
+			IMessagingClient rawClient = createMessagingClient( factoryName );
+			if( rawClient != null ) {
+				newMessagingClient = new JmxWrapperForMessagingClient( rawClient );
 				newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
-				openConnection(newMessagingClient);
+				openConnection( newMessagingClient );
 			}
 
 		} catch( Exception e ) {
@@ -189,72 +184,61 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			sb.append( "Or the messaging server may not be started yet.\n\n" );
 			sb.append( "Consider using the 'roboconf:force-reconnect' command if you forgot to start the messaging server.\n" );
 			sb.append( "**** WARNING ****\n" );
-			System.out.println( sb );
+			this.console.println( sb.toString());
 		}
 
 		// Replace the current client
-		// (the new client may be null, it is not a problem - see #getMessagingClient())
 		IMessagingClient oldClient;
 		synchronized( this ) {
-			oldClient = this.messagingClient;
-			this.messagingClient = newMessagingClient;
+
+			// Simple changes
 			this.messagingType = factoryName;
+			oldClient = this.messagingClient;
+
+			// The messaging client can NEVER be null
+			if( newMessagingClient != null )
+				this.messagingClient = newMessagingClient;
+			else
+				resetInternalClient();
 		}
 
-		closeConnection( oldClient, "The previous client could not be terminated correctly.", this.logger );
+		terminateClient( oldClient, "The previous client could not be terminated correctly.", this.logger );
 	}
 
 
 	@Override
 	public void addMessagingClientFactory( final IMessagingClientFactory factory ) {
 
+		this.logger.fine( "A new messaging factory was added: " + factory.getType());
 		synchronized( this ) {
-			if( this.messagingClient == null
-					&& factory.getType().equals(this.messagingType)) {
+			if( this.messagingClient.isDismissClient()
+					&& factory.getType().equals( this.messagingType )) {
+
 				// This is the messaging factory we were expecting...
 				// We can try to switch to this incoming factory right now!
-
-				// Create a new client
-				IMessagingClient newMessagingClient = null;
-				try {
-					newMessagingClient = createMessagingClient( factory.getType());
-					if( newMessagingClient != null ) {
-						newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
-						openConnection(newMessagingClient);
-					}
-
-					this.logger.fine( "A new messaging factory was added: " + factory.getType());
-
-				} catch( IOException e ) {
-					this.logger.warning( "An error occurred while creating a new messaging client. " + e.getMessage());
-					Utils.logException( this.logger, e );
-				}
-
-				// Replace the current client
-				// (the new client may be null, it is not a problem - see #getMessagingClient())
-				this.messagingClient = newMessagingClient;
+				switchMessagingType( this.messagingType );
 			}
 		}
 	}
 
 
 	@Override
-	public void removeMessagingClientFactory( final IMessagingClientFactory factory ) {
+	public void removeMessagingClientFactory( IMessagingClientFactory factory ) {
 
+		String factoryType = factory != null ? factory.getType() : null;
 		IMessagingClient oldClient = null;
 		synchronized( this ) {
 			if( this.messagingClient != null
-					&& this.messagingClient.getMessagingType().equals(this.messagingType)) {
+					&& this.messagingClient.getMessagingType().equals( factoryType )) {
 
 				// This is the messaging factory we were using...
 				// We must release our messaging client right now.
-				oldClient = this.messagingClient;
-				this.messagingClient = null;
+				oldClient = resetInternalClient();
 			}
 		}
 
-		closeConnection( oldClient, "The previous client could not be terminated correctly.", this.logger );
-		this.logger.fine( "A messaging factory was removed: " + factory != null ? factory.getType() : null );
+		terminateClient( oldClient, "The previous client could not be terminated correctly.", this.logger );
+		this.logger.fine( "A messaging factory was removed: " + factoryType );
 	}
 
 
@@ -263,10 +247,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		final Map<String,String> result;
 		synchronized( this ) {
-			if( this.messagingClient != null )
-				result = this.messagingClient.getConfiguration();
-			else
-				result = Collections.emptyMap();
+			result = this.messagingClient.getConfiguration();
 		}
 
 		return result;
@@ -357,53 +338,52 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	public synchronized boolean hasValidClient() {
 
 		// The dismissed client always return false for this statement.
-		return getMessagingClient().isConnected();
+		return this.messagingClient.isConnected();
 	}
 
 
 	/**
-	 * @return a messaging client (never null)
+	 * @return the messagingClient
 	 */
-	protected IMessagingClient getMessagingClient() {
-
-		IMessagingClient result;
-		synchronized( this ) {
-			result = this.messagingClient != null ? this.messagingClient : this.dismissClient;
-		}
-
-		//this.logger.finest( "The messaging client is of type " + result.getClass().getSimpleName());
-		return result;
+	public IMessagingClient getMessagingClient() {
+		return this.messagingClient;
 	}
 
 
 	/**
-	 * Resets the internal client (sets it to null).
+	 * Resets the internal client.
 	 */
 	protected synchronized IMessagingClient resetInternalClient() {
 
 		IMessagingClient oldClient = this.messagingClient;
-		this.messagingClient = null;
+		this.messagingClient = new JmxWrapperForMessagingClient( null );
 		return oldClient;
 	}
 
 
 	/**
-	 * Closes the connection of a messaging client.
-	 * @param client the client (may be null)
+	 * Closes the connection of a messaging client and terminates it properly.
+	 * @param client the client (never null)
 	 * @param errorMessage the error message to log in case of problem
 	 * @param logger a logger
 	 */
-	static void closeConnection( IMessagingClient client, String errorMessage, Logger logger ) {
+	static void terminateClient( IMessagingClient client, String errorMessage, Logger logger ) {
 
-		if( client != null ) {
-			try {
-				logger.fine( "The reconfigurable client is requesting its internal connection to be closed." );
-				client.closeConnection();
+		try {
+			logger.fine( "The reconfigurable client is requesting its internal connection to be closed." );
+			client.closeConnection();
 
-			} catch( Exception e ) {
-				logger.warning( errorMessage + " " + e.getMessage());
-				Utils.logException( logger, e );
-			}
+		} catch( Exception e ) {
+			logger.warning( errorMessage + " " + e.getMessage());
+			Utils.logException( logger, e );
+
+		} finally {
+			// "unregisterService" was not merged with "closeConnection"
+			// on purpose. What is specific to JMX is restricted to this class
+			// and this bundle. Sub-classes may use "closeConnection" without
+			// any side effect on the JMX part.
+			if( client instanceof JmxWrapperForMessagingClient )
+				((JmxWrapperForMessagingClient) client).unregisterService();
 		}
 	}
 }

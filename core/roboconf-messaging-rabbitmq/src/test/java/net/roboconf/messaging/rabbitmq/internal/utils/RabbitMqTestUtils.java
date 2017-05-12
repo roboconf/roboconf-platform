@@ -30,15 +30,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConnectionFactory;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.RabbitMqClient;
-
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -178,7 +179,9 @@ public abstract class RabbitMqTestUtils {
 	 */
 	public static RabbitMqClient getMessagingClient( ReconfigurableClient<?> reconfigurable )
 	throws IllegalAccessException {
-		return TestUtils.getInternalField( reconfigurable, "messagingClient", RabbitMqClient.class );
+
+		IMessagingClient wrapperClient = TestUtils.getInternalField( reconfigurable, "messagingClient", IMessagingClient.class );
+		return TestUtils.getInternalField( wrapperClient, "messagingClient", RabbitMqClient.class );
 	}
 
 

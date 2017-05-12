@@ -26,15 +26,15 @@
 package net.roboconf.messaging.http.internal.sockets;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-
-import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.http.internal.messages.HttpSerializationUtils;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.http.internal.messages.HttpSerializationUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -42,7 +42,7 @@ import org.eclipse.jetty.websocket.api.WebSocketListener;
 public class AgentWebSocket implements WebSocketListener {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final LinkedBlockingQueue<Message> messageQueue;
+	private final RoboconfMessageQueue messageQueue;
 	private Session session;
 
 
@@ -50,7 +50,7 @@ public class AgentWebSocket implements WebSocketListener {
 	 * Constructor.
 	 * @param messageQueue
 	 */
-	public AgentWebSocket( LinkedBlockingQueue<Message> messageQueue ) {
+	public AgentWebSocket( RoboconfMessageQueue messageQueue ) {
 		this.messageQueue = messageQueue;
 	}
 
@@ -67,6 +67,7 @@ public class AgentWebSocket implements WebSocketListener {
 		} catch( ClassNotFoundException | IOException e ) {
 			this.logger.severe( "A message could not be deserialized. => " + e.getClass().getSimpleName());
 			Utils.logException( this.logger, e );
+			this.messageQueue.errorWhileReceivingMessage();
 		}
 	}
 

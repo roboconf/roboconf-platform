@@ -246,11 +246,13 @@ public final class UserDataUtils {
 		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
 
 			// Write the messaging configuration
-			Properties props = new Properties();
-			props.putAll( msgData );
-			props.remove( Constants.MESSAGING_TYPE );
-
 			File f = new File( etcDir, "net.roboconf.messaging." + messagingType + ".cfg" );
+			Logger logger = Logger.getLogger( UserDataUtils.class.getName());
+
+			Properties props = Utils.readPropertiesFileQuietly( f, logger );
+			props.putAll( msgData );
+			props.remove( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+
 			Utils.writePropertiesFile( props, f );
 
 			// Set the messaging type

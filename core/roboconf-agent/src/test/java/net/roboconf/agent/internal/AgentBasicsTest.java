@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ProcessStore;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -71,7 +71,7 @@ public class AgentBasicsTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		getInternalClient().messagesForTheDm.clear();
+		AgentTestUtils.getInternalClient( this.agent.getMessagingClient()).messagesForTheDm.clear();
 	}
 
 
@@ -92,7 +92,7 @@ public class AgentBasicsTest {
 	@Test
 	public void testForceHeartbeatSending() throws Exception {
 
-		TestClient client = getInternalClient();
+		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		Assert.assertEquals( 0, client.messagesForTheDm.size());
 
 		this.agent.forceHeartbeatSending();
@@ -104,7 +104,7 @@ public class AgentBasicsTest {
 	@Test
 	public void testBasicStartAndStop() throws Exception {
 
-		TestClient client = getInternalClient();
+		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 
 		// Stop when not running => no problem
 		Assert.assertTrue( client.isConnected());
@@ -115,7 +115,7 @@ public class AgentBasicsTest {
 		this.agent.start();
 		this.agent.getMessagingClient().setRegistry(this.registry);
 		this.agent.reconfigure();
-		client = getInternalClient();
+		client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		Assert.assertTrue( client.isConnected());
 
 		// Start when already started => nothing
@@ -123,7 +123,7 @@ public class AgentBasicsTest {
 		this.agent.start();
 		this.agent.getMessagingClient().setRegistry(this.registry);
 		this.agent.reconfigure();
-		client = getInternalClient();
+		client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		Assert.assertTrue( client.isConnected());
 		Assert.assertNotSame( oldClient, client );
 
@@ -134,7 +134,7 @@ public class AgentBasicsTest {
 		this.agent.start();
 		this.agent.getMessagingClient().setRegistry(this.registry);
 		this.agent.reconfigure();
-		client = getInternalClient();
+		client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		Assert.assertTrue( client.isConnected());
 
 		this.agent.stop();
@@ -149,7 +149,7 @@ public class AgentBasicsTest {
 	@Test
 	public void testStop_withException() throws Exception {
 
-		TestClient client = getInternalClient();
+		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		client.failMessageSending.set( true );
 		Assert.assertTrue( client.isConnected());
 
@@ -161,7 +161,7 @@ public class AgentBasicsTest {
 	@Test
 	public void testStop_notConnected() throws Exception {
 
-		TestClient client = getInternalClient();
+		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		client.closeConnection();
 		Assert.assertFalse( client.isConnected());
 
@@ -302,10 +302,5 @@ public class AgentBasicsTest {
 		Assert.assertFalse( status.startsWith( "There is no message" ));
 		Assert.assertFalse( status.contains( "No recipe is under execution." ));
 		Assert.assertTrue( status.contains( "Be careful. A recipe is under execution." ));
-	}
-
-
-	private TestClient getInternalClient() throws IllegalAccessException {
-		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
 	}
 }

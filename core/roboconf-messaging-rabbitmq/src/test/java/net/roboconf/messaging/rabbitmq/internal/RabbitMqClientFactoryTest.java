@@ -25,9 +25,23 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.FACTORY_RABBITMQ;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.GUEST;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+
 import java.io.IOException;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -36,13 +50,7 @@ import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * Tests for the RabbitMQ {@link net.roboconf.messaging.api.factory.IMessagingClientFactory}.
@@ -57,10 +65,13 @@ public class RabbitMqClientFactoryTest {
 	@Before
 	public void registerRabbitMqFactory() {
 
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, "localhost" );
+		configuration.put( RABBITMQ_SERVER_USERNAME, "guest" );
+		configuration.put( RABBITMQ_SERVER_PASSWORD, "guest" );
+
 		this.factory = new RabbitMqClientFactory();
-		this.factory.setMessageServerIp("localhost");
-		this.factory.setMessageServerUsername("guest");
-		this.factory.setMessageServerPassword("guest");
+		this.factory.configuration = configuration;
 
 		this.registry = new MessagingClientFactoryRegistry();
 		this.registry.addMessagingClientFactory(this.factory);
@@ -80,31 +91,34 @@ public class RabbitMqClientFactoryTest {
 		});
 
 		client.setRegistry(this.registry);
-		client.switchMessagingType(RabbitMqConstants.FACTORY_RABBITMQ);
+		client.switchMessagingType(FACTORY_RABBITMQ);
 
 		// Check the initial (default) configuration.
 		final RabbitMqClient client1 = RabbitMqTestUtils.getMessagingClient(client);
 		final Map<String,String> config1 = client1.getConfiguration();
-		Assert.assertEquals(RabbitMqConstants.FACTORY_RABBITMQ, config1.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("localhost", config1.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
-		Assert.assertEquals("guest", config1.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
-		Assert.assertEquals("guest", config1.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
+		Assert.assertEquals(FACTORY_RABBITMQ, config1.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals("localhost", config1.get(RABBITMQ_SERVER_IP));
+		Assert.assertEquals("guest", config1.get(RABBITMQ_SERVER_USERNAME));
+		Assert.assertEquals("guest", config1.get(RABBITMQ_SERVER_PASSWORD));
 		Assert.assertEquals( 1, this.factory.clients.size());
 
 		// Reconfigure the factory.
-		this.factory.setMessageServerIp("127.0.0.1");
-		this.factory.setMessageServerUsername("john.doe");
-		this.factory.setMessageServerPassword("1234");
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, "127.0.0.1" );
+		configuration.put( RABBITMQ_SERVER_USERNAME, "john.doe" );
+		configuration.put( RABBITMQ_SERVER_PASSWORD, "1234" );
+
+		this.factory.configuration = configuration;
 		this.factory.reconfigure();
 
 		// Check the client has been automatically changed.
 		final RabbitMqClient client2 = RabbitMqTestUtils.getMessagingClient(client);
 		Assert.assertNotSame(client1, client2);
 		final Map<String,String> config2 = client2.getConfiguration();
-		Assert.assertEquals(RabbitMqConstants.FACTORY_RABBITMQ, config2.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("127.0.0.1", config2.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
-		Assert.assertEquals("john.doe", config2.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
-		Assert.assertEquals("1234", config2.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
+		Assert.assertEquals(FACTORY_RABBITMQ, config2.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals("127.0.0.1", config2.get(RABBITMQ_SERVER_IP));
+		Assert.assertEquals("john.doe", config2.get(RABBITMQ_SERVER_USERNAME));
+		Assert.assertEquals("1234", config2.get(RABBITMQ_SERVER_PASSWORD));
 		Assert.assertEquals( 1, this.factory.clients.size());
 	}
 
@@ -112,26 +126,55 @@ public class RabbitMqClientFactoryTest {
 	@Test
 	public void testSetConfiguration() {
 
-		Map<String,String> map = new HashMap<String,String>( 0 );
+		Map<String,String> map = new HashMap<>( 0 );
 		Assert.assertFalse( this.factory.setConfiguration( map ));
 
 		map.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "whatever" );
 		Assert.assertFalse( this.factory.setConfiguration( map ));
 
-		map.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, RabbitMqConstants.FACTORY_RABBITMQ );
+		map.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, FACTORY_RABBITMQ );
 		Assert.assertTrue( this.factory.setConfiguration( map ));
-		Assert.assertEquals( RabbitMqConstants.DEFAULT_IP, this.factory.messageServerIp );
-		Assert.assertEquals( RabbitMqConstants.GUEST, this.factory.messageServerUsername );
-		Assert.assertEquals( RabbitMqConstants.GUEST, this.factory.messageServerPassword );
+		Assert.assertEquals( DEFAULT_IP, this.factory.configuration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( GUEST, this.factory.configuration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( GUEST, this.factory.configuration.get( RABBITMQ_SERVER_PASSWORD ));
 
-		map.put( RabbitMqConstants.RABBITMQ_SERVER_IP, "127.0.0.1" );
-		map.put( RabbitMqConstants.RABBITMQ_SERVER_USERNAME, "bob" );
-		map.put( RabbitMqConstants.RABBITMQ_SERVER_PASSWORD, "2" );
+		map.put( RABBITMQ_SERVER_IP, "127.0.0.1" );
+		map.put( RABBITMQ_SERVER_USERNAME, "bob" );
+		map.put( RABBITMQ_SERVER_PASSWORD, "2" );
 
 		Assert.assertTrue( this.factory.setConfiguration( map ));
-		Assert.assertEquals( "127.0.0.1", this.factory.messageServerIp );
-		Assert.assertEquals( "bob", this.factory.messageServerUsername );
-		Assert.assertEquals( "2", this.factory.messageServerPassword );
+		Assert.assertEquals( "127.0.0.1", this.factory.configuration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( "bob", this.factory.configuration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( "2", this.factory.configuration.get( RABBITMQ_SERVER_PASSWORD ));
+	}
+
+
+	@Test
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public void testSetConfiguration_dictionary() {
+
+		Dictionary dictionary = new Hashtable();
+		this.factory.setConfiguration( dictionary );
+
+		dictionary.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "whatever" );
+		this.factory.setConfiguration( dictionary );
+
+		dictionary.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, FACTORY_RABBITMQ );
+		this.factory.setConfiguration( dictionary );
+		Assert.assertEquals( DEFAULT_IP, this.factory.configuration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( GUEST, this.factory.configuration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( GUEST, this.factory.configuration.get( RABBITMQ_SERVER_PASSWORD ));
+
+		dictionary.put( RABBITMQ_SERVER_IP, "127.0.0.1" );
+		dictionary.put( RABBITMQ_SERVER_USERNAME, "bob" );
+		dictionary.put( RABBITMQ_SERVER_PASSWORD, "2" );
+		dictionary.put( "felix.fileinstall.filename", "sth" );
+
+		this.factory.setConfiguration( dictionary );
+		Assert.assertEquals( "127.0.0.1", this.factory.configuration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( "bob", this.factory.configuration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( "2", this.factory.configuration.get( RABBITMQ_SERVER_PASSWORD ));
+		Assert.assertFalse( this.factory.configuration.containsKey( "felix.fileinstall.filename" ));
 	}
 
 
@@ -167,7 +210,12 @@ public class RabbitMqClientFactoryTest {
 		ReconfigurableClient parent = Mockito.mock( ReconfigurableClientDm.class );
 		Mockito.doThrow( new IOException( "For tests..." )).when( parent ).closeConnection();
 
-		RabbitMqClient client = new RabbitMqClient( parent, "", "", "" );
+		Map<String,String> configuration = new HashMap<> ();
+		configuration.put( RABBITMQ_SERVER_IP, "" );
+		configuration.put( RABBITMQ_SERVER_USERNAME, "" );
+		configuration.put( RABBITMQ_SERVER_PASSWORD, "" );
+
+		RabbitMqClient client = new RabbitMqClient( parent, configuration );
 		this.factory.clients.add( client );
 		Assert.assertEquals( 1, this.factory.clients.size());
 

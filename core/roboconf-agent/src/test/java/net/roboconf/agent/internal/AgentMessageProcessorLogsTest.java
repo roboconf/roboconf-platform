@@ -28,8 +28,15 @@ package net.roboconf.agent.internal;
 import java.io.File;
 import java.util.logging.Level;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.agent.internal.misc.AgentConstants;
-import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
@@ -39,13 +46,6 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeLogLevel;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdGatherLogs;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -78,7 +78,7 @@ public class AgentMessageProcessorLogsTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		this.client = TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
+		this.client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		this.client.clearMessages();
 	}
 

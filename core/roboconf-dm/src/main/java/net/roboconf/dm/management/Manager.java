@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.runtime.IReconfigurable;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
@@ -56,6 +57,7 @@ import net.roboconf.dm.internal.tasks.CheckerForHeartbeatsTask;
 import net.roboconf.dm.internal.tasks.CheckerForStoredMessagesTask;
 import net.roboconf.dm.internal.tasks.CheckerForTargetsConfigurationTask;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.jmx.ManagerMBean;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
 import net.roboconf.dm.management.api.IAutonomicMngr;
@@ -97,7 +99,7 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class Manager implements IReconfigurable {
+public class Manager implements IReconfigurable, ManagerMBean {
 
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
@@ -552,6 +554,43 @@ public class Manager implements IReconfigurable {
 
 		if( this.messagingClient.getRegistry() != null )
 			this.messagingClient.getRegistry().removeMessagingClientFactory( clientFactory );
+	}
+
+
+	// MBean methods
+
+
+	@Override
+	public int getApplicationCount() {
+		return this.applicationMngr.getManagedApplications().size();
+	}
+
+
+	@Override
+	public int getApplicationTemplateCount() {
+		return this.applicationTemplateMngr.getApplicationTemplates().size();
+	}
+
+
+	@Override
+	public int getInstancesCount() {
+
+		int result = 0;
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			result += InstanceHelpers.getAllInstances( ma.getApplication()).size();
+
+		return result;
+	}
+
+
+	@Override
+	public int getScopedInstancesCount() {
+
+		int result = 0;
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			result += InstanceHelpers.findAllScopedInstances( ma.getApplication()).size();
+
+		return result;
 	}
 
 

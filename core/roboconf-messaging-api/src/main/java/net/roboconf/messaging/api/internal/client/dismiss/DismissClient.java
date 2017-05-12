@@ -28,13 +28,13 @@ package net.roboconf.messaging.api.internal.client.dismiss;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -47,7 +47,7 @@ public class DismissClient implements IMessagingClient {
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		this.logger.warning( DISMISSED_MESSAGE );
 	}
 

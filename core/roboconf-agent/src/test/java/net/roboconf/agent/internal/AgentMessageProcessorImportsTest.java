@@ -39,8 +39,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Import;
@@ -84,7 +84,7 @@ public class AgentMessageProcessorImportsTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		getInternalClient().clearMessages();
+		AgentTestUtils.getInternalClient( this.agent.getMessagingClient()).clearMessages();
 	}
 
 
@@ -97,7 +97,7 @@ public class AgentMessageProcessorImportsTest {
 	@Test
 	public void testImportsRequest() throws Exception {
 
-		TestClient client = getInternalClient();
+		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplicationTemplate app = new TestApplicationTemplate();
@@ -121,7 +121,7 @@ public class AgentMessageProcessorImportsTest {
 	@Test
 	public void testImportsRequestOnScopedInstance() throws Exception {
 
-		TestClient client = getInternalClient();
+		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Our scoped instance has variables to export
@@ -403,10 +403,5 @@ public class AgentMessageProcessorImportsTest {
 		Import imp = imports.iterator().next();
 		Assert.assertEquals( 1, imp.getExportedVars().size());
 		Assert.assertEquals( "192.168.0.45", imp.getExportedVars().get( "cluster.ip" ));
-	}
-
-
-	private TestClient getInternalClient() throws IllegalAccessException {
-		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
 	}
 }

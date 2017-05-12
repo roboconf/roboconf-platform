@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http.internal.sockets;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+package net.roboconf.dm.jmx;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentWebSocketTest {
+public interface ManagerMBean {
 
-	@Test
-	public void testBasics() {
+	/**
+	 * @return the number of applications
+	 */
+	int getApplicationCount();
 
-		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
-		AgentWebSocket socket = new AgentWebSocket( messageQueue );
-		socket.onWebSocketError( null );
-		socket.onWebSocketText( "ignored" );
+	/**
+	 * @return the number of application templates
+	 */
+	int getApplicationTemplateCount();
 
-		Assert.assertEquals( 0, messageQueue.size());
-	}
+	/**
+	 * @return the total number of scoped instances
+	 */
+	int getScopedInstancesCount();
 
-
-	@Test
-	public void testBinaryMessageInError() {
-
-		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
-		AgentWebSocket socket = new AgentWebSocket( messageQueue );
-		socket.onWebSocketBinary( new byte[1], 0, 1 );
-
-		Assert.assertEquals( 0, messageQueue.size());
-	}
+	/**
+	 * @return the total number of instances
+	 */
+	int getInstancesCount();
 }

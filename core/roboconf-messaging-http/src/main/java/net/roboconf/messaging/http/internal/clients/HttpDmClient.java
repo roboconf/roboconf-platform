@@ -28,20 +28,20 @@ package net.roboconf.messaging.http.internal.clients;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.eclipse.jetty.websocket.api.Session;
 
 import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.HttpClientFactory.HttpRoutingContext;
 import net.roboconf.messaging.http.internal.HttpUtils;
 import net.roboconf.messaging.http.internal.messages.HttpMessage;
 import net.roboconf.messaging.http.internal.messages.SubscriptionMessage;
-
-import org.eclipse.jetty.websocket.api.Session;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -52,7 +52,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 	private static final String DM_OWNER_ID = AbstractRoutingClient.buildOwnerId( RecipientKind.DM, null, null );
 
 	private final Map<String,Session> ctxToSession;
-	private LinkedBlockingQueue<Message> messageQueue;
+	private RoboconfMessageQueue messageQueue;
 	private final AtomicInteger openConnections = new AtomicInteger( 0 );
 
 	private String httpServerIp;
@@ -90,7 +90,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		this.messageQueue = messageQueue;
 	}
 
@@ -179,6 +179,14 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 			else
 				unsubscribe( sub.getOwnerId(), sub.getCtx());
 		}
+	}
+
+
+	/**
+	 * Indicates a message was received but could not be decoded.
+	 */
+	public void errorWhileReceivingMessage() {
+		this.messageQueue.errorWhileReceivingMessage();
 	}
 
 

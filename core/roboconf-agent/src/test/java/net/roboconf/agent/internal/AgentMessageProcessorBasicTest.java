@@ -39,9 +39,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -91,7 +91,7 @@ public class AgentMessageProcessorBasicTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		this.client = TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
+		this.client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		this.client.clearMessages();
 	}
 
