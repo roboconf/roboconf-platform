@@ -1,0 +1,20 @@
+{
+  "VMs": [
+    {
+      "path":   "/MySqlVm,
+      "status": "NOT_DEPLOYED"
+    },
+    {
+      "path":   "/ApacheVm,
+      "status": "NOT_DEPLOYED"
+    },
+    {
+      "path":   "/TomcatVm1,
+      "status": "NOT_DEPLOYED"
+    },
+    {
+      "path":   "/TomcatVm2,
+      "status": "NOT_DEPLOYED"
+    },
+  ]
+}
