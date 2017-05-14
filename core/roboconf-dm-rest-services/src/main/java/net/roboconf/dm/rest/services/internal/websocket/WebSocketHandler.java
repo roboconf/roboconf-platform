@@ -82,6 +82,12 @@ public class WebSocketHandler implements IDmListener {
 		return result;
 	}
 
+	public static int getSessionsCount() {
+		synchronized( SESSIONS ) {
+			return SESSIONS.size();
+		}
+	}
+
 
 	// IDmListener
 
