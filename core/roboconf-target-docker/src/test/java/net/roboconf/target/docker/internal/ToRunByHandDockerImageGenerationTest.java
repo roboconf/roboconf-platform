@@ -54,7 +54,7 @@ public class ToRunByHandDockerImageGenerationTest {
 		final String tag = "roboconf-test-by-hand";
 
 		Builder config = DefaultDockerClientConfig.createDefaultConfigBuilder();
-		config.withDockerHost( "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
+		config.withDockerHost( "tcp://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 
 		DockerClient docker = DockerClientBuilder.getInstance( config.build()).build();
 		Image img = DockerUtils.findImageByIdOrByTag( tag, docker );
