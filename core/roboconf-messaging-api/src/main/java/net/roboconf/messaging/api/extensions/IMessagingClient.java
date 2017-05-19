@@ -27,10 +27,10 @@ package net.roboconf.messaging.api.extensions;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -42,7 +42,7 @@ public interface IMessagingClient {
 	 * Sets the message queue where the client can store the messages to process.
 	 * @param messageQueue the message queue
 	 */
-	void setMessageQueue( LinkedBlockingQueue<Message> messageQueue );
+	void setMessageQueue( RoboconfMessageQueue messageQueue );
 
 	/**
 	 * @return true if the client is connected, false otherwise

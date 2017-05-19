@@ -33,6 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -69,7 +70,7 @@ public class InMemoryClient extends AbstractRoutingClient<LinkedBlockingQueue<Me
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		this.ctxToQueue.put( this.ownerId, messageQueue );
 	}
 

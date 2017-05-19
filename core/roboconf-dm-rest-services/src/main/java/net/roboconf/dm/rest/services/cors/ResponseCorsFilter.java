@@ -25,10 +25,8 @@
 
 package net.roboconf.dm.rest.services.cors;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.logging.Logger;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -55,28 +53,49 @@ import net.roboconf.core.utils.Utils;
  */
 public class ResponseCorsFilter implements ContainerResponseFilter {
 
+	public static final String CORS_REQ_HEADERS = "Access-Control-Request-Headers";
+	public static final String ORIGIN = "Origin";
+
+	static final String CORS_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
+	static final String CORS_ALLOW_METHODS = "Access-Control-Allow-Methods";
+	static final String CORS_ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials";
+	static final String CORS_ALLOW_HEADERS = "Access-Control-Allow-Headers";
+
+	static final String VALUE_ALLOWED_METHODS = "GET, DELETE, POST, PUT, OPTIONS";
+	static final String VALUE_ALLOW_CREDENTIALS = "true";
+
+
 	@Override
 	public ContainerResponse filter( ContainerRequest req, ContainerResponse contResp ) {
 
 		ResponseBuilder resp = Response.fromResponse( contResp.getResponse());
-		resp
-		.header( "Access-Control-Allow-Origin", "*" )
-		.header( "Access-Control-Allow-Methods", "GET, DELETE, POST, OPTIONS" );
+		Map<String,String> headers = buildHeaders(
+				req.getHeaderValue( CORS_REQ_HEADERS ),
+				req.getHeaderValue( ORIGIN ));
 
-		String reqHead = req.getHeaderValue( "Access-Control-Request-Headers" );
-		if( ! Utils.isEmptyOrWhitespaces( reqHead )) {
-			try {
-				reqHead = URLEncoder.encode( reqHead, StandardCharsets.UTF_8.displayName());
-
-			} catch( UnsupportedEncodingException e ) {
-				Logger logger = Logger.getLogger( getClass().getName());
-				Utils.logException( logger, e );
-			}
-
-			resp.header( "Access-Control-Allow-Headers", reqHead );
-		}
+		for( Map.Entry<String,String> h : headers.entrySet())
+			resp.header( h.getKey(), h.getValue());
 
 		contResp.setResponse( resp.build());
 		return contResp;
+	}
+
+
+	/**
+	 * Finds the right headers to set on the response to prevent CORS issues.
+	 * @param reqCorsHeader the headers related to CORS
+	 * @return a non-null map
+	 */
+	public static Map<String,String> buildHeaders( String reqCorsHeader, String requestUri ) {
+
+		Map<String,String> result = new LinkedHashMap<> ();
+		result.put( CORS_ALLOW_ORIGIN, requestUri );
+		result.put( CORS_ALLOW_METHODS, VALUE_ALLOWED_METHODS );
+		result.put( CORS_ALLOW_CREDENTIALS, VALUE_ALLOW_CREDENTIALS );
+
+		if( ! Utils.isEmptyOrWhitespaces( reqCorsHeader ))
+			result.put( CORS_ALLOW_HEADERS, reqCorsHeader );
+
+		return result;
 	}
 }

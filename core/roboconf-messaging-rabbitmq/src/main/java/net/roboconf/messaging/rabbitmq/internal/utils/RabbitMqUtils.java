@@ -25,8 +25,36 @@
 
 package net.roboconf.messaging.rabbitmq.internal.utils;
 
+import static net.roboconf.core.utils.Utils.getValue;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_SSL_MNGR_FACTORY;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_SSL_PROTOCOL;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_MNGR_FACTORY;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_PROTOCOL;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_USE_SSL;
+
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -52,14 +80,17 @@ public final class RabbitMqUtils {
 	/**
 	 * Configures the connection factory with the right settings.
 	 * @param factory the connection factory
-	 * @param messageServerIp the message server IP (can contain a port and can but null too)
-	 * @param messageServerUsername the user name for the message server
-	 * @param messageServerPassword the password for the message server
+	 * @param configuration the messaging configuration
 	 * @throws IOException if something went wrong
+	 * @see RabbitMqConstants
 	 */
-	public static void configureFactory( ConnectionFactory factory, String messageServerIp, String messageServerUsername, String messageServerPassword )
+	public static void configureFactory( ConnectionFactory factory, Map<String,String> configuration )
 	throws IOException {
 
+		final Logger logger = Logger.getLogger( RabbitMqUtils.class.getName());
+		logger.fine( "Configuring a connection factory for RabbitMQ." );
+
+		String messageServerIp = configuration.get( RABBITMQ_SERVER_IP );
 		if( messageServerIp != null ) {
 			Map.Entry<String,Integer> entry = Utils.findUrlAndPort( messageServerIp );
 			factory.setHost( entry.getKey());
@@ -67,13 +98,13 @@ public final class RabbitMqUtils {
 				factory.setPort( entry.getValue());
 		}
 
-		factory.setUsername( messageServerUsername );
-		factory.setPassword( messageServerPassword );
+		factory.setUsername( configuration.get( RABBITMQ_SERVER_USERNAME ));
+		factory.setPassword( configuration.get( RABBITMQ_SERVER_PASSWORD ));
 
 		// Timeout for connection establishment: 5s
 		factory.setConnectionTimeout( 5000 );
 
-		// Configure automatic reconnections
+		// Configure automatic reconnection
 		factory.setAutomaticRecoveryEnabled( true );
 
 		// Recovery interval: 10s
@@ -81,6 +112,45 @@ public final class RabbitMqUtils {
 
 		// Exchanges and so on should be redeclared if necessary
 		factory.setTopologyRecoveryEnabled( true );
+
+		// SSL
+		if( Boolean.parseBoolean( configuration.get( RABBITMQ_USE_SSL ))) {
+			logger.fine( "Connection factory for RabbitMQ: SSL is used." );
+
+			InputStream clientIS = null;
+			InputStream storeIS = null;
+			try {
+				clientIS = new FileInputStream( configuration.get( RABBITMQ_SSL_KEY_STORE_PATH ));
+				storeIS = new FileInputStream( configuration.get( RABBITMQ_SSL_TRUST_STORE_PATH ));
+
+				char[] keyStorePassphrase = configuration.get( RABBITMQ_SSL_KEY_STORE_PASSPHRASE ).toCharArray();
+				KeyStore ks = KeyStore.getInstance( getValue( configuration, RABBITMQ_SSL_KEY_STORE_TYPE, DEFAULT_SSL_KEY_STORE_TYPE ));
+				ks.load( clientIS, keyStorePassphrase );
+
+				String value = getValue( configuration, RABBITMQ_SSL_KEY_MNGR_FACTORY, DEFAULT_SSL_MNGR_FACTORY );
+				KeyManagerFactory kmf = KeyManagerFactory.getInstance( value );
+				kmf.init( ks, keyStorePassphrase );
+
+				char[] trustStorePassphrase = configuration.get( RABBITMQ_SSL_TRUST_STORE_PASSPHRASE ).toCharArray();
+				KeyStore tks = KeyStore.getInstance( getValue( configuration, RABBITMQ_SSL_TRUST_STORE_TYPE, DEFAULT_SSL_TRUST_STORE_TYPE ));
+				tks.load( storeIS, trustStorePassphrase );
+
+				value = getValue( configuration, RABBITMQ_SSL_TRUST_MNGR_FACTORY, DEFAULT_SSL_MNGR_FACTORY );
+				TrustManagerFactory tmf = TrustManagerFactory.getInstance( value );
+				tmf.init( tks );
+
+				SSLContext c = SSLContext.getInstance( getValue( configuration, RABBITMQ_SSL_PROTOCOL, DEFAULT_SSL_PROTOCOL ));
+				c.init( kmf.getKeyManagers(), tmf.getTrustManagers(), null );
+				factory.useSslProtocol( c );
+
+			} catch( GeneralSecurityException e ) {
+				throw new IOException( "SSL configuration for the RabbitMQ factory failed.", e );
+
+			} finally {
+				Utils.closeQuietly( storeIS );
+				Utils.closeQuietly( clientIS );
+			}
+		}
 	}
 
 

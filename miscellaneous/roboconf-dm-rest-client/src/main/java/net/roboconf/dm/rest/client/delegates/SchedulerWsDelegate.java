@@ -37,6 +37,7 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 
 import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.SchedulerWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
@@ -48,14 +49,17 @@ public class SchedulerWsDelegate {
 
 	private final WebResource resource;
 	private final Logger logger;
+	private final WsClient wsClient;
 
 
 	/**
 	 * Constructor.
 	 * @param resource a web resource
+	 * @param the WS client
 	 */
-	public SchedulerWsDelegate( WebResource resource ) {
+	public SchedulerWsDelegate( WebResource resource, WsClient wsClient ) {
 		this.resource = resource;
+		this.wsClient = wsClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -98,7 +102,8 @@ public class SchedulerWsDelegate {
 			path = path.queryParam( "cmd-name", cmdName );
 
 		List<ScheduledJob> result =
-				path.accept( MediaType.APPLICATION_JSON )
+				this.wsClient.createBuilder( path )
+				.accept( MediaType.APPLICATION_JSON )
 				.type( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<ScheduledJob>> () {});
 
@@ -106,7 +111,7 @@ public class SchedulerWsDelegate {
 			this.logger.finer( result.size() + " jobs were found." );
 		} else {
 			this.logger.finer( "No scheduled job was found." );
-			result = new ArrayList<ScheduledJob>( 0 );
+			result = new ArrayList<>( 0 );
 		}
 
 		return result;
@@ -140,9 +145,11 @@ public class SchedulerWsDelegate {
 		path = path.queryParam( "cmd-name", cmdName );
 		path = path.queryParam( "cron", cron );
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
-		handleResponse( response );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
 
+		handleResponse( response );
 		StringWrapper wrapper = response.getEntity( StringWrapper.class );
 		return wrapper.toString();
 	}
@@ -158,7 +165,10 @@ public class SchedulerWsDelegate {
 		this.logger.finer( "Deleting scheduled job: " + jobId  );
 
 		WebResource path = this.resource.path( UrlConstants.SCHEDULER ).path( jobId );
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).delete( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.delete( ClientResponse.class );
+
 		handleResponse( response );
 	}
 
@@ -173,9 +183,11 @@ public class SchedulerWsDelegate {
 		this.logger.finer( "Getting the properties of a scheduled job: " + jobId  );
 
 		WebResource path = this.resource.path( UrlConstants.SCHEDULER ).path( jobId );
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).get( ClientResponse.class );
-		handleResponse( response );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.get( ClientResponse.class );
 
+		handleResponse( response );
 		return response.getEntity( ScheduledJob.class );
 	}
 

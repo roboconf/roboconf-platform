@@ -35,6 +35,7 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 
 import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**
@@ -44,14 +45,17 @@ public class PreferencesWsDelegate {
 
 	private final WebResource resource;
 	private final Logger logger;
+	private final WsClient wsClient;
 
 
 	/**
 	 * Constructor.
 	 * @param resource a web resource
+	 * @param the WS client
 	 */
-	public PreferencesWsDelegate( WebResource resource ) {
+	public PreferencesWsDelegate( WebResource resource, WsClient wsClient ) {
 		this.resource = resource;
+		this.wsClient = wsClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -64,7 +68,7 @@ public class PreferencesWsDelegate {
 		this.logger.finer( "Getting all the preferences."  );
 
 		WebResource path = this.resource.path( UrlConstants.PREFERENCES );
-		List<Preference> result = path
+		List<Preference> result = this.wsClient.createBuilder( path )
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Preference>> () {});
 

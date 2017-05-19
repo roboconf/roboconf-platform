@@ -31,6 +31,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.http.HttpConstants;
@@ -65,7 +66,9 @@ public abstract class HttpTestUtils {
 	 */
 	public static HttpDmClient getMessagingClientDm( ReconfigurableClientDm reconfigurable )
 	throws IllegalAccessException {
-		return TestUtils.getInternalField(reconfigurable, "messagingClient", HttpDmClient.class);
+
+		IMessagingClient wrapperClient = TestUtils.getInternalField( reconfigurable, "messagingClient", IMessagingClient.class );
+		return TestUtils.getInternalField( wrapperClient, "messagingClient", HttpDmClient.class );
 	}
 
 
@@ -80,7 +83,9 @@ public abstract class HttpTestUtils {
 	 */
 	public static HttpAgentClient getMessagingClientAgent( ReconfigurableClientAgent reconfigurable )
 	throws IllegalAccessException {
-		return TestUtils.getInternalField(reconfigurable, "messagingClient", HttpAgentClient.class);
+
+		IMessagingClient wrapperClient = TestUtils.getInternalField( reconfigurable, "messagingClient", IMessagingClient.class );
+		return TestUtils.getInternalField( wrapperClient, "messagingClient", HttpAgentClient.class );
 	}
 
 

@@ -25,10 +25,11 @@
 
 package net.roboconf.messaging.http.internal.sockets;
 
-import net.roboconf.messaging.http.internal.HttpClientFactory;
-
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+import net.roboconf.messaging.http.internal.HttpClientFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -48,7 +49,9 @@ public class DmWebSocketTest {
 	@Test
 	public void testBinaryMessageInError() {
 
-		HttpClientFactory httpClientFatory = Mockito.mock( HttpClientFactory.class );
+		HttpClientFactory httpClientFatory = Mockito.spy( new HttpClientFactory());
+		httpClientFatory.getDmClient().setMessageQueue( new RoboconfMessageQueue());
+
 		DmWebSocket socket = new DmWebSocket( httpClientFatory );
 		socket.onWebSocketBinary( new byte[1], 0, 1 );
 	}

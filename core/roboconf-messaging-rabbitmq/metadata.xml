@@ -35,11 +35,7 @@
 		<provides />
 		
 		<callback transition="invalidate" method="stop"/>
-		<properties pid="net.roboconf.messaging.rabbitmq" updated="reconfigure">
-			<property name="net.roboconf.messaging.rabbitmq.server.ip" method="setMessageServerIp" value="localhost" />
-			<property name="net.roboconf.messaging.rabbitmq.server.username" method="setMessageServerUsername" value="guest" />
-			<property name="net.roboconf.messaging.rabbitmq.server.password" method="setMessageServerPassword" value="guest" />
-		</properties>
+		<properties pid="net.roboconf.messaging.rabbitmq" updated="setConfiguration" propagation="true" />
 	</component>
 	
 	<!-- And the instance... -->

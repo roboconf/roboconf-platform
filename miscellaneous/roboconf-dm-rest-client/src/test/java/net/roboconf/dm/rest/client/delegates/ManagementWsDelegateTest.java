@@ -152,6 +152,12 @@ public class ManagementWsDelegateTest {
 		apps = this.client.getManagementDelegate().listApplications( app.getName() + "0" );
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 0, apps.size());
+
+		// Get when a session ID was set
+		this.client.setSessionId( "whatever, filtering is not enabled during these tests" );
+		apps = this.client.getManagementDelegate().listApplications();
+		Assert.assertNotNull( apps );
+		Assert.assertEquals( 1, apps.size());
 	}
 
 

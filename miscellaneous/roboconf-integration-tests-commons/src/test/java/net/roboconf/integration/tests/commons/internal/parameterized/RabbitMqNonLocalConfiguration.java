@@ -30,11 +30,11 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ops4j.pax.exam.Option;
+
 import net.roboconf.core.Constants;
 import net.roboconf.integration.tests.commons.internal.runners.RoboconfPaxRunner;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import org.ops4j.pax.exam.Option;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,8 +44,7 @@ public class RabbitMqNonLocalConfiguration implements IMessagingConfiguration {
 	@Override
 	public List<Option> options() {
 
-		// For RabbitMQ, we only need to specify we use this messaging type.
-		// We use the default credentials to interact with RMQ.
+		// The DM and agents use RabbitMQ
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
@@ -57,13 +56,14 @@ public class RabbitMqNonLocalConfiguration implements IMessagingConfiguration {
 				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ ));
 
+		// Update the configuration for RabbitMQ clients
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
 				RabbitMqConstants.RABBITMQ_SERVER_USERNAME,
 				RoboconfPaxRunner.RBCF_USER ));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
 				RabbitMqConstants.RABBITMQ_SERVER_PASSWORD,
 				RoboconfPaxRunner.RBCF_USER ));
 

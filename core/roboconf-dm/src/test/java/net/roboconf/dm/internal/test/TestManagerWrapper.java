@@ -160,7 +160,9 @@ public final class TestManagerWrapper {
 	 */
 	public static IMessagingClient getInternalMessagingClient( ReconfigurableClientDm client )
 	throws IllegalAccessException {
-		return TestUtils.getInternalField( client, "messagingClient", IMessagingClient.class );
+
+		IMessagingClient wrapperClient = TestUtils.getInternalField( client, "messagingClient", IMessagingClient.class );
+		return TestUtils.getInternalField( wrapperClient, "messagingClient", IMessagingClient.class );
 	}
 
 

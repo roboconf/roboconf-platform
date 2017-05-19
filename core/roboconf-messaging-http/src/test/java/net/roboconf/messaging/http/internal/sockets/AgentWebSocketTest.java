@@ -25,12 +25,10 @@
 
 package net.roboconf.messaging.http.internal.sockets;
 
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -40,7 +38,7 @@ public class AgentWebSocketTest {
 	@Test
 	public void testBasics() {
 
-		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
 		AgentWebSocket socket = new AgentWebSocket( messageQueue );
 		socket.onWebSocketError( null );
 		socket.onWebSocketText( "ignored" );
@@ -52,7 +50,7 @@ public class AgentWebSocketTest {
 	@Test
 	public void testBinaryMessageInError() {
 
-		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		RoboconfMessageQueue messageQueue = new RoboconfMessageQueue();
 		AgentWebSocket socket = new AgentWebSocket( messageQueue );
 		socket.onWebSocketBinary( new byte[1], 0, 1 );
 

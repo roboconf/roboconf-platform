@@ -25,10 +25,18 @@
 
 package net.roboconf.dm.rest.services.cors;
 
-import javax.ws.rs.core.Response;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_ALLOW_CREDENTIALS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_ALLOW_HEADERS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_ALLOW_METHODS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_ALLOW_ORIGIN;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.CORS_REQ_HEADERS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.ORIGIN;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.VALUE_ALLOWED_METHODS;
+import static net.roboconf.dm.rest.services.cors.ResponseCorsFilter.VALUE_ALLOW_CREDENTIALS;
+
+import java.util.Arrays;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -41,35 +49,48 @@ import com.sun.jersey.spi.container.ContainerResponse;
 public class ResponseCorsFilterTest {
 
 	@Test
-	public void testHeadersUpdate_noMaj() {
+	public void testHeadersUpdate() {
+
+		final String origin = "http://something";
+		final String reqHeader = "POST";
 
 		ResponseCorsFilter filter = new ResponseCorsFilter();
 		ContainerRequest req = Mockito.mock( ContainerRequest.class );
-		ContainerResponse resp = Mockito.mock( ContainerResponse.class );
 
-		Mockito.when( resp.getResponse()).thenReturn( Response.ok().build());
+		// There are request headers
+		ContainerResponse resp = new ContainerResponse( null, null, null );
 		Mockito.verifyZeroInteractions( req );
+		Mockito.when( req.getHeaderValue( ORIGIN )).thenReturn( origin );
+		Mockito.when( req.getHeaderValue( CORS_REQ_HEADERS )).thenReturn( reqHeader );
+
 		ContainerResponse result = filter.filter( req, resp );
 
 		Assert.assertNotNull( result );
-		Mockito.verify( req, Mockito.times( 1 )).getHeaderValue( Mockito.anyString());
-	}
+		Assert.assertEquals( 4, result.getHttpHeaders().size());
+		Assert.assertEquals( Arrays.asList( VALUE_ALLOW_CREDENTIALS ), result.getHttpHeaders().get( CORS_ALLOW_CREDENTIALS ));
+		Assert.assertEquals( Arrays.asList( reqHeader ), result.getHttpHeaders().get( CORS_ALLOW_HEADERS ));
+		Assert.assertEquals( Arrays.asList( VALUE_ALLOWED_METHODS ), result.getHttpHeaders().get( CORS_ALLOW_METHODS ));
+		Assert.assertEquals( Arrays.asList( origin ), result.getHttpHeaders().get( CORS_ALLOW_ORIGIN ));
 
+		Mockito.verify( req ).getHeaderValue( CORS_REQ_HEADERS );
+		Mockito.verify( req ).getHeaderValue( ORIGIN );
+		Mockito.verifyNoMoreInteractions( req );
 
-	@Test
-	public void testHeadersUpdate_headersAppended() {
+		// No request header
+		resp = new ContainerResponse( null, null, null );
+		Mockito.reset( req );
+		Mockito.when( req.getHeaderValue( ORIGIN )).thenReturn( "http://something" );
 
-		ResponseCorsFilter filter = new ResponseCorsFilter();
-		ContainerRequest req = Mockito.mock( ContainerRequest.class );
-		ContainerResponse resp = Mockito.mock( ContainerResponse.class );
-
-		Mockito.when( resp.getResponse()).thenReturn( Response.ok().build());
-		Mockito.when( req.getHeaderValue( Mockito.anyString())).thenReturn( "hello" );
-
-		Mockito.verifyZeroInteractions( req );
-		ContainerResponse result = filter.filter( req, resp );
+		result = filter.filter( req, resp );
 
 		Assert.assertNotNull( result );
-		Mockito.verify( req, Mockito.times( 1 )).getHeaderValue( Mockito.anyString());
+		Assert.assertEquals( 3, result.getHttpHeaders().size());
+		Assert.assertEquals( Arrays.asList( VALUE_ALLOW_CREDENTIALS ), result.getHttpHeaders().get( CORS_ALLOW_CREDENTIALS ));
+		Assert.assertEquals( Arrays.asList( VALUE_ALLOWED_METHODS ), result.getHttpHeaders().get( CORS_ALLOW_METHODS ));
+		Assert.assertEquals( Arrays.asList( origin ), result.getHttpHeaders().get( CORS_ALLOW_ORIGIN ));
+
+		Mockito.verify( req ).getHeaderValue( ResponseCorsFilter.CORS_REQ_HEADERS );
+		Mockito.verify( req ).getHeaderValue( ResponseCorsFilter.ORIGIN );
+		Mockito.verifyNoMoreInteractions( req );
 	}
 }

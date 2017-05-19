@@ -82,6 +82,7 @@ public class PreferencesMngrImpl implements IPreferencesMngr {
 
 	/**
 	 * Invoked by iPojo when one or several properties were updated from Config Admin.
+	 * @param properties
 	 */
 	@Override
 	public void updateProperties( Dictionary<?,?> properties ) {

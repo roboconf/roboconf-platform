@@ -31,13 +31,14 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.dm.rest.client.exceptions.DebugWsException;
-import net.roboconf.dm.rest.commons.Diagnostic;
-import net.roboconf.dm.rest.commons.UrlConstants;
-
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
+
+import net.roboconf.dm.rest.client.WsClient;
+import net.roboconf.dm.rest.client.exceptions.DebugWsException;
+import net.roboconf.dm.rest.commons.Diagnostic;
+import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -46,15 +47,17 @@ public class DebugWsDelegate {
 
 	private final WebResource resource;
 	private final Logger logger;
+	private final WsClient wsClient;
 
 
 	/**
 	 * Constructor.
-	 *
 	 * @param resource a web resource
+	 * @param the WS client
 	 */
-	public DebugWsDelegate( WebResource resource ) {
+	public DebugWsDelegate( WebResource resource, WsClient wsClient ) {
 		this.resource = resource;
+		this.wsClient = wsClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -73,7 +76,7 @@ public class DebugWsDelegate {
 		if( message != null )
 			path = path.queryParam( "message", message );
 
-		ClientResponse response = path.get( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path ).get( ClientResponse.class );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
@@ -105,7 +108,7 @@ public class DebugWsDelegate {
 		if( message != null )
 			path = path.queryParam( "message", message );
 
-		ClientResponse response = path.get( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path ).get( ClientResponse.class );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
@@ -131,7 +134,10 @@ public class DebugWsDelegate {
 		path = path.queryParam( "application-name", applicationName );
 		path = path.queryParam( "instance-path", instancePath );
 
-		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).get( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.get( ClientResponse.class );
+
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
@@ -153,7 +159,10 @@ public class DebugWsDelegate {
 		WebResource path = this.resource.path( UrlConstants.DEBUG ).path( "diagnose-application" );
 		path = path.queryParam( "application-name", applicationName );
 
-		List<Diagnostic> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Diagnostic>> () {});
+		List<Diagnostic> result = this.wsClient.createBuilder( path )
+						.accept( MediaType.APPLICATION_JSON )
+						.get( new GenericType<List<Diagnostic>> () {});
+
 		if( result == null )
 			this.logger.finer( "No diagnostic was returned for application " + applicationName );
 

@@ -26,7 +26,6 @@
 package net.roboconf.messaging.api.internal.client.dismiss;
 
 import org.junit.Assert;
-
 import org.junit.Test;
 
 /**
@@ -47,7 +46,7 @@ public class DismissClientsTest {
 		client.publish( null, null );
 		client.deleteMessagingServerArtifacts( null );
 		client.setMessageQueue( null );
-		client.getMessagingType();
-		client.getConfiguration();
+		Assert.assertNotNull( client.getMessagingType());
+		Assert.assertNotNull( client.getConfiguration());
 	}
 }

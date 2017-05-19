@@ -28,7 +28,6 @@ package net.roboconf.messaging.api.reconfigurables;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
@@ -40,6 +39,7 @@ import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.utils.MessagingUtils;
@@ -75,7 +75,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 
 	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 		getMessagingClient().setMessageQueue( messageQueue );
 	}
 

@@ -27,13 +27,13 @@ package net.roboconf.messaging.api.internal.client.in_memory;
 
 import java.util.HashMap;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -45,7 +45,7 @@ public class InMemoryClientFactoryTest {
 
 		InMemoryClientFactory factory = new InMemoryClientFactory();
 		Assert.assertEquals( MessagingConstants.FACTORY_IN_MEMORY, factory.getType());
-		factory.setConfiguration( new HashMap<String,String>( 0 ));
+		Assert.assertFalse( factory.setConfiguration( new HashMap<String,String>( 0 )));
 
 		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
 		IMessagingClient client = factory.createClient( parentDm );

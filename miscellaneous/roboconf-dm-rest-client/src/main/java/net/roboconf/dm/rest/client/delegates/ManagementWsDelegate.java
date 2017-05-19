@@ -43,6 +43,7 @@ import com.sun.jersey.multipart.file.FileDataBodyPart;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
@@ -53,14 +54,17 @@ public class ManagementWsDelegate {
 
 	private final WebResource resource;
 	private final Logger logger;
+	private final WsClient wsClient;
 
 
 	/**
 	 * Constructor.
 	 * @param resource a web resource
+	 * @param the WS client
 	 */
-	public ManagementWsDelegate( WebResource resource ) {
+	public ManagementWsDelegate( WebResource resource, WsClient wsClient ) {
 		this.resource = resource;
+		this.wsClient = wsClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -86,8 +90,8 @@ public class ManagementWsDelegate {
 		FormDataMultiPart part = new FormDataMultiPart();
 		part.bodyPart( new FileDataBodyPart( "file", applicationFile, MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( "templates" )
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "templates" );
+		ClientResponse response = this.wsClient.createBuilder( path )
 				.type( MediaType.MULTIPART_FORM_DATA_TYPE )
 				.post( ClientResponse.class, part );
 
@@ -113,7 +117,10 @@ public class ManagementWsDelegate {
 		if( localFilePath != null )
 			path = path.queryParam( "local-file-path", localFilePath );
 
-		ClientResponse response = path.type( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.type( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
+
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
@@ -136,7 +143,10 @@ public class ManagementWsDelegate {
 		if( url != null )
 			path = path.queryParam( "url", url );
 
-		ClientResponse response = path.type( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		ClientResponse response = this.wsClient.createBuilder( path )
+						.type( MediaType.APPLICATION_JSON )
+						.post( ClientResponse.class );
+
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
@@ -195,7 +205,7 @@ public class ManagementWsDelegate {
 		if( exactQualifier != null )
 			path = path.queryParam( "qualifier", exactQualifier );
 
-		List<ApplicationTemplate> result = path
+		List<ApplicationTemplate> result = this.wsClient.createBuilder( path )
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<ApplicationTemplate>> () {});
 
@@ -231,11 +241,11 @@ public class ManagementWsDelegate {
 	public void deleteApplicationTemplate( String templateName, String templateQualifier ) throws ManagementWsException {
 		this.logger.finer( "Removing application template " + templateName + "..." );
 
-		ClientResponse response = this.resource
+		WebResource path = this.resource
 				.path( UrlConstants.APPLICATIONS ).path( "templates" )
-				.path( templateName ).path( templateQualifier )
-				.delete( ClientResponse.class );
+				.path( templateName ).path( templateQualifier );
 
+		ClientResponse response = this.wsClient.createBuilder( path ).delete( ClientResponse.class );
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
@@ -261,8 +271,8 @@ public class ManagementWsDelegate {
 		ApplicationTemplate tpl = new ApplicationTemplate( templateName ).qualifier( templateQualifier );
 		Application app = new Application( applicationName, tpl );
 
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS )
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS );
+		ClientResponse response = this.wsClient.createBuilder( path )
 				.type( MediaType.APPLICATION_JSON )
 				.post( ClientResponse.class, app );
 
@@ -291,7 +301,7 @@ public class ManagementWsDelegate {
 		if( exactName != null )
 			path = path.queryParam( "name", exactName );
 
-		List<Application> result = path
+		List<Application> result = this.wsClient.createBuilder( path )
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Application>> () {});
 
@@ -326,10 +336,12 @@ public class ManagementWsDelegate {
 	public void shutdownApplication( String applicationName ) throws ManagementWsException {
 		this.logger.finer( "Removing application " + applicationName + "..." );
 
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "shutdown" )
-				.post( ClientResponse.class );
+		WebResource path = this.resource
+					.path( UrlConstants.APPLICATIONS )
+					.path( applicationName )
+					.path( "shutdown" );
 
+		ClientResponse response = this.wsClient.createBuilder( path ).post( ClientResponse.class );
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
@@ -345,9 +357,8 @@ public class ManagementWsDelegate {
 	public void deleteApplication( String applicationName ) throws ManagementWsException {
 		this.logger.finer( "Removing application " + applicationName + "..." );
 
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName )
-				.delete( ClientResponse.class );
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( applicationName );
+		ClientResponse response = this.wsClient.createBuilder( path ).delete( ClientResponse.class );
 
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );

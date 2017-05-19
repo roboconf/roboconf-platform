@@ -58,11 +58,89 @@ public interface RabbitMqConstants {
 	 */
 	String RABBITMQ_SERVER_PASSWORD = RABBITMQ_PROPERTY_PREFIX + ".server.password";
 
+	/**
+	 * Messaging property indicating whether SSL should be used.
+	 */
+	String RABBITMQ_USE_SSL = RABBITMQ_PROPERTY_PREFIX + ".ssl.use";
+
+	/**
+	 * Messaging property indicating the SSL protocol.
+	 * <p>
+	 * Default value is {@value #DEFAULT_SSL_PROTOCOL}.
+	 * </p>
+	 */
+	String RABBITMQ_SSL_PROTOCOL = RABBITMQ_PROPERTY_PREFIX + ".ssl.protocol";
+
+	/**
+	 * Messaging property indicating whether the SSL configuration should be sent to agents as user data.
+	 * <p>
+	 * When set to false, it is considered the SSL configuration is predefined
+	 * in the base image (configured by hand). Default value is true.
+	 * </p>
+	 */
+	String RABBITMQ_SSL_AS_USER_DATA = RABBITMQ_PROPERTY_PREFIX + ".ssl.pass.as.user.data";
+
+	/**
+	 * Messaging property indicating the path of the key store.
+	 */
+	String RABBITMQ_SSL_KEY_STORE_PATH = RABBITMQ_PROPERTY_PREFIX + ".ssl.key.store.path";
+
+	/**
+	 * Messaging property indicating the pass phrase for the key store.
+	 */
+	String RABBITMQ_SSL_KEY_STORE_PASSPHRASE = RABBITMQ_PROPERTY_PREFIX + ".ssl.key.store.passphrase";
+
+	/**
+	 * Messaging property indicating the type of the certificate.
+	 * <p>
+	 * Default value is {@value #DEFAULT_SSL_KEY_STORE_TYPE}.
+	 * </p>
+	 */
+	String RABBITMQ_SSL_KEY_STORE_TYPE = RABBITMQ_PROPERTY_PREFIX + ".ssl.key.store.type";
+
+	/**
+	 * Messaging property indicating the location of the trust store.
+	 */
+	String RABBITMQ_SSL_TRUST_STORE_PATH = RABBITMQ_PROPERTY_PREFIX + ".ssl.trust.store.path";
+
+	/**
+	 * Messaging property indicating the pass phrase for the trust store.
+	 */
+	String RABBITMQ_SSL_TRUST_STORE_PASSPHRASE = RABBITMQ_PROPERTY_PREFIX + ".ssl.trust.store.passphrase";
+
+	/**
+	 * Messaging property indicating the type of the trust store.
+	 * <p>
+	 * Default value is {@value #DEFAULT_SSL_TRUST_STORE_TYPE}.
+	 * </p>
+	 */
+	String RABBITMQ_SSL_TRUST_STORE_TYPE = RABBITMQ_PROPERTY_PREFIX + ".ssl.trust.store.type";
+
+	/**
+	 * Messaging property indicating the factory for key managers.
+	 * <p>
+	 * Default value is {@value #DEFAULT_SSL_MNGR_FACTORY}.
+	 * </p>
+	 */
+	String RABBITMQ_SSL_KEY_MNGR_FACTORY = RABBITMQ_PROPERTY_PREFIX + ".ssl.key.manager.factory";
+
+	/**
+	 * Messaging property indicating the factory for trust managers.
+	 * <p>
+	 * Default value is {@value #DEFAULT_SSL_MNGR_FACTORY}.
+	 * </p>
+	 */
+	String RABBITMQ_SSL_TRUST_MNGR_FACTORY = RABBITMQ_PROPERTY_PREFIX + ".ssl.trust.manager.factory";
+
 
 	String EXCHANGE_INTER_APP = "roboconf.inter-app";
 	String EXCHANGE_DM = "roboconf.dm";
 
 
+	String DEFAULT_SSL_PROTOCOL = "TLSv1.1";
 	String DEFAULT_IP = "localhost";
+	String DEFAULT_SSL_KEY_STORE_TYPE = "PKCS12";
+	String DEFAULT_SSL_TRUST_STORE_TYPE = "JKS";
+	String DEFAULT_SSL_MNGR_FACTORY = "SunX509";
 	String GUEST = "guest";
 }

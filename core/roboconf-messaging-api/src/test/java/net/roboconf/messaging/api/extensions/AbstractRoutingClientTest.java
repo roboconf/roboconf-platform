@@ -27,13 +27,13 @@ package net.roboconf.messaging.api.extensions;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
-import net.roboconf.messaging.api.messages.Message;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -76,7 +76,7 @@ public class AbstractRoutingClientTest {
 		}
 
 		@Override
-		public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+		public void setMessageQueue( RoboconfMessageQueue messageQueue ) {
 			// nothing
 		}
 

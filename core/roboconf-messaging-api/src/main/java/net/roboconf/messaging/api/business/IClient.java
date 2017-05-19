@@ -27,8 +27,8 @@ package net.roboconf.messaging.api.business;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
+import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -40,7 +40,7 @@ public interface IClient {
 	 * Sets the message queue where the client can store the messages to process.
 	 * @param messageQueue the message queue
 	 */
-	void setMessageQueue( LinkedBlockingQueue<Message> messageQueue );
+	void setMessageQueue( RoboconfMessageQueue messageQueue );
 
 	/**
 	 * Sets the domain.
