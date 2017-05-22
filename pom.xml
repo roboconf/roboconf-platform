@@ -318,6 +318,7 @@
 				<module>karaf/roboconf-karaf-feature-dm</module>
 				<module>karaf/roboconf-karaf-dist-agent</module>
 				<module>karaf/roboconf-karaf-dist-dm</module>
+				<module>karaf/roboconf-karaf-decanter-collector-dm</module>
 		
 				<!-- Miscellaneous -->
 				<module>miscellaneous/roboconf-dm-rest-client</module>
