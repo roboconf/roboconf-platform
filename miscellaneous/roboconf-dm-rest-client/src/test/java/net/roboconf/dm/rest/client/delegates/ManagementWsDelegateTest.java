@@ -180,7 +180,7 @@ public class ManagementWsDelegateTest {
 		ApplicationTemplate receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the "filter" template
 		templates = this.client.getManagementDelegate().listApplicationTemplates( "filter", null );
@@ -195,30 +195,30 @@ public class ManagementWsDelegateTest {
 		receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the test template with the exact qualifier
-		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName(), tpl.getQualifier());
+		templates = this.client.getManagementDelegate().listApplicationTemplates( tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
 		receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the test template with the exact qualifier but no specific name
-		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getQualifier());
+		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getVersion());
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
 		receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Invalid qualifier
-		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getQualifier() + "2" );
+		templates = this.client.getManagementDelegate().listApplicationTemplates( null, tpl.getVersion() + "2" );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
 
@@ -304,7 +304,7 @@ public class ManagementWsDelegateTest {
 	@Test
 	public void testLoadUnzippedApplicationTemplate_alreadyExisting() throws Exception {
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).version( "1.0.1-SNAPSHOT" );
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 
@@ -389,7 +389,7 @@ public class ManagementWsDelegateTest {
 	@Test
 	public void testUploadZippedApplicationTemplate_alreadyExisting() throws Exception {
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).version( "1.0.1-SNAPSHOT" );
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
@@ -433,7 +433,7 @@ public class ManagementWsDelegateTest {
 	@Test
 	public void testLoadZippedApplicationTemplate_alreadyExisting() throws Exception {
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).version( "1.0.1-SNAPSHOT" );
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
@@ -512,9 +512,9 @@ public class ManagementWsDelegateTest {
 
 		// Create two applications
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "sample" );
+		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "1.0.1-SNAPSHOT" );
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
-		this.client.getManagementDelegate().createApplication( "app2", "Legacy LAMP", "sample" );
+		this.client.getManagementDelegate().createApplication( "app2", "Legacy LAMP", "1.0.1-SNAPSHOT" );
 		Assert.assertEquals( 2, this.client.getManagementDelegate().listApplications().size());
 	}
 
@@ -532,7 +532,7 @@ public class ManagementWsDelegateTest {
 
 		// Create an application wit a special name
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		Application app = this.client.getManagementDelegate().createApplication( "avé dés acçents", "Legacy LAMP", "sample" );
+		Application app = this.client.getManagementDelegate().createApplication( "avé dés acçents", "Legacy LAMP", "1.0.1-SNAPSHOT" );
 		Assert.assertNotNull( app );
 		Assert.assertEquals( "ave des accents", app.getName());
 		Assert.assertEquals( "avé dés acçents", app.getDisplayName());
@@ -554,7 +554,7 @@ public class ManagementWsDelegateTest {
 		this.client.getManagementDelegate().loadUnzippedApplicationTemplate( directory.getAbsolutePath());
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 
-		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "sample" );
+		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "1.0.1-SNAPSHOT" );
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
@@ -588,7 +588,7 @@ public class ManagementWsDelegateTest {
 		this.client.getManagementDelegate().loadUnzippedApplicationTemplate( directory.getAbsolutePath());
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 
-		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "sample" );
+		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "1.0.1-SNAPSHOT" );
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
 
 		this.client.getManagementDelegate().deleteApplication( "app1" );
@@ -601,7 +601,7 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 0, tpl.getAssociatedApplications().size());
 
 		// No associated application, delete it
-		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "sample" );
+		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "1.0.1-SNAPSHOT" );
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 }

@@ -38,6 +38,7 @@ import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
+import net.roboconf.core.Version;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -476,8 +477,10 @@ public final class RuntimeModelValidator {
 		else if( ! app.getName().matches( ParsingConstants.PATTERN_APP_NAME ))
 			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_NAME, app ));
 
-		if( Utils.isEmptyOrWhitespaces( app.getQualifier()))
-			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, app ));
+		if( Utils.isEmptyOrWhitespaces( app.getVersion()))
+			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_VERSION, app ));
+		else if( Version.parseVersion( app.getVersion()) == null )
+			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_VERSION, app, "Invalid version: " + app.getVersion()));
 
 		// Graph validation
 		Map<String,String> allExports;
@@ -533,8 +536,10 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( descriptor.getName()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_NAME, descriptor ));
 
-		if( Utils.isEmptyOrWhitespaces( descriptor.getQualifier()))
-			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, descriptor ));
+		if( Utils.isEmptyOrWhitespaces( descriptor.getVersion()))
+			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_VERSION, descriptor ));
+		else if( Version.parseVersion( descriptor.getVersion()) == null )
+			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_VERSION, descriptor, "Invalid version: " + descriptor.getVersion()));
 
 		if( Utils.isEmptyOrWhitespaces( descriptor.getDslId()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, descriptor ));

@@ -29,14 +29,14 @@ import java.io.File;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -62,59 +62,59 @@ public class IconUtilsTest {
 	@Test
 	public void testEncodeAndDecode() {
 
-		String name = "app", qualifier = null;
-		Assert.assertEquals( "", IconUtils.encodeIconUrl( name, qualifier, null ));
+		String name = "app", version = null;
+		Assert.assertEquals( "", IconUtils.encodeIconUrl( name, version, null ));
 
 		File iconFile = new File( "whatever.jpg" );
-		String path = IconUtils.encodeIconUrl( name, qualifier, iconFile );
+		String path = IconUtils.encodeIconUrl( name, version, iconFile );
 		Assert.assertEquals( "/app/whatever.jpg", path );
 
 		Map.Entry<String,String> entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( name, entry.getKey());
-		Assert.assertNull( qualifier, entry.getValue());
+		Assert.assertNull( version, entry.getValue());
 
 		name = "app2";
-		qualifier = "";
-		path = IconUtils.encodeIconUrl( name, qualifier, iconFile );
+		version = "";
+		path = IconUtils.encodeIconUrl( name, version, iconFile );
 		entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( name, entry.getKey());
-		Assert.assertNull( qualifier, entry.getValue());
+		Assert.assertNull( version, entry.getValue());
 
 		name = "app2";
-		qualifier = "v2";
-		path = IconUtils.encodeIconUrl( name, qualifier, iconFile );
+		version = "v2";
+		path = IconUtils.encodeIconUrl( name, version, iconFile );
 		Assert.assertEquals( "/app2/v2/whatever.jpg", path );
 
 		entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( name, entry.getKey());
-		Assert.assertEquals( qualifier, entry.getValue());
+		Assert.assertEquals( version, entry.getValue());
 	}
 
 
 	@Test
 	public void testDecodeUrl() {
 
-		String path = "/app/qualifier/img.jpg";
+		String path = "/app/version/img.jpg";
 		Map.Entry<String,String> entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( "app", entry.getKey());
-		Assert.assertEquals( "qualifier", entry.getValue());
+		Assert.assertEquals( "version", entry.getValue());
 
-		path = "app/qualifier/img.jpg";
+		path = "app/version/img.jpg";
 		entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( "app", entry.getKey());
-		Assert.assertEquals( "qualifier", entry.getValue());
+		Assert.assertEquals( "version", entry.getValue());
 
-		path = "app/qualifier/oops/";
+		path = "app/version/oops/";
 		entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( "app", entry.getKey());
-		Assert.assertEquals( "qualifier", entry.getValue());
+		Assert.assertEquals( "version", entry.getValue());
 
-		path = "/app/qualifier/oops/";
+		path = "/app/version/oops/";
 		entry = IconUtils.decodeIconUrl( path );
 		Assert.assertEquals( "app", entry.getKey());
-		Assert.assertEquals( "qualifier", entry.getValue());
+		Assert.assertEquals( "version", entry.getValue());
 
-		path = "app/qualifier/oops.jpg/whatever";
+		path = "app/version/oops.jpg/whatever";
 		entry = IconUtils.decodeIconUrl( path );
 		Assert.assertNull( entry.getKey());
 		Assert.assertNull( entry.getValue());
@@ -147,7 +147,7 @@ public class IconUtilsTest {
 	public void testFindIcon_tpl() throws Exception {
 
 		File appDir = this.folder.newFolder();
-		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).qualifier( "v1" ).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).version( "v1" ).directory( appDir );
 
 		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
 		Assert.assertTrue( descDir.mkdirs());
@@ -164,9 +164,9 @@ public class IconUtilsTest {
 		Assert.assertTrue( defaultFile.createNewFile());
 		Assert.assertEquals( defaultFile, IconUtils.findIcon( tpl ));
 
-		Assert.assertNull( IconUtils.findIcon( new ApplicationTemplate( "app" ).qualifier( "" )));
-		Assert.assertNull( IconUtils.findIcon( new ApplicationTemplate( "app" ).qualifier( "" )));
-		Assert.assertNull( IconUtils.findIcon( new ApplicationTemplate( "app" ).qualifier( "v2" )));
+		Assert.assertNull( IconUtils.findIcon( new ApplicationTemplate( "app" ).version( "" )));
+		Assert.assertNull( IconUtils.findIcon( new ApplicationTemplate( "app" ).version( "" )));
+		Assert.assertNull( IconUtils.findIcon( new ApplicationTemplate( "app" ).version( "v2" )));
 	}
 
 
@@ -174,7 +174,7 @@ public class IconUtilsTest {
 	public void testFindIconUrl() throws Exception {
 
 		// Create fake icons
-		ApplicationTemplate tpl = new ApplicationTemplate( "tpl" ).qualifier( "v1" ).directory( this.folder.newFolder());
+		ApplicationTemplate tpl = new ApplicationTemplate( "tpl" ).version( "v1" ).directory( this.folder.newFolder());
 		File descDir = new File( tpl.getDirectory(), Constants.PROJECT_DIR_DESC );
 		Assert.assertTrue( descDir.mkdirs());
 		Assert.assertTrue( new File( descDir, "tp.jpg" ).createNewFile());
@@ -198,7 +198,7 @@ public class IconUtilsTest {
 	public void testFindIcon_nullConfigDirectory() throws Exception {
 
 		// In case we try to get an icon while the DM is reconfigured
-		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).qualifier( "v1" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).version( "v1" );
 		Assert.assertNull( IconUtils.findIcon( tpl ));
 	}
 }

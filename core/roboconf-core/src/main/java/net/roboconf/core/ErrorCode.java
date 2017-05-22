@@ -103,10 +103,11 @@ public enum ErrorCode {
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
 	RM_INVALID_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is invalid. Expected pattern: " + ParsingConstants.PATTERN_APP_NAME ),
 	RM_MISSING_APPLICATION_DSL_ID( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The DSL identifier to read model files is missing. The default parser will be used." ),
-	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
+	RM_MISSING_APPLICATION_VERSION( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application version is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
 	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must have a graph definition." ),
 	RM_MISSING_APPLICATION_EXPORT_PREFIX( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports external variables but did not specify the external prefix property." ),
+	RM_INVALID_APPLICATION_VERSION( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application version is invalid. Expected pattern: <major>.<minor>.<patch?>(.|-)<qualifier?>" ),
 
 	RM_DOT_IS_NOT_ALLOWED( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Component and facet names cannot contain a dot." ),
 	RM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component name cannot be empty." ),

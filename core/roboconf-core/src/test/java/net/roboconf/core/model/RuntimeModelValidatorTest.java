@@ -417,30 +417,36 @@ public class RuntimeModelValidatorTest {
 		ApplicationTemplate app = new ApplicationTemplate();
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		app.setName( "My Application #!" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_NAME, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		app.setName( "My Application (test)" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		app.setName( "My Application" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		app.setQualifier( "Snapshot Build #2401" );
+		app.setVersion( "Snapshot Build #2401" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.setVersion( "3.2.4" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -504,25 +510,27 @@ public class RuntimeModelValidatorTest {
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		desc.setName( "My Application #!" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		desc.setQualifier( "Snapshot Build #2401" );
+		desc.setVersion( "Snapshot Build #2401" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		desc.setDslId( "roboconf-1.0" );
+		desc.setVersion( "1.4" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -640,7 +648,7 @@ public class RuntimeModelValidatorTest {
 		Instance vmInstance2 = new Instance("vm2" ).component( vmComponent1 );
 		InstanceHelpers.insertChild( vmInstance1, vmInstance2 );
 
-		ApplicationTemplate app = new ApplicationTemplate( "app" ).qualifier( "snapshot" ).graphs( graphs );
+		ApplicationTemplate app = new ApplicationTemplate( "app" ).version( "2.4" ).graphs( graphs );
 		app.getRootInstances().add( vmInstance1 );
 
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
@@ -679,7 +687,7 @@ public class RuntimeModelValidatorTest {
 		Instance tomcatInstance = new Instance("tomcat" ).component( tomcatComponent );
 		InstanceHelpers.insertChild( vmInstance, tomcatInstance );
 
-		ApplicationTemplate app = new ApplicationTemplate( "app" ).qualifier( "snapshot" ).graphs( graphs );
+		ApplicationTemplate app = new ApplicationTemplate( "app" ).version( "2.4" ).graphs( graphs );
 		app.getRootInstances().add( vmInstance );
 
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();

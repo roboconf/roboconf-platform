@@ -185,7 +185,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			sb.append( ": " );
 			sb.append( creator.getName());
 			sb.append( " - " );
-			sb.append( creator.getQualifier());
+			sb.append( creator.getVersion());
 		}
 
 		// Create a target
@@ -355,7 +355,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	public void applicationWasDeleted( AbstractApplication app ) throws IOException {
 
 		String name = app.getName();
-		String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : null;
+		String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getVersion() : null;
 
 		List<InstanceContext> toClean = new ArrayList<> ();
 		Set<String> targetIds = new HashSet<> ();
@@ -661,7 +661,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			TargetUsageItem item = new TargetUsageItem();
 
 			item.setName( appName );
-			item.setQualifier( entry.getKey().getQualifier());
+			item.setVersion( entry.getKey().getQualifier());
 			item.setReferencing( true );
 			item.setUsing( appNames.contains( appName ));
 

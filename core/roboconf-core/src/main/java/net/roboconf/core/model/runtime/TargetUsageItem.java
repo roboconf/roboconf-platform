@@ -33,7 +33,7 @@ import java.util.Objects;
  */
 public class TargetUsageItem {
 
-	private String name, qualifier;
+	private String name, version;
 	private boolean isReferencing, isUsing;
 
 
@@ -52,17 +52,17 @@ public class TargetUsageItem {
 	}
 
 	/**
-	 * @return the qualifier
+	 * @return the version
 	 */
-	public String getQualifier() {
-		return this.qualifier;
+	public String getVersion() {
+		return this.version;
 	}
 
 	/**
-	 * @param qualifier the qualifier to set
+	 * @param version the version to set
 	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public void setVersion( String version ) {
+		this.version = version;
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class TargetUsageItem {
 	@Override
 	public int hashCode() {
 		int i1 = this.name == null ? 83 : this.name.hashCode();
-		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
+		int i2 = this.version == null ? 11 : this.version.hashCode();
 
 		return i1 + i2;
 	}
@@ -107,6 +107,6 @@ public class TargetUsageItem {
 	public boolean equals( Object obj ) {
 		return obj instanceof TargetUsageItem
 				&& Objects.equals( this.name, ((TargetUsageItem) obj ).name )
-				&& Objects.equals( this.qualifier, ((TargetUsageItem) obj ).qualifier );
+				&& Objects.equals( this.version, ((TargetUsageItem) obj ).version );
 	}
 }

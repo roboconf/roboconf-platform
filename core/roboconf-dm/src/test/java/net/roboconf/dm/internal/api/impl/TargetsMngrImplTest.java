@@ -670,7 +670,7 @@ public class TargetsMngrImplTest {
 		app1.name( "app1" );
 		TestApplication app2 = new TestApplication();
 		app2.name( "app2" );
-		Application app3 = new Application( "app3", new ApplicationTemplate( "tpl" ).qualifier( "v1" ));
+		Application app3 = new Application( "app3", new ApplicationTemplate( "tpl" ).version( "v1" ));
 
 		String t1 = this.mngr.createTarget( "id: t1\nprop: ok\nname: target 1\ndescription: t1's target\nhandler: h" );
 		String t2 = this.mngr.createTarget( "id: t2\nprop: ok\nhandler: docker" );
@@ -1141,7 +1141,7 @@ public class TargetsMngrImplTest {
 
 		TargetUsageItem item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -1150,7 +1150,7 @@ public class TargetsMngrImplTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -1165,7 +1165,7 @@ public class TargetsMngrImplTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -1177,7 +1177,7 @@ public class TargetsMngrImplTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertTrue( item.isReferencing());
 
 		// The change is here!
@@ -1191,7 +1191,7 @@ public class TargetsMngrImplTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -1200,7 +1200,7 @@ public class TargetsMngrImplTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -1221,7 +1221,7 @@ public class TargetsMngrImplTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 

@@ -52,7 +52,7 @@ public class InstanceContextTest {
 		Assert.assertNull( key.getQualifier());
 		Assert.assertEquals( "oops", key.getInstancePathOrComponentName());
 
-		tpl.setQualifier( "v1" );
+		tpl.setVersion( "v1" );
 		key = new InstanceContext( tpl, "oops" );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertEquals( "v1", key.getQualifier());

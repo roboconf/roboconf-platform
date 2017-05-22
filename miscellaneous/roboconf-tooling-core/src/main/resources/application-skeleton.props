@@ -1,5 +1,5 @@
 application-name = ${NAME}
-application-qualifier = ${VERSION}
+application-version = ${VERSION}
 
 application-dsl-id = roboconf-1.0
 application-description = ${DESCRIPTION}

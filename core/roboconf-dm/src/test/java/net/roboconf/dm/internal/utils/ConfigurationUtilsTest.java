@@ -127,7 +127,7 @@ public class ConfigurationUtilsTest {
 		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
 		Assert.assertEquals( "test", ConfigurationUtils.findTemplateDirectory( tpl, configurationDirectory ).getName());
 
-		tpl.setQualifier( "v2" );
+		tpl.setVersion( "v2" );
 		Assert.assertEquals( "test - v2", ConfigurationUtils.findTemplateDirectory( tpl, configurationDirectory ).getName());
 	}
 
@@ -159,7 +159,7 @@ public class ConfigurationUtilsTest {
 	public void testFindIcon_tpl() throws Exception {
 
 		File configDir = this.folder.newFolder();
-		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).qualifier( "v1" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).version( "v1" );
 
 		File appDir = ConfigurationUtils.findTemplateDirectory( tpl, configDir );
 		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
