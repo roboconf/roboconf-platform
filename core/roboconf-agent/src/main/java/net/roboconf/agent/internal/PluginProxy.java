@@ -44,6 +44,7 @@ public class PluginProxy implements PluginInterface {
 	static int startCount = 0;
 	static int stopCount = 0;
 	static int updateCount = 0;
+	static int errorCount = 0;
 
 	PluginInterface plugin;
 
@@ -69,38 +70,68 @@ public class PluginProxy implements PluginInterface {
 
 	@Override
 	public void initialize(Instance instance) throws PluginException {
-		this.plugin.initialize(instance);
+		try {
+			this.plugin.initialize(instance);
+		} catch(PluginException e) {
+			PluginProxy.incrementErrorCount();
+			throw e;
+		}
 		PluginProxy.incrementInitializeCount();
 	}
 
 	@Override
 	public void deploy(Instance instance) throws PluginException {
-		this.plugin.deploy(instance);
+		try {
+			this.plugin.deploy(instance);
+		} catch(PluginException e) {
+			PluginProxy.incrementErrorCount();
+			throw e;
+		}
 		PluginProxy.incrementDeployCount();
 	}
 
 	@Override
 	public void start(Instance instance) throws PluginException {
-		this.plugin.start(instance);
+		try {
+			this.plugin.start(instance);
+		} catch(PluginException e) {
+			PluginProxy.incrementErrorCount();
+			throw e;
+		}
 		PluginProxy.incrementStartCount();
 	}
 
 	@Override
 	public void update(Instance instance, Import importChanged,
 			InstanceStatus statusChanged) throws PluginException {
-		this.plugin.update(instance, importChanged, statusChanged);
+		try {
+			this.plugin.update(instance, importChanged, statusChanged);
+		} catch(PluginException e) {
+			PluginProxy.incrementErrorCount();
+			throw e;
+		}
 		PluginProxy.incrementUpdateCount();
 	}
 
 	@Override
 	public void stop(Instance instance) throws PluginException {
-		this.plugin.stop(instance);
+		try {
+			this.plugin.stop(instance);
+		} catch(PluginException e) {
+			PluginProxy.incrementErrorCount();
+			throw e;
+		}
 		PluginProxy.incrementStopCount();
 	}
 
 	@Override
 	public void undeploy(Instance instance) throws PluginException {
-		this.plugin.undeploy(instance);
+		try {
+			this.plugin.undeploy(instance);
+		} catch(PluginException e) {
+			PluginProxy.incrementErrorCount();
+			throw e;
+		}
 		PluginProxy.incrementUndeployCount();
 	}
 
@@ -184,6 +215,18 @@ public class PluginProxy implements PluginInterface {
 
 	private static synchronized void incrementUpdateCount() {
 		PluginProxy.updateCount ++;
+	}
+
+	/**
+	 * Retrieves the number of invocation errors.
+	 * @return The number of invocation errors
+	 */
+	public static synchronized int getErrorCount() {
+		return errorCount;
+	}
+
+	private static synchronized void incrementErrorCount() {
+		PluginProxy.errorCount ++;
 	}
 
 }

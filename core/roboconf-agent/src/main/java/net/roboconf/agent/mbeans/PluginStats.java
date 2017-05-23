@@ -69,4 +69,8 @@ public class PluginStats implements PluginStatsMBean {
 		return PluginProxy.getUpdateCount();
 	}
 
+	@Override
+	public int getErrorCount() {
+		return PluginProxy.getErrorCount();
+	}
 }

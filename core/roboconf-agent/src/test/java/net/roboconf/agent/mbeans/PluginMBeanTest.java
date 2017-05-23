@@ -95,6 +95,9 @@ public class PluginMBeanTest {
 		count = (int)this.mbs.getAttribute(this.objectName, "UpdateCount");
 		Assert.assertEquals(0, count);
 
+		count = (int)this.mbs.getAttribute(this.objectName, "ErrorCount");
+		Assert.assertEquals(0, count);
+
 		plugin.initialize(null);
 		plugin.deploy(null);
 		plugin.start(null);
@@ -119,5 +122,8 @@ public class PluginMBeanTest {
 
 		count = (int)this.mbs.getAttribute(this.objectName, "UpdateCount");
 		Assert.assertEquals(1, count);
+
+		count = (int)this.mbs.getAttribute(this.objectName, "ErrorCount");
+		Assert.assertEquals(0, count);
 	}
 }

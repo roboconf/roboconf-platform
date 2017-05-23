@@ -72,4 +72,10 @@ public interface PluginStatsMBean {
 	 * @return The requested number of invocations
 	 */
 	int getUpdateCount();
+
+	/**
+	 * Retrieves the number of invocation errors.
+	 * @return The number of invocation errors
+	 */
+	int getErrorCount();
 }
