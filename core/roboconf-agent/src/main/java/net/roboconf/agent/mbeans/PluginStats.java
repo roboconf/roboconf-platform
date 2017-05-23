@@ -23,9 +23,8 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.internal.mbeans;
+package net.roboconf.agent.mbeans;
 
-import net.roboconf.agent.PluginMBean;
 import net.roboconf.agent.internal.PluginProxy;
 
 /**
@@ -33,7 +32,12 @@ import net.roboconf.agent.internal.PluginProxy;
  * @author Pierre-Yves Gibello - Linagora
  *
  */
-public class PluginMBeanImpl implements PluginMBean {
+public class PluginStats implements PluginStatsMBean {
+
+	@Override
+	public void reset() {
+		PluginProxy.resetAllCounters();
+	}
 
 	@Override
 	public int getInitializeCount() {

@@ -86,13 +86,11 @@
 	</component>
 
 	<!-- MBean to monitor plugin activity -->
-	<component classname="net.roboconf.agent.internal.mbeans.PluginMBeanImpl" name="roboconf-plugin-mbean">
-		<!-- When present, this property triggers MBean registration (if management feature is active) -->
-		<!-- properties>
-			<property name="jmx.objectname" type="java.lang.String" value="net.roboconf.agent:roboconf,name=pluginstats" />
-		</properties -->
-		<provides specifications="net.roboconf.agent.mbeans.PluginMBean" >
-			<property name="jmx.objectname" value="net.roboconf.agent:roboconf,name=pluginstats" type="java.lang.String" />
+	<component classname="net.roboconf.agent.mbeans.PluginStats" name="roboconf-plugin-mbean" public="false">
+		<!-- When present, this property triggers MBean registration (if management feature is active)
+		 JMX server at service:jmx:rmi:///jndi/rmi://localhost:1099/karaf-root -->
+		<provides specifications="net.roboconf.agent.mbeans.PluginStatsMBean" >
+			<property name="jmx.objectname" value="net.roboconf:type=agent-plugins" type="java.lang.String" />
 		</provides>
 	</component>
 	<instance component="roboconf-plugin-mbean" name="Roboconf - Plugin monitoring MBean" />

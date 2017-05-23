@@ -55,6 +55,18 @@ public class PluginProxy implements PluginInterface {
 		this.plugin = plugin;
 	}
 
+	/**
+	 * Resets all counters.
+	 */
+	public static synchronized void resetAllCounters() {
+		initializeCount = 0;
+		deployCount = 0;
+		undeployCount = 0;
+		startCount = 0;
+		stopCount = 0;
+		updateCount = 0;
+	}
+
 	@Override
 	public void initialize(Instance instance) throws PluginException {
 		this.plugin.initialize(instance);

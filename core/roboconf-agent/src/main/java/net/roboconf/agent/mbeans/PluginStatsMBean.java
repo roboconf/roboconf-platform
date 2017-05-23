@@ -23,14 +23,19 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent;
+package net.roboconf.agent.mbeans;
 
 /**
  * Interface for plugin management MBean.
  * @author Pierre-Yves Gibello - Linagora
  *
  */
-public interface PluginMBean {
+public interface PluginStatsMBean {
+
+	/**
+	 * Resets all counters.
+	 */
+	void reset();
 
 	/**
 	 * Retrieves the number of "initialize" invocations.
