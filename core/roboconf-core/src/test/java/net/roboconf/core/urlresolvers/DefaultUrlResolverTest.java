@@ -87,7 +87,7 @@ public class DefaultUrlResolverTest {
 
 		Thread t = new Thread( serverRunnable );
 		t.start();
-		Thread.sleep( 500 );
+		Thread.sleep( 700 );
 
 		// Prepare our test
 		DefaultUrlResolver resolver = new DefaultUrlResolver();

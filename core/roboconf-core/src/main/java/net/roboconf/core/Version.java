@@ -95,9 +95,9 @@ public final class Version {
 		Matcher m = Pattern.compile( "^(\\d+)\\.(\\d+)(\\.\\d+)?([.-].+)?$" ).matcher( rawVersion );
 		if( m.find()) {
 			result = new Version(
-					Integer.valueOf( m.group( 1 )),
-					Integer.valueOf( m.group( 2 )),
-					m.group( 3 ) == null ? 0 : Integer.valueOf( m.group( 3 ).substring( 1 )),
+					Integer.parseInt( m.group( 1 )),
+					Integer.parseInt( m.group( 2 )),
+					m.group( 3 ) == null ? 0 : Integer.parseInt( m.group( 3 ).substring( 1 )),
 					m.group( 4 ) == null ? null : m.group( 4 ).substring( 1 ));
 		}
 

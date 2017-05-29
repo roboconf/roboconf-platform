@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -197,7 +198,7 @@ public final class AgentUtils {
 					continue;
 
 				String content = Utils.readFileContent( log );
-				logFiles.put( name, content.getBytes( "UTF-8" ));
+				logFiles.put( name, content.getBytes( StandardCharsets.UTF_8 ));
 			}
 		}
 
@@ -282,7 +283,7 @@ public final class AgentUtils {
 					File target = new File( karafEtc, source.getName().replaceFirst( "\\.tpl$", "" ));
 
 					// Do not overwrite the agent's configuration file (infinite configuration loop)
-					if( UserDataUtils.CONF_FILE_AGENT.equalsIgnoreCase( target.getName()))
+					if( UserDataHelper.CONF_FILE_AGENT.equalsIgnoreCase( target.getName()))
 						continue;
 
 					String content = Utils.readFileContent( source );
