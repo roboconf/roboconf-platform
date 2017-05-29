@@ -25,6 +25,8 @@
 
 package net.roboconf.agent.internal;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -34,17 +36,16 @@ import net.roboconf.plugin.api.PluginInterface;
 /**
  * Proxy for plugin lifecycle and monitoring.
  * @author Pierre-Yves Gibello - Linagora
- *
  */
 public class PluginProxy implements PluginInterface {
 
-	static int initializeCount = 0;
-	static int deployCount = 0;
-	static int undeployCount = 0;
-	static int startCount = 0;
-	static int stopCount = 0;
-	static int updateCount = 0;
-	static int errorCount = 0;
+	static AtomicInteger initializeCount = new AtomicInteger(0);
+	static AtomicInteger deployCount = new AtomicInteger(0);
+	static AtomicInteger undeployCount = new AtomicInteger(0);
+	static AtomicInteger startCount = new AtomicInteger(0);
+	static AtomicInteger stopCount = new AtomicInteger(0);
+	static AtomicInteger updateCount = new AtomicInteger(0);
+	static AtomicInteger errorCount = new AtomicInteger(0);
 
 	PluginInterface plugin;
 
@@ -60,12 +61,12 @@ public class PluginProxy implements PluginInterface {
 	 * Resets all counters.
 	 */
 	public static synchronized void resetAllCounters() {
-		initializeCount = 0;
-		deployCount = 0;
-		undeployCount = 0;
-		startCount = 0;
-		stopCount = 0;
-		updateCount = 0;
+		initializeCount.set(0);
+		deployCount.set(0);
+		undeployCount.set(0);
+		startCount.set(0);
+		stopCount.set(0);
+		updateCount.set(0);
 	}
 
 	@Override
@@ -76,7 +77,7 @@ public class PluginProxy implements PluginInterface {
 			PluginProxy.incrementErrorCount();
 			throw e;
 		}
-		PluginProxy.incrementInitializeCount();
+		initializeCount.incrementAndGet();
 	}
 
 	@Override
@@ -87,7 +88,7 @@ public class PluginProxy implements PluginInterface {
 			PluginProxy.incrementErrorCount();
 			throw e;
 		}
-		PluginProxy.incrementDeployCount();
+		deployCount.incrementAndGet();
 	}
 
 	@Override
@@ -98,7 +99,7 @@ public class PluginProxy implements PluginInterface {
 			PluginProxy.incrementErrorCount();
 			throw e;
 		}
-		PluginProxy.incrementStartCount();
+		startCount.incrementAndGet();
 	}
 
 	@Override
@@ -110,7 +111,7 @@ public class PluginProxy implements PluginInterface {
 			PluginProxy.incrementErrorCount();
 			throw e;
 		}
-		PluginProxy.incrementUpdateCount();
+		updateCount.incrementAndGet();
 	}
 
 	@Override
@@ -121,7 +122,7 @@ public class PluginProxy implements PluginInterface {
 			PluginProxy.incrementErrorCount();
 			throw e;
 		}
-		PluginProxy.incrementStopCount();
+		stopCount.incrementAndGet();
 	}
 
 	@Override
@@ -132,7 +133,7 @@ public class PluginProxy implements PluginInterface {
 			PluginProxy.incrementErrorCount();
 			throw e;
 		}
-		PluginProxy.incrementUndeployCount();
+		undeployCount.incrementAndGet();
 	}
 
 	@Override
@@ -149,84 +150,60 @@ public class PluginProxy implements PluginInterface {
 	 * Retrieves the number of "initialize" invocations.
 	 * @return The requested number of invocations
 	 */
-	public static synchronized int getInitializeCount() {
-		return initializeCount;
-	}
-
-	private static synchronized void incrementInitializeCount() {
-		PluginProxy.initializeCount ++;
+	public static int getInitializeCount() {
+		return initializeCount.intValue();
 	}
 
 	/**
 	 * Retrieves the number of "deploy" invocations.
 	 * @return The requested number of invocations
 	 */
-	public static synchronized int getDeployCount() {
-		return deployCount;
-	}
-
-	private static synchronized void incrementDeployCount() {
-		PluginProxy.deployCount ++;
+	public static int getDeployCount() {
+		return deployCount.intValue();
 	}
 
 	/**
 	 * Retrieves the number of "undeploy" invocations.
 	 * @return The requested number of invocations
 	 */
-	public static synchronized int getUndeployCount() {
-		return undeployCount;
-	}
-
-	private static synchronized void incrementUndeployCount() {
-		PluginProxy.undeployCount ++;
+	public static int getUndeployCount() {
+		return undeployCount.intValue();
 	}
 
 	/**
 	 * Retrieves the number of "start" invocations.
 	 * @return The requested number of invocations
 	 */
-	public static synchronized int getStartCount() {
-		return startCount;
-	}
-
-	private static synchronized void incrementStartCount() {
-		PluginProxy.startCount ++;
+	public static int getStartCount() {
+		return startCount.intValue();
 	}
 
 	/**
 	 * Retrieves the number of "stop" invocations.
 	 * @return The requested number of invocations
 	 */
-	public static synchronized int getStopCount() {
-		return stopCount;
-	}
-
-	private static synchronized void incrementStopCount() {
-		PluginProxy.stopCount ++;
+	public static int getStopCount() {
+		return stopCount.intValue();
 	}
 
 	/**
 	 * Retrieves the number of "update" invocations.
 	 * @return The requested number of invocations
 	 */
-	public static synchronized int getUpdateCount() {
-		return updateCount;
-	}
-
-	private static synchronized void incrementUpdateCount() {
-		PluginProxy.updateCount ++;
+	public static int getUpdateCount() {
+		return updateCount.intValue();
 	}
 
 	/**
 	 * Retrieves the number of invocation errors.
 	 * @return The number of invocation errors
 	 */
-	public static synchronized int getErrorCount() {
-		return errorCount;
+	public static int getErrorCount() {
+		return errorCount.intValue();
 	}
 
-	private static synchronized void incrementErrorCount() {
-		PluginProxy.errorCount ++;
+	private static void incrementErrorCount() {
+		errorCount.incrementAndGet();
 	}
 
 }

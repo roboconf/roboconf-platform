@@ -23,59 +23,53 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.mbeans;
+package net.roboconf.agent.jmx;
+
+import net.roboconf.agent.internal.PluginProxy;
 
 /**
- * Interface for plugin management MBean.
+ * MBean to monitor plugin invocations.
  * @author Pierre-Yves Gibello - Linagora
- *
  */
-public interface PluginStatsMBean {
+public class PluginStats implements PluginStatsMBean {
 
-	/**
-	 * Resets all counters.
-	 */
-	void reset();
+	@Override
+	public void reset() {
+		PluginProxy.resetAllCounters();
+	}
 
-	/**
-	 * Retrieves the number of "initialize" invocations.
-	 * @return The requested number of invocations
-	 */
-	int getInitializeCount();
+	@Override
+	public int getInitializeCount() {
+		return PluginProxy.getInitializeCount();
+	}
 
-	/**
-	 * Retrieves the number of "deploy" invocations.
-	 * @return The requested number of invocations
-	 */
-	int getDeployCount();
+	@Override
+	public int getDeployCount() {
+		return PluginProxy.getDeployCount();
+	}
 
-	/**
-	 * Retrieves the number of "undeploy" invocations.
-	 * @return The requested number of invocations
-	 */
-	int getUndeployCount();
+	@Override
+	public int getUndeployCount() {
+		return PluginProxy.getUndeployCount();
+	}
 
-	/**
-	 * Retrieves the number of "start" invocations.
-	 * @return The requested number of invocations
-	 */
-	int getStartCount();
+	@Override
+	public int getStartCount() {
+		return PluginProxy.getStartCount();
+	}
 
-	/**
-	 * Retrieves the number of "stop" invocations.
-	 * @return The requested number of invocations
-	 */
-	int getStopCount();
+	@Override
+	public int getStopCount() {
+		return PluginProxy.getStopCount();
+	}
 
-	/**
-	 * Retrieves the number of "update" invocations.
-	 * @return The requested number of invocations
-	 */
-	int getUpdateCount();
+	@Override
+	public int getUpdateCount() {
+		return PluginProxy.getUpdateCount();
+	}
 
-	/**
-	 * Retrieves the number of invocation errors.
-	 * @return The number of invocation errors
-	 */
-	int getErrorCount();
+	@Override
+	public int getErrorCount() {
+		return PluginProxy.getErrorCount();
+	}
 }

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.mbeans;
+package net.roboconf.agent.jmx;
 
 import java.lang.management.ManagementFactory;
 
@@ -49,7 +49,6 @@ import org.junit.Test;
 /**
  * Test plugin MBean implementation.
  * @author Pierre-Yves Gibello - Linagora
- *
  */
 public class PluginMBeanTest {
 

@@ -274,7 +274,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		if( result != null )
 			result.setNames( this.applicationName, this.scopedInstancePath );
 
-		return (result == null ? null : new PluginProxy(result));
+		return result == null ? null : new PluginProxy(result);
 	}
 
 
