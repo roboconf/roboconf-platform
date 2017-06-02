@@ -53,6 +53,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
+import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 /**
@@ -81,22 +82,27 @@ public class TargetsMngrImplTest {
 	@Test
 	public void testNormalCrudScenarios() throws Exception {
 
-		Assert.assertNull( this.mngr.findRawTargetProperties( "whatever" ));
+		TargetProperties props = this.mngr.findTargetProperties( "whatever" );
+		Assert.assertNotNull( props );
+		Assert.assertEquals( "", props.asString());
+		Assert.assertNull( props.getSourceFile());
+
 		String targetId = this.mngr.createTarget( "id: tid\nprop: ok\nhandler: h" );
 		Assert.assertEquals( "tid", targetId );
 
 		String newTargetId = this.mngr.createTarget( "ok: ok\nid: tok\nhandler: h" );
 		Assert.assertNotNull( newTargetId );
 
-		String props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( "prop: ok\nhandler: h", props );
+		props = this.mngr.findTargetProperties( targetId );
+		Assert.assertEquals( "prop: ok\nhandler: h", props.asString());
+		Assert.assertNotNull( props.getSourceFile());
 
-		props = this.mngr.findRawTargetProperties( newTargetId );
-		Assert.assertEquals( "ok: ok\nhandler: h", props.trim());
+		props = this.mngr.findTargetProperties( newTargetId );
+		Assert.assertEquals( "ok: ok\nhandler: h", props.asString().trim());
 
 		this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done\nhandler: ok" );
-		props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
+		props = this.mngr.findTargetProperties( targetId );
+		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props.asString());
 
 		// Missing handler
 		try {
@@ -107,11 +113,15 @@ public class TargetsMngrImplTest {
 			// nothing
 		}
 
-		props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props );
+		props = this.mngr.findTargetProperties( targetId );
+		Assert.assertEquals( "prop2: ko\nprop1: done\nhandler: ok", props.asString());
 
 		this.mngr.deleteTarget( targetId );
-		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+
+		props = this.mngr.findTargetProperties( targetId );
+		Assert.assertNotNull( props );
+		Assert.assertEquals( "", props.asString());
+		Assert.assertNull( props.getSourceFile());
 	}
 
 
@@ -133,8 +143,8 @@ public class TargetsMngrImplTest {
 			Assert.assertEquals( s, "tid", targetId );
 			Assert.assertEquals( 1, ((TargetsMngrImpl) this.mngr).targetIds.size());
 
-			String props = this.mngr.findRawTargetProperties( targetId );
-			Assert.assertEquals( s, "prop: ok\nhandler: h\nprop-after: ok", props.replace( "\r", "" ).trim());
+			TargetProperties props = this.mngr.findTargetProperties( targetId );
+			Assert.assertEquals( s, "prop: ok\nhandler: h\nprop-after: ok", props.asString().replace( "\r", "" ).trim());
 
 			this.mngr.deleteTarget( targetId );
 			Assert.assertEquals( 0, ((TargetsMngrImpl) this.mngr).targetIds.size());
@@ -156,13 +166,16 @@ public class TargetsMngrImplTest {
 		Assert.assertTrue( targetDir.exists());
 		Assert.assertEquals( 1, targetDir.listFiles().length);
 
-		String props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( "prop: value\nhandler: h", props );
+		TargetProperties props = this.mngr.findTargetProperties( targetId );
+		Assert.assertEquals( "prop: value\nhandler: h", props.asString());
 
 		this.mngr.deleteTarget( targetId );
 		Assert.assertFalse( targetDir.exists());
 
-		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+		props = this.mngr.findTargetProperties( targetId );
+		Assert.assertNotNull( props );
+		Assert.assertEquals( "", props.asString());
+		Assert.assertNull( props.getSourceFile());
 		Assert.assertFalse( targetDir.exists());
 	}
 
@@ -286,13 +299,15 @@ public class TargetsMngrImplTest {
 		Assert.assertTrue( targetDir.exists());
 		Assert.assertEquals( 2, targetDir.listFiles().length);
 
-		String props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( "prop: value\nhandler: h", props );
+		TargetProperties props = this.mngr.findTargetProperties( targetId );
+		Assert.assertEquals( "prop: value\nhandler: h", props.asString());
 
 		this.mngr.deleteTarget( targetId );
 		Assert.assertFalse( targetDir.exists());
 
-		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
+		props = this.mngr.findTargetProperties( targetId );
+		Assert.assertNotNull( props );
+		Assert.assertEquals( "", props.asString());
 		Assert.assertFalse( targetDir.exists());
 	}
 
@@ -716,23 +731,25 @@ public class TargetsMngrImplTest {
 
 
 	@Test
-	public void testFindRawTargetProperties_noProperties() {
-		Assert.assertEquals( 0, this.mngr.findRawTargetProperties( new TestApplication(), "/whatever" ).size());
+	public void testfindTargetProperties_noProperties() {
+		Assert.assertEquals( 0, this.mngr.findTargetProperties( new TestApplication(), "/whatever" ).asMap().size());
 	}
 
 
 	@Test
-	public void testFindRawTargetProperties_withProperties() throws Exception {
+	public void testfindTargetProperties_withProperties() throws Exception {
 
 		TestApplication app = new TestApplication();
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		String targetId = this.mngr.createTarget( "prop: ok\nid: tid\nhandler: h" );
 		this.mngr.associateTargetWith( targetId, app, instancePath );
 
-		Map<String,String> props = this.mngr.findRawTargetProperties( app, instancePath );
-		Assert.assertEquals( 2, props.size());
-		Assert.assertEquals( "ok", props.get( "prop" ));
-		Assert.assertEquals( "h", props.get( "handler" ));
+		TargetProperties props = this.mngr.findTargetProperties( app, instancePath );
+		Assert.assertEquals( 2, props.asMap().size());
+		Assert.assertEquals( "ok", props.asMap().get( "prop" ));
+		Assert.assertEquals( "h", props.asMap().get( "handler" ));
+		Assert.assertNotNull( props.asString());
+		Assert.assertTrue( props.getSourceFile().exists());
 	}
 
 
@@ -879,10 +896,12 @@ public class TargetsMngrImplTest {
 		String targetId = this.mngr.createTarget( "prop: ok\nid=tid\nhandler: h" );
 		this.mngr.associateTargetWith( targetId, app, instancePath );
 
-		Map<String,String> props = this.mngr.lockAndGetTarget( app, app.getMySqlVm());
-		Assert.assertEquals( 2, props.size());
-		Assert.assertEquals( "ok", props.get( "prop" ));
-		Assert.assertEquals( "h", props.get( "handler" ));
+		TargetProperties props = this.mngr.lockAndGetTarget( app, app.getMySqlVm());
+		Assert.assertEquals( 2, props.asMap().size());
+		Assert.assertEquals( "ok", props.asMap().get( "prop" ));
+		Assert.assertEquals( "h", props.asMap().get( "handler" ));
+		Assert.assertNotNull( props.asString());
+		Assert.assertTrue( props.getSourceFile().exists());
 
 		Assert.assertEquals( 1, this.mngr.listAllTargets().size());
 		try {
@@ -912,15 +931,19 @@ public class TargetsMngrImplTest {
 		this.mngr.associateTargetWith( targetId, app, instancePath );
 		this.mngr.associateTargetWith( targetId, app, null );
 
-		Map<String,String> props = this.mngr.lockAndGetTarget( app, app.getMySqlVm());
-		Assert.assertEquals( 2, props.size());
-		Assert.assertEquals( "ok", props.get( "prop" ));
-		Assert.assertEquals( "h", props.get( "handler" ));
+		TargetProperties props = this.mngr.lockAndGetTarget( app, app.getMySqlVm());
+		Assert.assertEquals( 2, props.asMap().size());
+		Assert.assertEquals( "ok", props.asMap().get( "prop" ));
+		Assert.assertEquals( "h", props.asMap().get( "handler" ));
+		Assert.assertNotNull( props.asString());
+		Assert.assertTrue( props.getSourceFile().exists());
 
 		props = this.mngr.lockAndGetTarget( app, app.getTomcatVm());
-		Assert.assertEquals( 2, props.size());
-		Assert.assertEquals( "ok", props.get( "prop" ));
-		Assert.assertEquals( "h", props.get( "handler" ));
+		Assert.assertEquals( 2, props.asMap().size());
+		Assert.assertEquals( "ok", props.asMap().get( "prop" ));
+		Assert.assertEquals( "h", props.asMap().get( "handler" ));
+		Assert.assertNotNull( props.asString());
+		Assert.assertTrue( props.getSourceFile().exists());
 
 		Assert.assertEquals( 1, this.mngr.listAllTargets().size());
 		try {

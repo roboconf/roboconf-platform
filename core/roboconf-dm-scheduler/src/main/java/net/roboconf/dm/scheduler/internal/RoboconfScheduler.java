@@ -28,6 +28,7 @@ package net.roboconf.dm.scheduler.internal;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -94,7 +95,7 @@ public class RoboconfScheduler implements IScheduler {
 		quartzProperties.append( "org.quartz.scheduler.skipUpdateCheck: false\n" );
 
 		StdSchedulerFactory factory = new StdSchedulerFactory();
-		factory.initialize( new ByteArrayInputStream( quartzProperties.toString().getBytes( "UTF-8" )));
+		factory.initialize( new ByteArrayInputStream( quartzProperties.toString().getBytes( StandardCharsets.UTF_8 )));
 
 		// Create a new scheduler
 		this.scheduler = factory.getScheduler();

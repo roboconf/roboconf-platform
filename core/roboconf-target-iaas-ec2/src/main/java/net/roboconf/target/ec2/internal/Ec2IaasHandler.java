@@ -26,6 +26,7 @@
 package net.roboconf.target.ec2.internal;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -315,7 +316,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
-		String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
+		String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( StandardCharsets.UTF_8 )), "UTF-8" );
 		runInstancesRequest.setUserData( encodedUserData );
 
 		return runInstancesRequest;

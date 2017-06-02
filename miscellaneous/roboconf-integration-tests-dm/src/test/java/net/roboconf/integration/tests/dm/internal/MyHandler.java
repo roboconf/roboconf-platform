@@ -58,7 +58,6 @@ public class MyHandler implements TargetHandler {
 		Agent agent = new Agent();
 		agent.setApplicationName( parameters.getApplicationName());
 		agent.setScopedInstancePath( parameters.getScopedInstancePath());
-		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
 		agent.setMessagingType(messagingType);

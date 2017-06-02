@@ -69,6 +69,7 @@ public class UserDataHelper {
 	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public AgentProperties findParametersForAmazonOrOpenStack( Logger logger ) {
+		logger.info( "User data are being retrieved for AWS / Openstack..." );
 
 		// Copy the user data
 		String userData = "";
@@ -133,6 +134,7 @@ public class UserDataHelper {
 	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public AgentProperties findParametersForAzure( Logger logger ) {
+		logger.info( "User data are being retrieved for Microsoft Azure..." );
 
 		String userData = "";
 		try {
@@ -172,6 +174,7 @@ public class UserDataHelper {
 	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public AgentProperties findParametersForVmware( Logger logger ) {
+		logger.info( "User data are being retrieved for VMWare..." );
 
 		AgentProperties result = null;
 		File propertiesFile = new File("/tmp/roboconf.properties");
@@ -239,6 +242,7 @@ public class UserDataHelper {
 	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public AgentProperties findParametersFromUrl( String url, Logger logger ) {
+		logger.info( "User data are being retrieved from URL: " + url );
 
 		AgentProperties result = null;
 		try {

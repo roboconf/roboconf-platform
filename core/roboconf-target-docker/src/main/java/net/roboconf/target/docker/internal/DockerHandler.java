@@ -27,10 +27,11 @@ package net.roboconf.target.docker.internal;
 
 import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
 
+import java.io.File;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-
-import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
@@ -49,13 +50,12 @@ import net.roboconf.target.api.TargetHandlerParameters;
  */
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
-	// Injected by iPojo
-	private MavenResolver mavenResolver;
-
 	// Other properties
 	public static final String TARGET_ID = "docker";
-	static final String MESSAGING_TYPE = "net.roboconf.messaging.type";
-	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
+	static final String LOCALHOST = "localhost";
+
+	static final String DEFAULT_IMAGE = "roboconf/roboconf-agent";
+	static final String DEFAULT_ENDPOINT = "tcp://localhost:4243";
 
 	// Container creation
 	static final String IMAGE_ID = "docker.image";
@@ -67,28 +67,20 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String RUN_EXEC = "docker.run.exec";
 
 	// Image generation
-	static final String GENERATE_IMAGE = "docker.generate.image";
-	static final String BASE_IMAGE = "docker.base.image";
-	static final String AGENT_PACKAGE_URL = "docker.agent.package.url";
-	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
-	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
-	static final String ADDITIONAL_DEPLOY = "docker.additional.deploy";
+	static final String GENERATE_IMAGE_FROM = "docker.generate.image.from";
 
-	static final String DOWNLOAD_BASE_IMAGE = "docker.download.base-image";
-	static final String DOCKER_IMAGE_REGISTRY = "docker.image.registry";
-	static final String DEFAULT_DOCKER_IMAGE_REGISTRY = "registry.hub.docker.com";
-
-	// Docker exec markers for Roboconf configuration injection.
-	static final String MARKER_MESSAGING_CONFIGURATION = "$msgConfig$";
-	static final String MARKER_APPLICATION_NAME = "$applicationName$";
-	static final String MARKER_INSTANCE_PATH = "$instancePath$";
-	static final String MARKER_MESSAGING_TYPE = "$messagingType$";
-
+	// Run options
 	static final String OPTION_PREFIX = "docker.option.";
 	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
 	static final String OPTION_PREFIX_ENV = OPTION_PREFIX + "env.";
 
+	// Private fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Map<String,File> containerIdToVolume;
+
+	// A directory that is used to store temporary volumes for our containers
+	// (can be overridden for tests)
+	File userDataVolume = new File( System.getProperty( "java.io.tmpdir" ), "rbcf-docker" );
 
 
 	/**
@@ -97,6 +89,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	public DockerHandler() {
 		// Wait 2 seconds between every polling
 		this.delay = 2000;
+		this.containerIdToVolume = new ConcurrentHashMap<> ();
 	}
 
 
@@ -118,10 +111,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
-		this.logger.fine( "Creating a new machine." );
-
-		// Search an existing image in the local Docker repository
-		DockerUtils.verifyDockerClient( parameters.getTargetProperties());
+		this.logger.fine( "Creating a new machine..." );
 
 		// We do not do anything else here.
 		// We return a UUID.
@@ -140,14 +130,12 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		// machineId does not match a real container ID.
 		// It is the name of the container we will create.
 		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
-				parameters.getTargetProperties(),
-				parameters.getMessagingProperties(),
+				parameters,
 				machineId,
-				parameters.getScopedInstancePath(),
-				parameters.getApplicationName(),
-				scopedInstance );
+				scopedInstance,
+				this.userDataVolume,
+				this.containerIdToVolume );
 
-		configurator.setMavenResolver( this.mavenResolver );
 		return configurator;
 	}
 
@@ -195,12 +183,21 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			// Indeed, it may have been killed manually. This method will then
 			// just mark the Roboconf instance as "not deployed" without throwing an exception.
 			if( container != null ) {
+
+				// Stop the container
 				ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
 				if( state != null
 						&& ( extractBoolean( state.getRunning()) || extractBoolean( state.getPaused())))
 					dockerClient.killContainerCmd( container.getId()).exec();
 
 				dockerClient.removeContainerCmd( container.getId()).withForce( true ).exec();
+
+				// Delete the volume we used to share user data
+				// (container names are prefixed by their parent, here "/").
+				// See https://github.com/moby/moby/issues/6705
+				String containerName = container.getNames()[ 0 ].substring( 1 );
+				File userDataDir = this.containerIdToVolume.remove( containerName );
+				Utils.deleteFilesRecursivelyAndQuietly( userDataDir );
 			}
 
 		} catch( Exception e ) {
@@ -217,6 +214,6 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
-		return "localhost";
+		return LOCALHOST;
 	}
 }

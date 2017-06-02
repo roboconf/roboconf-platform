@@ -1,5 +1,5 @@
-# Set the base image to Ubuntu
-FROM ubuntu
+# Set the base image to Alpine
+FROM alpine:latest
 
 # Put a default command to execute.
 # This one will keep the container running.

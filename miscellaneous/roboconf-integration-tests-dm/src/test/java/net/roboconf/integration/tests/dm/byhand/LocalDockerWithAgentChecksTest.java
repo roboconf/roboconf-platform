@@ -68,7 +68,7 @@ import net.roboconf.integration.tests.commons.internal.runners.RoboconfITConfigu
 import net.roboconf.integration.tests.commons.internal.runners.RoboconfPaxRunner;
 import net.roboconf.integration.tests.dm.probes.DmTest;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-import net.roboconf.target.docker.internal.DockerTestUtils;
+import net.roboconf.target.docker.internal.test.DockerTestUtils;
 
 /**
  * A test where the DM launches Docker containers and checks agents work.

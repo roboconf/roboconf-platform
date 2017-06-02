@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,54 +23,55 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.commands;
+package net.roboconf.dm.internal.api.impl.beans;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
-import net.roboconf.core.commands.AppendCommandInstruction;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.exceptions.CommandException;
+import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-class AppendCommandExecution extends AbstractCommandExecution {
+public class TargetPropertiesImpl implements TargetProperties {
 
-	private final AppendCommandInstruction instr;
+	private final Map<String,String> map;
+	private final String content;
+	private final File sourceFile;
 
 
 	/**
 	 * Constructor.
-	 * @param instr
 	 */
-	public AppendCommandExecution( AppendCommandInstruction instr ) {
-		this.instr = instr;
+	public TargetPropertiesImpl() {
+		this( new HashMap<String,String>( 0 ), "", null );
 	}
 
+	/**
+	 * Constructor.
+	 * @param map
+	 * @param content
+	 * @param sourceFile
+	 */
+	public TargetPropertiesImpl( Map<String,String> map, String content, File sourceFile ) {
+		this.map = map;
+		this.content = content;
+		this.sourceFile = sourceFile;
+	}
 
 	@Override
-	public void execute() throws CommandException {
+	public Map<String,String> asMap() {
+		return this.map;
+	}
 
-		OutputStreamWriter fw = null;
-		try {
-			File f = new File( this.instr.getFilePath());
-			boolean append = f.exists() && f.length() > 0;
+	@Override
+	public String asString() {
+		return this.content;
+	}
 
-			fw = new OutputStreamWriter( new FileOutputStream( f, true ), StandardCharsets.UTF_8 );
-			if( append )
-				fw.append( "\n" );
-
-			fw.append( this.instr.getContent());
-
-		} catch( IOException e ) {
-			throw new CommandException( e );
-
-		} finally {
-			Utils.closeQuietly( fw );
-		}
+	@Override
+	public File getSourceFile() {
+		return this.sourceFile;
 	}
 }

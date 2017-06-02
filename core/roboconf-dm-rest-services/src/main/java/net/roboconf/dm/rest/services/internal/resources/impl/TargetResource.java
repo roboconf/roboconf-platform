@@ -50,6 +50,7 @@ import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
@@ -214,12 +215,12 @@ public class TargetResource implements ITargetResource {
 	public Response getTargetProperties( String targetId ) {
 
 		this.logger.fine( "Request: get properties for target " + targetId + "." );
-		String content = this.manager.targetsMngr().findRawTargetProperties( targetId );
+		TargetProperties props = this.manager.targetsMngr().findTargetProperties( targetId );
 		Response response;
-		if( content == null )
+		if( props.getSourceFile() == null )
 			response = Response.status( Status.NOT_FOUND ).build();
 		else
-			response = Response.ok().entity( new StringWrapper( content )).build();
+			response = Response.ok().entity( new StringWrapper( props.asString())).build();
 
 		return response;
 	}
