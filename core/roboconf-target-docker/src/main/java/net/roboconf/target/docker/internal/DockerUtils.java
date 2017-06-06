@@ -25,14 +25,7 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,7 +34,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.WordUtils;
-import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -53,10 +45,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
-import net.roboconf.core.utils.UriUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
@@ -74,20 +63,6 @@ public final class DockerUtils {
 
 
 	/**
-	 * Verifies the Docker client configuration.
-	 * @param targetProperties the target properties
-	 * @throws TargetException if the configuration is invalid
-	 */
-	public static void verifyDockerClient( Map<String,String> targetProperties )  throws TargetException {
-
-		String imageId = targetProperties.get( DockerHandler.IMAGE_ID );
-		String generate = targetProperties.get( DockerHandler.GENERATE_IMAGE );
-		if( imageId == null && ! Boolean.parseBoolean( generate ))
-			throw new TargetException( "The " + DockerHandler.IMAGE_ID + " parameter was not specified, or enable image generation." );
-	}
-
-
-	/**
 	 * Creates a Docker client from target properties.
 	 * @param targetProperties a non-null map
 	 * @return a Docker client
@@ -98,11 +73,10 @@ public final class DockerUtils {
 		// Validate what needs to be validated.
 		Logger logger = Logger.getLogger( DockerHandler.class.getName());
 		logger.fine( "Setting the target properties." );
-		verifyDockerClient( targetProperties );
 
 		String edpt = targetProperties.get( DockerHandler.ENDPOINT );
 		if( Utils.isEmptyOrWhitespaces( edpt ))
-			edpt = "tcp://localhost:4243";
+			edpt = DockerHandler.DEFAULT_ENDPOINT;
 
 		// The configuration is straight-forward.
 		Builder config =
@@ -273,12 +247,6 @@ public final class DockerUtils {
 		// of generating the right JSon objects.
 		Map<String,List<String>> hackedSetterNames = new HashMap<> ();
 
-// Remains from Docker-Java 2.x (the mechanism still works)
-//
-//		List<String> list = new ArrayList<> ();
-//		list.add( "withMemoryLimit" );
-//		hackedSetterNames.put( "withMemory", list );
-
 		// List known types
 		List<Class<?>> types = new ArrayList<> ();
 		types.add( String.class );
@@ -397,136 +365,6 @@ public final class DockerUtils {
 
 
 	/**
-	 * Builds the command to pass to a new Docker container.
-	 * @param cmd the value of the docker.run.command property
-	 * @param messagingConfiguration the messaging configuration (not null)
-	 * @param applicationName the application's name
-	 * @param scopedInstancePath the scoped instance's path
-	 * @return a non-null list of arguments
-	 */
-	public static List<String> buildRunCommand(
-			String cmd,
-			Map<String,String> messagingConfiguration,
-			String applicationName,
-			String scopedInstancePath ) {
-
-		// We get the custom command line (docker.run.exec property) to run and:
-		// - If nothing/invalid is specified (args == null), we use the standard agent start command
-		// - If an empty command is explicitly specified (args.isEmpty()), there must be a RUN line in the Dockerfile.
-		// - Else we use the provided command line. We may need to inject agent & messaging configuration.
-		List<String> args = parseRunExecLine( cmd );
-		if( args == null ) {
-
-			// No docker.run.exec property (or invalid), fall back to the default command line.
-			// Build the command line, passing the agent & messaging configuration.
-			// Command line is:
-			// - Agent's start.sh script
-			// - messaging provider-specific configuration file,
-			// - agent.application-name=<<name of the application>>
-			// - agent.scoped-instance-path=<<path of the scoped instance>>
-			// - agent.messaging-type=<<type of messaging>>
-			// - each of the messaging configuration properties, prefixed by "msg."
-			args = new ArrayList<> ();
-			args.add("/usr/local/roboconf-agent/start.sh");
-			args.add( "etc/net.roboconf.messaging." + DockerHandler.MARKER_MESSAGING_TYPE + ".cfg");
-			args.add( "agent.application-name=" + DockerHandler.MARKER_APPLICATION_NAME );
-			args.add( "agent.scoped-instance-path=" + DockerHandler.MARKER_INSTANCE_PATH );
-			args.add( "agent.messaging-type=" + DockerHandler.MARKER_MESSAGING_TYPE );
-			args.add( DockerHandler.MARKER_MESSAGING_CONFIGURATION );
-		}
-
-		// Now proceed to argument substitution, using the special markers.
-		for( int i=0; i<args.size(); i++ ) {
-
-			// The current argument, that may be substituted.
-			String arg = args.get( i );
-
-			// The string to substitute to the marker, or null if nothing to substitute.
-			final String s;
-
-			// The index (in arg) and length of the marker to replace.
-			final int j, l;
-
-			if( arg.contains( DockerHandler.MARKER_MESSAGING_TYPE )) {
-				j = arg.indexOf(DockerHandler.MARKER_MESSAGING_TYPE);
-				l = DockerHandler.MARKER_MESSAGING_TYPE.length();
-				s = messagingConfiguration.containsKey( DockerHandler.MESSAGING_TYPE )
-						? messagingConfiguration.get( DockerHandler.MESSAGING_TYPE ) : "";
-
-			} else if( arg.contains( DockerHandler.MARKER_APPLICATION_NAME )) {
-				j = arg.indexOf(DockerHandler.MARKER_APPLICATION_NAME);
-				l = DockerHandler.MARKER_APPLICATION_NAME.length();
-				s = applicationName;
-
-			} else if( arg.contains( DockerHandler.MARKER_INSTANCE_PATH )) {
-				j = arg.indexOf(DockerHandler.MARKER_INSTANCE_PATH);
-				l = DockerHandler.MARKER_INSTANCE_PATH.length();
-				s = scopedInstancePath;
-
-			} else {
-				if( arg.equals(DockerHandler.MARKER_MESSAGING_CONFIGURATION )) {
-
-					// A bit more special: remove the whole argument and appends all
-					// the messaging configuration, prefixed by "msg.".
-					args.remove( i );
-					for( Map.Entry<String,String> e : messagingConfiguration.entrySet()) {
-						if( DockerHandler.MESSAGING_TYPE.equals( e.getKey()))
-							continue;
-
-						args.add(i, "msg." + e.getKey() + '=' + e.getValue());
-						i++;
-					}
-
-					// We've gone one position to far...
-					i--;
-				}
-
-				// No in-string substitution.
-				j = -1;
-				l = 0;
-				s = null;
-			}
-
-			// Proceed to in-string substitution.
-			if( s != null ) {
-				arg = arg.substring(0, j) + s + arg.substring(j + l, arg.length());
-				args.set(i, arg);
-			}
-		}
-
-		return args;
-	}
-
-
-	/**
-	 * Parses the given {@code docker.run.exec} property value.
-	 * @param runExecLine the {@code docker.run.exec} property value.
-	 * @return the {@code docker.run.exec} command + arguments array.
-	 */
-	public static List<String> parseRunExecLine( String runExecLine ) {
-
-		List<String> result = null;
-		if( ! Utils.isEmptyOrWhitespaces( runExecLine )) {
-			try {
-				Gson gson = new Gson();
-				String[] array = gson.fromJson(runExecLine, String[].class);
-
-				// The returned collection must support the remove operation!
-				// Array.asList() returns an unmodifiable collection.
-				result = new ArrayList<>( Arrays.asList( array ));
-
-			} catch( JsonSyntaxException e ) {
-				Logger logger = Logger.getLogger( DockerUtils.class.getName());
-				logger.warning("Cannot parse property " + DockerHandler.RUN_EXEC + ": " + runExecLine);
-				Utils.logException( logger, e );
-			}
-		}
-
-		return result;
-	}
-
-
-	/**
 	 * Handles Boolean values.
 	 * <p>
 	 * Docker-java 3.x annotates state methods with "@CheckNotNull".
@@ -536,46 +374,48 @@ public final class DockerUtils {
 	 * @param bool a Boolean value
 	 * @return the boolean value, or <code>false</code> if it was null
 	 */
-	public static  boolean extractBoolean( Boolean bool ) {
+	public static boolean extractBoolean( Boolean bool ) {
 		return bool != null ? bool.booleanValue() : false;
 	}
 
 
 	/**
-	 * Downloads a remote file (supports Maven URLs).
-	 * <p>
-	 * Please, refer to Pax URL's guide for more details about Maven URLs.
-	 * https://ops4j1.jira.com/wiki/display/paxurl/Mvn+Protocol
-	 * </p>
-	 *
-	 * @param url an URL
-	 * @param targetFile the file where it should be saved
-	 * @param mavenResolver the Maven resolver
-	 *
-	 * @throws IOException
-	 * @throws URISyntaxException
+	 * A constant linked to {@link #findDefaultImageVersion(String)}.
 	 */
-	public static void downloadRemotePackage( String url, File targetFile, MavenResolver mavenResolver )
-	throws IOException, URISyntaxException {
+	public static final String LATEST = "latest";
 
-		if( url.toLowerCase().startsWith( "mvn:" )) {
-			if( mavenResolver == null )
-				throw new IOException( "Maven URLs are only resolved in Karaf at the moment." );
 
-			File sourceFile = mavenResolver.resolve( url );
-			Utils.copyStream( sourceFile, targetFile );
+	/**
+	 * Finds the version of the default Docker image.
+	 * @param rawVersion the raw version (e.g. ManifestUtils.findBundleVersion())
+	 * @return {@value #LATEST} if the raw version is null or a snapshot, a specific version otherwise
+	 */
+	public static String findDefaultImageVersion( String rawVersion ) {
 
-		} else {
-			URL u = UriUtils.urlToUri( url ).toURL();
-			URLConnection uc = u.openConnection();
-			InputStream in = null;
-			try {
-				in = new BufferedInputStream( uc.getInputStream());
-				Utils.copyStream( in, targetFile );
+		String rbcfVersion = rawVersion;
+		if( rbcfVersion == null
+				|| rbcfVersion.toLowerCase().endsWith( "snapshot" ))
+			rbcfVersion = LATEST;
 
-			} finally {
-				Utils.closeQuietly( in );
-			}
-		}
+		return rbcfVersion;
+	}
+
+
+	/**
+	 * Builds a container name.
+	 * @param scopedInstancePath a scoped instance path
+	 * @param applicationName an application name
+	 * @return a non-null string
+	 */
+	public static String buildContainerNameFrom( String scopedInstancePath, String applicationName ) {
+
+		String containerName = scopedInstancePath + "_from_" + applicationName;
+		containerName = containerName.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
+
+		// Prevent container names from being too long (see #480)
+		if( containerName.length() > 61 )
+			containerName = containerName.substring( 0, 61 );
+
+		return containerName;
 	}
 }

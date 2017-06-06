@@ -29,9 +29,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -79,7 +79,7 @@ public class FromInstances {
 		Collection<AbstractBlock> result = new ArrayList<> ();
 
 		// Process the root instance
-		Map<Instance,BlockInstanceOf> instanceToBlock = new LinkedHashMap<> ();
+		Map<Instance,BlockInstanceOf> instanceToBlock = new ConcurrentHashMap<> ();
 		BlockInstanceOf rootBlock = new BlockInstanceOf( file );
 		instanceToBlock.put( rootInstance, rootBlock );
 
@@ -132,7 +132,7 @@ public class FromInstances {
 			}
 
 			// Update the parent
-			BlockInstanceOf parentBlock = instanceToBlock.get( instance.getParent());
+			BlockInstanceOf parentBlock = instance.getParent() == null ? null : instanceToBlock.get( instance.getParent());
 			if( parentBlock != null ) {
 				parentBlock.getInnerBlocks().add( new BlockBlank( file, "" ));
 				parentBlock.getInnerBlocks().add( currentBlock );

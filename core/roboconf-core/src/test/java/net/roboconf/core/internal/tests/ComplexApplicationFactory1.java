@@ -72,7 +72,7 @@ public final class ComplexApplicationFactory1 {
 	 */
 	public static ApplicationTemplate newApplication() {
 
-		ApplicationTemplate app = new ApplicationTemplate( "name" ).qualifier( "test" ).dslId( ParsingConstants.DSL_VERSION );
+		ApplicationTemplate app = new ApplicationTemplate( "name" ).version( "test" ).dslId( ParsingConstants.DSL_VERSION );
 		Graphs graph = new Graphs();
 		app.setGraphs( graph );
 

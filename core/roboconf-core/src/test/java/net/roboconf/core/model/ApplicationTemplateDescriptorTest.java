@@ -56,7 +56,7 @@ public class ApplicationTemplateDescriptorTest {
 		desc1.setName( UUID.randomUUID().toString());
 		saveAndCompare( desc1 );
 
-		desc1.setQualifier( UUID.randomUUID().toString());
+		desc1.setVersion( UUID.randomUUID().toString());
 		saveAndCompare( desc1 );
 
 		desc1.setDslId( UUID.randomUUID().toString());
@@ -129,7 +129,7 @@ public class ApplicationTemplateDescriptorTest {
 
 		Assert.assertEquals( desc1.getDescription(), desc2.getDescription());
 		Assert.assertEquals( desc1.getName(), desc2.getName());
-		Assert.assertEquals( desc1.getQualifier(), desc2.getQualifier());
+		Assert.assertEquals( desc1.getVersion(), desc2.getVersion());
 		Assert.assertEquals( desc1.getDslId(), desc2.getDslId());
 		Assert.assertEquals( desc1.getGraphEntryPoint(), desc2.getGraphEntryPoint());
 		Assert.assertEquals( desc1.getInstanceEntryPoint(), desc2.getInstanceEntryPoint());

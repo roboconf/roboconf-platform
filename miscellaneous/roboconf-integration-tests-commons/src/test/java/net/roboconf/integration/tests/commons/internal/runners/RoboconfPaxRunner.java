@@ -29,11 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
-import net.roboconf.target.docker.internal.DockerTestUtils;
-import net.roboconf.target.docker.internal.DockerUtils;
-
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
@@ -41,6 +36,11 @@ import org.junit.runners.model.InitializationError;
 import org.ops4j.pax.exam.junit.PaxExam;
 
 import com.github.dockerjava.api.DockerClient;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+import net.roboconf.target.docker.internal.DockerUtils;
+import net.roboconf.target.docker.internal.test.DockerTestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -94,7 +94,7 @@ public class RoboconfPaxRunner extends PaxExam {
 					DockerTestUtils.checkDockerIsInstalled();
 					dockerIsHere = true;
 
-					Map<String,String> targetProperties = new HashMap<String,String> ();
+					Map<String,String> targetProperties = new HashMap<> ();
 					targetProperties.put( "docker.endpoint", "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 					targetProperties.put( "docker.image", IMG_NAME );
 

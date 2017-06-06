@@ -257,7 +257,7 @@ public class ManagementResource implements IManagementResource {
 		for( ApplicationTemplate tpl : this.manager.applicationTemplateMngr().getApplicationTemplates()) {
 			// Equality is on the name, not on the display name
 			if(( exactName == null || exactName.equals( tpl.getName()))
-					&& (exactQualifier == null || exactQualifier.equals( tpl.getQualifier())))
+					&& (exactQualifier == null || exactQualifier.equals( tpl.getVersion())))
 				result.add( tpl );
 		}
 
@@ -313,7 +313,7 @@ public class ManagementResource implements IManagementResource {
 		Response result;
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
-			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
+			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getVersion();
 			String appName = app.getDisplayName() != null ? app.getDisplayName() : app.getName();
 			ManagedApplication ma = this.manager.applicationMngr().createApplication( appName, app.getDescription(), tplName, tplQualifier );
 			result = Response.ok().entity( ma.getApplication()).build();

@@ -111,7 +111,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 		ApplicationTemplate result = null;
 		for( ApplicationTemplate tpl : this.templates.keySet()) {
 			if( Objects.equals( tpl.getName(), name )
-					&& Objects.equals( tpl.getQualifier(), qualifier )) {
+					&& Objects.equals( tpl.getVersion(), qualifier )) {
 				result = tpl;
 				break;
 			}

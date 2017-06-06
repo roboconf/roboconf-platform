@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -113,7 +114,7 @@ public class AzureIaasHandler implements TargetHandler {
 					parameters.getApplicationName(),
 					rootInstanceName );
 
-			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
+			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( StandardCharsets.UTF_8 )), "UTF-8" );
 
 			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
 			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "Location", azureProperties.getLocation());
@@ -342,7 +343,7 @@ public class AzureIaasHandler implements TargetHandler {
 		DocumentBuilder b;
 		b = f.newDocumentBuilder();
 		Document doc;
-		doc = b.parse(new ByteArrayInputStream(xmlStr.getBytes("UTF-8")));
+		doc = b.parse(new ByteArrayInputStream(xmlStr.getBytes( StandardCharsets.UTF_8 )));
 		NodeList nodes = doc.getElementsByTagName(nameOfNode);
 		String result = "false";
 		for (int i = 0; i < nodes.getLength(); i++) {

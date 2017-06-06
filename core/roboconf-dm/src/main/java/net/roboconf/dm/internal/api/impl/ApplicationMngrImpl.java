@@ -268,7 +268,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 				// Read the descriptor
 				File descriptorFile = new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
 				ApplicationDescriptor desc = ApplicationDescriptor.load( descriptorFile );
-				ApplicationTemplate tpl = this.applicationTemplateMngr.findTemplate( desc.getTemplateName(), desc.getTemplateQualifier());
+				ApplicationTemplate tpl = this.applicationTemplateMngr.findTemplate( desc.getTemplateName(), desc.getTemplateVersion());
 				if( tpl == null )
 					throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 

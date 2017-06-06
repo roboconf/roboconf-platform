@@ -143,7 +143,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 		sb.append( startTable());
 		sb.append( addTableLine( this.messages.get( "app.name" ), this.applicationTemplate.getName())); //$NON-NLS-1$
-		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.applicationTemplate.getQualifier())); //$NON-NLS-1$
+		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.applicationTemplate.getVersion())); //$NON-NLS-1$
 		sb.append( endTable());
 
 		sb.append( renderApplicationDescription());
@@ -180,7 +180,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 			sb.append( startTable());
 			sb.append( addTableLine( this.messages.get( "app.name" ), this.applicationTemplate.getName())); //$NON-NLS-1$
-			sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.applicationTemplate.getQualifier())); //$NON-NLS-1$
+			sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.applicationTemplate.getVersion())); //$NON-NLS-1$
 			sb.append( endTable());
 
 			sb.append( renderApplicationDescription());

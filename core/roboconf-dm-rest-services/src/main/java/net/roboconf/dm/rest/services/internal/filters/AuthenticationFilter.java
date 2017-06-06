@@ -53,6 +53,7 @@ import net.roboconf.dm.rest.services.internal.annotations.RestIndexer.RestOperat
 import net.roboconf.dm.rest.services.internal.audit.AuditLogRecord;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
+import net.roboconf.dm.rest.services.jmx.RestServicesMBean;
 
 /**
  * A filter to determine and request (if necessary) authentication.
@@ -68,9 +69,11 @@ import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 public class AuthenticationFilter implements Filter {
 
 	static final String USER_AGENT = "User-Agent";
-	private final Logger logger = Logger.getLogger( getClass().getName());
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final RestServicesMBean restServicesMBean;
 	private final RestIndexer restIndexer;
+
 	private AuthenticationManager authenticationMngr;
 	private boolean authenticationEnabled, enableCors;
 	private long sessionPeriod;
@@ -78,9 +81,11 @@ public class AuthenticationFilter implements Filter {
 
 	/**
 	 * Constructor.
+	 * @param restServicesMBean
 	 */
-	public AuthenticationFilter() {
+	public AuthenticationFilter( RestServicesMBean restServicesMBean ) {
 		this.restIndexer = new RestIndexer();
+		this.restServicesMBean = restServicesMBean;
 	}
 
 
@@ -88,6 +93,10 @@ public class AuthenticationFilter implements Filter {
 	public void doFilter( ServletRequest req, ServletResponse resp, FilterChain chain )
 	throws IOException, ServletException {
 
+		// Measure activity
+		((ServletRegistrationComponent) this.restServicesMBean).restRequestsCount.incrementAndGet();
+
+		// Authentication and audit
 		if( ! this.authenticationEnabled ) {
 			chain.doFilter( req, resp );
 
@@ -153,6 +162,7 @@ public class AuthenticationFilter implements Filter {
 				}
 
 				// Send an error
+				((ServletRegistrationComponent) this.restServicesMBean).restRequestsWithAuthFailureCount.incrementAndGet();
 				response.sendError( 403, "Authentication is required." );
 			}
 		}

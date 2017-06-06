@@ -29,7 +29,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -47,24 +49,18 @@ import org.xml.sax.SAXException;
 
 import net.roboconf.agent.internal.AgentProperties;
 import net.roboconf.core.Constants;
+import net.roboconf.core.utils.UriUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 
 /**
+ * No static method so that we can mock this class.
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora
  */
-public final class UserDataUtils {
+public class UserDataHelper {
 
 	public static final String CONF_FILE_AGENT = "net.roboconf.agent.configuration.cfg";
-
-
-	/**
-	 * Private empty constructor.
-	 */
-	private UserDataUtils() {
-		// nothing
-	}
 
 
 	/**
@@ -72,7 +68,8 @@ public final class UserDataUtils {
 	 * @param logger a logger
 	 * @return the agent's data, or null if they could not be parsed
 	 */
-	public static AgentProperties findParametersForAmazonOrOpenStack( Logger logger ) {
+	public AgentProperties findParametersForAmazonOrOpenStack( Logger logger ) {
+		logger.info( "User data are being retrieved for AWS / Openstack..." );
 
 		// Copy the user data
 		String userData = "";
@@ -136,13 +133,14 @@ public final class UserDataUtils {
 	 * @param logger a logger
 	 * @return the agent's data, or null if they could not be parsed
 	 */
-	public static AgentProperties findParametersForAzure( Logger logger ) {
+	public AgentProperties findParametersForAzure( Logger logger ) {
+		logger.info( "User data are being retrieved for Microsoft Azure..." );
 
 		String userData = "";
 		try {
 			// Get the user data from /var/lib/waagent/ovf-env.xml and decode it
 			String userDataEncoded = getValueOfTagInXMLFile( "/var/lib/waagent/ovf-env.xml", "CustomData" );
-			userData = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" )), "UTF-8" );
+			userData = new String( Base64.decodeBase64( userDataEncoded.getBytes( StandardCharsets.UTF_8 )), "UTF-8" );
 
 		} catch( IOException | ParserConfigurationException | SAXException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
@@ -169,13 +167,16 @@ public final class UserDataUtils {
 		return result;
 	}
 
+
 	/**
 	 * Configures the agent from VMWare.
 	 * @param logger a logger
 	 * @return the agent's data, or null if they could not be parsed
 	 */
-	public static AgentProperties findParametersForVmware( Logger logger ) {
+	public AgentProperties findParametersForVmware( Logger logger ) {
+		logger.info( "User data are being retrieved for VMWare..." );
 
+		AgentProperties result = null;
 		File propertiesFile = new File("/tmp/roboconf.properties");
 		try {
 			int retries = 30;
@@ -185,11 +186,11 @@ public final class UserDataUtils {
 					Thread.sleep( 2000 );
 
 				} catch( InterruptedException e ) {
-					throw new IOException("Can't read properties file: " + e);
+					throw new IOException( "Cannot read properties file: " + e );
 				}
 			}
 
-			AgentProperties result = AgentProperties.readIaasProperties(Utils.readPropertiesFile(propertiesFile));
+			result = AgentProperties.readIaasProperties(Utils.readPropertiesFile(propertiesFile));
 
 			/*
 			 * HACK for specific IaaS configurations (using properties file in a VMWare-like manner)
@@ -220,34 +221,68 @@ public final class UserDataUtils {
 
 			} catch( IOException e ) {
 				Utils.logException( logger, e );
+
 			} finally {
 				Utils.closeQuietly( in );
 			}
 			/* HACK ends here (see comment above). Removing it is harmless on classical VMWare configurations. */
 
-			return result;
-
-		} catch(IOException e) {
-			logger.fine("Agent failed to read properties file " + propertiesFile);
-			return null;
+		} catch( IOException e ) {
+			logger.fine( "Agent failed to read properties file " + propertiesFile );
+			result = null;
 		}
+
+		return result;
 	}
+
+
+	/**
+	 * Retrieve the agent's configuration from an URL.
+	 * @param logger a logger
+	 * @return the agent's data, or null if they could not be parsed
+	 */
+	public AgentProperties findParametersFromUrl( String url, Logger logger ) {
+		logger.info( "User data are being retrieved from URL: " + url );
+
+		AgentProperties result = null;
+		try {
+			URI uri = UriUtils.urlToUri( url );
+			Properties props = new Properties();
+			InputStream in = null;
+			try {
+				in = uri.toURL().openStream();
+				props.load( in );
+
+			} finally {
+				Utils.closeQuietly( in );
+			}
+
+			result = AgentProperties.readIaasProperties( props );
+
+		} catch( Exception e ) {
+			logger.fine( "Agent parameters could not be read from " + url );
+			result = null;
+		}
+
+		return result;
+	}
+
 
 	/**
 	 * Reconfigures the messaging.
 	 * @param etcDir the KARAF_ETC directory
 	 * @param msgData the messaging configuration parameters
 	 */
-	public static void reconfigureMessaging( String etcDir, Map<String,String> msgData )
+	public void reconfigureMessaging( String etcDir, Map<String,String> msgData )
 	throws IOException {
 
 		String messagingType = msgData.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
-		Logger.getLogger( UserDataUtils.class.getName()).fine( "Messaging type for reconfiguration: " + messagingType );
+		Logger.getLogger( getClass().getName()).fine( "Messaging type for reconfiguration: " + messagingType );
 		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
 
 			// Write the messaging configuration
 			File f = new File( etcDir, "net.roboconf.messaging." + messagingType + ".cfg" );
-			Logger logger = Logger.getLogger( UserDataUtils.class.getName());
+			Logger logger = Logger.getLogger( getClass().getName());
 
 			Properties props = Utils.readPropertiesFileQuietly( f, logger );
 			props.putAll( msgData );
@@ -258,9 +293,11 @@ public final class UserDataUtils {
 			// Set the messaging type
 			f = new File( etcDir, CONF_FILE_AGENT );
 
-			props = Utils.readPropertiesFileQuietly( f, Logger.getLogger( UserDataUtils.class.getName()));
-			props.put( Constants.MESSAGING_TYPE, messagingType );
-			Utils.writePropertiesFile( props, f );
+			props = Utils.readPropertiesFileQuietly( f, Logger.getLogger( getClass().getName()));
+			if( messagingType != null ) {
+				props.put( Constants.MESSAGING_TYPE, messagingType );
+				Utils.writePropertiesFile( props, f );
+			}
 		}
 	}
 
@@ -288,6 +325,7 @@ public final class UserDataUtils {
 
 		return valueOfTagName;
 	}
+
 
 	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName)
 	throws ParserConfigurationException, SAXException, IOException {

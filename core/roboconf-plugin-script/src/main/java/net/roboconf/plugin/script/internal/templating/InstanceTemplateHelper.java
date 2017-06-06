@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -108,7 +108,7 @@ public final class InstanceTemplateHelper {
 		OutputStream os = null;
 		try {
 			os = new FileOutputStream( targetFile );
-			OutputStreamWriter writer = new OutputStreamWriter( os, Charset.forName( "UTF-8" ).newEncoder());
+			OutputStreamWriter writer = new OutputStreamWriter( os, StandardCharsets.UTF_8.newEncoder());
 			injectInstanceImports( instance, templateFilePath, writer );
 
 		} finally {

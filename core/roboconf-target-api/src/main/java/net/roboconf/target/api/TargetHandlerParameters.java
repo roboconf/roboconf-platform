@@ -37,7 +37,7 @@ public class TargetHandlerParameters {
 	private Map<String,String> targetProperties;
 	private Map<String,String> messagingProperties;
 	private String scopedInstancePath, applicationName, domain;
-	private File targetConfigurationScript;
+	private File targetConfigurationScript, targetPropertiesDirectory;
 
 
 
@@ -121,6 +121,20 @@ public class TargetHandlerParameters {
 
 	public TargetHandlerParameters targetConfigurationScript( File targetConfigurationScript ) {
 		this.targetConfigurationScript = targetConfigurationScript;
+		return this;
+	}
+
+
+	public File getTargetPropertiesDirectory() {
+		return this.targetPropertiesDirectory;
+	}
+
+	public void setTargetPropertiesDirectory( File targetPropertiesDirectory ) {
+		this.targetPropertiesDirectory = targetPropertiesDirectory;
+	}
+
+	public TargetHandlerParameters targetPropertiesDirectory( File targetPropertiesDirectory ) {
+		this.targetPropertiesDirectory = targetPropertiesDirectory;
 		return this;
 	}
 }

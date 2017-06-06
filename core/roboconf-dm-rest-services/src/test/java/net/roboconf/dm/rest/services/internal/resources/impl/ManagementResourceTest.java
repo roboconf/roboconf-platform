@@ -169,7 +169,7 @@ public class ManagementResourceTest {
 		ApplicationTemplate receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the "filter" template
 		templates = this.resource.listApplicationTemplates( "filter", null );
@@ -184,30 +184,30 @@ public class ManagementResourceTest {
 		receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the test template with the exact qualifier
-		templates = this.resource.listApplicationTemplates( tpl.getName(), tpl.getQualifier());
+		templates = this.resource.listApplicationTemplates( tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
 		receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the test template with the exact qualifier but no specific name
-		templates = this.resource.listApplicationTemplates( null, tpl.getQualifier());
+		templates = this.resource.listApplicationTemplates( null, tpl.getVersion());
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
 		receivedTpl = templates.get( 0 );
 		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
 		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
-		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Invalid qualifier
-		templates = this.resource.listApplicationTemplates( null, tpl.getQualifier() + "2" );
+		templates = this.resource.listApplicationTemplates( null, tpl.getVersion() + "2" );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
 
@@ -313,7 +313,7 @@ public class ManagementResourceTest {
 	@Test
 	public void testLoadUnzippedApplicationTemplate_alreadyExisting() throws Exception {
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).version( "1.0.1-SNAPSHOT" );
 		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 
@@ -497,7 +497,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 
 		// Create two applications
-		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).version( "1.0.1-SNAPSHOT" );
 		Assert.assertEquals( 0, this.resource.listApplications().size());
 		Assert.assertEquals(
 				Status.OK.getStatusCode(),
@@ -517,7 +517,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 2, this.resource.listApplications().size());
 
 		// Try to create an application associated with an unknown template
-		ApplicationTemplate tpl2 = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "oops" );
+		ApplicationTemplate tpl2 = new ApplicationTemplate( "Legacy LAMP" ).version( "oops" );
 		Assert.assertEquals(
 				Status.NOT_FOUND.getStatusCode(),
 				this.resource.createApplication( new Application( "app1", tpl2 )).getStatus());
@@ -542,7 +542,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.FORBIDDEN.getStatusCode(),
-				this.resource.deleteApplicationTemplate( tpl.getName(), tpl.getQualifier()).getStatus());
+				this.resource.deleteApplicationTemplate( tpl.getName(), tpl.getVersion()).getStatus());
 
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 
@@ -564,7 +564,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
 				Status.OK.getStatusCode(),
-				this.resource.deleteApplicationTemplate( tpl.getName(), tpl.getQualifier()).getStatus());
+				this.resource.deleteApplicationTemplate( tpl.getName(), tpl.getVersion()).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 	}

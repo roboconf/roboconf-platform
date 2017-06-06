@@ -75,7 +75,7 @@ public class InstanceContext {
 	 */
 	public InstanceContext( AbstractApplication app ) {
 		this.name = app.getName();
-		this.qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : null;
+		this.qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getVersion() : null;
 	}
 
 

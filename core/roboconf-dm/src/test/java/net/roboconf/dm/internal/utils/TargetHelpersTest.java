@@ -40,6 +40,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
+import net.roboconf.dm.internal.api.impl.beans.TargetPropertiesImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.ITargetsMngr;
 
@@ -103,10 +104,10 @@ public class TargetHelpersTest {
 		ManagedApplication ma = new ManagedApplication( new TestApplication());
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when(
-				targetsMngr.findRawTargetProperties(
+				targetsMngr.findTargetProperties(
 						Mockito.any( AbstractApplication.class ),
 						Mockito.any( String.class )))
-				.thenReturn( new HashMap<String,String>( 0 ));
+				.thenReturn( new TargetPropertiesImpl());
 
 		TargetHelpers.verifyTargets( new TargetHandlerResolverImpl(), ma, targetsMngr );
 	}

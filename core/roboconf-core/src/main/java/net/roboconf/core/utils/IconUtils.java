@@ -64,7 +64,7 @@ public final class IconUtils {
 	 * <i>Encodes</i> the URL for an application or a template.
 	 * <p>
 	 * For an application, it looks like <code>/app/icon.jpg</code>.<br>
-	 * For a template, it looks like <code>/app/qualifier/icon.jpg</code>.
+	 * For a template, it looks like <code>/app/version/icon.jpg</code>.
 	 * </p>
 	 * <p>
 	 * Notice the returned image is not always a JPG file.
@@ -72,18 +72,18 @@ public final class IconUtils {
 	 * </p>
 	 *
 	 * @param name the application or template name
-	 * @param qualifier the template qualifier, or null for an application
+	 * @param version the template version, or null for an application
 	 * @param iconFile the icon file associated with the application or the template
 	 * @return the empty string if iconFile is null, or a longer path otherwise
 	 */
-	public static String encodeIconUrl( String name, String qualifier, File iconFile ) {
+	public static String encodeIconUrl( String name, String version, File iconFile ) {
 
 		StringBuilder sb = new StringBuilder();
 		if( iconFile != null ) {
 			sb.append( "/" );
 			sb.append( name );
-			if( ! Utils.isEmptyOrWhitespaces( qualifier ))
-				sb.append( "/" + qualifier );
+			if( ! Utils.isEmptyOrWhitespaces( version ))
+				sb.append( "/" + version );
 
 			sb.append( "/" );
 			sb.append( iconFile.getName());
@@ -94,16 +94,16 @@ public final class IconUtils {
 
 
 	/**
-	 * Decodes an URL path to extract a name and a potential qualifier.
+	 * Decodes an URL path to extract a name and a potential version.
 	 * @param path an URL path
-	 * @return a non-null map entry (key = name, value = qualifier)
+	 * @return a non-null map entry (key = name, value = version)
 	 */
 	public static Map.Entry<String,String> decodeIconUrl( String path ) {
 
 		if( path.startsWith( "/" ))
 			path = path.substring( 1 );
 
-		String name = null, qualifier = null;
+		String name = null, version = null;
 		String[] parts = path.split( "/" );
 		switch( parts.length ) {
 		case 2:
@@ -112,14 +112,14 @@ public final class IconUtils {
 
 		case 3:
 			name = parts[ 0 ];
-			qualifier = parts[ 1 ];
+			version = parts[ 1 ];
 			break;
 
 		default:
 			break;
 		}
 
-		return new AbstractMap.SimpleEntry<>( name, qualifier );
+		return new AbstractMap.SimpleEntry<>( name, version );
 	}
 
 
@@ -148,7 +148,7 @@ public final class IconUtils {
 
 			if( app instanceof ApplicationTemplate ) {
 				sb.append( "/" );
-				sb.append(((ApplicationTemplate) app).getQualifier());
+				sb.append(((ApplicationTemplate) app).getVersion());
 			}
 
 			sb.append( "/" );

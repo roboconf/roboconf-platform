@@ -54,6 +54,7 @@ import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
+import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
@@ -220,12 +221,12 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 				// Find the target handler
 				String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
-				targetProperties.putAll( scopedInstance.data );
+				TargetProperties targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+				targetProperties.asMap().putAll( scopedInstance.data );
 
 				TargetHandler readTargetHandler = null;
 				try {
-					readTargetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+					readTargetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties.asMap());
 
 				} catch( Exception e ) {
 					// nothing
@@ -446,10 +447,10 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			}
 
 			// Prepare the creation
-			Map<String,String> targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );
-			targetProperties.putAll( scopedInstance.data );
+			TargetProperties targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );
+			targetProperties.asMap().putAll( scopedInstance.data );
 
-			TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+			TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties.asMap());
 			TargetHandlerParameters parameters = parameters( ma, scopedInstance, targetProperties );
 
 			// FIXME: there can be many problems here.
@@ -526,15 +527,15 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			this.logger.fine( "Agent '" + path + "' is about to be deleted in " + ma.getName() + "." );
 			if( machineId != null ) {
 				String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
-				targetProperties.putAll( scopedInstance.data );
+				TargetProperties targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+				targetProperties.asMap().putAll( scopedInstance.data );
 
 				// Cancel post-configuration
 				TargetHandlerParameters parameters = parameters( ma, scopedInstance, targetProperties );
 				this.targetConfigurator.cancelCandidate( parameters, scopedInstance );
 
 				// Terminate the machine and release the lock
-				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties.asMap());
 				targetHandler.terminateMachine( parameters, machineId );
 
 				releaseLockedTargets( ma.getApplication(), scopedInstance );
@@ -586,19 +587,22 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	private TargetHandlerParameters parameters(
 			ManagedApplication ma,
 			Instance scopedInstance,
-			Map<String,String> targetProperties ) {
+			TargetProperties targetProperties ) {
 
 		Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
 		String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 
 		File localExecutionScript = this.targetsMngr.findScriptForDm( ma.getApplication(), scopedInstance );
 		TargetHandlerParameters parameters = new TargetHandlerParameters()
-				.targetProperties( targetProperties )
+				.targetProperties( targetProperties.asMap())
 				.messagingProperties( messagingConfiguration )
 				.scopedInstancePath( scopedInstancePath )
 				.applicationName( ma.getName())
 				.domain( this.dmDomain )
 				.targetConfigurationScript( localExecutionScript );
+
+		if( targetProperties.getSourceFile() != null )
+			parameters.setTargetPropertiesDirectory( targetProperties.getSourceFile().getParentFile());
 
 		return parameters;
 	}

@@ -48,10 +48,10 @@ public class TargetUsageItemTest {
 		Assert.assertEquals( obj, obj2 );
 		Assert.assertEquals( obj.hashCode(), obj2.hashCode());
 
-		obj.setQualifier( "desc" );
+		obj.setVersion( "desc" );
 		Assert.assertFalse( obj.equals( obj2 ));
 
-		obj2.setQualifier( "desc" );
+		obj2.setVersion( "desc" );
 		Assert.assertEquals( obj, obj2 );
 		Assert.assertEquals( obj.hashCode(), obj2.hashCode());
 	}

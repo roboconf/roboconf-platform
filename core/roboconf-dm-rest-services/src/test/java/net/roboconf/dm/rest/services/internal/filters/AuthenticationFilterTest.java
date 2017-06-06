@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -43,6 +44,7 @@ import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
+import net.roboconf.dm.rest.services.internal.ServletRegistrationComponent;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 
@@ -51,38 +53,50 @@ import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
  */
 public class AuthenticationFilterTest {
 
+	private AuthenticationFilter filter;
+	private ServletRegistrationComponent servletRegistrationComponent;
+
+
+	@Before
+	public void setup() {
+
+		this.servletRegistrationComponent = new ServletRegistrationComponent( null );
+		this.filter = new AuthenticationFilter( this.servletRegistrationComponent );
+	}
+
+
 	@Test
 	public void forCodeCoverage() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.init( null );
-		filter.destroy();
+		this.filter.init( null );
+		this.filter.destroy();
 	}
 
 
 	@Test
 	public void testDoFiler_noAuthentication() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( false );
+		this.filter.setAuthenticationEnabled( false );
 
 		ServletRequest req = Mockito.mock( ServletRequest.class );
 		ServletResponse resp = Mockito.mock( ServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verifyZeroInteractions( req );
 		Mockito.verifyZeroInteractions( resp );
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 0, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( "/whatever" );
@@ -90,7 +104,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -102,16 +116,18 @@ public class AuthenticationFilterTest {
 		Mockito.verify( resp, Mockito.only()).sendError( 403, "Authentication is required." );
 		Mockito.verifyNoMoreInteractions( resp );
 		Mockito.verifyZeroInteractions( chain );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie_corsEnabled() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
-		filter.setEnableCors( true );
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setEnableCors( true );
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( "/whatever" );
@@ -119,7 +135,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -134,6 +150,9 @@ public class AuthenticationFilterTest {
 		Mockito.verify( resp ).sendError( 403, "Authentication is required." );
 		Mockito.verifyNoMoreInteractions( resp );
 		Mockito.verifyZeroInteractions( chain );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
@@ -143,13 +162,12 @@ public class AuthenticationFilterTest {
 		final String sessionId = "a1a2a3a4";
 		final long sessionPeriod = -1;
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setSessionPeriod( sessionPeriod );
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setSessionPeriod( sessionPeriod );
 
 		AuthenticationManager authMngr = Mockito.mock( AuthenticationManager.class );
 		Mockito.when( authMngr.isSessionValid( sessionId, sessionPeriod )).thenReturn( true );
-		filter.setAuthenticationManager( authMngr );
+		this.filter.setAuthenticationManager( authMngr );
 
 		FilterChain chain = Mockito.mock( FilterChain.class );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
@@ -160,7 +178,7 @@ public class AuthenticationFilterTest {
 			new Cookie( UrlConstants.SESSION_ID, sessionId )
 		});
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -172,6 +190,9 @@ public class AuthenticationFilterTest {
 		Mockito.verify( authMngr ).isSessionValid( sessionId, sessionPeriod );
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
 		Mockito.verifyZeroInteractions( resp );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 0, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
@@ -181,13 +202,12 @@ public class AuthenticationFilterTest {
 		final String sessionId = "a1a2a3a4";
 		final long sessionPeriod = -1;
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setSessionPeriod( sessionPeriod );
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setSessionPeriod( sessionPeriod );
 
 		AuthenticationManager authMngr = Mockito.mock( AuthenticationManager.class );
 		Mockito.when( authMngr.isSessionValid( sessionId, sessionPeriod )).thenReturn( false );
-		filter.setAuthenticationManager( authMngr );
+		this.filter.setAuthenticationManager( authMngr );
 
 		FilterChain chain = Mockito.mock( FilterChain.class );
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
@@ -198,7 +218,7 @@ public class AuthenticationFilterTest {
 			new Cookie( UrlConstants.SESSION_ID, sessionId )
 		});
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -210,15 +230,17 @@ public class AuthenticationFilterTest {
 		Mockito.verify( authMngr ).isSessionValid( sessionId, sessionPeriod );
 		Mockito.verifyZeroInteractions( chain );
 		Mockito.verify( resp, Mockito.only()).sendError( 403, "Authentication is required." );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie_butLoginPageRequested() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( IAuthenticationResource.PATH + IAuthenticationResource.LOGIN_PATH );
@@ -228,7 +250,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -239,15 +261,17 @@ public class AuthenticationFilterTest {
 
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
 		Mockito.verifyZeroInteractions( resp );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 0, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie_butUserPrefRequested() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( IPreferencesResource.PATH );
@@ -258,7 +282,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -269,15 +293,17 @@ public class AuthenticationFilterTest {
 
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
 		Mockito.verifyZeroInteractions( resp );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 0, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie_butOptionsRequest() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( IPreferencesResource.PATH );
@@ -287,7 +313,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -298,15 +324,17 @@ public class AuthenticationFilterTest {
 
 		Mockito.verify( chain, Mockito.only()).doFilter( req, resp );
 		Mockito.verifyZeroInteractions( resp );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 0, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie_butUserPrefRequested_post() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( IPreferencesResource.PATH );
@@ -317,7 +345,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -328,15 +356,17 @@ public class AuthenticationFilterTest {
 
 		Mockito.verifyZeroInteractions( chain );
 		Mockito.verify( resp, Mockito.only()).sendError( 403, "Authentication is required." );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 
 	@Test
 	public void testDoFiler_withAuthentication_noCookie_butOtherPrefRequested() throws Exception {
 
-		AuthenticationFilter filter = new AuthenticationFilter();
-		filter.setAuthenticationEnabled( true );
-		filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
+		this.filter.setAuthenticationEnabled( true );
+		this.filter.setAuthenticationManager( Mockito.mock( AuthenticationManager.class ));
 
 		HttpServletRequest req = Mockito.mock( HttpServletRequest.class );
 		Mockito.when( req.getRequestURI()).thenReturn( IPreferencesResource.PATH );
@@ -347,7 +377,7 @@ public class AuthenticationFilterTest {
 		HttpServletResponse resp = Mockito.mock( HttpServletResponse.class );
 		FilterChain chain = Mockito.mock( FilterChain.class );
 
-		filter.doFilter( req, resp, chain );
+		this.filter.doFilter( req, resp, chain );
 		Mockito.verify( req ).getCookies();
 		Mockito.verify( req, Mockito.times( 2 )).getRequestURI();
 		Mockito.verify( req, Mockito.times( 2 )).getMethod();
@@ -358,6 +388,9 @@ public class AuthenticationFilterTest {
 
 		Mockito.verifyZeroInteractions( chain );
 		Mockito.verify( resp, Mockito.only()).sendError( 403, "Authentication is required." );
+
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsCount());
+		Assert.assertEquals( 1, this.servletRegistrationComponent.getRestRequestsWithAuthFailureCount());
 	}
 
 

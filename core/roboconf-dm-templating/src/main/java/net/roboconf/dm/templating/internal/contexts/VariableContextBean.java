@@ -30,8 +30,10 @@ package net.roboconf.dm.templating.internal.contexts;
  * @author Pierre Bourret - Université Joseph Fourier
  */
 public class VariableContextBean {
+
 	String name;
 	String value;
+
 
 	public String getName() {
 		return this.name;

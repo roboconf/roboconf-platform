@@ -49,6 +49,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.ITargetConfigurator;
+import net.roboconf.dm.internal.api.impl.beans.TargetPropertiesImpl;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IConfigurationMngr;
@@ -57,6 +58,7 @@ import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
+import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
 import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -117,12 +119,20 @@ public class InstancesMngrImplTest {
 			}
 		};
 
-		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.lockAndGetTarget(
+				Mockito.any( Application.class ),
+				Mockito.any( Instance.class ))).thenReturn( new TargetPropertiesImpl());
+
+		Mockito.when( targetsMngr.findTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
@@ -186,7 +196,6 @@ public class InstancesMngrImplTest {
 			}
 		};
 
-		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
@@ -195,6 +204,15 @@ public class InstancesMngrImplTest {
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.lockAndGetTarget(
+				Mockito.any( Application.class ),
+				Mockito.any( Instance.class ))).thenReturn( new TargetPropertiesImpl());
+
+		Mockito.when( targetsMngr.findTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
@@ -256,20 +274,23 @@ public class InstancesMngrImplTest {
 		// We want to make sure target locking is correctly invoked by the instances manager.
 		// So, we store requests to lock or unlock a target for a given instance.
 		final Map<Instance,Integer> instancePathToLock = new HashMap<> ();
-		Mockito.when( targetsMngr.lockAndGetTarget( app, app.getMySqlVm())).thenAnswer( new Answer<Map<String,String>>() {
+		Mockito.when( targetsMngr.lockAndGetTarget( app, app.getMySqlVm())).thenAnswer( new Answer<TargetProperties>() {
 
 			@Override
-			public Map<String,String> answer( InvocationOnMock invocation ) throws Throwable {
+			public TargetProperties answer( InvocationOnMock invocation ) throws Throwable {
 
 				Instance inst = invocation.getArgumentAt( 1, Instance.class );
 				Integer count = instancePathToLock.get( inst );
 				count = count == null ? 1 : count + 1;
 				instancePathToLock.put( inst, count );
 
-				Map<String,String> result = new HashMap<>( 0 );
-				return result;
+				return new TargetPropertiesImpl();
 			}
 		});
+
+		Mockito.when( targetsMngr.findTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		Mockito.doAnswer( new Answer<Object>() {
 			@Override
@@ -346,13 +367,12 @@ public class InstancesMngrImplTest {
 		final AtomicBoolean acquired = new AtomicBoolean( false );
 		final AtomicBoolean released = new AtomicBoolean( false );
 
-		Mockito.when( targetsMngr.lockAndGetTarget( app, app.getMySqlVm())).thenAnswer( new Answer<Map<String,String>>() {
+		Mockito.when( targetsMngr.lockAndGetTarget( app, app.getMySqlVm())).thenAnswer( new Answer<TargetProperties>() {
 
 			@Override
-			public Map<String,String> answer( InvocationOnMock invocation ) throws Throwable {
+			public TargetProperties answer( InvocationOnMock invocation ) throws Throwable {
 				acquired.set( true );
-				Map<String,String> result = new HashMap<>( 0 );
-				return result;
+				return new TargetPropertiesImpl();
 			}
 		});
 
@@ -396,9 +416,9 @@ public class InstancesMngrImplTest {
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
-		Mockito.when( targetsMngr.findRawTargetProperties(
+		Mockito.when( targetsMngr.findTargetProperties(
 				Mockito.any( Application.class ),
-				Mockito.anyString())).thenReturn( new HashMap<String,String>( 0 ));
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
@@ -425,7 +445,7 @@ public class InstancesMngrImplTest {
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 
 		// The handler's ID did not match => no restoration and no use of other mocks
-		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findTargetProperties( Mockito.eq( app ), Mockito.anyString());
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
 
@@ -449,9 +469,9 @@ public class InstancesMngrImplTest {
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
-		Mockito.when( targetsMngr.findRawTargetProperties(
+		Mockito.when( targetsMngr.findTargetProperties(
 				Mockito.any( Application.class ),
-				Mockito.anyString())).thenReturn( new HashMap<String,String>( 0 ));
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
@@ -481,7 +501,7 @@ public class InstancesMngrImplTest {
 		mngr.restoreInstanceStates( ma, targetHandlerArgument );
 
 		// The handler's ID did not match => no restoration and no use of other mocks
-		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findTargetProperties( Mockito.eq( app ), Mockito.anyString());
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
 
@@ -501,8 +521,6 @@ public class InstancesMngrImplTest {
 	public void testRestoreInstances_rightHandler_vmRunning() throws Exception {
 
 		// Prepare stuff
-		Map<String,String> targetProperties = new HashMap<>( 0 );
-
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
@@ -511,9 +529,9 @@ public class InstancesMngrImplTest {
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
-		Mockito.when( targetsMngr.findRawTargetProperties(
+		Mockito.when( targetsMngr.findTargetProperties(
 				Mockito.any( Application.class ),
-				Mockito.anyString())).thenReturn( targetProperties );
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
@@ -547,7 +565,7 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
-		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findTargetProperties( Mockito.eq( app ), Mockito.anyString());
 		Mockito.verify( targetsMngr ).findScriptForDm( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
@@ -574,16 +592,14 @@ public class InstancesMngrImplTest {
 	public void testRestoreInstances_rightHandler_vmRunning_withMessagingException() throws Exception {
 
 		// Prepare stuff
-		Map<String,String> targetProperties = new HashMap<>( 0 );
-
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
-		Mockito.when( targetsMngr.findRawTargetProperties(
+		Mockito.when( targetsMngr.findTargetProperties(
 				Mockito.any( Application.class ),
-				Mockito.anyString())).thenReturn( targetProperties );
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -624,7 +640,7 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is running => a message was sent.
-		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findTargetProperties( Mockito.eq( app ), Mockito.anyString());
 		Mockito.verify( targetsMngr ).findScriptForDm( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verifyNoMoreInteractions( targetsMngr );
@@ -651,8 +667,6 @@ public class InstancesMngrImplTest {
 	public void testRestoreInstances_rightHandler_vmNotRunning() throws Exception {
 
 		// Prepare stuff
-		Map<String,String> targetProperties = new HashMap<>( 0 );
-
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
@@ -661,9 +675,9 @@ public class InstancesMngrImplTest {
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
 
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
-		Mockito.when( targetsMngr.findRawTargetProperties(
+		Mockito.when( targetsMngr.findTargetProperties(
 				Mockito.any( Application.class ),
-				Mockito.anyString())).thenReturn( targetProperties );
+				Mockito.anyString())).thenReturn( new TargetPropertiesImpl());
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
@@ -698,7 +712,7 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 
 		// The handler's ID matched and the VM is NOT running => no message was sent.
-		Mockito.verify( targetsMngr ).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetsMngr ).findTargetProperties( Mockito.eq( app ), Mockito.anyString());
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
 		Mockito.verify( targetsMngr ).unlockTarget( Mockito.eq( app ), Mockito.eq( app.getTomcatVm()));
 		Mockito.verify( targetsMngr ).findScriptForDm( Mockito.eq( app ), Mockito.eq( app.getMySqlVm()));
@@ -745,7 +759,6 @@ public class InstancesMngrImplTest {
 		// Prepare stuff
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
-		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
@@ -753,6 +766,11 @@ public class InstancesMngrImplTest {
 
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.lockAndGetTarget(
+				Mockito.any( Application.class ),
+				Mockito.any( Instance.class ))).thenReturn( new TargetPropertiesImpl());
 
 		TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
 		Mockito.when( targetHandler.createMachine( Mockito.any( TargetHandlerParameters.class ))).thenReturn( "this-id" );
@@ -762,7 +780,7 @@ public class InstancesMngrImplTest {
 				Mockito.any( Instance.class ));
 
 		ITargetHandlerResolver targetHandlerResolver = Mockito.mock( ITargetHandlerResolver.class );
-		Mockito.when( targetHandlerResolver.findTargetHandler( Mockito.anyMap())).thenReturn( targetHandler );
+		Mockito.when( targetHandlerResolver.findTargetHandler( Mockito.anyMapOf( String.class, String.class ))).thenReturn( targetHandler );
 
 		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( targetHandlerResolver );

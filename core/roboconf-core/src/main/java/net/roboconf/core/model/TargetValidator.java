@@ -27,6 +27,7 @@ package net.roboconf.core.model;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +64,7 @@ public class TargetValidator {
 
 		this.props = new Properties();
 		try {
-			this.props.load( new ByteArrayInputStream( propertiesFileContent.getBytes( "UTF-8" )));
+			this.props.load( new ByteArrayInputStream( propertiesFileContent.getBytes( StandardCharsets.UTF_8 )));
 
 		} catch( Exception e ) {
 			this.failed = true;

@@ -25,47 +25,39 @@
 
 package net.roboconf.target.docker.internal;
 
-import static net.roboconf.target.docker.internal.DockerHandler.ADDITIONAL_DEPLOY;
-import static net.roboconf.target.docker.internal.DockerHandler.ADDITIONAL_PACKAGES;
-import static net.roboconf.target.docker.internal.DockerHandler.AGENT_JRE_AND_PACKAGES;
-import static net.roboconf.target.docker.internal.DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
-import static net.roboconf.target.docker.internal.DockerHandler.AGENT_PACKAGE_URL;
-import static net.roboconf.target.docker.internal.DockerHandler.BASE_IMAGE;
-import static net.roboconf.target.docker.internal.DockerHandler.DEFAULT_DOCKER_IMAGE_REGISTRY;
-import static net.roboconf.target.docker.internal.DockerHandler.DOCKER_IMAGE_REGISTRY;
-import static net.roboconf.target.docker.internal.DockerHandler.DOWNLOAD_BASE_IMAGE;
-import static net.roboconf.target.docker.internal.DockerHandler.GENERATE_IMAGE;
+import static net.roboconf.target.docker.internal.DockerHandler.DEFAULT_IMAGE;
+import static net.roboconf.target.docker.internal.DockerHandler.GENERATE_IMAGE_FROM;
 import static net.roboconf.target.docker.internal.DockerHandler.IMAGE_ID;
 import static net.roboconf.target.docker.internal.DockerHandler.OPTION_PREFIX_ENV;
 import static net.roboconf.target.docker.internal.DockerHandler.OPTION_PREFIX_RUN;
-import static net.roboconf.target.docker.internal.DockerHandler.RUN_EXEC;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.ops4j.pax.url.mvn.MavenResolver;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
-import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.google.common.collect.Sets;
 
+import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ManifestUtils;
-import net.roboconf.core.utils.MavenUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -73,51 +65,49 @@ import net.roboconf.target.api.TargetException;
  */
 public class DockerMachineConfigurator implements MachineConfigurator {
 
-	static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
-
 	DockerClient dockerClient;
+	Logger logger = Logger.getLogger( getClass().getName());
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
+	static final String USER_DATA_DIR = "/tmp/user-data/";
+	static final String USER_DATA_FILE = "parameters.properties";
+
+	private final TargetHandlerParameters parameters;
 	private final Instance scopedInstance;
-	private final Map<String,String> targetProperties;
-	private final Map<String,String> messagingConfiguration;
-	private final String machineId, scopedInstancePath, applicationName;
+	private final String machineId;
 
-	private MavenResolver mavenResolver;
-
+	private final File userDataVolume;
+	private final Map<String,File> containerIdToVolume;
 
 
 	/**
 	 * Constructor.
-	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
-	 * @param messagingConfiguration the messaging configuration
+	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
-	 * @param applicationName the application name
-	 * @param scopedInstancePath the path of the scoped/root instance
 	 * @param scopedInstance the scoped instance
+	 * @param userDataVolume the directory into which user data volume should be created
+	 * @param containerIdToVolume a map to associate container IDs with user data directories
 	 */
 	public DockerMachineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
+			TargetHandlerParameters parameters,
 			String machineId,
-			String scopedInstancePath,
-			String applicationName,
-			Instance scopedInstance ) {
+			Instance scopedInstance,
+			File userDataVolume,
+			Map<String,File> containerIdToVolume ) {
 
-		this.targetProperties = targetProperties;
-		this.messagingConfiguration = messagingConfiguration;
-		this.applicationName = applicationName;
-		this.scopedInstancePath = scopedInstancePath;
+		this.parameters = parameters;
 		this.machineId = machineId;
 		this.scopedInstance = scopedInstance;
+
+		this.userDataVolume = userDataVolume;
+		this.containerIdToVolume = containerIdToVolume;
 	}
 
 
 	/**
-	 * @param mavenResolver the mavenResolver to set
+	 * @return the parameters
 	 */
-	public void setMavenResolver( MavenResolver mavenResolver ) {
-		this.mavenResolver = mavenResolver;
+	public TargetHandlerParameters getParameters() {
+		return this.parameters;
 	}
 
 
@@ -142,17 +132,18 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		// So, this is not asynchronous configuration.
 		// Said differently, this method will be invoked only once!
 
-		this.dockerClient = DockerUtils.createDockerClient( this.targetProperties );
-		String imageId = this.targetProperties.get( IMAGE_ID );
-		String fixedImageId = fixImageId( imageId );
+		Map<String,String> targetProperties = this.parameters.getTargetProperties();
+		this.dockerClient = DockerUtils.createDockerClient( targetProperties );
 
-		String generateAS = this.targetProperties.get( GENERATE_IMAGE );
-		boolean generate = Boolean.parseBoolean( generateAS );
-		Image img = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
-		if( generate && img == null )
-			createImage( fixedImageId );
+		String rbcfVersion = DockerUtils.findDefaultImageVersion( ManifestUtils.findBundleVersion());
+		String imageId = Utils.getValue( targetProperties, IMAGE_ID, DEFAULT_IMAGE + ":" + rbcfVersion );
+		this.logger.fine( "Used image: " + imageId );
 
-		createContainer( fixedImageId );
+		Image img = DockerUtils.findImageByIdOrByTag( imageId, this.dockerClient );
+		if( img == null )
+			createImage( imageId );
+
+		createContainer( imageId );
 		return true;
 	}
 
@@ -166,47 +157,72 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		// Get the command to pass to the container
 		this.logger.info( "Creating container " + this.machineId + " from image " + imageId );
-		List<String> args = DockerUtils.buildRunCommand(
-				this.targetProperties.get( RUN_EXEC ),
-				this.messagingConfiguration , this.applicationName, this.scopedInstancePath );
+
+		// Extract parameters as local variables
+		Map<String,String> targetProperties = this.parameters.getTargetProperties();
+		String applicationName = this.parameters.getApplicationName();
+		String scopedInstancePath = this.parameters.getScopedInstancePath();
 
 		// Deal with the Docker run options
 		Map<String,String> options = new HashMap<> ();
-		for( Map.Entry<String,String> entry : this.targetProperties.entrySet()) {
+		for( Map.Entry<String,String> entry : targetProperties.entrySet()) {
 			if( entry.getKey().toLowerCase().startsWith( OPTION_PREFIX_RUN )) {
 				String key = entry.getKey().substring( OPTION_PREFIX_RUN.length());
 				options.put( key, entry.getValue());
 			}
 		}
 
-		// Deal with environment variables
+		// Deal with environment variables (user)
 		List<String> env = new ArrayList<> ();
-		for( Map.Entry<String,String> entry : this.targetProperties.entrySet()) {
+		for( Map.Entry<String,String> entry : targetProperties.entrySet()) {
 			if( entry.getKey().toLowerCase().startsWith( OPTION_PREFIX_ENV )) {
 
 				String key = entry.getKey().substring( OPTION_PREFIX_ENV.length());
 				String value = entry.getValue();
 
-				value = value.replace( "<application-name>", this.applicationName );
-				value = value.replace( "<scoped-instance-path>", this.scopedInstancePath );
+				value = value.replace( "<application-name>", applicationName );
+				value = value.replace( "<scoped-instance-path>", scopedInstancePath );
+				value = value.replace( "<scoped-messaging_type>", Utils.getValue(
+						this.parameters.getMessagingProperties(),
+						MessagingConstants.MESSAGING_TYPE_PROPERTY,
+						"" ));
 
 				env.add( key + "=" + value );
 			}
 		}
 
+		// Deal with environment variables (default one: the Roboconf version)
+		String rbcfVersion = DockerUtils.findDefaultImageVersion( ManifestUtils.findBundleVersion());
+		env.add( "RBCF_VERSION=" + rbcfVersion );
+
+		// Deal with environment variables (default one: the user data)
+		env.add( "AGENT_PARAMETERS=file:" + USER_DATA_DIR + USER_DATA_FILE );
+
 		// Execute...
 		try {
-			String containerName = this.scopedInstancePath + "_from_" + this.applicationName;
-			containerName = containerName.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
+			String containerName = DockerUtils.buildContainerNameFrom( scopedInstancePath, applicationName );
 
-			// Prevent container names from being too long (see #480)
-			if( containerName.length() > 61 )
-				containerName = containerName.substring( 0, 61 );
+			// Create a volume
+			File dir = new File( this.userDataVolume, containerName );
+			Utils.createDirectory( dir );
+			this.containerIdToVolume.put( containerName, dir );
 
+			String userData = DataHelpers.writeUserDataAsString(
+					this.parameters.getMessagingProperties(),
+					this.parameters.getDomain(),
+					this.parameters.getApplicationName(),
+					this.parameters.getScopedInstancePath());
+
+			Utils.writeStringInto( userData, new File( dir, USER_DATA_FILE ));
+			Volume volume = new Volume( USER_DATA_DIR );
+			Bind volumeBind = new Bind( dir.getAbsolutePath(), volume );
+
+			// Create the container
 			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId )
 					.withName( containerName )
 					.withEnv( env )
-					.withCmd( args.toArray( new String[ args.size()]));
+					.withVolumes( Arrays.asList( volume ))
+					.withBinds( Arrays.asList( volumeBind ));
 
 			DockerUtils.configureOptions( options, cmd );
 			CreateContainerResponse container = cmd.exec();
@@ -246,153 +262,39 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @throws TargetException if something went wrong
 	 */
 	void createImage( String imageId ) throws TargetException {
-		this.logger.fine( "Trying to create image " + imageId + " from a generated Dockerfile." );
 
-		// Find the agent's package URL
-		String agentPackageUrl = this.targetProperties.get( AGENT_PACKAGE_URL );
-		if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
-			String bundleVersion = ManifestUtils.findBundleVersion();
-			String mavenVersion = ManifestUtils.findMavenVersion( bundleVersion );
-			if( bundleVersion == null )
-				throw new TargetException( "Roboconf's version could not be determined (guessing the agent package URL failed)." );
+		// If there is no Dockerfile, this method will do nothing
+		File targetDirectory = this.parameters.getTargetPropertiesDirectory();
+		String dockerFilePath = this.parameters.getTargetProperties().get( GENERATE_IMAGE_FROM );
+		if( ! Utils.isEmptyOrWhitespaces( dockerFilePath ) && targetDirectory != null ) {
 
-			IOException exception = null;
-			try {
-				agentPackageUrl = MavenUtils.findMavenUrl( "net.roboconf", "roboconf-karaf-dist-agent", mavenVersion, "tar.gz" );
-			} catch( IOException e ) {
-				exception = e;
-			}
-
-			if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
-				String s = "No Maven package was found for the agent distribution " + mavenVersion + " (guessing the agent package URL failed).";
-				throw new TargetException( s, exception );
-			}
-		}
-
-		// Verify the base image exists, if any
-		// (otherwise, a default one is provided by the image generator).
-		String baseImageRef = this.targetProperties.get( BASE_IMAGE );
-		if( ! Utils.isEmptyOrWhitespaces( baseImageRef )) {
-
-			Image baseImage = DockerUtils.findImageByIdOrByTag( baseImageRef, this.dockerClient );
-			String downloadImage = this.targetProperties.get( DOWNLOAD_BASE_IMAGE );
-			if( baseImage == null ) {
-
-				// Should we download it?
-				if( ! Boolean.parseBoolean( downloadImage ))
-					throw new TargetException( "Base image '" + baseImageRef + "' was not found. Image generation is not possible." );
-
-				// Download the base image then
-				String imageRegistry = Utils.getValue( this.targetProperties, DOCKER_IMAGE_REGISTRY, DEFAULT_DOCKER_IMAGE_REGISTRY );
-				this.logger.fine( "Asking Docker to download image '" + baseImageRef + "' from the registry: " + imageRegistry );
-				List<String> imageInfos = Utils.splitNicely( baseImageRef, ":" );
-
-				PullImageCmd cmd  = this.dockerClient.pullImageCmd( imageInfos.get( 0 )).withRegistry( imageRegistry );
-				if( imageInfos.size() > 1 )
-					cmd = cmd.withTag( imageInfos.get( 1 ));
-
-				try {
-					cmd.exec( new RoboconfPullImageResultCallback()).awaitSuccess();
-
-				} catch( Exception e ) {
-					Utils.logException( this.logger, e );
-					throw new TargetException( "An error occurred while downloading image '" + baseImageRef + "'.", e );
-				}
-
-				baseImage = DockerUtils.findImageByIdOrByTag( baseImageRef, this.dockerClient);
-				if( baseImage == null)
-					throw new TargetException( "Base image '" + baseImageRef + "' was not found, even after a download attempt. Image generation is not possible." );
-
-				this.logger.info( "Base image '" + baseImageRef + "' was successfulyl downloaded." );
-			}
-		}
-
-		// Build the packages list.
-		String packages = this.targetProperties.get( AGENT_JRE_AND_PACKAGES );
-		final String additionalPackages = this.targetProperties.get( ADDITIONAL_PACKAGES );
-		if( ! Utils.isEmptyOrWhitespaces(additionalPackages)) {
-
-			// Sets to the default here, so we do not override the JRE package.
-			if (Utils.isEmptyOrWhitespaces(packages))
-				packages = AGENT_JRE_AND_PACKAGES_DEFAULT;
-
-			packages = packages + ' ' + additionalPackages;
-		}
-
-		// Build the additional URLs-to-deploy list.
-		final String deploy = this.targetProperties.get( ADDITIONAL_DEPLOY );
-		List<String> deployList;
-		if( Utils.isEmptyOrWhitespaces( deploy ))
-			deployList = Collections.emptyList();
-		else
-			deployList = Utils.splitNicely( deploy, " " );
-
-		// Create the image
-		File dockerfile = null;
-		try {
-			// Generate a Dockerfile
-			DockerfileGenerator gen = dockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
-			dockerfile = gen.generateDockerfile();
+			this.logger.fine( "Trying to create image " + imageId + " from a Dockerfile." );
+			File dockerFile = new File( targetDirectory, dockerFilePath );
+			if( ! dockerFile.exists())
+				throw new TargetException( "No Dockerfile was found at " + dockerFile );
 
 			// Start the build.
 			// This will block the current thread until the creation is complete.
+			String builtImageId;
 			this.logger.fine( "Asking Docker to build the image from our Dockerfile." );
-			String builtImageId = this.dockerClient
-					.buildImageCmd( dockerfile )
-					.withTag( imageId )
+			try {
+				builtImageId = this.dockerClient
+					.buildImageCmd( dockerFile )
+					.withTags( Sets.newHashSet( imageId ))
+					.withPull( true )
 					.exec( new RoboconfBuildImageResultCallback())
 					.awaitImageId();
 
+			} catch( Exception e ) {
+				Utils.logException( this.logger, e );
+				throw new TargetException( e );
+			}
+
 			// No need to store the real image ID... Docker has it.
 			// Besides, we search images by both IDs and tags.
-			// Anyway, we can log the information anyway.
+			// Anyway, we can log the information.
 			this.logger.fine( "Image '" + builtImageId + "' was succesfully generated by Roboconf." );
-
-		} catch( Exception e ) {
-			Utils.logException( this.logger, e );
-			throw new TargetException( e );
-
-		} finally {
-			Utils.deleteFilesRecursivelyAndQuietly( dockerfile );
 		}
-	}
-
-
-	/**
-	 * @param baseImageRef
-	 * @param deployList
-	 * @param packages
-	 * @param agentPackageUrl
-	 * @return a new Docker image generator (externalized for tests)
-	 */
-	DockerfileGenerator dockerfileGenerator(String agentPackageUrl , String packages , List<String> deployList, String baseImageRef ) {
-
-		DockerfileGenerator gen = new DockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
-		gen.setMavenResolver( this.mavenResolver );
-
-		return gen;
-	}
-
-
-	/**
-	 * @param imageId
-	 * @return a non-null string
-	 */
-	static String fixImageId( String imageId ) {
-		return Utils.isEmptyOrWhitespaces( imageId ) ? DEFAULT_IMG_NAME : imageId;
-	}
-
-
-	/**
-	 * A call back invoked when a Docker image was pulled.
-	 * <p>
-	 * No anonymous class in Roboconf.
-	 * </p>
-	 *
-	 * @author Vincent Zurczak - Linagora
-	 */
-	static class RoboconfPullImageResultCallback extends PullImageResultCallback {
-		// nothing
 	}
 
 

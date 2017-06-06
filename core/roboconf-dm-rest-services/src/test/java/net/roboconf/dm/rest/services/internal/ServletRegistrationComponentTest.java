@@ -84,6 +84,7 @@ public class ServletRegistrationComponentTest {
 	@Before
 	@SuppressWarnings( "unchecked" )
 	public void initializeManager() throws Exception {
+
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
@@ -264,7 +265,9 @@ public class ServletRegistrationComponentTest {
 
 		// No NPE
 		this.register.setEnableCors( true );
+		Assert.assertTrue( this.register.isCorsEnabled());
 		this.register.setEnableCors( false );
+		Assert.assertFalse( this.register.isCorsEnabled());
 	}
 
 
@@ -306,6 +309,9 @@ public class ServletRegistrationComponentTest {
 
 		// No NPE
 		this.register.setEnableAuthentication( false );
+		Assert.assertFalse( this.register.isAuthenticationRequired());
+		this.register.setEnableAuthentication( true );
+		Assert.assertTrue( this.register.isAuthenticationRequired());
 	}
 
 

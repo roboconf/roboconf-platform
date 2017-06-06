@@ -97,7 +97,7 @@ public class ApplicationTemplateMngrImplTest {
 		map.put( tpl, Boolean.TRUE );
 		Assert.assertEquals( tpl, this.mngr.findTemplate( "lamp", null ));
 
-		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).qualifier( "v2" );
+		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).version( "v2" );
 		map.put( tpl2, Boolean.TRUE );
 
 		Assert.assertFalse( tpl.equals( tpl2 ));
@@ -146,7 +146,7 @@ public class ApplicationTemplateMngrImplTest {
 
 		ApplicationTemplate tpl = this.mngr.getApplicationTemplates().iterator().next();
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 	}
@@ -181,7 +181,7 @@ public class ApplicationTemplateMngrImplTest {
 		ApplicationTemplate tpl = this.mngr.getApplicationTemplates().iterator().next();
 		Assert.assertEquals( "ca debute", tpl.getName());
 		Assert.assertEquals( "ça débute", tpl.getDisplayName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 	}
@@ -211,7 +211,7 @@ public class ApplicationTemplateMngrImplTest {
 
 		ApplicationTemplate tpl = this.mngr.getApplicationTemplates().iterator().next();
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 	}
@@ -247,7 +247,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertNotNull( tpl );
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
-		this.mngr.deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		this.mngr.deleteApplicationTemplate( tpl.getName(), tpl.getVersion());
 		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
 	}
 
@@ -264,7 +264,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Mockito.when( this.applicationMngr.isTemplateUsed( tpl )).thenReturn( true );
-		this.mngr.deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		this.mngr.deleteApplicationTemplate( tpl.getName(), tpl.getVersion());
 	}
 
 
@@ -309,7 +309,7 @@ public class ApplicationTemplateMngrImplTest {
 		}
 
 		// Change the qualifier in the files
-		desc.setQualifier( "v33.2" );
+		desc.setVersion( "33.2" );
 		ApplicationTemplateDescriptor.save( descriptorFile, desc );
 		this.mngr.loadApplicationTemplate( directoryCopy );
 	}
@@ -343,7 +343,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		// Change the qualifier in the files
-		desc.setQualifier( "v33.2" );
+		desc.setVersion( "33.2" );
 		desc.setExternalExportsPrefix( null );
 		ApplicationTemplateDescriptor.save( descriptorFile, desc );
 		this.mngr.loadApplicationTemplate( directoryCopy );
@@ -380,8 +380,8 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		// Verify the search works
-		Assert.assertNull( this.mngr.findTemplate( desc.getName(), desc.getQualifier()));
-		Assert.assertNotNull( this.mngr.findTemplate( "ca a commence", desc.getQualifier()));
+		Assert.assertNull( this.mngr.findTemplate( desc.getName(), desc.getVersion()));
+		Assert.assertNotNull( this.mngr.findTemplate( "ca a commence", desc.getVersion()));
 	}
 
 
@@ -392,7 +392,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertTrue( source.exists());
 
 		File apps = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES );
-		File target = new File( apps, "Legacy LAMP - sample/sub/dir" );
+		File target = new File( apps, "Legacy LAMP - 1.0.1-SNAPSHOT/sub/dir" );
 		Utils.copyDirectory( source, target );
 		this.mngr.loadApplicationTemplate( target );
 	}
@@ -422,7 +422,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
@@ -454,7 +454,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
@@ -497,7 +497,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
@@ -544,7 +544,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
@@ -606,7 +606,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 
@@ -680,7 +680,7 @@ public class ApplicationTemplateMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 		Assert.assertNotNull( tpl.getGraphs());
 		Assert.assertFalse( tpl.getRootInstances().isEmpty());
 

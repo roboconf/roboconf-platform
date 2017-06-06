@@ -187,7 +187,7 @@ public class UpdateSwaggerJson {
 		// (*) Target usage items
 		TargetUsageItem tui = new TargetUsageItem();
 		tui.setName( "app or template name" );
-		tui.setQualifier( "template qualifier (null for applications)" );
+		tui.setVersion( "template qualifier (null for applications)" );
 		tui.setReferencing( true );
 		tui.setUsing( true );
 
@@ -335,7 +335,7 @@ public class UpdateSwaggerJson {
 
 		ApplicationTemplate tpl = new ApplicationTemplate();
 		tpl.setName( "test-app" );
-		tpl.setQualifier( "test" );
+		tpl.setVersion( "test" );
 
 		// Root instances
 		Component vmComponent = new Component( "vm" ).installerName( Constants.TARGET_INSTALLER );

@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -75,7 +76,7 @@ public final class AgentProperties {
 	 * @return the domain
 	 */
 	public String getDomain() {
-		return this.domain;
+		return this.domain == null ? Constants.DEFAULT_DOMAIN : this.domain;
 	}
 
 
@@ -193,7 +194,7 @@ public final class AgentProperties {
 			}
 		}
 
-		result.setMessagingConfiguration(Collections.unmodifiableMap(messagingConfiguration));
+		result.setMessagingConfiguration( Collections.unmodifiableMap( messagingConfiguration ));
 		return result;
 	}
 
@@ -212,5 +213,4 @@ public final class AgentProperties {
 
 		return property;
 	}
-
 }

@@ -141,7 +141,7 @@ public class TargetWsDelegateTest {
 
 		String content = "handler: h\nid: toto\nprop: ok";
 		String targetId = this.client.getTargetWsDelegate().createTarget( content );
-		String read = this.manager.targetsMngr().findRawTargetProperties( targetId );
+		String read = this.manager.targetsMngr().findTargetProperties( targetId ).asString();
 
 		Assert.assertEquals( "handler: h\nprop: ok", read );
 	}

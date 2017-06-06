@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.docker.internal;
+package net.roboconf.target.docker.internal.test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +110,7 @@ public final class DockerTestUtils {
 		BufferedReader reader = null;
 		boolean ok = false;
 		try {
-			reader = new BufferedReader( new InputStreamReader( new FileInputStream( dockerConf ), "UTF-8" ));
+			reader = new BufferedReader( new InputStreamReader( new FileInputStream( dockerConf ), StandardCharsets.UTF_8 ));
 			String line;
 			while( ! ok && (line = reader.readLine()) != null) {
 				if( line.indexOf("#") < 0
@@ -133,7 +134,7 @@ public final class DockerTestUtils {
 
 			OutputStreamWriter writer = null;
 			try {
-				writer = new OutputStreamWriter( new FileOutputStream( dockerConf, true ),"UTF-8" );
+				writer = new OutputStreamWriter( new FileOutputStream( dockerConf, true ), StandardCharsets.UTF_8 );
 				writer.append("DOCKER_OPTS=\"-H tcp://localhost:" + DOCKER_TCP_PORT + " -H unix:///var/run/docker.sock\"\n");
 
 			} finally {
