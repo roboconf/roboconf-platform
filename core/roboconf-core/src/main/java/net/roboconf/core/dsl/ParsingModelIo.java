@@ -28,6 +28,7 @@ package net.roboconf.core.dsl;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.dsl.parsing.FileDefinitionParser;
@@ -109,6 +110,6 @@ public final class ParsingModelIo {
 	throws IOException {
 
 		String s = writeConfigurationFile( relationsFile, writeComments, lineSeparator );
-		Utils.copyStream( new ByteArrayInputStream( s.getBytes( "UTF-8" )), targetFile );
+		Utils.copyStream( new ByteArrayInputStream( s.getBytes( StandardCharsets.UTF_8 )), targetFile );
 	}
 }

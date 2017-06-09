@@ -268,7 +268,7 @@ public class ManagementWsDelegate {
 	throws ManagementWsException {
 
 		this.logger.finer( "Creating application " + applicationName + " from " + templateName + " - " + templateQualifier + "..." );
-		ApplicationTemplate tpl = new ApplicationTemplate( templateName ).qualifier( templateQualifier );
+		ApplicationTemplate tpl = new ApplicationTemplate( templateName ).version( templateQualifier );
 		Application app = new Application( applicationName, tpl );
 
 		WebResource path = this.resource.path( UrlConstants.APPLICATIONS );

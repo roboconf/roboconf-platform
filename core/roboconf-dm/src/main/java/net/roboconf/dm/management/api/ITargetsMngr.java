@@ -153,28 +153,50 @@ public interface ITargetsMngr {
 
 
 	/**
-	 * Finds the RAW target properties of a scoped instance within an application or an application template.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public interface TargetProperties {
+
+		/**
+		 * @return the properties as a map
+		 */
+		Map<String,String> asMap();
+
+		/**
+		 * @return the properties as a string
+		 */
+		String asString();
+
+		/**
+		 * @return the properties file (or null if no matching target was found)
+		 */
+		File getSourceFile();
+	}
+
+
+	/**
+	 * Finds the target properties of a scoped instance within an application or an application template.
 	 * <p>
 	 * Notice that this variable does not expand anything (e.g. IP addresses).
 	 * </p>
 	 *
 	 * @param app an application or application template
 	 * @param instancePath an instance path
-	 * @return a non-null map of properties (empty if the file was not found)
+	 * @return target properties (not null, empty if the file was not found)
 	 * @see #lockAndGetTarget(AbstractApplication, String)
 	 */
-	Map<String,String> findRawTargetProperties( AbstractApplication app, String instancePath );
+	TargetProperties findTargetProperties( AbstractApplication app, String instancePath );
 
 	/**
-	 * Finds the RAW target properties of a scoped instance within an application or an application template.
+	 * Finds the properties for a given target.
 	 * <p>
 	 * Notice that this variable does not expand anything (e.g. IP addresses).
 	 * </p>
 	 *
 	 * @param targetId the target ID
-	 * @return a string with the target properties as a string (null if the file was not found)
+	 * @return target properties (not null, empty if the file was not found)
 	 */
-	String findRawTargetProperties( String targetId );
+	TargetProperties findTargetProperties( String targetId );
 
 	/**
 	 * Finds the target ID for a scoped instance within an application or an application template.
@@ -281,7 +303,7 @@ public interface ITargetsMngr {
 
 
 	/**
-	 * Almost equivalent to {@link #findRawTargetProperties(AbstractApplication, String)}.
+	 * Almost equivalent to {@link #findTargetProperties(AbstractApplication, String)}.
 	 * <p>
 	 * However, there are two differences. First, it locks the target.
 	 * And second, it expands properties with information extracted from the instance.
@@ -293,13 +315,13 @@ public interface ITargetsMngr {
 	 *
 	 * @param app an application
 	 * @param scopedInstance a scoped instance
-	 * @return a non-null map of properties (empty if the file was not found)
+	 * @return target properties (not null, empty if the file was not found)
 	 * @throws IOException if the target could not be locked or properties not be read
 	 * <p>
 	 * In case of exception, you will have to explicitly invoke {@link #unlockTarget(AbstractApplication, Instance)}.
 	 * </p>
 	 */
-	Map<String,String> lockAndGetTarget( Application app, Instance scopedInstance ) throws IOException;
+	TargetProperties lockAndGetTarget( Application app, Instance scopedInstance ) throws IOException;
 
 
 	/**

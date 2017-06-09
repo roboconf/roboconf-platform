@@ -106,7 +106,7 @@ public final class RuntimeModelIo {
 				appDescriptor = ApplicationTemplateDescriptor.load( descriptorFile );
 				app.setName( appDescriptor.getName());
 				app.setDescription( appDescriptor.getDescription());
-				app.setQualifier( appDescriptor.getQualifier());
+				app.setVersion( appDescriptor.getVersion());
 				app.setDslId( appDescriptor.getDslId());
 				app.setExternalExportsPrefix( appDescriptor.getExternalExportsPrefix());
 
@@ -155,10 +155,10 @@ public final class RuntimeModelIo {
 			ApplicationTemplateDescriptor appDescriptor = new ApplicationTemplateDescriptor();
 			appDescriptor.setName( Constants.GENERATED );
 			appDescriptor.setDslId( Constants.GENERATED );
-			appDescriptor.setQualifier( Constants.GENERATED );
+			appDescriptor.setVersion( Constants.GENERATED );
 
 			ApplicationLoadResult alr = new ApplicationLoadResult();
-			alr.applicationTemplate = new ApplicationTemplate( Constants.GENERATED ).dslId( Constants.GENERATED ).qualifier( Constants.GENERATED );
+			alr.applicationTemplate = new ApplicationTemplate( Constants.GENERATED ).dslId( Constants.GENERATED ).version( Constants.GENERATED );
 
 			File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 			File[] graphFiles = graphDirectory.listFiles( new GraphFileFilter());

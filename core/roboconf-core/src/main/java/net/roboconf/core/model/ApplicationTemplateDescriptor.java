@@ -45,7 +45,7 @@ import net.roboconf.core.utils.Utils;
 public class ApplicationTemplateDescriptor {
 
 	public static final String APPLICATION_NAME = "application-name";
-	public static final String APPLICATION_QUALIFIER = "application-qualifier";
+	public static final String APPLICATION_VERSION = "application-version";
 	public static final String APPLICATION_DESCRIPTION = "application-description";
 	public static final String APPLICATION_DSL_ID = "application-dsl-id";
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
@@ -54,7 +54,7 @@ public class ApplicationTemplateDescriptor {
 	public static final String APPLICATION_EXTERNAL_EXPORTS = "exports";
 	public static final String APPLICATION_EXTERNAL_EXPORTS_AS = "as";
 
-	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId, externalExportsPrefix;
+	private String name, description, version, graphEntryPoint, instanceEntryPoint, dslId, externalExportsPrefix;
 	public final Map<String,String> externalExports = new HashMap<> ();
 	public final Set<String> invalidExternalExports = new HashSet<> ();
 
@@ -88,17 +88,17 @@ public class ApplicationTemplateDescriptor {
 	}
 
 	/**
-	 * @return the qualifier
+	 * @return the version
 	 */
-	public String getQualifier() {
-		return this.qualifier;
+	public String getVersion() {
+		return this.version;
 	}
 
 	/**
-	 * @param qualifier the qualifier to set
+	 * @param version the version to set
 	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public void setVersion( String version ) {
+		this.version = version;
 	}
 
 	/**
@@ -168,7 +168,7 @@ public class ApplicationTemplateDescriptor {
 		ApplicationTemplateDescriptor result = new ApplicationTemplateDescriptor();
 		result.name = properties.getProperty( APPLICATION_NAME, null );
 		result.description = properties.getProperty( APPLICATION_DESCRIPTION, null );
-		result.qualifier = properties.getProperty( APPLICATION_QUALIFIER, null );
+		result.version = properties.getProperty( APPLICATION_VERSION, null );
 		result.graphEntryPoint = properties.getProperty( APPLICATION_GRAPH_EP, null );
 		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
 		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
@@ -219,8 +219,8 @@ public class ApplicationTemplateDescriptor {
 		if( descriptor.name != null )
 			properties.setProperty( APPLICATION_NAME, descriptor.name );
 
-		if( descriptor.qualifier != null )
-			properties.setProperty( APPLICATION_QUALIFIER, descriptor.qualifier );
+		if( descriptor.version != null )
+			properties.setProperty( APPLICATION_VERSION, descriptor.version );
 
 		if( descriptor.dslId != null )
 			properties.setProperty( APPLICATION_DSL_ID, descriptor.dslId );

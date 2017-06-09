@@ -111,18 +111,18 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 		ApplicationTemplate tpl = templates.get( 0 );
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 
 		// Create an application
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplications().size());
-		client.getManagementDelegate().createApplication( "app1", tpl.getName(), tpl.getQualifier());
+		client.getManagementDelegate().createApplication( "app1", tpl.getName(), tpl.getVersion());
 		List<Application> apps = client.getManagementDelegate().listApplications();
 		Assert.assertEquals( 1, apps.size());
 
 		Application receivedApp = apps.get( 0 );
 		Assert.assertEquals( "app1", receivedApp.getName());
 		Assert.assertEquals( "Legacy LAMP", receivedApp.getTemplate().getName());
-		Assert.assertEquals( "sample", receivedApp.getTemplate().getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", receivedApp.getTemplate().getVersion());
 
 		// Check the JSon serialization
 		URI targetUri = URI.create( rootUrl + "/app/app1/instances?instance-path=/Apache%20VM" );

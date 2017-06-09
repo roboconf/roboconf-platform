@@ -56,6 +56,13 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-messaging-api</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java</artifactId>
 			<exclusions>
@@ -113,11 +120,11 @@
 			<scope>test</scope>
 		</dependency>
 		
-		<!-- Resolve Maven URLs -->
 		<dependency>
-			<groupId>org.ops4j.pax.url</groupId>
-			<artifactId>pax-url-aether</artifactId>
-			<scope>provided</scope>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-agent</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	
@@ -138,8 +145,7 @@
 							org.xml.*,
 							org.w3c.*,
 							org.slf4j.*,
-							org.apache.log4.*,
-							org.ops4j.pax.url.*
+							org.apache.log4.*
 						</Import-Package>
 						<Embed-Dependency>
 							*;scope=compile|runtime;inline=true;groupId=!net.roboconf

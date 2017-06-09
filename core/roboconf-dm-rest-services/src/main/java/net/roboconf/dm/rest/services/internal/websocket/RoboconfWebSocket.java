@@ -31,6 +31,7 @@ import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.rest.services.internal.ServletRegistrationComponent;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -59,6 +60,7 @@ public class RoboconfWebSocket implements WebSocketListener {
 	public void onWebSocketError( Throwable cause ) {
 		this.logger.severe( "An error related to web sockets occurred. Session origin: " + this.session.getRemoteAddress());
 		Utils.logException( this.logger, new Exception( cause ));
+		ServletRegistrationComponent.WS_CONNECTION_ERRORS_COUNT.incrementAndGet();
 	}
 
 	@Override

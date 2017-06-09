@@ -58,6 +58,7 @@ import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.impl.beans.InstanceContext;
+import net.roboconf.dm.internal.api.impl.beans.TargetPropertiesImpl;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.api.IConfigurationMngr;
@@ -185,7 +186,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			sb.append( ": " );
 			sb.append( creator.getName());
 			sb.append( " - " );
-			sb.append( creator.getQualifier());
+			sb.append( creator.getVersion());
 		}
 
 		// Create a target
@@ -355,7 +356,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	public void applicationWasDeleted( AbstractApplication app ) throws IOException {
 
 		String name = app.getName();
-		String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : null;
+		String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getVersion() : null;
 
 		List<InstanceContext> toClean = new ArrayList<> ();
 		Set<String> targetIds = new HashSet<> ();
@@ -407,36 +408,25 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public Map<String,String> findRawTargetProperties( AbstractApplication app, String instancePath ) {
+	public TargetProperties findTargetProperties( AbstractApplication app, String instancePath ) {
 
-		Map<String,String> result = new HashMap<> ();
 		String targetId = findTargetId( app, instancePath );
-		if( targetId != null ) {
-			File f = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
-			for( Map.Entry<Object,Object> entry : Utils.readPropertiesFileQuietly( f, this.logger ).entrySet()) {
-				result.put((String) entry.getKey(), (String) entry.getValue());
-			}
-		}
-
-		return result;
+		return findTargetProperties( targetId );
 	}
 
 
 	@Override
-	public String findRawTargetProperties( String targetId ) {
+	public TargetProperties findTargetProperties( String targetId ) {
 
-		File f = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
-		String content = null;
-		try {
-			if( f != null )
-				content = Utils.readFileContent( f );
+		File file = findTargetFile( targetId, Constants.TARGET_PROPERTIES_FILE_NAME );
+		String content = Utils.readFileContentQuietly( file, this.logger );
 
-		} catch( IOException e ) {
-			this.logger.severe( "Raw properties could not be read for target " + targetId );
-			Utils.logException( this.logger, e );
+		Map<String,String> map = new HashMap<> ();
+		for( Map.Entry<Object,Object> entry : Utils.readPropertiesQuietly( content, this.logger ).entrySet()) {
+			map.put((String) entry.getKey(), (String) entry.getValue());
 		}
 
-		return content;
+		return new TargetPropertiesImpl( map, content, file );
 	}
 
 
@@ -604,7 +594,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public Map<String,String> lockAndGetTarget( Application app, Instance scopedInstance )
+	public TargetProperties lockAndGetTarget( Application app, Instance scopedInstance )
 	throws IOException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
@@ -618,8 +608,13 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		}
 
 		this.logger.fine( "Target " + targetId + "'s lock was acquired for " + instancePath );
-		Map<String,String> result = findRawTargetProperties( app, instancePath );
-		return TargetHelpers.expandProperties( scopedInstance, result );
+		TargetProperties result = findTargetProperties( app, instancePath );
+		Map<String,String> newTargetProperties = TargetHelpers.expandProperties( scopedInstance, result.asMap());
+
+		result.asMap().clear();
+		result.asMap().putAll( newTargetProperties );
+
+		return result;
 	}
 
 
@@ -661,7 +656,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			TargetUsageItem item = new TargetUsageItem();
 
 			item.setName( appName );
-			item.setQualifier( entry.getKey().getQualifier());
+			item.setVersion( entry.getKey().getQualifier());
 			item.setReferencing( true );
 			item.setUsing( appNames.contains( appName ));
 

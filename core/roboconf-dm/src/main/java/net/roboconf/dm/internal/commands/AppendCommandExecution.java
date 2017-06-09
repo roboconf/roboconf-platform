@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 
 import net.roboconf.core.commands.AppendCommandInstruction;
 import net.roboconf.core.utils.Utils;
@@ -59,7 +60,7 @@ class AppendCommandExecution extends AbstractCommandExecution {
 			File f = new File( this.instr.getFilePath());
 			boolean append = f.exists() && f.length() > 0;
 
-			fw = new OutputStreamWriter( new FileOutputStream( f, true ), "UTF-8" );
+			fw = new OutputStreamWriter( new FileOutputStream( f, true ), StandardCharsets.UTF_8 );
 			if( append )
 				fw.append( "\n" );
 

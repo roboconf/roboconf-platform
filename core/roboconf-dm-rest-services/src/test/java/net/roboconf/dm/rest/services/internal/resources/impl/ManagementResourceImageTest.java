@@ -95,7 +95,7 @@ public class ManagementResourceImageTest {
 	}
 
 	private static final String TEMPLATE_NAME = "Legacy LAMP";
-	private static final String TEMPLATE_QUALIFIER = "sample";
+	private static final String TEMPLATE_QUALIFIER = "1.0.1-SNAPSHOT";
 	private static final String APPLICATION_NAME = "app";
 
 	@Rule
@@ -329,7 +329,7 @@ public class ManagementResourceImageTest {
 	@Test
 	public void testSetTemplateImage_no_such_element() throws Exception {
 
-		final ApplicationTemplate t = new ApplicationTemplate("foo").qualifier("bar");
+		final ApplicationTemplate t = new ApplicationTemplate("foo").version("bar");
 		final File icon = getApplicationIcon(t, "png");
 		Assert.assertFalse(icon.exists());
 		Assert.assertEquals(

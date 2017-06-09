@@ -212,7 +212,7 @@ public class TemplatingManagerTest {
 		TemplatingManager mngr = new TemplatingManager();
 		mngr.setOutputDirectory( this.folder.newFile().getAbsolutePath());
 
-		TemplateEntry te = new TemplateEntry( new File( "inexisting.tpl" ), null, null );
+		TemplateEntry te = new TemplateEntry( new File( "inexisting.tpl" ), null, null, null );
 		Application app = new Application( "test", null );
 
 		mngr.generate( app, Collections.singleton( te ));

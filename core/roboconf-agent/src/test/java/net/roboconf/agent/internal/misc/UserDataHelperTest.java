@@ -44,10 +44,11 @@ import net.roboconf.messaging.api.MessagingConstants;
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class UserDataUtilsTest {
+public class UserDataHelperTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+	private final UserDataHelper userDataHelper = new UserDataHelper();
 
 
 	@After
@@ -63,7 +64,7 @@ public class UserDataUtilsTest {
 		// Prepare
 		File karafEtc =  this.folder.newFolder();
 		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
-		final File agentConf = new File( karafEtc, UserDataUtils.CONF_FILE_AGENT );
+		final File agentConf = new File( karafEtc, UserDataHelper.CONF_FILE_AGENT );
 
 		// Execute
 		Map<String,String> msgData = new HashMap<> ();
@@ -75,7 +76,7 @@ public class UserDataUtilsTest {
 		Assert.assertFalse( msgConf.exists());
 		Assert.assertFalse( agentConf.exists());
 
-		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
+		this.userDataHelper.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
 
 		// Check
 		Assert.assertTrue( msgConf.exists());
@@ -101,7 +102,7 @@ public class UserDataUtilsTest {
 		// Prepare
 		File karafEtc =  this.folder.newFolder();
 		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
-		final File agentConf = new File( karafEtc, UserDataUtils.CONF_FILE_AGENT );
+		final File agentConf = new File( karafEtc, UserDataHelper.CONF_FILE_AGENT );
 
 		Properties props = new Properties();
 		props.setProperty( "key", "value" );
@@ -120,7 +121,7 @@ public class UserDataUtilsTest {
 		Assert.assertFalse( msgConf.exists());
 		Assert.assertTrue( agentConf.exists());
 
-		UserDataUtils.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
+		this.userDataHelper.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
 
 		// Check
 		Assert.assertTrue( msgConf.exists());
@@ -148,7 +149,7 @@ public class UserDataUtilsTest {
 		msgData.remove( "test" );
 		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user2");
 
-		UserDataUtils.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
+		this.userDataHelper.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
 
 		p = Utils.readPropertiesFile( msgConf );
 		Assert.assertEquals( 4, p.keySet().size());
@@ -167,8 +168,18 @@ public class UserDataUtilsTest {
 	@Test( expected = IOException.class )
 	public void testReconfigureMessaging_noKarafEtc() throws IOException {
 
-		UserDataUtils.reconfigureMessaging(
+		this.userDataHelper.reconfigureMessaging(
 				File.separator + "this_is_a_wrong_path",
+				new HashMap<String,String>( 0 ));
+	}
+
+
+	@Test
+	public void testReconfigureMessaging_emptyKarafEtc() throws IOException {
+
+		// No exception
+		this.userDataHelper.reconfigureMessaging(
+				"",
 				new HashMap<String,String>( 0 ));
 	}
 }

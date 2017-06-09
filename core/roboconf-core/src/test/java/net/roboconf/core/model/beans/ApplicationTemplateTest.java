@@ -40,11 +40,11 @@ public class ApplicationTemplateTest {
 
 		ApplicationTemplate app1 = new ApplicationTemplate();
 		app1.setName( "app" );
-		app1.setQualifier( "snapshot" );
+		app1.setVersion( "snapshot" );
 
 		ApplicationTemplate app2 = new ApplicationTemplate();
 		app2.setName( "app" );
-		app2.setQualifier( "snapshot" );
+		app2.setVersion( "snapshot" );
 
 		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
@@ -73,7 +73,7 @@ public class ApplicationTemplateTest {
 	public void testEqualsAndHashCode_3() {
 
 		ApplicationTemplate app1 = new ApplicationTemplate();
-		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "whatever" );
+		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).version( "whatever" );
 
 		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
@@ -85,8 +85,8 @@ public class ApplicationTemplateTest {
 	@Test
 	public void testEqualsAndHashCode_4() {
 
-		ApplicationTemplate app1 = new ApplicationTemplate( "app" ).qualifier( "v1" );
-		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "v3" );
+		ApplicationTemplate app1 = new ApplicationTemplate( "app" ).version( "v1" );
+		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).version( "v3" );
 
 		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
@@ -101,7 +101,7 @@ public class ApplicationTemplateTest {
 		ApplicationTemplate app = new ApplicationTemplate( "app" );
 		Assert.assertFalse( app.equals( null ));
 		Assert.assertFalse( app.equals( new ApplicationTemplate()));
-		Assert.assertFalse( app.equals( new ApplicationTemplate( "app" ).qualifier( "something" )));
+		Assert.assertFalse( app.equals( new ApplicationTemplate( "app" ).version( "something" )));
 		Assert.assertFalse( app.equals( new Object()));
 
 		Assert.assertEquals( app, app );
@@ -112,10 +112,10 @@ public class ApplicationTemplateTest {
 	@Test
 	public void testChain() {
 
-		ApplicationTemplate app = new ApplicationTemplate().name( "ins" ).description( "desc" ).qualifier( "snapshot" ).graphs( new Graphs());
+		ApplicationTemplate app = new ApplicationTemplate().name( "ins" ).description( "desc" ).version( "snapshot" ).graphs( new Graphs());
 		Assert.assertEquals( "ins", app.getName());
 		Assert.assertEquals( "desc", app.getDescription());
-		Assert.assertEquals( "snapshot", app.getQualifier());
+		Assert.assertEquals( "snapshot", app.getVersion());
 		Assert.assertNotNull( app.getGraphs());
 	}
 

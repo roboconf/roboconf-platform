@@ -84,7 +84,7 @@ public class RuntimeModelIoTest {
 
 		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
 		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
-		Assert.assertEquals( "sample", result.applicationTemplate.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", result.applicationTemplate.getVersion());
 
 		Assert.assertNotNull( result.applicationTemplate.getGraphs());
 		Graphs g = result.applicationTemplate.getGraphs();
@@ -214,7 +214,7 @@ public class RuntimeModelIoTest {
 		// Test the graph and descriptor
 		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
 		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
-		Assert.assertEquals( "sample", result.applicationTemplate.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", result.applicationTemplate.getVersion());
 		Assert.assertEquals( "roboconf-1.0", result.applicationTemplate.getDslId());
 
 		Assert.assertNotNull( result.applicationTemplate.getGraphs());
@@ -458,7 +458,7 @@ public class RuntimeModelIoTest {
 
 		Properties props = new Properties();
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_NAME, "app-name" );
-		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_QUALIFIER, "snapshot" );
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_VERSION, "1.0" );
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
 		Utils.writePropertiesFile( props, new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
@@ -672,7 +672,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setInstanceEntryPoint( "model.instances" );
 		desc.setDslId( "roboconf-1.0" );
 
@@ -701,7 +701,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -727,7 +727,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -772,7 +772,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -800,7 +800,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );

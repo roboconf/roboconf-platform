@@ -42,7 +42,7 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 
 	private static final long serialVersionUID = -4753958407033243184L;
 
-	private String qualifier, dslId, externalExportsPrefix;
+	private String version, dslId, externalExportsPrefix;
 	private Graphs graphs;
 
 	// We use a list because an application's attributes may be modified.
@@ -81,17 +81,17 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	}
 
 	/**
-	 * @return the qualifier
+	 * @return the version
 	 */
-	public String getQualifier() {
-		return this.qualifier;
+	public String getVersion() {
+		return this.version;
 	}
 
 	/**
-	 * @param qualifier the qualifier to set
+	 * @param version the version to set
 	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public void setVersion( String version ) {
+		this.version = version;
 	}
 
 	/**
@@ -141,13 +141,13 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	public boolean equals( Object obj ) {
 		return obj instanceof ApplicationTemplate
 				&& Objects.equals( this.name, ((ApplicationTemplate) obj ).getName())
-				&& Objects.equals( this.qualifier, ((ApplicationTemplate) obj ).getQualifier());
+				&& Objects.equals( this.version, ((ApplicationTemplate) obj ).getVersion());
 	}
 
 	@Override
 	public int hashCode() {
 		int i1 = this.name == null ? 29 : this.name.hashCode();
-		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
+		int i2 = this.version == null ? 11 : this.version.hashCode();
 		return i1 * i2;
 	}
 
@@ -160,10 +160,10 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	}
 
 	/**
-	 * Sets the qualifier in a chain approach.
+	 * Sets the version in a chain approach.
 	 */
-	public ApplicationTemplate qualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public ApplicationTemplate version( String version ) {
+		this.version = version;
 		return this;
 	}
 

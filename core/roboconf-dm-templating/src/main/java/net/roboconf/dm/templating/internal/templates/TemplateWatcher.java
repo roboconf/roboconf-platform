@@ -38,11 +38,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Logger;
-
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.templating.internal.TemplatingManager;
-import net.roboconf.dm.templating.internal.helpers.AllHelper;
-import net.roboconf.dm.templating.internal.helpers.IsKeyHelper;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
@@ -56,6 +53,11 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.io.StringTemplateSource;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.templating.internal.TemplatingManager;
+import net.roboconf.dm.templating.internal.helpers.AllHelper;
+import net.roboconf.dm.templating.internal.helpers.IsKeyHelper;
 
 /**
  * A file system watcher dedicated to the Roboconf application templates.
@@ -242,15 +244,23 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 
 		TemplateEntry templateEntry = null;
 		try {
+			// Parse the template's content and find the (optional) output
+			String templateFileContent = Utils.readFileContent( templateFile );
+			Matcher m = Pattern.compile( "\\{\\{!\\s*roboconf-output:(.*)\\}\\}" ).matcher( templateFileContent.trim());
+
+			String targetFilePath = null;
+			if( m.find())
+				targetFilePath = m.group( 1 ).trim();
+
 			// Compile the template file
 			final Template template = this.handlebars.compile(
 					new StringTemplateSource(
 							templateFile.toString(),
-							Utils.readFileContent( templateFile )));
+							templateFileContent ));
 
 			// Create the entry
 			templateEntry = new TemplateEntry(
-					templateFile, template,
+					templateFile, targetFilePath, template,
 					TemplateUtils.findApplicationName( this.templateDir, templateFile ));
 
 		} catch( IOException | IllegalArgumentException | HandlebarsException e ) {
@@ -269,7 +279,7 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	private void process( Collection<File> templateFiles ) {
 
 		// Compile them all
-		Collection<TemplateEntry> templateEntries = new ArrayList<TemplateEntry> ();
+		Collection<TemplateEntry> templateEntries = new ArrayList<> ();
 		for( File f : templateFiles ) {
 			final TemplateEntry templateEntry = compileTemplate( f );
 			if( templateEntry != null )
@@ -280,7 +290,7 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 		this.lock.writeLock().lock();
 		try {
 			for( final TemplateEntry te : templateEntries )
-				this.fileToTemplate.put( te.getFile(), te );
+				this.fileToTemplate.put( te.getTemplateFile(), te );
 
 		} finally {
 			this.lock.writeLock().unlock();

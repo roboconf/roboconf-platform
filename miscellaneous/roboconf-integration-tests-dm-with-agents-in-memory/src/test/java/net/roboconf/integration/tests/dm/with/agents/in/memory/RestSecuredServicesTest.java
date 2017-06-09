@@ -134,7 +134,7 @@ public class RestSecuredServicesTest extends DmWithAgentInMemoryTest {
 
 		ApplicationTemplate tpl = templates.get( 0 );
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
-		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", tpl.getVersion());
 
 		// Log out
 		client.getAuthenticationWsDelegate().logout( sessionId );

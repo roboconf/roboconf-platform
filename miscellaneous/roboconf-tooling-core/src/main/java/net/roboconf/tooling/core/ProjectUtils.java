@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -154,7 +155,7 @@ public final class ProjectUtils {
 				.replace( TPL_DESCRIPTION, creationBean.getProjectDescription());
 
 		File pomFile = new File( targetDirectory, "pom.xml" );
-		Utils.copyStream( new ByteArrayInputStream( tpl.getBytes( "UTF-8" )), pomFile );
+		Utils.copyStream( new ByteArrayInputStream( tpl.getBytes( StandardCharsets.UTF_8 )), pomFile );
 
 		// Create the descriptor
 		in = ProjectUtils.class.getResourceAsStream( "/application-skeleton.props" );

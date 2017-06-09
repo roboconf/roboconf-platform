@@ -41,9 +41,9 @@ public class ApplicationDescriptor {
 	public static final String APPLICATION_NAME = "application-name";
 	public static final String APPLICATION_DESCRIPTION = "application-description";
 	public static final String APPLICATION_TPL_NAME = "template-name";
-	public static final String APPLICATION_TPL_QUALIFIER = "template-qualifier";
+	public static final String APPLICATION_TPL_VERSION = "template-version";
 
-	private String name, description, templateName, templateQualifier;
+	private String name, description, templateName, templateVersion;
 
 
 	/**
@@ -89,17 +89,17 @@ public class ApplicationDescriptor {
 	}
 
 	/**
-	 * @return the templateQualifier
+	 * @return the templateVersion
 	 */
-	public String getTemplateQualifier() {
-		return this.templateQualifier;
+	public String getTemplateVersion() {
+		return this.templateVersion;
 	}
 
 	/**
-	 * @param templateQualifier the templateQualifier to set
+	 * @param templateVersion the templateVersion to set
 	 */
-	public void setTemplateQualifier( String templateQualifier ) {
-		this.templateQualifier = templateQualifier;
+	public void setTemplateVersion( String templateVersion ) {
+		this.templateVersion = templateVersion;
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class ApplicationDescriptor {
 		result.name = properties.getProperty( APPLICATION_NAME, null );
 		result.description = properties.getProperty( APPLICATION_DESCRIPTION, null );
 		result.templateName = properties.getProperty( APPLICATION_TPL_NAME, null );
-		result.templateQualifier = properties.getProperty( APPLICATION_TPL_QUALIFIER, null );
+		result.templateVersion = properties.getProperty( APPLICATION_TPL_VERSION, null );
 
 		return result;
 	}
@@ -151,8 +151,8 @@ public class ApplicationDescriptor {
 			if( ! Utils.isEmptyOrWhitespaces( app.getTemplate().getName()))
 				properties.setProperty( APPLICATION_TPL_NAME, app.getTemplate().getName());
 
-			if( ! Utils.isEmptyOrWhitespaces( app.getTemplate().getQualifier()))
-				properties.setProperty( APPLICATION_TPL_QUALIFIER, app.getTemplate().getQualifier());
+			if( ! Utils.isEmptyOrWhitespaces( app.getTemplate().getVersion()))
+				properties.setProperty( APPLICATION_TPL_VERSION, app.getTemplate().getVersion());
 		}
 
 		Utils.writePropertiesFile( properties, f );

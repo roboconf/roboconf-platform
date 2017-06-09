@@ -26,6 +26,13 @@
 package net.roboconf.tooling.core;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
@@ -34,11 +41,6 @@ import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.tooling.core.ProjectUtils.CreationBean;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -68,7 +70,7 @@ public class ProjectUtilsTest {
 
 		Assert.assertEquals( bean.getProjectDescription(), alr.getApplicationTemplate().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
-		Assert.assertEquals( bean.getProjectVersion(), alr.getApplicationTemplate().getQualifier());
+		Assert.assertEquals( bean.getProjectVersion(), alr.getApplicationTemplate().getVersion());
 	}
 
 
@@ -91,13 +93,16 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( 6, modelDir.listFiles().length );
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( modelDir );
-		Assert.assertEquals( 2, alr.getLoadErrors().size());
-		for( RoboconfError roboconfError : alr.getLoadErrors())
-			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
+		List<RoboconfError> errors = new ArrayList<>( alr.getLoadErrors());
+
+		Assert.assertEquals( 3, errors.size());
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 1 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 2 ).getErrorCode());
 
 		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
-		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getQualifier());
+		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getVersion());
 	}
 
 
@@ -132,13 +137,16 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( 6, modelDir.listFiles().length );
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( modelDir );
-		Assert.assertEquals( 2, alr.getLoadErrors().size());
-		for( RoboconfError roboconfError : alr.getLoadErrors())
-			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
+		List<RoboconfError> errors = new ArrayList<>( alr.getLoadErrors());
+
+		Assert.assertEquals( 3, errors.size());
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 1 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 2 ).getErrorCode());
 
 		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
-		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getQualifier());
+		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getVersion());
 	}
 
 

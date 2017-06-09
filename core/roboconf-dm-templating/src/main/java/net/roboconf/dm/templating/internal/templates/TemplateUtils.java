@@ -31,16 +31,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Logger;
 
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.context.JavaBeanValueResolver;
+import com.github.jknack.handlebars.context.MapValueResolver;
+import com.github.jknack.handlebars.context.MethodValueResolver;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.templating.internal.contexts.ApplicationContextBean;
 import net.roboconf.dm.templating.internal.contexts.ContextUtils;
 import net.roboconf.dm.templating.internal.resolvers.ComponentPathResolver;
-
-import com.github.jknack.handlebars.Context;
-import com.github.jknack.handlebars.context.JavaBeanValueResolver;
-import com.github.jknack.handlebars.context.MapValueResolver;
-import com.github.jknack.handlebars.context.MethodValueResolver;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -114,22 +114,31 @@ public final class TemplateUtils {
 				).build();
 
 		// Deal with the templates
-		for( TemplateEntry template : templates ) {
+		try {
+			for( TemplateEntry template : templates ) {
 
-			logger.fine( "Processing template " + template.getFile() + " to application " + app + "." );
-			File target = new File( outputDirectory, app.getName());
-			Utils.createDirectory( target );
+				logger.fine( "Processing template " + template.getTemplateFile() + " to application " + app + "." );
 
-			String filename = template.getFile().getName().replaceFirst( "\\.tpl$", "" );
-			target = new File( target, filename );
+				File target;
+				String targetFilePath = template.getTargetFilePath();
+				if( ! Utils.isEmptyOrWhitespaces( targetFilePath )) {
+					target = new File( targetFilePath.replace( "${app}", app.getName()));
 
-			String output = template.getTemplate().apply( wrappingCtx );
-			Utils.writeStringInto( output, target );
+				} else {
+					String filename = template.getTemplateFile().getName().replaceFirst( "\\.tpl$", "" );
+					target = new File( outputDirectory, app.getName() + "/" + filename );
+				}
 
-			logger.fine( "Template " + template.getFile() + " was processed with application " + app + ". Output is in " + target );
+				Utils.createDirectory( target.getParentFile());
+				String output = template.getTemplate().apply( wrappingCtx );
+				Utils.writeStringInto( output, target );
+
+				logger.fine( "Template " + template.getTemplateFile() + " was processed with application " + app + ". Output is in " + target );
+			}
+
+		} finally {
+			wrappingCtx.destroy();
 		}
-
-		wrappingCtx.destroy();
 	}
 
 

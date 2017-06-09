@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -574,7 +575,7 @@ public class FileDefinitionParserTest {
 				Assert.assertNotNull( f );
 				Assert.assertTrue( f.getName(), f.exists());
 
-				br = new BufferedReader( new InputStreamReader( new FileInputStream( f ), "UTF-8" ));
+				br = new BufferedReader( new InputStreamReader( new FileInputStream( f ), StandardCharsets.UTF_8 ));
 				String line = br.readLine();
 				Assert.assertNotNull( line );
 

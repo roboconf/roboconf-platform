@@ -33,6 +33,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
@@ -45,11 +49,6 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.templating.internal.templates.TemplateEntry;
 import net.roboconf.dm.templating.internal.templates.TemplateUtils;
 import net.roboconf.dm.templating.internal.templates.TemplateWatcher;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * Helpers do not have unit tests.
@@ -65,11 +64,12 @@ public class GenerationTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
-	private Application app;
 
 
-	@Before
-	public void createApplication() throws Exception {
+	/**
+	 * @return an application to use with templating tests
+	 */
+	public static Application testApplicationForTemplates() throws Exception {
 
 		// Load the application from the test resources.
 		File dir = TestUtils.findApplicationDirectory( "app-for-templates" );
@@ -79,20 +79,22 @@ public class GenerationTest {
 		assertThat( result.getApplicationTemplate()).isNotNull();
 
 		// Create and patch an application to verify contexts are correctly generated
-		this.app = new Application( "test-app", result.getApplicationTemplate()).description( "An example application" );
-		Instance apacheVm = InstanceHelpers.findInstanceByPath( this.app, "/ApacheVm" );
+		Application app = new Application( "test-app", result.getApplicationTemplate()).description( "An example application" );
+		Instance apacheVm = InstanceHelpers.findInstanceByPath( app, "/ApacheVm" );
 		assertThat( apacheVm ).isNotNull();
 
 		apacheVm.overriddenExports.put( "apacheVm.extra", "bonus" );
 
-		for( Instance rootInstance : this.app.getRootInstances()) {
+		for( Instance rootInstance : app.getRootInstances()) {
 			if( rootInstance.equals( apacheVm ))
 				continue;
 
-			rootInstance.data.put( Instance.APPLICATION_NAME, this.app.getName());
+			rootInstance.data.put( Instance.APPLICATION_NAME, app.getName());
 			rootInstance.data.put( Instance.MACHINE_ID, "ds4sd14sdsfkdf" );
 			ImportHelpers.addImport( rootInstance, "test", new Import( apacheVm ));
 		}
+
+		return app;
 	}
 
 
@@ -113,15 +115,20 @@ public class GenerationTest {
 		// Compare output files with what was expected
 		for( File tplFile : templateFiles ) {
 
+			// The template is used somewhere else
+			if( "basic-with-custom-output.txt.tpl".equals( tplFile.getName()))
+				continue;
+
 			TemplateEntry te = watcher.compileTemplate( tplFile );
 			Assert.assertNotNull( tplFile.getName(), te );
-			TemplateUtils.generate( this.app, outputDir, Collections.singleton( te ), logger );
+			TemplateUtils.generate( testApplicationForTemplates(), outputDir, Collections.singleton( te ), logger );
 
 			File outputFile = new File( outputDir, "test-app/" + tplFile.getName().replace( ".tpl", "" ));
 			Assert.assertTrue( tplFile.getName(), outputFile.exists());
 
 			File expectedFile =  TestUtils.findTestFile( "/output/" + outputFile.getName());
 			Assert.assertTrue( expectedFile.getName(), expectedFile.exists());
+
 			String expectedFileContent = Utils.readFileContent( expectedFile );
 			String fileContent = Utils.readFileContent( outputFile );
 			Assert.assertEquals( tplFile.getName(), expectedFileContent, fileContent );
@@ -148,7 +155,7 @@ public class GenerationTest {
 
 			TemplateEntry te = watcher.compileTemplate( tplFile );
 			Assert.assertNotNull( tplFile.getName(), te );
-			TemplateUtils.generate( this.app, outputDir, Collections.singleton( te ), logger );
+			TemplateUtils.generate( testApplicationForTemplates(), outputDir, Collections.singleton( te ), logger );
 
 			File outputFile = new File( outputDir, "test-app/" + tplFile.getName().replace( ".tpl", "" ));
 			Assert.assertTrue( tplFile.getName(), outputFile.exists());

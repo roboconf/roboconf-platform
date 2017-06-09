@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.templating.internal.templates;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,14 +36,14 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.templating.internal.helpers.GenerationTest;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -93,11 +94,11 @@ public class TemplateUtilsTest {
 	public void testFindTemplatesForApplication() {
 
 		List<TemplateEntry> templates = new ArrayList<> ();
-		templates.add( new TemplateEntry( new File( "whatever1.tpl" ), null, null ));
-		templates.add( new TemplateEntry( new File( "whatever2.tpl" ), null, null ));
-		templates.add( new TemplateEntry( new File( "whatever3.tpl" ), null, "app1" ));
-		templates.add( new TemplateEntry( new File( "whatever4.tpl" ), null, "app1" ));
-		templates.add( new TemplateEntry( new File( "whatever5.tpl" ), null, "app2" ));
+		templates.add( new TemplateEntry( new File( "whatever1.tpl" ), null, null, null ));
+		templates.add( new TemplateEntry( new File( "whatever2.tpl" ), null, null, null ));
+		templates.add( new TemplateEntry( new File( "whatever3.tpl" ), null, null, "app1" ));
+		templates.add( new TemplateEntry( new File( "whatever4.tpl" ), null, null, "app1" ));
+		templates.add( new TemplateEntry( new File( "whatever5.tpl" ), null, null, "app2" ));
 
 		Collection<TemplateEntry> filteredTemplates = TemplateUtils.findTemplatesForApplication( null, templates );
 		Assert.assertEquals( 2, filteredTemplates.size());
@@ -125,7 +126,7 @@ public class TemplateUtilsTest {
 
 
 	@Test
-	public void testGenerate() throws Exception {
+	public void testGenerate_defaultDirectory() throws Exception {
 
 		// Copy a template
 		File dir = this.folder.newFolder();
@@ -142,25 +143,137 @@ public class TemplateUtilsTest {
 		TemplateEntry te = new TemplateWatcher( null, dir, 100 ).compileTemplate( tplFile );
 		Assert.assertNotNull( te );
 		Assert.assertNull( te.getAppName());
-		Assert.assertEquals( tplFile, te.getFile());
+		Assert.assertEquals( tplFile, te.getTemplateFile());
 		Assert.assertNotNull( te.getTemplate());
 
 		// Apply it to a given application
-		Application app = new Application( "test", null );
-		Component comp = new Component( "VM" ).installerName( "target" );
-		Instance rootInstance = new Instance( "vm" ).component( comp );
-		app.getRootInstances().add( rootInstance );
-
 		Logger logger = Logger.getLogger( getClass().getName());
 		File outputDir = this.folder.newFolder();
+		Application app = GenerationTest.testApplicationForTemplates();
 
 		Assert.assertEquals( 0, outputDir.listFiles().length );
 		TemplateUtils.generate( app, outputDir, Collections.singleton( te ), logger );
 		Assert.assertEquals( 1, outputDir.listFiles().length );
 
-		File expectedFile = new File( outputDir, "test/basic.txt" );
-		Assert.assertTrue( expectedFile.exists());
-		Assert.assertTrue( expectedFile.length() > 0 );
+		File targetFile = new File( outputDir, app.getName() + "/basic.txt" );
+		Assert.assertTrue( targetFile.exists());
+		String currentContent = Utils.readFileContent( targetFile );
+
+		File expectedFile =  TestUtils.findTestFile( "/output/basic.txt" );
+		String expectedContent = Utils.readFileContent( expectedFile );
+
+		Assert.assertEquals( expectedContent, currentContent );
+	}
+
+
+	@Test
+	public void testGenerate_customDirectory() throws Exception {
+
+		File targetFile = this.folder.newFile();
+		Utils.deleteFilesRecursively( targetFile );
+
+		// Copy a template
+		String templateContent;
+		InputStream in = getClass().getResourceAsStream( "/templates/basic-with-custom-output.txt.tpl" );
+		try {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStreamUnsafelyUseWithCaution( in, os );
+			templateContent = os.toString( "UTF-8" ).replace( "%DIR%", targetFile.getAbsolutePath());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		File dir = this.folder.newFolder();
+		File tplFile = new File( dir, "basic-with-custom-output.txt.tpl" );
+		Utils.writeStringInto( templateContent, tplFile );
+
+		// Compile and verify it
+		TemplateEntry te = new TemplateWatcher( null, dir, 100 ).compileTemplate( tplFile );
+		Assert.assertNotNull( te );
+		Assert.assertNull( te.getAppName());
+		Assert.assertEquals( tplFile, te.getTemplateFile());
+		Assert.assertEquals( targetFile.getAbsolutePath(), te.getTargetFilePath());
+		Assert.assertNotNull( te.getTemplate());
+
+		// The file does not exist (yet)
+		Assert.assertFalse( targetFile.exists());
+
+		// Apply it to a given application
+		Logger logger = Logger.getLogger( getClass().getName());
+		File outputDir = this.folder.newFolder();
+
+		Assert.assertEquals( 0, outputDir.listFiles().length );
+		TemplateUtils.generate( GenerationTest.testApplicationForTemplates(), outputDir, Collections.singleton( te ), logger );
+
+		// Nothing was added in the out put directory
+		Assert.assertEquals( 0, outputDir.listFiles().length );
+
+		// It was directly written in the target file
+		Assert.assertTrue( targetFile.exists());
+		String currentContent = Utils.readFileContent( targetFile );
+
+		File expectedFile =  TestUtils.findTestFile( "/output/basic-with-custom-output.txt" );
+		String expectedContent = Utils.readFileContent( expectedFile );
+
+		Assert.assertEquals( expectedContent, currentContent );
+	}
+
+
+	@Test
+	public void testGenerate_customDirectory_byApp() throws Exception {
+
+		File targetFilePattern = new File( this.folder.newFolder(), "${app}/${app}.paf" );
+
+		// Copy a template
+		String templateContent;
+		InputStream in = getClass().getResourceAsStream( "/templates/basic-with-custom-output.txt.tpl" );
+		try {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStreamUnsafelyUseWithCaution( in, os );
+			templateContent = os.toString( "UTF-8" ).replace( "%DIR%", targetFilePattern.getAbsolutePath());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		File dir = this.folder.newFolder();
+		File tplFile = new File( dir, "basic-with-custom-output.txt.tpl" );
+		Utils.writeStringInto( templateContent, tplFile );
+
+		// Compile and verify it
+		TemplateEntry te = new TemplateWatcher( null, dir, 100 ).compileTemplate( tplFile );
+		Assert.assertNotNull( te );
+		Assert.assertNull( te.getAppName());
+		Assert.assertEquals( tplFile, te.getTemplateFile());
+		Assert.assertEquals( targetFilePattern.getAbsolutePath(), te.getTargetFilePath());
+		Assert.assertNotNull( te.getTemplate());
+
+		// The file does not exist (yet)
+		Application app =  GenerationTest.testApplicationForTemplates();
+		File targetFile = new File( targetFilePattern.getParentFile().getParentFile(), app.getName() + "/" + app.getName() + ".paf" );
+		Assert.assertFalse( targetFilePattern.exists());
+		Assert.assertFalse( targetFile.exists());
+
+		// Apply it to a given application
+		Logger logger = Logger.getLogger( getClass().getName());
+		File outputDir = this.folder.newFolder();
+
+		Assert.assertEquals( 0, outputDir.listFiles().length );
+		TemplateUtils.generate( app, outputDir, Collections.singleton( te ), logger );
+
+		// Nothing was added in the out put directory
+		Assert.assertEquals( 0, outputDir.listFiles().length );
+
+		// It was directly written in the target file
+		Assert.assertFalse( targetFilePattern.exists());
+		Assert.assertTrue( targetFile.exists());
+		String currentContent = Utils.readFileContent( targetFile );
+
+		File expectedFile =  TestUtils.findTestFile( "/output/basic-with-custom-output.txt" );
+		String expectedContent = Utils.readFileContent( expectedFile );
+
+		Assert.assertEquals( expectedContent, currentContent );
 	}
 
 
@@ -168,7 +281,7 @@ public class TemplateUtilsTest {
 	public void testGenerate_io_exception() throws Exception {
 
 		File inexistingTemplate = new File( "inexisting.tpl" );
-		TemplateEntry te = new TemplateEntry( inexistingTemplate, null, null );
+		TemplateEntry te = new TemplateEntry( inexistingTemplate, null, null, null );
 
 		Application app = new Application( "test", null );
 		Logger logger = Logger.getLogger( getClass().getName());

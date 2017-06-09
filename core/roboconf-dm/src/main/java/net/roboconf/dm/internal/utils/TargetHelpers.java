@@ -71,7 +71,7 @@ public final class TargetHelpers {
 
 			try {
 				String path = InstanceHelpers.computeInstancePath( inst );
-				Map<String,String> targetProperties = targetsMngr.findRawTargetProperties( ma.getApplication(), path );
+				Map<String,String> targetProperties = targetsMngr.findTargetProperties( ma.getApplication(), path ).asMap();
 				targetHandlerResolver.findTargetHandler( targetProperties );
 
 			} catch( TargetException e ) {
