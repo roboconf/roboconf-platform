@@ -204,7 +204,7 @@ public enum ErrorCode {
 	CMD_MISSING_PARENT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A parent instance path was expected in the command." ),
 	CMD_CONFLICTING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A sibling instance with this name already exists." ),
 	CMD_EMAIL_NO_MESSAGE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The e-mail message cannot be empty." ),
-	CMD_NO_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "No valid instruction was found in the file." ),
+	CMD_NO_INSTRUCTION( ErrorLevel.WARNING, ErrorCategory.COMMANDS, "No valid instruction was found in the file." ),
 	CMD_UNRESOLVED_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A variable is used in a command but it could not be resolved." ),
 	CMD_INVALID_SYNTAX( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Invalid syntax for this command. Please, refer to the documentation." ),
 	CMD_MISSING_TARGET_FILE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The target file is missing." ),

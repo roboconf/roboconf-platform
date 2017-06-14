@@ -200,4 +200,34 @@ public final class RoboconfErrorHelpers {
 
 		errors.removeAll( toRemove );
 	}
+
+
+	/**
+	 * Formats a Roboconf error as a string.
+	 * @param error an error
+	 * @return a non-null string
+	 */
+	public static String formatError( RoboconfError error ) {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( "[ " );
+		sb.append( error.getErrorCode().getCategory().toString().toLowerCase());
+		sb.append( " ] " );
+		sb.append( error.getErrorCode().getMsg());
+		if( ! Utils.isEmptyOrWhitespaces( error.getDetails()))
+			sb.append( " " + error.getDetails());
+
+		if( sb.charAt( sb.length() -1 ) != '.' )
+			sb.append( "." );
+
+		if( error instanceof ParsingError ) {
+			sb.append( " See " );
+			sb.append(((ParsingError) error).getFile().getName());
+			sb.append( ", line " );
+			sb.append(((ParsingError) error).getLine());
+			sb.append( "." );
+		}
+
+		return sb.toString();
+	}
 }

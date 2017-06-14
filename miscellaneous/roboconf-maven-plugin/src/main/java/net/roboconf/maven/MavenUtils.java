@@ -29,8 +29,7 @@ import org.apache.maven.plugin.logging.Log;
 
 import net.roboconf.core.ErrorCode.ErrorLevel;
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.ParsingError;
-import net.roboconf.core.utils.Utils;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -53,30 +52,12 @@ public final class MavenUtils {
 	 */
 	public static StringBuilder formatError( RoboconfError error, Log log ) {
 
-		StringBuilder sb = new StringBuilder();
-		sb.append( "[ " );
-		sb.append( error.getErrorCode().getCategory().toString().toLowerCase());
-		sb.append( " ] " );
-		sb.append( error.getErrorCode().getMsg());
-		if( ! Utils.isEmptyOrWhitespaces( error.getDetails()))
-			sb.append( " " + error.getDetails());
-
-		if( ! sb.toString().endsWith( "." ))
-			sb.append( "." );
-
-		if( error instanceof ParsingError ) {
-			sb.append( " See " );
-			sb.append(((ParsingError) error).getFile().getName());
-			sb.append( ", line " );
-			sb.append(((ParsingError) error).getLine());
-			sb.append( "." );
-		}
-
+		String s = RoboconfErrorHelpers.formatError( error );
 		if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
-			log.warn( sb.toString());
+			log.warn( s );
 		else
-			log.error( sb.toString());
+			log.error( s );
 
-		return sb;
+		return new StringBuilder( s );
 	}
 }

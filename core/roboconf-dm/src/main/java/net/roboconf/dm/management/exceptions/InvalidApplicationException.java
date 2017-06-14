@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -77,14 +78,8 @@ public class InvalidApplicationException extends Exception {
 		sb.append( "The application contains errors." );
 
 		for( RoboconfError error : errors ) {
-			sb.append( "\n[ " );
-			sb.append( error.getErrorCode().getLevel());
-			sb.append( " ] " );
-			sb.append( error.getErrorCode().getMsg());
-			if( error.getDetails() != null ) {
-				sb.append( "\nDetails: " );
-				sb.append( error.getDetails());
-			}
+			sb.append( "\n" );
+			sb.append( RoboconfErrorHelpers.formatError( error ));
 		}
 
 		return sb.toString();
