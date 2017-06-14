@@ -44,9 +44,9 @@ import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -110,7 +110,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 					.searchManagedEntity("ComputeResource", targetProperties.get( CLUSTER )));
 
 			// Generate the user data first, so that nothing has been done on the IaaS if it fails
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
@@ -178,7 +178,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 		String userData = "";
 		try {
-			userData = DataHelpers.writeUserDataAsString(
+			userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),

@@ -50,8 +50,8 @@ import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.google.common.collect.Sets;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.ManifestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -207,7 +207,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			Utils.createDirectory( dir );
 			this.containerIdToVolume.put( containerName, dir );
 
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					this.parameters.getMessagingProperties(),
 					this.parameters.getDomain(),
 					this.parameters.getApplicationName(),

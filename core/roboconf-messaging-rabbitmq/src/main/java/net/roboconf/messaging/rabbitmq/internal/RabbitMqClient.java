@@ -49,6 +49,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Recoverable;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
@@ -152,6 +153,10 @@ public class RabbitMqClient implements IMessagingClient {
 			result.remove( RABBITMQ_SSL_TRUST_STORE_TYPE );
 		} else {
 			result.put( RABBITMQ_SSL_AS_USER_DATA, "true" );
+
+			// Indicate which properties point to files whose content should be sent to agents
+			result.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_KEY_STORE_PATH, "" );
+			result.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_TRUST_STORE_PATH, "" );
 		}
 
 		return result;

@@ -60,9 +60,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -108,7 +108,7 @@ public class AzureIaasHandler implements TargetHandler {
 			// When the VM is up, it will be able to read this data.
 			// TODO: Azure does not allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
 			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),

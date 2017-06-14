@@ -25,6 +25,7 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +36,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 
@@ -164,9 +165,13 @@ public final class AgentProperties {
 	 */
 	public static AgentProperties readIaasProperties( String rawProperties, Logger logger ) throws IOException {
 
+		// Store files in the system's temporary directory.
+		// In Karaf, this will point to the "data/tmp" directory.
 		Properties props = new Properties();
-		if( rawProperties != null )
-			props = DataHelpers.readUserData( rawProperties );
+		if( rawProperties != null ) {
+			File msgResourcesDirectory = new File( "java.io.tmpdir", "roboconf-messaging" );
+			props = UserDataHelpers.readUserData( rawProperties, msgResourcesDirectory );
+		}
 
 		return readIaasProperties( props );
 	}
@@ -181,12 +186,12 @@ public final class AgentProperties {
 
 		// Given #213, we have to replace some characters escaped by AWS (and probably Openstack too).
 		AgentProperties result = new AgentProperties();
-		result.setApplicationName( updatedField( props, DataHelpers.APPLICATION_NAME ));
-		result.setScopedInstancePath( updatedField( props, DataHelpers.SCOPED_INSTANCE_PATH ));
-		result.setDomain( updatedField( props, DataHelpers.DOMAIN ));
+		result.setApplicationName( updatedField( props, UserDataHelpers.APPLICATION_NAME ));
+		result.setScopedInstancePath( updatedField( props, UserDataHelpers.SCOPED_INSTANCE_PATH ));
+		result.setDomain( updatedField( props, UserDataHelpers.DOMAIN ));
 
 		final Map<String, String> messagingConfiguration = new LinkedHashMap<> ();
-		List<String> toSkip = Arrays.asList( DataHelpers.APPLICATION_NAME, DataHelpers.DOMAIN, DataHelpers.SCOPED_INSTANCE_PATH );
+		List<String> toSkip = Arrays.asList( UserDataHelpers.APPLICATION_NAME, UserDataHelpers.DOMAIN, UserDataHelpers.SCOPED_INSTANCE_PATH );
 		for( String k : props.stringPropertyNames()) {
 			if( ! toSkip.contains( k )) {
 				// All other properties are considered messaging-specific.

@@ -53,9 +53,9 @@ import org.jclouds.openstack.v2_0.domain.Resource;
 
 import com.google.common.base.Predicate;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -180,7 +180,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		metadata.put( "Created by", "Roboconf" );
 
 		try {
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
