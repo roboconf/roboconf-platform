@@ -1,0 +1,5 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    This bundle is an event driven collector for karaf - Decanter in the DM. 
