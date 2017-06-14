@@ -44,16 +44,19 @@ import net.roboconf.core.utils.Utils;
  */
 public class ApplicationTemplateDescriptor {
 
-	public static final String APPLICATION_NAME = "application-name";
-	public static final String APPLICATION_VERSION = "application-version";
-	public static final String APPLICATION_TAGS = "application-tags";
-	public static final String APPLICATION_DESCRIPTION = "application-description";
-	public static final String APPLICATION_DSL_ID = "application-dsl-id";
+	public static final String APPLICATION_NAME = "name";
+	public static final String APPLICATION_VERSION = "version";
+	public static final String APPLICATION_TAGS = "tags";
+	public static final String APPLICATION_DESCRIPTION = "description";
+	public static final String APPLICATION_DSL_ID = "dsl-id";
+
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
 	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
 	public static final String APPLICATION_EXTERNAL_EXPORTS_PREFIX = "exports-prefix";
 	public static final String APPLICATION_EXTERNAL_EXPORTS = "exports";
 	public static final String APPLICATION_EXTERNAL_EXPORTS_AS = "as";
+
+	private static final String LEGACY_PREFIX = "application-";
 
 	private String name, description, version, graphEntryPoint, instanceEntryPoint, dslId, externalExportsPrefix;
 	public final Map<String,String> externalExports = new HashMap<> ();
@@ -168,12 +171,16 @@ public class ApplicationTemplateDescriptor {
 	public static ApplicationTemplateDescriptor load( Properties properties ) {
 
 		ApplicationTemplateDescriptor result = new ApplicationTemplateDescriptor();
-		result.name = properties.getProperty( APPLICATION_NAME, null );
-		result.description = properties.getProperty( APPLICATION_DESCRIPTION, null );
-		result.version = properties.getProperty( APPLICATION_VERSION, null );
+
+		// Properties with legacy
+		result.name = getLegacyProperty( properties, APPLICATION_NAME, null );
+		result.description = getLegacyProperty( properties, APPLICATION_DESCRIPTION, null );
+		result.version = getLegacyProperty( properties, APPLICATION_VERSION, null );
+		result.dslId = getLegacyProperty( properties, APPLICATION_DSL_ID, null );
+
+		// Unchanged properties
 		result.graphEntryPoint = properties.getProperty( APPLICATION_GRAPH_EP, null );
 		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
-		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
 		result.externalExportsPrefix = properties.getProperty( APPLICATION_EXTERNAL_EXPORTS_PREFIX, null );
 
 		// Exports
@@ -261,5 +268,22 @@ public class ApplicationTemplateDescriptor {
 
 		properties.setProperty( APPLICATION_TAGS, Utils.format( descriptor.tags, ", " ));
 		Utils.writePropertiesFile( properties, f );
+	}
+
+
+	/**
+	 * Gets a property value while supporting legacy ones.
+	 * @param props non-null properties
+	 * @param property a non-null property name (not legacy)
+	 * @param defaultValue the default value if the property is not found
+	 * @return a non-null string if the property was found, the default value otherwise
+	 */
+	static String getLegacyProperty( Properties props, String property, String defaultValue ) {
+
+		String result = props.getProperty( property, null );
+		if( result == null )
+			result = props.getProperty( LEGACY_PREFIX + property, defaultValue );
+
+		return result;
 	}
 }
