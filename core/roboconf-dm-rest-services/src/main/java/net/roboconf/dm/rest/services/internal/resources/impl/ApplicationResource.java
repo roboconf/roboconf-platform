@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -51,6 +52,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -734,21 +736,43 @@ public class ApplicationResource implements IApplicationResource {
 	 * #getCommandInstructions(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response getCommandInstructions(String app, String commandName) {
+	public Response getCommandInstructions( String appName, String commandName ) {
 
-		this.logger.fine("Request: get instructions from " + commandName + " in the " + app + " application.");
+		this.logger.fine("Request: get instructions from " + commandName + " in the " + appName + " application.");
 		Response response;
 		try {
-			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
-			String res = this.manager.commandsMngr().getCommandInstructions( ma.getApplication(), commandName);
-			if( res.isEmpty())
+			Application app = this.manager.applicationMngr().findApplicationByName( appName );
+			String res;
+			if( app == null )
+				response = Response.status( Status.NOT_FOUND ).build();
+			else if( Utils.isEmptyOrWhitespaces( res = this.manager.commandsMngr().getCommandInstructions( app, commandName )))
 				response = Response.status( Status.NO_CONTENT ).build();
 			else
-				response = Response.ok(res).build();
+				response = Response.ok( res ).build();
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
 		}
+
+		return response;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #replaceTags(java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Response replaceTags( String name, String version, List<String> tags ) {
+
+		this.logger.fine("Request: replace tags for template " + name + " (version " + version + ").");
+		Response response = Response.ok().build();
+
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().findTemplate( name, version );
+		if( tpl == null )
+			response = Response.status( Status.NOT_FOUND ).build();
+		else
+			tpl.setTags( tags );
 
 		return response;
 	}

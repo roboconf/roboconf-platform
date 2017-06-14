@@ -49,8 +49,10 @@ public interface IApplicationTemplateMngr {
 
 	/**
 	 * Deletes an application template.
+	 * @param tplName the template's name
+	 * @param tplVersion the template's version
 	 */
-	void deleteApplicationTemplate( String tplName, String tplQualifier )
+	void deleteApplicationTemplate( String tplName, String tplVersion )
 	throws UnauthorizedActionException, InvalidApplicationException, IOException;
 
 
@@ -69,12 +71,12 @@ public interface IApplicationTemplateMngr {
 	/**
 	 * Finds a template.
 	 * <p>
-	 * A template is identified by its name and its qualifier.
+	 * A template is identified by its name and its version.
 	 * </p>
 	 *
 	 * @param name the template's name
-	 * @param qualifier the template's qualifier
+	 * @param version the template's version
 	 * @return an application template, or null if none was found
 	 */
-	ApplicationTemplate findTemplate( String name, String qualifier );
+	ApplicationTemplate findTemplate( String name, String version );
 }

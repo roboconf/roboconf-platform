@@ -46,6 +46,7 @@ public class ApplicationTemplateDescriptor {
 
 	public static final String APPLICATION_NAME = "application-name";
 	public static final String APPLICATION_VERSION = "application-version";
+	public static final String APPLICATION_TAGS = "application-tags";
 	public static final String APPLICATION_DESCRIPTION = "application-description";
 	public static final String APPLICATION_DSL_ID = "application-dsl-id";
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
@@ -57,6 +58,7 @@ public class ApplicationTemplateDescriptor {
 	private String name, description, version, graphEntryPoint, instanceEntryPoint, dslId, externalExportsPrefix;
 	public final Map<String,String> externalExports = new HashMap<> ();
 	public final Set<String> invalidExternalExports = new HashSet<> ();
+	public final Set<String> tags = new HashSet<> ();
 
 
 	/**
@@ -174,6 +176,7 @@ public class ApplicationTemplateDescriptor {
 		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
 		result.externalExportsPrefix = properties.getProperty( APPLICATION_EXTERNAL_EXPORTS_PREFIX, null );
 
+		// Exports
 		final Pattern pattern = Pattern.compile(
 				"([^=\\s]+)\\s+" + APPLICATION_EXTERNAL_EXPORTS_AS + "\\s+([^=\\s]+)",
 				Pattern.CASE_INSENSITIVE );
@@ -186,6 +189,10 @@ public class ApplicationTemplateDescriptor {
 			else
 				result.invalidExternalExports.add( rawExport );
 		}
+
+		// Tags
+		String rawTags = properties.getProperty( APPLICATION_TAGS, "" );
+		result.tags.addAll( Utils.splitNicely( rawTags, "," ));
 
 		return result;
 	}
@@ -252,6 +259,7 @@ public class ApplicationTemplateDescriptor {
 		if( sb.length() > 0 )
 			properties.setProperty( APPLICATION_EXTERNAL_EXPORTS, sb.toString());
 
+		properties.setProperty( APPLICATION_TAGS, Utils.format( descriptor.tags, ", " ));
 		Utils.writePropertiesFile( properties, f );
 	}
 }

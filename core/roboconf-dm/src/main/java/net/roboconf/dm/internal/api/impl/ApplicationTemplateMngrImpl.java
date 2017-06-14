@@ -106,12 +106,12 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 
 	@Override
-	public ApplicationTemplate findTemplate( String name, String qualifier ) {
+	public ApplicationTemplate findTemplate( String name, String version ) {
 
 		ApplicationTemplate result = null;
 		for( ApplicationTemplate tpl : this.templates.keySet()) {
 			if( Objects.equals( tpl.getName(), name )
-					&& Objects.equals( tpl.getVersion(), qualifier )) {
+					&& Objects.equals( tpl.getVersion(), version )) {
 				result = tpl;
 				break;
 			}
@@ -191,15 +191,15 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 
 	@Override
-	public void deleteApplicationTemplate( String tplName, String tplQualifier )
+	public void deleteApplicationTemplate( String tplName, String tplVersion )
 	throws UnauthorizedActionException, InvalidApplicationException, IOException {
 
-		ApplicationTemplate tpl = findTemplate( tplName, tplQualifier );
+		ApplicationTemplate tpl = findTemplate( tplName, tplVersion );
 		if( tpl == null )
 			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
 		if( this.applicationMngr.isTemplateUsed( tpl )) {
-			throw new UnauthorizedActionException( tplName + " (" + tplQualifier + ") is still used by applications. It cannot be deleted." );
+			throw new UnauthorizedActionException( tplName + " (" + tplVersion + ") is still used by applications. It cannot be deleted." );
 
 		} else {
 			this.logger.info( "Deleting the application template called " + tpl.getName() + "..." );

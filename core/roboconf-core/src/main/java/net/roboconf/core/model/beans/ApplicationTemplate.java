@@ -28,11 +28,14 @@ package net.roboconf.core.model.beans;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * An application template groups an identifier, graph definitions and instances.
@@ -48,6 +51,12 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	// We use a list because an application's attributes may be modified.
 	// With a set, this could result in unpredictable behaviors.
 	private final List<Application> associatedApplications = new ArrayList<> ();
+
+	/**
+	 * Tags associated with this template.
+	 */
+	// Private to guarantee atomic operations on it.
+	private final Set<String> tags = new TreeSet<> ();
 
 	/**
 	 * External exports.
@@ -226,5 +235,35 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 		synchronized( this.associatedApplications ) {
 			this.associatedApplications.remove( app );
 		}
+	}
+
+	/**
+	 * Adds a tag.
+	 * @param tag
+	 */
+	public void addTag( String tag ) {
+		synchronized( this.tags ) {
+			this.tags.add( tag );
+		}
+	}
+
+	/**
+	 * Replaces all the tags.
+	 * @param tags a (potentially null) collection of tags
+	 */
+	public void setTags( Collection<String> tags ) {
+
+		synchronized( this.tags ) {
+			this.tags.clear();
+			if( tags != null )
+				this.tags.addAll( tags );
+		}
+	}
+
+	/**
+	 * @return the tags
+	 */
+	public Set<String> getTags() {
+		return Collections.unmodifiableSet( this.tags );
 	}
 }

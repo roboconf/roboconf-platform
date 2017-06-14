@@ -109,6 +109,7 @@ public final class RuntimeModelIo {
 				app.setVersion( appDescriptor.getVersion());
 				app.setDslId( appDescriptor.getDslId());
 				app.setExternalExportsPrefix( appDescriptor.getExternalExportsPrefix());
+				app.setTags( appDescriptor.tags );
 
 				for( Map.Entry<String,String> entry : appDescriptor.externalExports.entrySet())
 					app.externalExports.put( entry.getKey(), app.getExternalExportsPrefix() + "." + entry.getValue());

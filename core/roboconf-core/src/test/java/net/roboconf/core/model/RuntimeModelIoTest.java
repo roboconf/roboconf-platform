@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -85,6 +86,9 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
 		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
 		Assert.assertEquals( "1.0.1-SNAPSHOT", result.applicationTemplate.getVersion());
+
+		List<String> tags = Arrays.asList( "test", "lamp", "example" );
+		Assert.assertEquals( new TreeSet<>( tags ), result.applicationTemplate.getTags());
 
 		Assert.assertNotNull( result.applicationTemplate.getGraphs());
 		Graphs g = result.applicationTemplate.getGraphs();

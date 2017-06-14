@@ -222,10 +222,10 @@ public class ManagementResource implements IManagementResource {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
-	 * #listApplicationTemplates(java.lang.String, java.lang.String)
+	 * #listApplicationTemplates(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ApplicationTemplate> listApplicationTemplates( String exactName, String exactQualifier ) {
+	public List<ApplicationTemplate> listApplicationTemplates( String exactName, String exactQualifier, String tag ) {
 
 		// Log
 		if( this.logger.isLoggable( Level.FINE )) {
@@ -257,7 +257,8 @@ public class ManagementResource implements IManagementResource {
 		for( ApplicationTemplate tpl : this.manager.applicationTemplateMngr().getApplicationTemplates()) {
 			// Equality is on the name, not on the display name
 			if(( exactName == null || exactName.equals( tpl.getName()))
-					&& (exactQualifier == null || exactQualifier.equals( tpl.getVersion())))
+					&& (exactQualifier == null || exactQualifier.equals( tpl.getVersion())
+					&& (tag == null || tpl.getTags().contains( tag ))))
 				result.add( tpl );
 		}
 
@@ -272,7 +273,7 @@ public class ManagementResource implements IManagementResource {
 	 */
 	@Override
 	public List<ApplicationTemplate> listApplicationTemplates() {
-		return listApplicationTemplates( null, null );
+		return listApplicationTemplates( null, null, null );
 	}
 
 

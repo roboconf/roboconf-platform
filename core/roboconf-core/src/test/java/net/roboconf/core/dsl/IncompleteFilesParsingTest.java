@@ -39,7 +39,7 @@ import net.roboconf.core.model.beans.Graphs;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class IncopleteFilesParsingTest {
+public class IncompleteFilesParsingTest {
 
 	@Test
 	public void testIncompleteFilesResultInEmptyGraphByDefault() throws Exception {

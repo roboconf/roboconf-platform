@@ -156,6 +156,7 @@ public final class JSonBindingUtils {
 	private static final String APP_INST_TPL_EEP = "tplEep";
 
 	private static final String APP_TPL_APPS = "apps";
+	private static final String APP_TPL_TAGS = "tags";
 	private static final String COMP_INSTALLER = "installer";
 
 	private static final String INST_CHANNELS = "channels";
@@ -625,7 +626,7 @@ public final class JSonBindingUtils {
 			for( Application associatedApp : app.getAssociatedApplications()) {
 
 				// #483 We do not know why, but after we delete an application
-				// from the web console, the resulting JSon array sometimes contain null.
+				// from the web console, the resulting JSon array sometimes contains null.
 				// This prevents the deletion of a template that does not have applications anymore.
 				// The "IF" is a WORKAROUND.
 				if( associatedApp != null
@@ -636,6 +637,17 @@ public final class JSonBindingUtils {
 			}
 
 			generator.writeEndArray();
+
+			// Tags
+			Set<String> tags = app.getTags();
+			if( ! tags.isEmpty()) {
+				generator.writeArrayFieldStart( APP_TPL_TAGS );
+				for( String s : tags )
+					generator.writeString( s );
+
+				generator.writeEndArray();
+			}
+
 			generator.writeEndObject();
 		}
 	}
@@ -698,6 +710,11 @@ public final class JSonBindingUtils {
 
 			if(( n = node.get( EEP )) != null )
 				application.setExternalExportsPrefix( n.textValue());
+
+			if(( n = node.get( APP_TPL_TAGS )) != null ) {
+				for( JsonNode arrayNodeItem : n )
+					application.addTag( arrayNodeItem.textValue());
+			}
 
 			return application;
 		}
