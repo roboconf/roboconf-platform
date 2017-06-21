@@ -637,7 +637,7 @@ public class UtilsTest {
 	public void testWriteException() {
 
 		String msg = "Hello from Roboconf.";
-		String stackTrace = Utils.writeException( new Exception( msg ));
+		String stackTrace = Utils.writeExceptionButDoNotUseItForLogging( new Exception( msg ));
 		Assert.assertTrue( stackTrace.contains( msg ));
 	}
 
@@ -918,6 +918,12 @@ public class UtilsTest {
 
 		Utils.logException( logger, Level.INFO, new Exception( "boo!" ));
 		Assert.assertTrue( logHandler.getLogs().startsWith( "java.lang.Exception: boo!" ));
+
+		// With an additional message
+		logHandler.getStringBuilder().setLength( 0 );
+		Assert.assertEquals( "", logHandler.getLogs());
+		Utils.logException( logger, Level.INFO, new Exception( "nice try!" ), "again" );
+		Assert.assertTrue( logHandler.getLogs().startsWith( "again\njava.lang.Exception: nice try!" ));
 	}
 
 

@@ -981,15 +981,14 @@ public final class Utils {
 	/**
 	 * Writes an exception's stack trace into a string.
 	 * <p>
-	 * This method used to be public.<br>
-	 * Its visibility was reduced to promote {@link #logException(Logger, Exception)},
-	 * which has better performances.
+	 * {@link #logException(Logger, Exception)} has better performances
+	 * and should be used for logging purpose.
 	 * </p>
 	 *
 	 * @param t an exception or a throwable (not null)
 	 * @return a string
 	 */
-	static String writeException( Throwable t ) {
+	public static String writeExceptionButDoNotUseItForLogging( Throwable t ) {
 
 		StringWriter sw = new StringWriter();
 		t.printStackTrace( new PrintWriter( sw ));
@@ -1009,11 +1008,37 @@ public final class Utils {
 	 * @param logger the logger
 	 * @param t an exception or a throwable
 	 * @param logLevel the log level (see {@link Level})
+	 * @param message a message to insert before the stack trace
+	 */
+	public static void logException( Logger logger, Level logLevel, Throwable t, String message ) {
+
+		if( logger.isLoggable( logLevel )) {
+			StringBuilder sb = new StringBuilder();
+			if( message != null ) {
+				sb.append( message );
+				sb.append( "\n" );
+			}
+
+			sb.append( writeExceptionButDoNotUseItForLogging( t ));
+			logger.log( logLevel, sb.toString());
+		}
+	}
+
+
+	/**
+	 * Logs an exception with the given logger and the given level.
+	 * <p>
+	 * Writing a stack trace may be time-consuming in some environments.
+	 * To prevent useless computing, this method checks the current log level
+	 * before trying to log anything.
+	 * </p>
+	 *
+	 * @param logger the logger
+	 * @param t an exception or a throwable
+	 * @param logLevel the log level (see {@link Level})
 	 */
 	public static void logException( Logger logger, Level logLevel, Throwable t ) {
-
-		if( logger.isLoggable( logLevel ))
-			logger.log( logLevel, writeException( t ));
+		logException( logger, logLevel, t, null );
 	}
 
 

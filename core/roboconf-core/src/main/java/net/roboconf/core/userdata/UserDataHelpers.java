@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -184,12 +185,19 @@ public final class UserDataHelpers {
 	 */
 	static void interceptLoadingFiles( Properties props ) throws IOException {
 
+		Logger logger = Logger.getLogger( UserDataHelpers.class.getName());
 		Set<String> keys = props.stringPropertyNames();
 		for( String key : keys ) {
 			if( ! key.startsWith( ENCODE_FILE_CONTENT_PREFIX ))
 				continue;
 
-			String value = props.getProperty( key.substring( ENCODE_FILE_CONTENT_PREFIX.length()));
+			String realKey = key.substring( ENCODE_FILE_CONTENT_PREFIX.length());
+			String value = props.getProperty( realKey );
+			if( value == null ) {
+				logger.fine( "No file was specified for " + realKey + ". Skipping it..." );
+				continue;
+			}
+
 			File f = new File( value );
 			if( ! f.exists())
 				throw new IOException( "File " + f + " was not found." );
@@ -216,6 +224,7 @@ public final class UserDataHelpers {
 		if( outputDirectory == null )
 			return;
 
+		Logger logger = Logger.getLogger( UserDataHelpers.class.getName());
 		Set<String> keys = props.stringPropertyNames();
 		for( String key : keys ) {
 			if( ! key.startsWith( ENCODE_FILE_CONTENT_PREFIX ))
@@ -228,6 +237,10 @@ public final class UserDataHelpers {
 			// Write it to the disk
 			String realKey = key.substring( ENCODE_FILE_CONTENT_PREFIX.length());
 			String value = props.getProperty( realKey );
+			if( value == null ) {
+				logger.fine( "No file content was provided for " + realKey + ". Skipping it..." );
+				continue;
+			}
 
 			Utils.createDirectory( outputDirectory );
 			File output = new File( outputDirectory, new File( value ).getName());

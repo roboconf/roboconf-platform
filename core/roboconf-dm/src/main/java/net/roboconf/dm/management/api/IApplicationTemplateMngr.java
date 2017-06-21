@@ -44,7 +44,7 @@ public interface IApplicationTemplateMngr {
 	 * @see ApplicationTemplateMngrDelegate#loadApplicationTemplate(File, File)
 	 */
 	ApplicationTemplate loadApplicationTemplate( File applicationFilesDirectory )
-	throws AlreadyExistingException, InvalidApplicationException, IOException;
+	throws AlreadyExistingException, InvalidApplicationException, IOException, UnauthorizedActionException;
 
 
 	/**

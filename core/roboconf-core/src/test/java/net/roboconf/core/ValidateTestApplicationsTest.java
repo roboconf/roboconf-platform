@@ -29,10 +29,11 @@ import java.io.File;
 import java.util.List;
 
 import org.junit.Assert;
+
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 import org.junit.Test;
 

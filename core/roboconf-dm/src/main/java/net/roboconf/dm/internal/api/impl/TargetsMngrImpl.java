@@ -43,7 +43,8 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.TargetValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
@@ -53,7 +54,6 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;

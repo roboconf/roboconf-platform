@@ -25,21 +25,24 @@
 
 package net.roboconf.maven;
 
+import java.util.Collection;
+import java.util.Map;
+
 import org.apache.maven.plugin.logging.Log;
 
-import net.roboconf.core.ErrorCode.ErrorLevel;
-import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
+import net.roboconf.core.errors.ErrorCode.ErrorLevel;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public final class MavenUtils {
+public final class MavenPluginUtils {
 
 	/**
 	 * Private empty constructor.
 	 */
-	private MavenUtils() {
+	private MavenPluginUtils() {
 		// nothing
 	}
 
@@ -50,14 +53,19 @@ public final class MavenUtils {
 	 * @param log the Maven logger
 	 * @return a string builder with the output
 	 */
-	public static StringBuilder formatError( RoboconfError error, Log log ) {
+	public static StringBuilder formatErrors( Collection<? extends RoboconfError> errors, Log log ) {
 
-		String s = RoboconfErrorHelpers.formatError( error );
-		if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
-			log.warn( s );
-		else
-			log.error( s );
+		StringBuilder result = new StringBuilder();
+		for( Map.Entry<RoboconfError,String> entry : RoboconfErrorHelpers.formatErrors( errors, null, true ).entrySet()) {
+			if( entry.getKey().getErrorCode().getLevel() == ErrorLevel.WARNING )
+				log.warn( entry.getValue());
+			else
+				log.error( entry.getValue());
 
-		return new StringBuilder( s );
+			result.append( entry.getValue());
+			result.append( "\n" );
+		}
+
+		return result;
 	}
 }

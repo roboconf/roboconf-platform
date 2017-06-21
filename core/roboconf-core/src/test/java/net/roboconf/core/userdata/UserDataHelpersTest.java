@@ -144,12 +144,16 @@ public class UserDataHelpersTest {
 
 		final String key1 = "key1.loc";
 		final String key2 = "key2";
+		final String key3 = "key3";
 
 		Map<String,String> msgCfg = msgCfg( "192.168.1.24", "user", "pwd" );
 		msgCfg.put( key1, f.getAbsolutePath());
 		msgCfg.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + key1, "" );
 		msgCfg.put( key2, f.getAbsolutePath());
 		msgCfg.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + key2, "" );
+
+		// Test a missing file
+		msgCfg.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + key3, "" );
 
 		Properties props = UserDataHelpers.writeUserDataAsProperties( msgCfg, "domain", "app", "/root" );
 		Assert.assertEquals( msgCfg.size() + 3, props.size());

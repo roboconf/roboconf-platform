@@ -25,6 +25,8 @@
 
 package net.roboconf.core.autonomic;
 
+import static net.roboconf.core.errors.ErrorDetails.file;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +34,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
@@ -59,7 +62,7 @@ public class RuleParser {
 	 */
 	public RuleParser( File ruleFile ) {
 
-		String details = "File name: " + ruleFile.getName();
+		ErrorDetails details = file( ruleFile );
 		try {
 			String s = Utils.readFileContent( ruleFile );
 			s = s.replaceAll( MULTILINE_COMMENT_PATTERN, "" );

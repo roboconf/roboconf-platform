@@ -40,12 +40,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -124,20 +124,14 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		getLog().info( "Generating a report for validation errors under " + MavenPluginConstants.VALIDATION_RESULT_PATH );
 
 		// Generate the report (file and console too)
-		StringBuilder globalSb = new StringBuilder();
 		List<RoboconfError> resolvedErrors = RoboconfErrorHelpers.resolveErrorsWithLocation( alr );
-
-		for( RoboconfError error : resolvedErrors ) {
-			StringBuilder sb = MavenUtils.formatError( error, getLog());
-			globalSb.append( sb );
-			globalSb.append( "\n" );
-		}
+		StringBuilder sb = MavenPluginUtils.formatErrors( resolvedErrors, getLog());
 
 		// Write the report.
 		// Reporting only makes sense when there is an error or a warning.
 		File targetFile = new File( this.project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
 		Utils.createDirectory( targetFile.getParentFile());
-		Utils.writeStringInto( globalSb.toString(), targetFile );
+		Utils.writeStringInto( sb.toString(), targetFile );
 	}
 
 

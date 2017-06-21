@@ -41,6 +41,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.tests.ComplexApplicationFactory1;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.ParsingError;
@@ -52,7 +53,6 @@ import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora

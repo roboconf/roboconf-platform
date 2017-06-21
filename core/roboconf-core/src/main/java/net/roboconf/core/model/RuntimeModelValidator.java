@@ -25,21 +25,31 @@
 
 package net.roboconf.core.model;
 
+import static net.roboconf.core.errors.ErrorDetails.component;
+import static net.roboconf.core.errors.ErrorDetails.conflicting;
+import static net.roboconf.core.errors.ErrorDetails.cycle;
+import static net.roboconf.core.errors.ErrorDetails.expected;
+import static net.roboconf.core.errors.ErrorDetails.facet;
+import static net.roboconf.core.errors.ErrorDetails.instance;
+import static net.roboconf.core.errors.ErrorDetails.unexpected;
+import static net.roboconf.core.errors.ErrorDetails.unrecognized;
+import static net.roboconf.core.errors.ErrorDetails.variable;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.Version;
 import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -85,36 +95,36 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( component.getName()))
 			errors.add( new ModelError( ErrorCode.RM_EMPTY_COMPONENT_NAME, component ));
 		else if( ! component.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
-			errors.add( new ModelError( ErrorCode.RM_INVALID_COMPONENT_NAME, component, "Component name: " + component ));
+			errors.add( new ModelError( ErrorCode.RM_INVALID_COMPONENT_NAME, component, component( component )));
 		else if( component.getName().contains( "." ))
-			errors.add( new ModelError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, component, "Component name: " + component ));
+			errors.add( new ModelError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, component, component( component )));
 
 		// Check the installer
 		String installerName = ComponentHelpers.findComponentInstaller( component );
 		if( Utils.isEmptyOrWhitespaces( installerName ))
-			errors.add( new ModelError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, component, "Component name: " + component ));
+			errors.add( new ModelError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, component, component( component )));
 		else if( ! installerName.matches( ParsingConstants.PATTERN_FLEX_ID ))
-			errors.add( new ModelError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER, component, "Component name: " + component ));
+			errors.add( new ModelError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER, component, component( component )));
 
 		else if( ComponentHelpers.findAllAncestors( component ).isEmpty()
 				&& ! Constants.TARGET_INSTALLER.equals( installerName ))
-			errors.add( new ModelError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, component, "Component name: " + component ));
+			errors.add( new ModelError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, component, component( component )));
 
 		// Check the name of exported variables
 		for( ExportedVariable exportedVariable : component.exportedVariables.values()) {
 
 			String exportedVarName = exportedVariable.getName();
 			if( Utils.isEmptyOrWhitespaces( exportedVarName ))
-				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, "Variable name: " + exportedVarName ));
+				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, variable( exportedVarName )));
 			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, "Variable name: " + exportedVarName ));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, variable( exportedVarName )));
 
 			if( exportedVariable.isRandom()) {
 				if( exportedVariable.getRandomKind() == null )
-					errors.add( new ModelError( ErrorCode.RM_INVALID_RANDOM_KIND, component, "Unknown kind: " + exportedVariable.getRawKind()));
+					errors.add( new ModelError( ErrorCode.RM_INVALID_RANDOM_KIND, component, unrecognized( exportedVariable.getRawKind())));
 
 				if( exportedVariable.getValue() != null )
-					errors.add( new ModelError( ErrorCode.RM_NO_VALUE_FOR_RANDOM, component, "Variable name: " + exportedVariable.getName()));
+					errors.add( new ModelError( ErrorCode.RM_NO_VALUE_FOR_RANDOM, component, variable( exportedVarName )));
 			}
 		}
 
@@ -128,27 +138,27 @@ public final class RuntimeModelValidator {
 			patternForImports += "(\\.\\*)?";
 
 			if( Utils.isEmptyOrWhitespaces( varName ))
-				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, "Variable name: " + varName ));
+				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, variable( varName )));
 			else if( ! varName.matches( patternForImports ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, "Variable name: " + varName ));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, variable( varName )));
 
 			// If the import is optional...
 			if( var.isOptional())
 				continue;
 
 			if( allExportedVariables.containsKey( varName ))
-				errors.add( new ModelError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, component, "Variable name: " + varName ));
+				errors.add( new ModelError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, component, variable( varName )));
 		}
 
 		// No cycle in inheritance
-		String errorMsg = ComponentHelpers.searchForInheritanceCycle( component );
-		if( errorMsg != null )
-			errors.add( new ModelError( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, component, errorMsg ));
+		String cycle = ComponentHelpers.searchForInheritanceCycle( component );
+		if( cycle != null )
+			errors.add( new ModelError( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, component, cycle( cycle )));
 
 		// Containment Cycles?
-		errorMsg = ComponentHelpers.searchForLoop( component );
-		if( errorMsg != null && errorMsg.startsWith( component.getName()))
-			errors.add( new ModelError( ErrorCode.RM_CYCLE_IN_COMPONENTS, component, errorMsg ));
+		cycle = ComponentHelpers.searchForLoop( component );
+		if( cycle != null && cycle.startsWith( component.getName()))
+			errors.add( new ModelError( ErrorCode.RM_CYCLE_IN_COMPONENTS, component, cycle( cycle )));
 
 		return errors;
 	}
@@ -171,23 +181,23 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( facet.getName()))
 			result.add( new ModelError( ErrorCode.RM_EMPTY_FACET_NAME, facet ));
 		else if( ! facet.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
-			result.add( new ModelError( ErrorCode.RM_INVALID_FACET_NAME, facet, "Facet name: " + facet ));
+			result.add( new ModelError( ErrorCode.RM_INVALID_FACET_NAME, facet, facet( facet )));
 		else if( facet.getName().contains( "." ))
-			result.add( new ModelError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, facet, "Facet name: " + facet ));
+			result.add( new ModelError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, facet, facet( facet )));
 
 		// Check the name of exported variables
 		for( String exportedVarName : facet.exportedVariables.keySet()) {
 
 			if( Utils.isEmptyOrWhitespaces( exportedVarName ))
-				result.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, facet, "Variable name: " + exportedVarName ));
+				result.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, facet, variable( exportedVarName )));
 			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
-				result.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, facet, "Variable name: " + exportedVarName ));
+				result.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, facet, variable( exportedVarName )));
 		}
 
 		// Look for cycles in inheritance
-		String errorMsg = ComponentHelpers.searchForInheritanceCycle( facet );
-		if( errorMsg != null )
-			result.add( new ModelError( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, facet, errorMsg ));
+		String cycle = ComponentHelpers.searchForInheritanceCycle( facet );
+		if( cycle != null )
+			result.add( new ModelError( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, facet, cycle( cycle )));
 
 		return result;
 	}
@@ -205,8 +215,7 @@ public final class RuntimeModelValidator {
 		for( Component c : ComponentHelpers.findAllComponents( graphs )) {
 			File componentDirectory = ResourceUtils.findInstanceResourcesDirectory( projectDirectory, c );
 			if( ! componentDirectory.exists()) {
-				ModelError error = new ModelError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, c );
-				error.setDetails( "Component name: " + c.getName());
+				ModelError error = new ModelError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, c, component( c ));
 				result.add( error );
 
 			} else if( ComponentHelpers.isTarget( c )) {
@@ -234,7 +243,7 @@ public final class RuntimeModelValidator {
 
 		for( Component rootComponent : graphs.getRootComponents()) {
 			if( ! ComponentHelpers.findAllAncestors( rootComponent ).isEmpty())
-				errors.add( new ModelError( ErrorCode.RM_NOT_A_ROOT_COMPONENT, rootComponent, "Component name: " + rootComponent ));
+				errors.add( new ModelError( ErrorCode.RM_NOT_A_ROOT_COMPONENT, rootComponent, component( rootComponent )));
 		}
 
 		// Validate all the components
@@ -300,21 +309,21 @@ public final class RuntimeModelValidator {
 
 			// Add an error about unknown variable
 			for( Component component : importedVariableToImporters.get( entry.getKey()))
-				errors.add( new ModelError( errorCode, component, "Variable name: " + entry.getKey()));
+				errors.add( new ModelError( errorCode, component, variable( entry.getKey())));
 		}
 
 		// Do we have orphan facets?
 		for( Facet f : graphs.getFacetNameToFacet().values()) {
 			if( f.getAssociatedComponents().isEmpty()) {
 				if( f.getChildren().isEmpty())
-					errors.add( new ModelError( ErrorCode.RM_ORPHAN_FACET, f, "Facet name: " + f ));
+					errors.add( new ModelError( ErrorCode.RM_ORPHAN_FACET, f, facet( f )));
 				else
-					errors.add( new ModelError( ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN, f, "Facet name: " + f ));
+					errors.add( new ModelError( ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN, f, facet( f )));
 
 				// Unreachable components
 				for( AbstractType t : f.getChildren()) {
 					if( t instanceof Component )
-						errors.add( new ModelError( ErrorCode.RM_UNREACHABLE_COMPONENT, t, "Component name: " + t ));
+						errors.add( new ModelError( ErrorCode.RM_UNREACHABLE_COMPONENT, t, component( t.getName())));
 				}
 			}
 		}
@@ -335,7 +344,7 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( instance.getName()))
 			errors.add( new ModelError( ErrorCode.RM_EMPTY_INSTANCE_NAME, instance ));
 		else if( ! instance.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
-			errors.add( new ModelError( ErrorCode.RM_INVALID_INSTANCE_NAME, instance, "Instance name: " + instance.getName()));
+			errors.add( new ModelError( ErrorCode.RM_INVALID_INSTANCE_NAME, instance, instance( instance )));
 
 		// Check exports
 		if( instance.getComponent() == null )
@@ -357,14 +366,11 @@ public final class RuntimeModelValidator {
 			}
 
 			if( errorCode != null ) {
-				StringBuilder sb = new StringBuilder( "One of the following parent was expected: " );
-				for( Iterator<Component> it = ancestors.iterator(); it.hasNext(); ) {
-					sb.append( it.next().getName());
-					if( it.hasNext())
-						sb.append( ", " );
-				}
+				List<ErrorDetails> details = new ArrayList<> ();
+				for( Component component : ancestors )
+					details.add( expected( component.getName()));
 
-				errors.add( new ModelError( errorCode, instance, sb.toString()));
+				errors.add( new ModelError( errorCode, instance, details.toArray( new ErrorDetails[ details.size()])));
 			}
 		}
 
@@ -397,21 +403,18 @@ public final class RuntimeModelValidator {
 			// The export is incomplete or does not override anything...
 			Set<String> fullNames = localNameToFullNames.get( entry.getKey());
 			if( fullNames == null ) {
-				errors.add( new ModelError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, instance, "Variable name: " + entry.getKey()));
+				errors.add( new ModelError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, instance, variable( entry.getKey())));
 
 			} else if( fullNames.size() > 1 ) {
-				StringBuilder sb = new StringBuilder();
-				sb.append( "Variable '" );
-				sb.append( entry.getKey());
-				sb.append( "' overrides " );
+				List<ErrorDetails> details = new ArrayList<> ();
+				details.add( variable( entry.getKey()));
+				for( String string : fullNames )
+					details.add( conflicting( string));
 
-				for( Iterator<String> it = fullNames.iterator(); it.hasNext(); ) {
-					sb.append( it.next());
-					if( it.hasNext())
-						sb.append( ", " );
-				}
-
-				errors.add( new ModelError( ErrorCode.RM_AMBIGUOUS_OVERRIDING, instance, sb.toString()));
+				errors.add( new ModelError(
+						ErrorCode.RM_AMBIGUOUS_OVERRIDING,
+						instance,
+						details.toArray( new ErrorDetails[ details.size()])));
 			}
 		}
 
@@ -436,7 +439,7 @@ public final class RuntimeModelValidator {
 			if( Utils.isEmptyOrWhitespaces( value )
 					&& ! Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( name )
 					&& ! name.toLowerCase().endsWith( "." + Constants.SPECIFIC_VARIABLE_IP ))
-				errors.add( new ModelError( ErrorCode.RM_MISSING_VARIABLE_VALUE, instance, "Variable name: " + name ));
+				errors.add( new ModelError( ErrorCode.RM_MISSING_VARIABLE_VALUE, instance, variable( name )));
 		}
 
 		// Hack: start (restore overridden exports)
@@ -480,7 +483,7 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( app.getVersion()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_VERSION, app ));
 		else if( Version.parseVersion( app.getVersion()) == null )
-			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_VERSION, app, "Invalid version: " + app.getVersion()));
+			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_VERSION, app, unexpected( app.getVersion())));
 
 		// Graph validation
 		Map<String,String> allExports;
@@ -505,16 +508,16 @@ public final class RuntimeModelValidator {
 		Set<String> alreadySeen = new HashSet<> ();
 		for( Map.Entry<String,String> entry : app.externalExports.entrySet()) {
 			if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, app, "Variable name: " + entry.getKey()));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, app, variable( entry.getKey())));
 
 			if( ! allExports.containsKey( entry.getKey()))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, app, "Variable name: " + entry.getKey()));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, app, variable( entry.getKey())));
 
 			if( ! entry.getValue().matches( ParsingConstants.PATTERN_ID ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, app, "Variable name: " + entry.getValue()));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, app, variable( entry.getValue())));
 
 			if( alreadySeen.contains( entry.getValue()))
-				errors.add( new ModelError( ErrorCode.RM_ALREADY_DEFINED_EXTERNAL_EXPORT, app, "Variable name: " + entry.getValue()));
+				errors.add( new ModelError( ErrorCode.RM_ALREADY_DEFINED_EXTERNAL_EXPORT, app, variable( entry.getValue())));
 			else
 				alreadySeen.add( entry.getValue());
 		}
@@ -539,7 +542,7 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( descriptor.getVersion()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_VERSION, descriptor ));
 		else if( Version.parseVersion( descriptor.getVersion()) == null )
-			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_VERSION, descriptor, "Invalid version: " + descriptor.getVersion()));
+			errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_VERSION, descriptor, unexpected( descriptor.getVersion())));
 
 		if( Utils.isEmptyOrWhitespaces( descriptor.getDslId()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, descriptor ));
@@ -552,10 +555,10 @@ public final class RuntimeModelValidator {
 
 		for( Map.Entry<String,String> entry : descriptor.externalExports.entrySet()) {
 			if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, descriptor, "Variable name: " + entry.getKey()));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, descriptor, variable( entry.getKey())));
 
 			if( ! entry.getValue().matches( ParsingConstants.PATTERN_ID ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, descriptor, "Variable name: " + entry.getValue()));
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, descriptor, variable( entry.getValue())));
 		}
 
 		return errors;

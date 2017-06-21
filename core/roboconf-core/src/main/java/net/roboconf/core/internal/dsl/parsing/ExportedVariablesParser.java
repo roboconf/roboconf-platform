@@ -25,13 +25,15 @@
 
 package net.roboconf.core.internal.dsl.parsing;
 
+import static net.roboconf.core.errors.ErrorDetails.variable;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
@@ -127,7 +129,7 @@ public class ExportedVariablesParser {
 
 		// c is '"'
 		if( ! Utils.isEmptyOrWhitespaces( sb.toString())) {
-			this.errors.add( new ParsingError( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, sourceFile, lineNumber, "Variable name: " + variableName ));
+			this.errors.add( new ParsingError( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, sourceFile, lineNumber, variable( variableName )));
 
 			// Move the cursor forward so that we do not read the quote character, again
 			this.cursor ++;
@@ -146,7 +148,7 @@ public class ExportedVariablesParser {
 
 		// We expect a closing quote
 		if( c != '"' ) {
-			this.errors.add( new ParsingError( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, sourceFile, lineNumber, "Variable name: " + variableName ));
+			this.errors.add( new ParsingError( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, sourceFile, lineNumber, variable( variableName )));
 			return;
 		}
 
@@ -161,7 +163,7 @@ public class ExportedVariablesParser {
 				this.cursor ++;
 
 			} else {
-				this.errors.add( new ParsingError( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, sourceFile, lineNumber, "Variable name: " + variableName ));
+				this.errors.add( new ParsingError( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, sourceFile, lineNumber, variable( variableName )));
 				return;
 			}
 		}

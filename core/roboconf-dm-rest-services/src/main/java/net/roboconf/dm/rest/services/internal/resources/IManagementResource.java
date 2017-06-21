@@ -71,7 +71,10 @@ public interface IManagementResource {
 	 * @return a response
 	 *
 	 * @HTTP 200 Everything went fine.
-	 * @HTTP 406 The application could not be created (e.g. invalid).
+	 * @HTTP 409 Conflicts occurred with deployment targets.
+	 * @HTTP 406 Invalid application template.
+	 * @HTTP 403 An application template with this name already exists.
+	 * @HTTP 401 The application template could not be registered (e.g. DM not ready).
 	 */
 	@POST
 	@Path("/templates")
@@ -97,7 +100,8 @@ public interface IManagementResource {
 	 * @return a response
 	 *
 	 * @HTTP 200 Everything went fine.
-	 * @HTTP 406 Invalid application template.
+	 * @HTTP 409 Conflicts occurred with deployment targets.
+	 * @HTTP 406 Invalid application template or invalid URL.
 	 * @HTTP 403 An application template with this name already exists.
 	 * @HTTP 401 The application template could not be registered (e.g. DM not ready).
 	 */
@@ -126,6 +130,7 @@ public interface IManagementResource {
 	 * @return a response
 	 *
 	 * @HTTP 200 Everything went fine.
+	 * @HTTP 409 Conflicts occurred with deployment targets.
 	 * @HTTP 406 Invalid application template.
 	 * @HTTP 403 An application template with this name already exists.
 	 * @HTTP 401 The application template could not be registered (e.g. DM not ready).

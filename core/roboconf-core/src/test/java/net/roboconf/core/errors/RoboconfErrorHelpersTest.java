@@ -23,21 +23,25 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.helpers;
+package net.roboconf.core.errors;
 
-import static net.roboconf.core.ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT;
-import static net.roboconf.core.ErrorCode.PM_DUPLICATE_PROPERTY;
-import static net.roboconf.core.ErrorCode.PM_MALFORMED_COMMENT;
-import static net.roboconf.core.ErrorCode.PROJ_NO_RESOURCE_DIRECTORY;
-import static net.roboconf.core.ErrorCode.REC_ARTIFACT_ID_IN_LOWER_CASE;
-import static net.roboconf.core.ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR;
-import static net.roboconf.core.ErrorCode.RM_INVALID_COMPONENT_INSTALLER;
-import static net.roboconf.core.ErrorCode.RM_INVALID_VARIABLE_NAME;
-import static net.roboconf.core.ErrorCode.RM_ORPHAN_FACET;
-import static net.roboconf.core.ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN;
-import static net.roboconf.core.ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET;
-import static net.roboconf.core.ErrorCode.RM_UNREACHABLE_COMPONENT;
-import static net.roboconf.core.ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE;
+import static net.roboconf.core.errors.ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT;
+import static net.roboconf.core.errors.ErrorCode.PM_DUPLICATE_PROPERTY;
+import static net.roboconf.core.errors.ErrorCode.PM_MALFORMED_COMMENT;
+import static net.roboconf.core.errors.ErrorCode.PROJ_NO_RESOURCE_DIRECTORY;
+import static net.roboconf.core.errors.ErrorCode.REC_ARTIFACT_ID_IN_LOWER_CASE;
+import static net.roboconf.core.errors.ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR;
+import static net.roboconf.core.errors.ErrorCode.RM_INVALID_COMPONENT_INSTALLER;
+import static net.roboconf.core.errors.ErrorCode.RM_INVALID_VARIABLE_NAME;
+import static net.roboconf.core.errors.ErrorCode.RM_ORPHAN_FACET;
+import static net.roboconf.core.errors.ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN;
+import static net.roboconf.core.errors.ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET;
+import static net.roboconf.core.errors.ErrorCode.RM_UNREACHABLE_COMPONENT;
+import static net.roboconf.core.errors.ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE;
+import static net.roboconf.core.errors.ErrorDetails.name;
+import static net.roboconf.core.errors.ErrorDetails.unexpected;
+import static net.roboconf.core.errors.ErrorDetails.value;
+import static net.roboconf.core.errors.ErrorDetails.variable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -47,8 +51,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.i18n.TranslationBundle;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
@@ -87,22 +90,6 @@ public class RoboconfErrorHelpersTest {
 		errors = RoboconfErrorHelpers.findWarnings( errors );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
-	}
-
-
-	@Test
-	public void testExtractAndFormatWarnings() {
-
-		Collection<RoboconfError> errors = new ArrayList<> ();
-		Assert.assertEquals( 0, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
-
-		RoboconfError error = new RoboconfError( PROJ_NO_RESOURCE_DIRECTORY );
-		errors.add( error );
-		Assert.assertEquals( 1, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
-
-		error.setDetails( "whatever" );
-		errors.add( new RoboconfError( PM_DUPLICATE_PROPERTY ));
-		Assert.assertEquals( 1, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
 	}
 
 
@@ -202,30 +189,68 @@ public class RoboconfErrorHelpersTest {
 
 
 	@Test
-	public void testFormatError() {
+	public void testFormatError_en() {
 
-		RoboconfError error = new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT );
-		String s = RoboconfErrorHelpers.formatError( error );
-		Assert.assertEquals( "[ commands ] " + CMD_CANNOT_HAVE_ANY_PARENT.getMsg(), s );
+		final String msg = "This component cannot have any parent. It cannot be instantiated under this instance.";
 
-		error = new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, "oops" );
-		s = RoboconfErrorHelpers.formatError( error );
-		Assert.assertEquals( "[ commands ] " + CMD_CANNOT_HAVE_ANY_PARENT.getMsg() + " oops.", s );
+		List<RoboconfError> errors = new ArrayList<> ();
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT ));
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, name( "oops" )));
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, value( "oops" )));
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, unexpected( "oops." )));
+		errors.add( new ParsingError( CMD_CANNOT_HAVE_ANY_PARENT, new File( "/test" ), 24 ));
+		errors.add( new ParsingError( CMD_CANNOT_HAVE_ANY_PARENT, new File( "/test" ), 21, name( "you" ), variable( "v" )));
 
-		error = new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, "oops" );
-		s = RoboconfErrorHelpers.formatError( error );
-		Assert.assertEquals( "[ commands ] " + CMD_CANNOT_HAVE_ANY_PARENT.getMsg() + " oops.", s );
+		List<String> errorMessages = new ArrayList<>( RoboconfErrorHelpers.formatErrors( errors, TranslationBundle.EN, true ).values());
+		Assert.assertEquals( errors.size(), errorMessages.size());
 
-		error = new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, "oops." );
-		s = RoboconfErrorHelpers.formatError( error );
-		Assert.assertEquals( "[ commands ] " + CMD_CANNOT_HAVE_ANY_PARENT.getMsg() + " oops.", s );
+		Assert.assertEquals(
+				"[ " + CMD_CANNOT_HAVE_ANY_PARENT.getCategory().name().toLowerCase() + " ] " + msg,
+				errorMessages.get( 0 ));
 
-		error = new ParsingError( CMD_CANNOT_HAVE_ANY_PARENT, new File( "test" ), 24 );
-		s = RoboconfErrorHelpers.formatError( error );
-		Assert.assertEquals( "[ commands ] " + CMD_CANNOT_HAVE_ANY_PARENT.getMsg() + " See test, line 24.", s );
+		Assert.assertEquals(
+				"[ " + CMD_CANNOT_HAVE_ANY_PARENT.getCategory().name().toLowerCase() + " ] " + msg + " Name: oops",
+				errorMessages.get( 1 ));
 
-		error = new ParsingError( CMD_CANNOT_HAVE_ANY_PARENT, new File( "test" ), 21, "you" );
-		s = RoboconfErrorHelpers.formatError( error );
-		Assert.assertEquals( "[ commands ] " + CMD_CANNOT_HAVE_ANY_PARENT.getMsg() + " you. See test, line 21.", s );
+		Assert.assertEquals(
+				"[ " + CMD_CANNOT_HAVE_ANY_PARENT.getCategory().name().toLowerCase() + " ] " + msg + " Value: oops",
+				errorMessages.get( 2 ));
+
+		Assert.assertEquals(
+				"[ " + CMD_CANNOT_HAVE_ANY_PARENT.getCategory().name().toLowerCase() + " ] " + msg + " Unexpected: oops.",
+				errorMessages.get( 3 ));
+
+		Assert.assertEquals(
+				"[ " + CMD_CANNOT_HAVE_ANY_PARENT.getCategory().name().toLowerCase() + " ] " + msg + " File: /test. Line number: 24",
+				errorMessages.get( 4 ));
+
+		Assert.assertEquals(
+				"[ " + CMD_CANNOT_HAVE_ANY_PARENT.getCategory().name().toLowerCase() + " ] " + msg + " Name: you. Variable: v. File: /test. Line number: 21",
+				errorMessages.get( 5 ));
+	}
+
+
+	@Test
+	public void testFormatError_fr() {
+
+		final String msg = "Ce composant ne peut pas avoir de parent. Il ne peut pas être instancié sous cette instance.";
+
+		List<RoboconfError> errors = new ArrayList<> ();
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT ));
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, name( "oops" )));
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, value( "oops" )));
+		errors.add( new RoboconfError( CMD_CANNOT_HAVE_ANY_PARENT, unexpected( "oops." )));
+		errors.add( new ParsingError( CMD_CANNOT_HAVE_ANY_PARENT, new File( "/test" ), 24 ));
+		errors.add( new ParsingError( CMD_CANNOT_HAVE_ANY_PARENT, new File( "/test" ), 21, name( "you" ), variable( "v" )));
+
+		List<String> errorMessages = new ArrayList<>( RoboconfErrorHelpers.formatErrors( errors, TranslationBundle.FR, false ).values());
+		Assert.assertEquals( errors.size(), errorMessages.size());
+
+		Assert.assertEquals( msg, errorMessages.get( 0 ));
+		Assert.assertEquals( msg + " Nom : oops", errorMessages.get( 1 ));
+		Assert.assertEquals( msg + " Valeur : oops", errorMessages.get( 2 ));
+		Assert.assertEquals( msg + " Non-attendu : oops.", errorMessages.get( 3 ));
+		Assert.assertEquals( msg + " Fichier : /test. N° de ligne : 24", errorMessages.get( 4 ));
+		Assert.assertEquals( msg + " Nom : you. Variable : v. Fichier : /test. N° de ligne : 21", errorMessages.get( 5 ));
 	}
 }

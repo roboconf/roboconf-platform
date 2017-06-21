@@ -211,6 +211,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		// Find a plug-in
 		PluginInterface result = null;
 		if( this.simulatePlugins ) {
+			this.logger.finer( "Simulating plugins..." );
 			result = new PluginMock();
 
 		} else {
@@ -234,7 +235,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		if( result != null )
 			result.setNames( this.applicationName, this.scopedInstancePath );
 
-		return result == null ? null : new PluginProxy(result);
+		return result == null ? null : new PluginProxy( result );
 	}
 
 

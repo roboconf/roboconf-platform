@@ -25,13 +25,19 @@
 
 package net.roboconf.dm.rest.services.internal.utils;
 
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import net.roboconf.core.utils.Utils;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IPreferencesMngr;
+import net.roboconf.dm.management.exceptions.InvalidApplicationException;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -47,64 +53,58 @@ public final class RestServicesUtils {
 
 
 	/**
-	 * Handles an exception.
-	 * @param logger the logger
+	 * Handles an error and makes the magic stuff so that users can understand it.
 	 * @param status the response's status
-	 * @param msg the message (can be null)
-	 * @param e the exception (can be null)
+	 * @param restError a REST error
+	 * @param lang the user language
 	 * @return a response builder
 	 */
-	public static ResponseBuilder handleException( Logger logger, int status, String msg, Exception e ) {
+	public static ResponseBuilder handleError( int status, RestError restError, String lang ) {
+
+		List<RoboconfError> errors = new ArrayList<> ();
+		errors.add( restError );
+		if( restError.getException() instanceof InvalidApplicationException ) {
+			errors.addAll(((InvalidApplicationException) restError.getException()).getErrors());
+		}
 
 		StringBuilder sb = new StringBuilder();
-		if( msg != null )
-			sb.append( formatEnd( msg ));
-
-		if( e != null && ! Utils.isEmptyOrWhitespaces( e.getMessage()))
-			sb.append( e.getMessage());
-
-		logger.severe( sb.toString());
-		if( e != null )
-			Utils.logException( logger, e );
+		String sep = "\n\n";
+		for( String s : RoboconfErrorHelpers.formatErrors( errors, null, false ).values()) {
+			sb.append( s );
+			sb.append( sep );
+			sep = "\n";
+		}
 
 		// Errors should return a JSon object.
 		// Otherwise, Restangular cannot parse error messages.
-		String details = msg == null ? "Not specified." : msg.replaceAll( "\"", "\\\"" );
-		return Response.status( status ).entity( "{\"reason\":\"" + details + "\"}" );
+		// See https://stackoverflow.com/questions/42068/how-do-i-handle-newlines-in-json
+		String msg = sb.toString().trim()
+						.replaceAll( "\"", "\\\"" )
+						.replaceAll( "\n", "\\\\n" )
+						.replaceAll( "\r", "\\\\r" )
+						.replaceAll( "\t", "\\\\t" );
+
+		return Response.status( status ).entity( "{\"reason\":\"" + msg + "\"}" );
 	}
 
 
 	/**
-	 * Handles an exception.
-	 * @param logger the logger
+	 * Handles an error and makes the magic stuff so that users can understand it.
 	 * @param status the response's status
-	 * @param msg the message (can be null)
-	 * @param e the exception (can be null)
+	 * @param restError a REST error
+	 * @param lang the user language
 	 * @return a response builder
 	 */
-	public static ResponseBuilder handleException( Logger logger, Status status, String msg, Exception e ) {
-		return handleException( logger, status.getStatusCode(), msg, e );
+	public static ResponseBuilder handleError( Status status, RestError restError, String lang ) {
+		return handleError( status.getStatusCode(), restError, lang );
 	}
 
 
 	/**
-	 * Handles an exception.
-	 * @param logger the logger
-	 * @param status the response's status
-	 * @param msg the message (can be null)
-	 * @return a response builder
+	 * @param manager a non-null manager
+	 * @return the user language, as specified in the preferences
 	 */
-	public static ResponseBuilder handleException( Logger logger, Status status, String msg ) {
-		return handleException( logger, status.getStatusCode(), msg, null );
-	}
-
-
-	/**
-	 * Formats the end of a message for logging.
-	 * @param s a string (can be null)
-	 * @return a formatted string, or null if the input was null
-	 */
-	static String formatEnd( String s ) {
-		return Utils.isEmptyOrWhitespaces( s ) ? null : s.replaceFirst( "\\s*$", " " );
+	public static String lang( Manager manager ) {
+		return manager.preferencesMngr().get( IPreferencesMngr.USER_LANGUAGE );
 	}
 }
