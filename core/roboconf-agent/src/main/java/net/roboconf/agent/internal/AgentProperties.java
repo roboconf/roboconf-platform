@@ -169,7 +169,7 @@ public final class AgentProperties {
 		// In Karaf, this will point to the "data/tmp" directory.
 		Properties props = new Properties();
 		if( rawProperties != null ) {
-			File msgResourcesDirectory = new File( "java.io.tmpdir", "roboconf-messaging" );
+			File msgResourcesDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-messaging" );
 			props = UserDataHelpers.readUserData( rawProperties, msgResourcesDirectory );
 		}
 
