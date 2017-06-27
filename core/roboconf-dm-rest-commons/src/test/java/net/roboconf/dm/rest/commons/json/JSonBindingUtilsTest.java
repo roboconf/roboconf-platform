@@ -87,6 +87,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getVersion(), readApp.getVersion());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
 	}
 
 
@@ -111,6 +112,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getVersion(), readApp.getVersion());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
 	}
 
 
@@ -149,6 +151,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getVersion(), readApp.getVersion());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
 	}
 
 
@@ -169,6 +172,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getVersion(), readApp.getVersion());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
 	}
 
 
@@ -244,17 +248,19 @@ public class JSonBindingUtilsTest {
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate app = new ApplicationTemplate( "àéoçù" ).description( "some text" ).version( "v1" );
+
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
-
 		Assert.assertEquals( result, s );
+
 		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
 		Assert.assertEquals( app, readApp );
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getVersion(), readApp.getVersion());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
 	}
 
 
@@ -272,6 +278,32 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getVersion(), readApp.getVersion());
 		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
+	}
+
+
+	@Test
+	public void testApplicationTemplateBinding_11() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		final String result =
+		"{\"name\":\"coucou\",\"displayName\":\"coucou\",\"desc\":\"some text\",\"version\":\"v1\",\"apps\":[],\"tags\":[\"t1\",\"t21\",\"t4\"]}";
+
+		ApplicationTemplate app = new ApplicationTemplate( "coucou" ).description( "some text" ).version( "v1" );
+		app.setTags( Arrays.asList( "t1", "t21", "t4" ));
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+		Assert.assertEquals( result, s );
+
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getVersion(), readApp.getVersion());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+		Assert.assertEquals( app.getTags(), readApp.getTags());
 	}
 
 

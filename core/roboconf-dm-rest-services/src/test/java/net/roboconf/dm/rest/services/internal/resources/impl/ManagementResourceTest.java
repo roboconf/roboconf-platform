@@ -172,12 +172,12 @@ public class ManagementResourceTest {
 		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the "filter" template
-		templates = this.resource.listApplicationTemplates( "filter", null );
+		templates = this.resource.listApplicationTemplates( "filter", null, null );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
 
 		// Get the test template with no specific qualifier
-		templates = this.resource.listApplicationTemplates( tpl.getName(), null );
+		templates = this.resource.listApplicationTemplates( tpl.getName(), null, null );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
@@ -187,7 +187,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the test template with the exact qualifier
-		templates = this.resource.listApplicationTemplates( tpl.getName(), tpl.getVersion());
+		templates = this.resource.listApplicationTemplates( tpl.getName(), tpl.getVersion(), null );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
@@ -197,7 +197,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Get the test template with the exact qualifier but no specific name
-		templates = this.resource.listApplicationTemplates( null, tpl.getVersion());
+		templates = this.resource.listApplicationTemplates( null, tpl.getVersion(), null );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 1, templates.size());
 
@@ -207,12 +207,30 @@ public class ManagementResourceTest {
 		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
 
 		// Invalid qualifier
-		templates = this.resource.listApplicationTemplates( null, tpl.getVersion() + "2" );
+		templates = this.resource.listApplicationTemplates( null, tpl.getVersion() + "2", null );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
 
 		// Invalid name
-		templates = this.resource.listApplicationTemplates( tpl.getName() + "1", null );
+		templates = this.resource.listApplicationTemplates( tpl.getName() + "1", null, null );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		// Right tag
+		final String tag = "cool";
+		tpl.addTag( tag );
+
+		templates = this.resource.listApplicationTemplates( null, tpl.getVersion(), tag );
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getVersion(), receivedTpl.getVersion());
+
+		// Invalid tag
+		templates = this.resource.listApplicationTemplates( null, tpl.getVersion() + "2", "invalid tag" );
 		Assert.assertNotNull( templates );
 		Assert.assertEquals( 0, templates.size());
 	}

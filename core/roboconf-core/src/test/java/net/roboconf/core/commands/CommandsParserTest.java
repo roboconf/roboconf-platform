@@ -28,18 +28,18 @@ package net.roboconf.core.commands;
 import java.io.File;
 import java.util.List;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ParsingError;
-import net.roboconf.core.utils.Utils;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -107,7 +107,7 @@ public class CommandsParserTest {
 		CommandsParser parser = new CommandsParser( this.app, new File( "inexisting" ));
 		List<ParsingError> errors = parser.getParsingErrors();
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.CMD_NO_INSTRUCTION, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.CMD_INEXISTING_COMMAND_FILE, errors.get( 0 ).getErrorCode());
 	}
 
 

@@ -28,11 +28,9 @@ package net.roboconf.core.model;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -40,12 +38,14 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.converters.FromInstanceDefinition;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
+import net.roboconf.core.errors.ErrorDetails.ErrorDetailsKind;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -56,7 +56,6 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -821,13 +820,10 @@ public class RuntimeModelValidatorTest {
 		RoboconfErrorHelpers.filterErrorsForRecipes( errors );
 		Assert.assertEquals( 3, errors.size());
 
-		Set<String> messages = new HashSet<> ();
 		for( ModelError error : errors ) {
 			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, error.getErrorCode());
-			messages.add( error.getDetails());
+			Assert.assertEquals( 1, error.getDetails().length );
 		}
-
-		Assert.assertEquals( 3, messages.size());
 	}
 
 
@@ -873,7 +869,10 @@ public class RuntimeModelValidatorTest {
 		ModelError error = errors.iterator().next();
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, error.getErrorCode());
 		Assert.assertEquals( new Component( "app" ), error.getModelObject());
-		Assert.assertTrue( error.getDetails().contains( "messaging.*" ));
+
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.VARIABLE, error.getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertTrue( error.getDetails()[ 0 ].getElementName().contains( "messaging.*" ));
 	}
 
 
@@ -891,7 +890,10 @@ public class RuntimeModelValidatorTest {
 		ModelError error = errors.iterator().next();
 		Assert.assertEquals( ErrorCode.RM_INVALID_RANDOM_KIND, error.getErrorCode());
 		Assert.assertEquals( new Component( "comp2" ), error.getModelObject());
-		Assert.assertTrue( error.getDetails().contains( "string" ));
+
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.UNRECOGNIZED, error.getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertTrue( error.getDetails()[ 0 ].getElementName().contains( "string" ));
 	}
 
 
@@ -909,7 +911,10 @@ public class RuntimeModelValidatorTest {
 		ModelError error = errors.iterator().next();
 		Assert.assertEquals( ErrorCode.RM_NO_VALUE_FOR_RANDOM, error.getErrorCode());
 		Assert.assertEquals( new Component( "comp2" ), error.getModelObject());
-		Assert.assertTrue( error.getDetails().contains( "httpPort" ));
+
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.VARIABLE, error.getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertTrue( error.getDetails()[ 0 ].getElementName().contains( "httpPort" ));
 	}
 
 

@@ -30,16 +30,21 @@ import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_PROTOCOL;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_MNGR_FACTORY;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_USE_SSL;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -49,6 +54,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Recoverable;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
@@ -141,17 +147,42 @@ public class RabbitMqClient implements IMessagingClient {
 		// Filter SSL parameters so that there are not
 		// written in user data if the configuration says so.
 		Map<String,String> result = new HashMap<>( this.configuration );
-		if( "false".equalsIgnoreCase( this.configuration.get( RABBITMQ_SSL_AS_USER_DATA ))) {
-			result.remove( RABBITMQ_SSL_KEY_STORE_PASSPHRASE );
-			result.remove( RABBITMQ_SSL_KEY_STORE_PATH );
-			result.remove( RABBITMQ_SSL_KEY_STORE_TYPE );
-			result.remove( RABBITMQ_SSL_KEY_MNGR_FACTORY );
-			result.remove( RABBITMQ_SSL_TRUST_MNGR_FACTORY );
-			result.remove( RABBITMQ_SSL_TRUST_STORE_PASSPHRASE );
-			result.remove( RABBITMQ_SSL_TRUST_STORE_PATH );
-			result.remove( RABBITMQ_SSL_TRUST_STORE_TYPE );
-		} else {
+		String useSsl = this.configuration.get( RABBITMQ_USE_SSL );
+
+		List<String> allSslProperties = new ArrayList<>( Arrays.asList(
+				RABBITMQ_SSL_KEY_STORE_PASSPHRASE,
+				RABBITMQ_SSL_KEY_STORE_PATH,
+				RABBITMQ_SSL_KEY_STORE_TYPE,
+				RABBITMQ_SSL_KEY_MNGR_FACTORY,
+				RABBITMQ_SSL_TRUST_MNGR_FACTORY,
+				RABBITMQ_SSL_TRUST_STORE_PASSPHRASE,
+				RABBITMQ_SSL_TRUST_STORE_PATH,
+				RABBITMQ_SSL_TRUST_STORE_TYPE,
+				RABBITMQ_SSL_AS_USER_DATA,
+				RABBITMQ_SSL_PROTOCOL,
+				RABBITMQ_USE_SSL
+		));
+
+		// SSL disabled? Remove all the SSL properties
+		if( useSsl == null || "false".equalsIgnoreCase( useSsl )) {
+			result.keySet().removeAll( allSslProperties );
+		}
+
+		// SSL but do not send stores as user data
+		else if( "false".equalsIgnoreCase( this.configuration.get( RABBITMQ_SSL_AS_USER_DATA ))) {
+			allSslProperties.remove( RABBITMQ_SSL_AS_USER_DATA );
+			allSslProperties.remove( RABBITMQ_SSL_PROTOCOL );
+			allSslProperties.remove( RABBITMQ_USE_SSL );
+			result.keySet().removeAll( allSslProperties );
+		}
+
+		// Otherwise (SSL enabled and full user data)
+		else {
 			result.put( RABBITMQ_SSL_AS_USER_DATA, "true" );
+
+			// Indicate which properties point to files whose content should be sent to agents
+			result.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_KEY_STORE_PATH, "" );
+			result.put( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_TRUST_STORE_PATH, "" );
 		}
 
 		return result;

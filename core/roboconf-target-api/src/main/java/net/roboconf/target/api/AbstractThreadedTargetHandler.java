@@ -112,8 +112,10 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 * @param machineId the ID machine of the machine to configure
 	 * @param scopedInstance the scoped instance
 	 * @return a machine configurator
+	 * @throws TargetException if something went wrong
 	 */
-	public abstract MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance );
+	public abstract MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
+	throws TargetException;
 
 
 	/**

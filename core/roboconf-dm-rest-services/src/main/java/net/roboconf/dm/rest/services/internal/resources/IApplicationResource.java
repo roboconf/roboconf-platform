@@ -340,6 +340,7 @@ public interface IApplicationResource {
 	 *
 	 * @HTTP 200 Everything went fine.
 	 * @HTTP 204 No instruction was found.
+	 * @HTTP 404 The application was not found.
 	 */
 	@GET
 	@Path( "/commands/{command-name}" )
@@ -364,4 +365,22 @@ public interface IApplicationResource {
 	@POST
 	@Path( "/commands/execute" )
 	Response executeCommand( @PathParam("name") String app, @QueryParam("command-name") String commandName );
+
+
+	/**
+	 * Replaces the tags for an application template.
+	 * @param name the application name
+	 * @param version the application version
+	 * @param tags the tags
+	 * @return a response
+	 *
+	 * @HTTP 200 Everything went fine.
+	 * @HTTP 404 The application template was not found.
+	 */
+	@POST
+	@Path( "/tags" )
+	Response replaceTags(
+			@PathParam("name") String name,
+			@QueryParam("version") String version,
+			@QueryParam("tags") List<String> tags );
 }

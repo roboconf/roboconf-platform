@@ -25,6 +25,16 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import static net.roboconf.core.errors.ErrorCode.REST_INEXISTING;
+import static net.roboconf.core.errors.ErrorCode.REST_MISSING_PROPERTY;
+import static net.roboconf.core.errors.ErrorDetails.application;
+import static net.roboconf.core.errors.ErrorDetails.component;
+import static net.roboconf.core.errors.ErrorDetails.instance;
+import static net.roboconf.core.errors.ErrorDetails.name;
+import static net.roboconf.core.errors.ErrorDetails.value;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.handleError;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.lang;
+
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
@@ -40,7 +50,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -51,6 +64,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -59,6 +73,7 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings.ApplicationBindingItem;
 import net.roboconf.dm.rest.commons.beans.TargetAssociation;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 import net.roboconf.target.api.TargetException;
@@ -92,26 +107,33 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: change state of " + instancePath + " to '" + newState + "' in " + applicationName + "." );
 		Response response = Response.ok().build();
+		String lang = lang( this.manager );
 		try {
 			ManagedApplication ma;
 			Instance instance;
 			if( ! InstanceStatus.isValidState( newState ))
-				response = Response.status( Status.FORBIDDEN ).entity( "Status '" + newState + "' does not exist." ).build();
+				response = handleError( Status.FORBIDDEN, new RestError( REST_INEXISTING, name( newState )), lang ).build();
 
 			else if(( ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName )) == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( applicationName )), lang ).build();
 
 			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
+				response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, instance( instancePath ), application( applicationName )), lang ).build();
 
 			else
 				this.manager.instancesMngr().changeInstanceState( ma, instance, InstanceStatus.whichStatus( newState ));
 
 		} catch( IOException | TargetException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 
 		} catch( Exception e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -128,15 +150,24 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: change the description of " + applicationName + "." );
 		Response response = Response.ok().build();
+		String lang = lang( this.manager );
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
-			if( ma == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
-			else
+			if( ma == null ) {
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
+
+			} else {
 				this.manager.applicationMngr().updateApplication( ma, desc );
+			}
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -152,16 +183,23 @@ public class ApplicationResource implements IApplicationResource {
 	public Response deployAndStartAll( String applicationName, String instancePath ) {
 
 		this.logger.fine( "Request: deploy and start instances in " + applicationName + ", from instance = " + instancePath + "." );
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			Instance instance = null;
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else if( instancePath != null &&
 					(instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " does not exist in " + applicationName + "." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, instance( instancePath ), application( applicationName )),
+						lang ).build();
 
 			} else {
 				this.manager.instancesMngr().deployAndStartAll( ma, instance );
@@ -169,7 +207,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( Exception e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -185,16 +226,23 @@ public class ApplicationResource implements IApplicationResource {
 	public Response stopAll( String applicationName, String instancePath ) {
 
 		this.logger.fine( "Request: stop instances in " + applicationName + ", from instance = " + instancePath + "." );
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			Instance instance = null;
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else if( instancePath != null &&
 					(instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " does not exist in " + applicationName + "." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, instance( instancePath ), application( applicationName )),
+						lang ).build();
 
 			} else {
 				this.manager.instancesMngr().stopAll( ma, instance );
@@ -202,7 +250,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( Exception e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -218,16 +269,23 @@ public class ApplicationResource implements IApplicationResource {
 	public Response undeployAll( String applicationName, String instancePath ) {
 
 		this.logger.fine( "Request: deploy and start instances in " + applicationName + ", from instance = " + instancePath + "." );
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			Instance instance = null;
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else if( instancePath != null &&
 					(instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " does not exist in " + applicationName + "." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, instance( instancePath ), application( applicationName )),
+						lang ).build();
 
 			} else {
 				this.manager.instancesMngr().undeployAll( ma, instance );
@@ -235,7 +293,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( Exception e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -294,11 +355,15 @@ public class ApplicationResource implements IApplicationResource {
 	public Response bindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
 
 		this.logger.fine( "Binding " + boundApp  + " to the " + externalExportPrefix + " prefix in application " + applicationName + "." );
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else {
 				this.manager.applicationMngr().bindOrUnbindApplication( ma, externalExportPrefix, boundApp, true );
@@ -306,7 +371,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( UnauthorizedActionException | IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -322,11 +390,15 @@ public class ApplicationResource implements IApplicationResource {
 	public Response unbindApplication( String applicationName, String externalExportPrefix, String boundApp ) {
 
 		this.logger.fine( "Unbinding " + boundApp  + " from the " + externalExportPrefix + " prefix in application " + applicationName + "." );
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else {
 				this.manager.applicationMngr().bindOrUnbindApplication( ma, externalExportPrefix, boundApp, false );
@@ -334,7 +406,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( UnauthorizedActionException | IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -362,11 +437,15 @@ public class ApplicationResource implements IApplicationResource {
 			this.logger.fine( sb.toString());
 		}
 
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = RestServicesUtils.handleError(
+						Status.NOT_FOUND,
+						new RestError( ErrorCode.REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else {
 				Set<String> apps = new TreeSet<> ();
@@ -378,7 +457,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( UnauthorizedActionException | IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -396,7 +478,10 @@ public class ApplicationResource implements IApplicationResource {
 		Response response;
 		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 		if( ma == null ) {
-			response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			response = handleError(
+					Status.NOT_FOUND,
+					new RestError( REST_INEXISTING, application( applicationName )),
+					lang( this.manager )).build();
 
 		} else {
 			ApplicationBindings bindings = new ApplicationBindings();
@@ -448,11 +533,15 @@ public class ApplicationResource implements IApplicationResource {
 		else
 			this.logger.fine( "Request: add instance " + instance.getName() + " under " + parentInstancePath + " in " + applicationName + "." );
 
+		String lang = lang( this.manager );
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null ) {
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
 			} else {
 				Graphs graphs = ma.getApplication().getTemplate().getGraphs();
@@ -465,10 +554,16 @@ public class ApplicationResource implements IApplicationResource {
 				// serialized in the same map...). Now let's make this "fictional" instance real (fix it)!
 				Component realComponent;
 				if( componentName == null ) {
-					response = Response.status( Status.NOT_FOUND ).entity( "No component was specified for the instance." ).build();
+					response = handleError(
+							Status.NOT_FOUND,
+							new RestError( REST_MISSING_PROPERTY, value( "component" )),
+							lang ).build();
 
 				} else if((realComponent = ComponentHelpers.findComponent( graphs, componentName )) == null ) {
-					response = Response.status( Status.NOT_FOUND ).entity( "Component " + componentName + " does not exist." ).build();
+					response = handleError(
+							Status.NOT_FOUND,
+							new RestError( REST_INEXISTING, component( componentName )),
+							lang ).build();
 
 				} else {
 					instance.setComponent( realComponent );
@@ -481,7 +576,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( ImpossibleInsertionException | IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -497,24 +595,38 @@ public class ApplicationResource implements IApplicationResource {
 	public Response removeInstance( String applicationName, String instancePath ) {
 
 		this.logger.fine( "Request: remove " + instancePath + " in " + applicationName + "." );
+		String lang = lang( this.manager );
 		Response response = Response.ok().build();
 		Instance instance;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
-			if( ma == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			if( ma == null ) {
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang ).build();
 
-			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
+			} else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
+				response = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, instance( instancePath ), application( applicationName )),
+						lang ).build();
 
-			else
+			} else {
 				this.manager.instancesMngr().removeInstance( ma, instance );
+			}
 
 		} catch( UnauthorizedActionException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.NOT_ACCEPTABLE,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -586,16 +698,20 @@ public class ApplicationResource implements IApplicationResource {
 	public Response resynchronize( String applicationName ) {
 
 		this.logger.fine( "Request: resynchronize all the agents." );
+		String lang = lang( this.manager );
 		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+				response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( applicationName )), lang ).build();
 			else
 				this.manager.instancesMngr().resynchronizeAgents( ma );
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.NOT_ACCEPTABLE,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -702,26 +818,32 @@ public class ApplicationResource implements IApplicationResource {
 	public Response executeCommand( String app, String commandName ) {
 
 		this.logger.fine("Request: execute command " + commandName + " in the " + app + " application.");
+		String lang = lang( this.manager );
 		Response response = Response.ok().build();
 		try {
 			Application application = this.manager.applicationMngr().findApplicationByName( app );
 			if( application == null )
-				response = Response.status( Status.NOT_FOUND ).entity( "Application " + app + " does not exist." ).build();
+				response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( app )), lang ).build();
 			else
 				this.manager.commandsMngr().execute( application, commandName );
 
 		} catch( NoSuchFileException e ) {
-			response = RestServicesUtils.handleException(
-					this.logger, Status.NOT_FOUND,
-					"Command " + commandName + " does not exist.", e ).build();
+			response = RestServicesUtils.handleError(
+					Status.NOT_FOUND,
+					new RestError( ErrorCode.REST_INEXISTING, e, ErrorDetails.name( commandName )),
+					lang ).build();
 
 		} catch( CommandException e ) {
-			response = RestServicesUtils.handleException(
-					this.logger, Status.CONFLICT,
-					"Command " + commandName + " encountered an error during its execution.", e ).build();
+			response = RestServicesUtils.handleError(
+					Status.CONFLICT,
+					new RestError( ErrorCode.REST_APP_EXEC_ERROR, e, ErrorDetails.name( commandName )),
+					lang ).build();
 
 		} catch( Exception e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang ).build();
 		}
 
 		return response;
@@ -734,21 +856,46 @@ public class ApplicationResource implements IApplicationResource {
 	 * #getCommandInstructions(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response getCommandInstructions(String app, String commandName) {
+	public Response getCommandInstructions( String appName, String commandName ) {
 
-		this.logger.fine("Request: get instructions from " + commandName + " in the " + app + " application.");
+		this.logger.fine("Request: get instructions from " + commandName + " in the " + appName + " application.");
 		Response response;
 		try {
-			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
-			String res = this.manager.commandsMngr().getCommandInstructions( ma.getApplication(), commandName);
-			if( res.isEmpty())
+			Application app = this.manager.applicationMngr().findApplicationByName( appName );
+			String res;
+			if( app == null )
+				response = Response.status( Status.NOT_FOUND ).build();
+			else if( Utils.isEmptyOrWhitespaces( res = this.manager.commandsMngr().getCommandInstructions( app, commandName )))
 				response = Response.status( Status.NO_CONTENT ).build();
 			else
-				response = Response.ok(res).build();
+				response = Response.ok( res ).build();
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( ErrorCode.REST_UNDETAILED_ERROR, e ),
+					lang( this.manager )).build();
 		}
+
+		return response;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #replaceTags(java.lang.String, java.lang.String, java.util.List)
+	 */
+	@Override
+	public Response replaceTags( String name, String version, List<String> tags ) {
+
+		this.logger.fine("Request: replace tags for template " + name + " (version " + version + ").");
+		Response response = Response.ok().build();
+
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().findTemplate( name, version );
+		if( tpl == null )
+			response = Response.status( Status.NOT_FOUND ).build();
+		else
+			tpl.setTags( tags );
 
 		return response;
 	}

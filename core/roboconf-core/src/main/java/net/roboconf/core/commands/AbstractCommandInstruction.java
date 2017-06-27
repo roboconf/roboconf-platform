@@ -25,13 +25,17 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.instruction;
+import static net.roboconf.core.errors.ErrorDetails.variable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.AbstractApplication;
 
@@ -68,7 +72,7 @@ public abstract class AbstractCommandInstruction {
 
 		List<ParsingError> errors = new ArrayList<> ();
 		if( ! this.syntaxicallyCorrect )
-			errors.add( error( ErrorCode.CMD_INVALID_SYNTAX, "Instruction: " + this.instruction ));
+			errors.add( error( ErrorCode.CMD_INVALID_SYNTAX, instruction( this.instruction )));
 
 		Matcher m = VAR_PATTERN.matcher( this.instruction );
 		while( m.find()) {
@@ -82,7 +86,7 @@ public abstract class AbstractCommandInstruction {
 			}
 
 			if( ! found )
-				errors.add( error( ErrorCode.CMD_UNRESOLVED_VARIABLE, "Variable: " + varName ));
+				errors.add( error( ErrorCode.CMD_UNRESOLVED_VARIABLE, variable( varName )));
 		}
 
 		if( errors.isEmpty())
@@ -129,8 +133,12 @@ public abstract class AbstractCommandInstruction {
 	 * @param details (can be null)
 	 * @return a new parsing error
 	 */
-	protected ParsingError error( ErrorCode errorCode, String details ) {
-		return new ParsingError( errorCode, this.context.getCommandFile(), this.line, details );
+	protected ParsingError error( ErrorCode errorCode, ErrorDetails... details ) {
+		return new ParsingError(
+				errorCode,
+				this.context.getCommandFile(),
+				this.line,
+				details );
 	}
 
 

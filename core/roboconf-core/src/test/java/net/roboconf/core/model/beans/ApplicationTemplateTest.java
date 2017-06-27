@@ -26,6 +26,7 @@
 package net.roboconf.core.model.beans;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -138,5 +139,23 @@ public class ApplicationTemplateTest {
 		app.setName( " âêû éèà " );
 		Assert.assertEquals( "aeu eea", app.getName());
 		Assert.assertEquals( "âêû éèà", app.getDisplayName());
+	}
+
+
+	@Test
+	public void testTags() {
+
+		ApplicationTemplate app = new ApplicationTemplate();
+		Assert.assertEquals( 0, app.getTags().size());
+
+		app.addTag( "toto" );
+		Assert.assertEquals( 1, app.getTags().size());
+		Assert.assertEquals( "toto", app.getTags().iterator().next());
+
+		Set<String> newTags = new HashSet<> ();
+		newTags.add( "titi" );
+		newTags.add( "tutu" );
+		app.setTags( newTags );
+		Assert.assertEquals( newTags, app.getTags());
 	}
 }

@@ -23,15 +23,15 @@
  * limitations under the License.
  */
 
-package net.roboconf.core;
+package net.roboconf.core.errors;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import net.roboconf.core.ErrorCode.ErrorCategory;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.core.errors.ErrorCode.ErrorCategory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,7 +44,7 @@ public class ErrorCodeTest {
 	@Test
 	public void testCodesUnicity() {
 
-		Map<ErrorCategory,ErrorCode> categoryToLastCode = new HashMap<ErrorCategory,ErrorCode> ();
+		Map<ErrorCategory,ErrorCode> categoryToLastCode = new HashMap<> ();
 		for( ErrorCode code : ErrorCode.values()) {
 			ErrorCode lastCode = categoryToLastCode.get( code.getCategory());
 			if( lastCode != null )
@@ -61,7 +61,7 @@ public class ErrorCodeTest {
 	@Test
 	public void testCodesPrefixes() {
 
-		Map<ErrorCategory,String> categoryToPrefix = new HashMap<ErrorCategory,String> ();
+		Map<ErrorCategory,String> categoryToPrefix = new HashMap<> ();
 		categoryToPrefix.put( ErrorCategory.CONVERSION, "CO_" );
 		categoryToPrefix.put( ErrorCategory.PARSING, "P_" );
 		categoryToPrefix.put( ErrorCategory.PARSING_MODEL, "PM_" );
@@ -71,20 +71,19 @@ public class ErrorCodeTest {
 		categoryToPrefix.put( ErrorCategory.RECIPES, "REC_" );
 		categoryToPrefix.put( ErrorCategory.COMMANDS, "CMD_" );
 		categoryToPrefix.put( ErrorCategory.RULES, "RULE_" );
+		categoryToPrefix.put( ErrorCategory.REST, "REST_" );
 
 		for( ErrorCode code : ErrorCode.values()) {
 			String prefix = categoryToPrefix.get( code.getCategory());
 			Assert.assertNotNull( "No prefix was found for " + code, prefix );
 			Assert.assertTrue( "Invalid prefix for " + code + ". " + prefix + " was expected.", code.toString().startsWith( prefix ));
+			Assert.assertNotNull( code.getI18nProperties());
 		}
 	}
 
 
-	/**
-	 * RoboconfError codes must be in upper case.
-	 */
 	@Test
-	public void testCodesUpperCase() {
+	public void verifyCodesAreInUpperCase() {
 		for( ErrorCode code : ErrorCode.values()) {
 			Assert.assertEquals( code + " should be in upper case.", code.toString(), code.toString().toUpperCase());
 		}
@@ -99,5 +98,13 @@ public class ErrorCodeTest {
 			Assert.assertEquals( code, re.getErrorCode());
 			Assert.assertNotNull( re.toString());
 		}
+	}
+
+
+	@Test
+	public void testGetI18nProperties() {
+
+		Assert.assertEquals( 1, ErrorCode.CMD_INVALID_INSTANCE_NAME.getI18nProperties().length );
+		Assert.assertEquals( 0, ErrorCode.RULE_EMPTY_NAME.getI18nProperties().length );
 	}
 }

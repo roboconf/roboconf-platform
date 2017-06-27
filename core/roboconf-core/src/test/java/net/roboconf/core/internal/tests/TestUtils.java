@@ -132,7 +132,8 @@ public class TestUtils {
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	public static File findTestFile( String fileName, Class<?> clazz ) throws IOException, URISyntaxException {
+	public static File findTestFile( String fileName, Class<?> clazz )
+	throws IOException, URISyntaxException {
 
 		URL url = clazz.getResource( fileName );
 		File file;

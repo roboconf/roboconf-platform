@@ -33,8 +33,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 
@@ -94,7 +97,10 @@ public class PreferencesResource implements IPreferencesResource {
 			response = Response.ok().build();
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+			response = RestServicesUtils.handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( ErrorCode.REST_SAVE_ERROR, e, ErrorDetails.name( key )),
+					RestServicesUtils.lang( this.manager )).build();
 		}
 
 		return response;

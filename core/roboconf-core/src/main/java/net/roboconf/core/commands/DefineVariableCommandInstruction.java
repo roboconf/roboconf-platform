@@ -25,6 +25,9 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.value;
+import static net.roboconf.core.errors.ErrorDetails.variable;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
@@ -102,19 +105,19 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 
 			String datePattern = extractDatePattern( this.value );
 			if( datePattern.contains( "$(" )) {
-				result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, "Variable: " + this.key ));
+				result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, variable( this.key )));
 
 			} else try {
 				new SimpleDateFormat( datePattern );
 
 			} catch( Exception e ) {
-				result.add( error( ErrorCode.CMD_INVALID_DATE_PATTERN, "Pattern: " + datePattern ));
+				result.add( error( ErrorCode.CMD_INVALID_DATE_PATTERN, value( datePattern )));
 			}
 		}
 
 		// A formatted time in the middle of something else?
 		else if( this.value.contains( FORMATTED_TIME_PREFIX )) {
-			result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, "Variable: " + this.value ));
+			result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, variable( this.value )));
 		}
 
 		// Validate instance existence at the end, and only if no error was found before

@@ -33,6 +33,7 @@ import java.util.Map;
 
 import org.junit.Assert;
 import net.roboconf.core.Constants;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;

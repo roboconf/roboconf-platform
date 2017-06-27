@@ -25,6 +25,11 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import static net.roboconf.core.errors.ErrorCode.REST_AUTH_FAILED;
+import static net.roboconf.core.errors.ErrorCode.REST_AUTH_NO_MNGR;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.handleError;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.lang;
+
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -33,8 +38,10 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.IAuthenticationResource;
 
 /**
@@ -45,6 +52,16 @@ public class AuthenticationResource implements IAuthenticationResource {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private AuthenticationManager authenticationManager;
+	private final Manager manager;
+
+
+	/**
+	 * Constructor.
+	 * @param manager the manager
+	 */
+	public AuthenticationResource( Manager manager ) {
+		this.manager = manager;
+	}
 
 
 	@Override
@@ -54,11 +71,11 @@ public class AuthenticationResource implements IAuthenticationResource {
 		String sessionId;
 		Response response;
 		if( this.authenticationManager == null ) {
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( "No authentication manager was available." ).build();
+			response = handleError( Status.INTERNAL_SERVER_ERROR, new RestError( REST_AUTH_NO_MNGR ), lang( this.manager )).build();
 			this.logger.fine( "No authentication manager was available. User was " + username );
 
 		} else if(( sessionId = this.authenticationManager.login( username, password )) == null ) {
-			response = Response.status( Status.FORBIDDEN ).entity( "Authentication failed." ).build();
+			response = handleError( Status.FORBIDDEN, new RestError( REST_AUTH_FAILED ), lang( this.manager )).build();
 			this.logger.fine( "Authentication failed. User was " + username );
 
 		} else {

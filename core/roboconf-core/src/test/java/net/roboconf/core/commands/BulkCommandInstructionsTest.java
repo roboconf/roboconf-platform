@@ -32,8 +32,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.commands.BulkCommandInstructions.ChangeStateInstruction;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.ParsingError;
 

@@ -44,8 +44,8 @@ import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.internal.misc.UserDataHelper;
 import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.Constants;
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.ProcessStore;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -350,7 +350,7 @@ public class AgentBasicsTest {
 	public void testReloadUserData_fromFile() throws Exception {
 
 		Map<String,String> messagingConfiguration = new HashMap<> ();
-		String s = DataHelpers.writeUserDataAsString( messagingConfiguration, "d1", "app", "/vm2" );
+		String s = UserDataHelpers.writeUserDataAsString( messagingConfiguration, "d1", "app", "/vm2" );
 
 		File outputFile = this.folder.newFile();
 		Utils.writeStringInto( s, outputFile );
@@ -389,7 +389,7 @@ public class AgentBasicsTest {
 	public void testReloadUserData_fromFile_propertiesCannotBeOverwritten() throws Exception {
 
 		Map<String,String> messagingConfiguration = new HashMap<> ();
-		String s = DataHelpers.writeUserDataAsString( messagingConfiguration, "d1", "app", "/vm2" );
+		String s = UserDataHelpers.writeUserDataAsString( messagingConfiguration, "d1", "app", "/vm2" );
 
 		File outputFile = this.folder.newFile();
 		Utils.writeStringInto( s, outputFile );

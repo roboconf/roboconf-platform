@@ -246,7 +246,7 @@ public final class ProgramUtils {
 					this.sb.append( prefix + line + "\n" );
 
 			} catch( IOException e ) {
-				this.logger.severe( Utils.writeException( e ));
+				this.logger.severe( Utils.writeExceptionButDoNotUseItForLogging( e ));
 
 			} finally {
 				Utils.closeQuietly( br );

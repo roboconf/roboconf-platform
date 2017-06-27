@@ -33,12 +33,12 @@ import java.util.HashSet;
 import java.util.List;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.RoboconfError;
-import net.roboconf.core.RoboconfErrorComparator;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorComparator;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**

@@ -31,9 +31,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager.IAuthService;
@@ -43,11 +46,19 @@ import net.roboconf.dm.rest.commons.security.AuthenticationManager.IAuthService;
  */
 public class AuthenticationResourceTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+
 	@Test
 	public void testLoginAndLogout() throws Exception {
 
+		// Simple manager
+		Manager manager = new Manager();
+		manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+
 		// No authentication manager
-		AuthenticationResource res = new AuthenticationResource();
+		AuthenticationResource res = new AuthenticationResource( manager );
 		Response resp = res.login( "kikou", "pwd" );
 		Assert.assertEquals( Status.INTERNAL_SERVER_ERROR.getStatusCode(), resp.getStatus());
 

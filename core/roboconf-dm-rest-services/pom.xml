@@ -298,6 +298,32 @@
 							</checkstyleRules>
 						</configuration>
 					</execution>
+					<execution>
+						<id>check-entity-usage</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<includes>**/*.java</includes>
+							<excludes>**/RestServicesUtils.java</excludes>
+							<checkstyleRules>
+			
+								<module name="Checker">
+									<property name="charset" value="UTF-8" />
+			
+									<module name="TreeWalker">
+										<module name="Regexp">
+											<property name="format" value="(?im)\.\s*entity\s*\([^)]*&amp;quot;" />
+											<property name="illegalPattern" value="true" />
+											<property name="message" value="Do not set strings as entities, that's bad for i18n! Use RestServicesUtils instead." />
+										</module>
+									</module>
+								</module>
+			
+							</checkstyleRules>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 

@@ -165,7 +165,7 @@ public class CommandsExecutorTest {
 	public void testExecutionFailure2() throws Exception {
 
 		// All the exceptions are caught, even NPE!
-		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "inexisting" ));
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, this.folder.newFile());
 		executor.execute();
 	}
 

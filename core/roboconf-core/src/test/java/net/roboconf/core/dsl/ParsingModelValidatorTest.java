@@ -34,7 +34,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.BlockBlank;
@@ -45,6 +44,7 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 
@@ -417,13 +417,13 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, errors.iterator().next().getErrorCode());
-		Assert.assertEquals( "Variable name: var1", errors.iterator().next().getDetails());
+		Assert.assertEquals( "var1", errors.iterator().next().getDetails()[ 0 ].getElementName());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var2, var1 =value1\"" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, errors.iterator().next().getErrorCode());
-		Assert.assertEquals( "Variable name: var1", errors.iterator().next().getDetails());
+		Assert.assertEquals( "var1", errors.iterator().next().getDetails()[ 0 ].getElementName());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var#, var2;" );
 		errors = ParsingModelValidator.validate( block );

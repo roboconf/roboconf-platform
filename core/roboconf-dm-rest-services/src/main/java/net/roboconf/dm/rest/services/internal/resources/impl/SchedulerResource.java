@@ -25,6 +25,9 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.handleError;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.lang;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +37,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.ISchedulerResource;
-import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 import net.roboconf.dm.scheduler.IScheduler;
 
 /**
@@ -46,10 +52,18 @@ import net.roboconf.dm.scheduler.IScheduler;
 @Path( ISchedulerResource.PATH )
 public class SchedulerResource implements ISchedulerResource {
 
-	private static final String MSG = " Roboconf's scheduler is not available.";
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Manager manager;
 	IScheduler scheduler;
 
+
+	/**
+	 * Constructor.
+	 * @param manager the manager
+	 */
+	public SchedulerResource( Manager manager ) {
+		this.manager = manager;
+	}
 
 
 	@Override
@@ -57,20 +71,28 @@ public class SchedulerResource implements ISchedulerResource {
 
 		this.logger.fine( "Request: save a new scheduled job as " + jobName + "." );
 		Response result;
-		String msg = jobName + " could not be saved.";
 		try {
 			jobId = this.scheduler.saveJob( jobId, jobName, cmdName, cron, appName );
 			result = Response.ok( new StringWrapper( jobId )).build();
 
 		} catch( IllegalArgumentException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, msg, e ).build();
+			result = handleError(
+					Status.NOT_FOUND,
+					new RestError( ErrorCode.REST_SAVE_ERROR, e, ErrorDetails.name( jobName )),
+					lang( this.manager )).build();
 
 		} catch( IOException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.BAD_REQUEST, msg, e ).build();
+			result = handleError(
+					Status.BAD_REQUEST,
+					new RestError( ErrorCode.REST_SAVE_ERROR, e, ErrorDetails.name( jobName )),
+					lang( this.manager )).build();
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, msg + MSG, e ).build();
+			result = handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_SCHEDULER_IS_UNAVAILABLE, e, ErrorDetails.name( jobName )),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -82,16 +104,21 @@ public class SchedulerResource implements ISchedulerResource {
 
 		this.logger.fine( "Request: delete the scheduled job " + jobName + "." );
 		Response result = Response.ok().build();
-		String msg = jobName + " could not be deleted.";
 		try {
 			this.scheduler.deleteJob( jobName );
 
 		} catch( IOException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, msg, e ).build();
+			result = handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( ErrorCode.REST_DELETION_ERROR, e, ErrorDetails.name( jobName )),
+					lang( this.manager )).build();
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, msg + MSG, e ).build();
+			result = handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_SCHEDULER_IS_UNAVAILABLE, e, ErrorDetails.name( jobName )),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -105,14 +132,22 @@ public class SchedulerResource implements ISchedulerResource {
 		this.logger.fine( "Request: get the details of job " + jobName + "." );
 		try {
 			ScheduledJob job = this.scheduler.findJobProperties( jobName );
-			if( job == null )
-				result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Job " + jobName + " does not exist." ).build();
-			else
+			if( job == null ) {
+				result = handleError(
+						Status.NOT_FOUND,
+						new RestError( ErrorCode.REST_INEXISTING, ErrorDetails.name( jobName )),
+						lang( this.manager )).build();
+
+			} else {
 				result = Response.ok( job ).build();
+			}
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, MSG.trim(), e ).build();
+			result = handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_SCHEDULER_IS_UNAVAILABLE, e, ErrorDetails.name( jobName )),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -139,7 +174,7 @@ public class SchedulerResource implements ISchedulerResource {
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			this.logger.warning( MSG.trim());
+			this.logger.warning( "Roboconf's scheduler is not available." );
 		}
 
 		return result;

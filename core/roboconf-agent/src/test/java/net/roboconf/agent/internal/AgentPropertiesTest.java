@@ -40,7 +40,7 @@ import java.util.logging.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 
 /**
@@ -62,7 +62,7 @@ public class AgentPropertiesTest {
 	@Test
 	public void testReadIaasProperties_all() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString(rabbitMqMessagingConfiguration("ip", "user", "pwd"), "domain", "my app", "/root/path" );
+		String s = UserDataHelpers.writeUserDataAsString(rabbitMqMessagingConfiguration("ip", "user", "pwd"), "domain", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
@@ -81,7 +81,7 @@ public class AgentPropertiesTest {
 	@Test
 	public void testReadIaasProperties_partial() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip", "user", null), "domain", "my app", "/root/path" );
+		String s = UserDataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip", "user", null), "domain", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
@@ -100,7 +100,7 @@ public class AgentPropertiesTest {
 	@Test
 	public void testReadIaasProperties_withSpecialCharacters() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip\\:port", "user", "pwd:with:two;dots\\:"), "domain", "my app", "/root/path" );
+		String s = UserDataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip\\:port", "user", "pwd:with:two;dots\\:"), "domain", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
