@@ -25,11 +25,12 @@
 
 package net.roboconf.core.userdata;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -152,12 +153,7 @@ public final class UserDataHelpers {
 
 
 	/**
-	 * Reads user data.
-	 * <p>
-	 * This method handles the {@link #ENCODE_FILE_CONTENT_PREFIX} prefix.
-	 * File contents are written on the disk and references are updated if necessary.
-	 * </p>
-	 *
+	 * Reads user data from a string and processes with with #{@link UserDataHelpers#processUserData(Properties, File)}.
 	 * @param rawProperties the user data as a string
 	 * @param outputDirectory a directory into which files should be written
 	 * <p>
@@ -173,8 +169,30 @@ public final class UserDataHelpers {
 		StringReader reader = new StringReader( rawProperties );
 		result.load( reader );
 
-		interceptWritingFiles( result, outputDirectory );
-		return result;
+		return processUserData( result, outputDirectory );
+	}
+
+
+	/**
+	 * Processes user data that were already read.
+	 * <p>
+	 * This method handles the {@link #ENCODE_FILE_CONTENT_PREFIX} prefix.
+	 * File contents are written on the disk and references are updated if necessary.
+	 * </p>
+	 *
+	 * @param properties the user data as properties
+	 * @param outputDirectory a directory into which files should be written
+	 * <p>
+	 * If null, files sent with {@link #ENCODE_FILE_CONTENT_PREFIX} will not be written.
+	 * </p>
+	 *
+	 * @return a non-null object
+	 * @throws IOException if something went wrong
+	 */
+	public static Properties processUserData( Properties properties, File outputDirectory ) throws IOException {
+
+		interceptWritingFiles( properties, outputDirectory );
+		return properties;
 	}
 
 
@@ -187,7 +205,7 @@ public final class UserDataHelpers {
 
 		Logger logger = Logger.getLogger( UserDataHelpers.class.getName());
 		Set<String> keys = props.stringPropertyNames();
-		for( String key : keys ) {
+		for( final String key : keys ) {
 			if( ! key.startsWith( ENCODE_FILE_CONTENT_PREFIX ))
 				continue;
 
@@ -202,8 +220,10 @@ public final class UserDataHelpers {
 			if( ! f.exists())
 				throw new IOException( "File " + f + " was not found." );
 
-			String fileContent = Utils.readFileContent( f );
-			String encodedFileContent = encodeToBase64( fileContent );
+			// Read the file content as bytes
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStream( f, os );
+			String encodedFileContent = encodeToBase64( os.toByteArray());
 			props.put( key, encodedFileContent );
 		}
 	}
@@ -226,25 +246,31 @@ public final class UserDataHelpers {
 
 		Logger logger = Logger.getLogger( UserDataHelpers.class.getName());
 		Set<String> keys = props.stringPropertyNames();
-		for( String key : keys ) {
+		for( final String key : keys ) {
 			if( ! key.startsWith( ENCODE_FILE_CONTENT_PREFIX ))
 				continue;
 
 			// Get the file content
 			String encodedFileContent = props.getProperty( key );
-			String fileContent = decodeFromBase64( encodedFileContent );
-
-			// Write it to the disk
 			String realKey = key.substring( ENCODE_FILE_CONTENT_PREFIX.length());
-			String value = props.getProperty( realKey );
-			if( value == null ) {
+			if( encodedFileContent == null ) {
 				logger.fine( "No file content was provided for " + realKey + ". Skipping it..." );
 				continue;
 			}
 
+			byte[] fileContent = decodeFromBase64( encodedFileContent );
+
+			// Write it to the disk
+			String targetFile = props.getProperty( realKey );
+			if( targetFile == null ) {
+				logger.fine( "No property named " + realKey + " was found. Skipping it..." );
+				continue;
+			}
+
 			Utils.createDirectory( outputDirectory );
-			File output = new File( outputDirectory, new File( value ).getName());
-			Utils.writeStringInto( fileContent, output );
+			File output = new File( outputDirectory, new File( targetFile ).getName());
+			Utils.copyStream( new ByteArrayInputStream( fileContent ), output );
+			logger.finer( "Writing " + key + " from user data in " + output.getAbsolutePath());
 
 			// Update the properties
 			props.remove( key );
@@ -254,23 +280,23 @@ public final class UserDataHelpers {
 
 
 	/**
-	 * Encodes a string with Base 64.
-	 * @param s a non-null string
+	 * Encodes a byte array with Base 64.
+	 * @param bytes a non-null byte array
 	 * @return a non-null string (encoded with base 64)
 	 */
-	static String encodeToBase64( String s ) {
+	static String encodeToBase64( byte[] bytes ) {
 		// FIXME: switch to Base64 once we are on Java 8+
-		return DatatypeConverter.printBase64Binary( s.getBytes( StandardCharsets.UTF_8 ));
+		return DatatypeConverter.printBase64Binary( bytes );
 	}
 
 
 	/**
 	 * Decodes a string with Base 64.
 	 * @param s a non-null string (encoded with base 64)
-	 * @return a non-null string
+	 * @return a non-null byte array
 	 */
-	static String decodeFromBase64( String s ) {
+	static byte[] decodeFromBase64( String s ) {
 		// FIXME: switch to Base64 once we are on Java 8+
-		return new String( DatatypeConverter.parseBase64Binary( s ), StandardCharsets.UTF_8 );
+		return DatatypeConverter.parseBase64Binary( s );
 	}
 }
