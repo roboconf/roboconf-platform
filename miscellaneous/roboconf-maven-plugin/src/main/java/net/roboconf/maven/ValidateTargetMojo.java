@@ -36,10 +36,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.TargetValidator;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * The mojo in charge of checking the target properties.
@@ -62,8 +61,7 @@ public class ValidateTargetMojo extends AbstractMojo {
 
 		// Load and validate the target properties
 		List<ModelError> errors = TargetValidator.parseDirectory( outputDirectory );
-		for( RoboconfError error : errors )
-			MavenUtils.formatError( error, getLog());
+		MavenPluginUtils.formatErrors( errors, getLog());
 
 		// Fail the build?
 		if( RoboconfErrorHelpers.containsCriticalErrors( errors ))

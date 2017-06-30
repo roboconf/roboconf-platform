@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core;
+package net.roboconf.core.errors;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -62,13 +62,16 @@ public class RoboconfErrorComparator implements Serializable, Comparator<Robocon
 		if( result == 0
 				&& ! Objects.equals( o1, o2 )) {
 
-			// Otherwise, compare the details
-			if( o1.getDetails() == null && o2.getDetails() != null )
-				result = -1;
-			else if( o1.getDetails() != null && o2.getDetails() == null )
-				result = 1;
-			else if( o1.getDetails() != null )
-				result = o1.getDetails().compareTo( o2.getDetails());
+			// Otherwise, compare the details (alphabetically)
+			for( int i=0; i<o1.getDetails().length && result == 0; i++ ) {
+				for( int j=0; j<o2.getDetails().length && result == 0; j++ ) {
+					result = o1.getDetails()[ i ].toString().compareTo( o2.getDetails()[ j ].toString());
+				}
+			}
+
+			// If all the strings are the same, compare by array size
+			if( result == 0 )
+				result = o1.getDetails().length - o2.getDetails().length;
 
 			// Since the objects are not equal, in no case we can accept to return 0.
 			// So, let's just take another order. The class name is used.

@@ -25,12 +25,15 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.instance;
+import static net.roboconf.core.errors.ErrorDetails.value;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -73,11 +76,11 @@ public class AssociateTargetCommandInstruction extends AbstractCommandInstructio
 
 		List<ParsingError> result = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( this.targetId ))
-			result.add( error( ErrorCode.CMD_INVALID_TARGET_ID, "Target ID: " + this.targetId ));
+			result.add( error( ErrorCode.CMD_INVALID_TARGET_ID, value( this.targetId )));
 
 		Instance resolvedInstance;
 		if(( resolvedInstance = this.context.resolveInstance( this.scopedInstancePath )) == null)
-			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, "Instance path: " + this.scopedInstancePath ));
+			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, instance( this.scopedInstancePath )));
 		else if( ! InstanceHelpers.isTarget( resolvedInstance ))
 			result.add( error( ErrorCode.CMD_NOT_A_SCOPED_INSTANCE ));
 

@@ -36,6 +36,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -52,8 +53,6 @@ import net.roboconf.target.api.TargetException;
  */
 public class OcciVMUtils {
 
-	public static Logger logger = Logger.getLogger(OcciVMUtils.class.getName());
-
 	/**
 	 * Creates a VM (OCCI / VMWare) using HTTP rendering.
 	 * @param hostIpPort IP and port of OCCI server (eg. "172.16.225.91:8080")
@@ -67,7 +66,17 @@ public class OcciVMUtils {
 	 * @param config A map of parameters (eg. mixin attributes)
 	 * @return The VM ID
 	 */
-	public static String createVM(String hostIpPort, String id, String template, String title, String summary, String userData, String user, String password, Map<String, String> config) throws TargetException {
+	public static String createVM(
+			String hostIpPort,
+			String id,
+			String template,
+			String title,
+			String summary,
+			String userData,
+			String user,
+			String password,
+			Map<String,String> config )
+	throws TargetException {
 
 		//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
 		if(hostIpPort.contains("multi-language-connector")) {
@@ -167,6 +176,7 @@ public class OcciVMUtils {
 		return ("OK".equalsIgnoreCase(ret.trim()) ? id : null);
 	}
 
+
 	/**
 	 * Creates a VM (OCCI / VMWare) using JSON rendering.
 	 * @param hostIpPort IP and port of OCCI server (eg. "172.16.225.91:8080")
@@ -181,7 +191,18 @@ public class OcciVMUtils {
 	 * @param waitForActive If true, wait until VM is active
 	 * @return The VM ID
 	 */
-	public static String createVMJson(String hostIpPort, String id, String template, String title, String summary, String userData, String user, String password, Map<String, String> config, boolean waitForActive) throws TargetException {
+	public static String createVMJson(
+			String hostIpPort,
+			String id,
+			String template,
+			String title,
+			String summary,
+			String userData,
+			String user,
+			String password,
+			Map<String,String> config,
+			boolean waitForActive )
+	throws TargetException {
 
 		//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
 		if(hostIpPort.contains("multi-language-connector")) {
@@ -243,10 +264,13 @@ public class OcciVMUtils {
 						+ "\"user\": \"" + user + "\",\n"
 						+ "\"password\": \"" + password + "\"\n"
 						+ "}\n}";
+
+				final Logger logger = Logger.getLogger( OcciVMUtils.class.getName());
 				logger.finest(request);
 
-				httpURLConnection.setRequestProperty("Content-Length", "" +
-						Integer.toString(request.getBytes().length));
+				httpURLConnection.setRequestProperty(
+						"Content-Length",
+						Integer.toString(request.getBytes( StandardCharsets.UTF_8 ).length));
 
 				output = new DataOutputStream(httpURLConnection.getOutputStream());
 				output.writeBytes(request);
@@ -260,7 +284,7 @@ public class OcciVMUtils {
 
 				// Parse JSON response to extract VM ID
 				ObjectMapper objectMapper = new ObjectMapper();
-				JsonResponse rsp = objectMapper.readValue(out.toString(), JsonResponse.class);
+				JsonResponse rsp = objectMapper.readValue(out.toString( "UTF-8" ), JsonResponse.class);
 				vmId = rsp.getId();
 
 				if(! Utils.isEmptyOrWhitespaces(vmId)) {
@@ -285,6 +309,7 @@ public class OcciVMUtils {
 
 			} catch (IOException e) {
 				throw new TargetException(e);
+
 			}  finally {
 				Utils.closeQuietly(in);
 				Utils.closeQuietly(output);
@@ -297,6 +322,7 @@ public class OcciVMUtils {
 		}
 	}
 
+
 	/**
 	 * Creates a VM from an image on ActiveEon Proactive Cloud Automation.
 	 * @param hostIpPort
@@ -306,12 +332,21 @@ public class OcciVMUtils {
 	 * @return The VM ID
 	 * @throws TargetException
 	 */
-	public static String createCloudAutomationVM(String hostIpPort, String image, String title, String userData, Map<String, String> config, boolean waitForActive) throws TargetException {
+	public static String createCloudAutomationVM(
+			String hostIpPort,
+			String image,
+			String title,
+			String userData,
+			Map<String,String> config,
+			boolean waitForActive )
+	throws TargetException {
+
 		String vmId = null;
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
 			url = new URL("http://" + hostIpPort + "/compute/");
+
 		} catch (MalformedURLException e) {
 			throw new TargetException(e);
 		}
@@ -347,9 +382,12 @@ public class OcciVMUtils {
 						+ "\"occi.compute.userdata\": \"" + userDataScript + "\",\n"
 						+ "\"occi.category.title\": \"scriptMixin\"\n"
 					+ "}\n}\n}";
+
+			final Logger logger = Logger.getLogger( OcciVMUtils.class.getName());
 			logger.finest(request);
-			httpURLConnection.setRequestProperty("Content-Length", "" +
-					Integer.toString(request.getBytes().length));
+			httpURLConnection.setRequestProperty(
+					"Content-Length",
+					Integer.toString(request.getBytes( StandardCharsets.UTF_8 ).length));
 
 			output = new DataOutputStream(httpURLConnection.getOutputStream());
 			output.writeBytes(request);
@@ -363,7 +401,7 @@ public class OcciVMUtils {
 
 			// Parse JSON response to extract VM ID
 			ObjectMapper objectMapper = new ObjectMapper();
-			JsonResponse rsp = objectMapper.readValue(out.toString(), JsonResponse.class);
+			JsonResponse rsp = objectMapper.readValue(out.toString( "UTF-8" ), JsonResponse.class);
 			vmId = rsp.getId();
 
 			// Wait until VM is active
@@ -383,6 +421,7 @@ public class OcciVMUtils {
 			}
 		} catch (IOException e) {
 			throw new TargetException(e);
+
 		}  finally {
 			Utils.closeQuietly(in);
 			Utils.closeQuietly(output);
@@ -394,6 +433,7 @@ public class OcciVMUtils {
 		return (vmId);
 	}
 
+
 	/**
 	 * Retrieves VM status (tested on CA only).
 	 * @param hostIpPort IP and port of OCCI server (eg. "172.16.225.91:8080")
@@ -402,6 +442,7 @@ public class OcciVMUtils {
 	 * @throws TargetException
 	 */
 	public static String getVMStatus(String hostIpPort, String id) throws TargetException {
+
 		String status = null;
 		URL url = null;
 		try {
@@ -424,11 +465,12 @@ public class OcciVMUtils {
 
 			// Parse JSON response to extract VM status
 			ObjectMapper objectMapper = new ObjectMapper();
-			JsonResponse rsp = objectMapper.readValue(out.toString(), JsonResponse.class);
+			JsonResponse rsp = objectMapper.readValue(out.toString( "UTF-8" ), JsonResponse.class);
 			status = rsp.getState();
 
 		} catch (IOException e) {
 			throw new TargetException(e);
+
 		}  finally {
 			Utils.closeQuietly(in);
 			if (httpURLConnection != null) {
@@ -439,6 +481,7 @@ public class OcciVMUtils {
 		return status;
 	}
 
+
 	/**
 	 * Deletes a VM (OCCI / VMWare).
 	 * @param hostIpPort IP and port of OCCI server (eg. "172.16.225.91:8080")
@@ -446,6 +489,7 @@ public class OcciVMUtils {
 	 * @return true if deletion OK, false otherwise
 	 */
 	public static boolean deleteVM(String hostIpPort, String id) throws TargetException {
+
 		String ret = null;
 		URL url = null;
 		try {
@@ -494,6 +538,7 @@ public class OcciVMUtils {
 	 * @throws TargetException
 	 */
 	public static String getVMIP(String hostIpPort, String id) throws TargetException {
+
 		String vmIp = null;
 		URL url = null;
 		try {
@@ -516,12 +561,13 @@ public class OcciVMUtils {
 
 			// Parse JSON response to extract VM IP
 			ObjectMapper objectMapper = new ObjectMapper();
-			JsonResponse rsp = objectMapper.readValue(out.toString(), JsonResponse.class);
+			JsonResponse rsp = objectMapper.readValue(out.toString( "UTF-8" ), JsonResponse.class);
 			vmIp = rsp.getHostsystemname();
 			if(Utils.isEmptyOrWhitespaces(vmIp)) vmIp = rsp.getHostname();
 
 		} catch (IOException e) {
 			throw new TargetException(e);
+
 		}  finally {
 			Utils.closeQuietly(in);
 			if (httpURLConnection != null) {
@@ -548,13 +594,16 @@ public class OcciVMUtils {
 		try {
 			InetAddress inet = InetAddress.getByName(ip);
 			result = inet.isReachable(5000);
+
 		} catch (Exception e) {
 			result = false;
+			final Logger logger = Logger.getLogger( OcciVMUtils.class.getName());
 			logger.info(e.getMessage());
 		}
 
 		return result;
 	}
+
 
 	/**
 	 * Test main program.
@@ -614,6 +663,7 @@ public class OcciVMUtils {
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 class JsonResponse {
+
 	private String id;
 	private String hostsystemname;
 	@JsonProperty("occi.compute.hostname")
@@ -621,26 +671,27 @@ class JsonResponse {
 	@JsonProperty("occi.compute.state")
 	private String state;
 
+
 	public String getId() {
-		return id;
+		return this.id;
 	}
 	public void setId(String id) {
 		this.id = id;
 	}
 	public String getHostsystemname() {
-		return hostsystemname;
+		return this.hostsystemname;
 	}
 	public void setHostsystemname(String hostsystemname) {
 		this.hostsystemname = hostsystemname;
 	}
 	public String getHostname() {
-		return hostname;
+		return this.hostname;
 	}
 	public void setHostname(String hostname) {
 		this.hostname = hostname;
 	}
 	public String getState() {
-		return state;
+		return this.state;
 	}
 	public void setState(String state) {
 		this.state = state;

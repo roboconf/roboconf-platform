@@ -23,7 +23,9 @@
  * limitations under the License.
  */
 
-package net.roboconf.core;
+package net.roboconf.core.errors;
+
+import static net.roboconf.core.errors.ErrorDetails.component;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,8 +39,8 @@ public class RoboconfErrorTest {
 	public void testEquals() {
 
 		RoboconfError def1 = new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT );
-		RoboconfError def2 = new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, "details" );
-		RoboconfError def3 = new RoboconfError( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, "details" );
+		RoboconfError def2 = new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, component( "details" ));
+		RoboconfError def3 = new RoboconfError( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, component( "details" ));
 
 		Assert.assertTrue( def1.equals( def1 ));
 		Assert.assertTrue( def1.equals( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT )));
@@ -48,12 +50,12 @@ public class RoboconfErrorTest {
 		Assert.assertFalse( def1.equals( def3 ));
 
 		Assert.assertTrue( def2.equals( def2 ));
-		Assert.assertTrue( def2.equals( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, "details" )));
+		Assert.assertTrue( def2.equals( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, component( "details" ))));
 		Assert.assertFalse( def2.equals( def3 ));
 		Assert.assertFalse( def2.equals( def1 ));
 
-		RoboconfError def4 = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, "component name: vm" );
-		RoboconfError def5 = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, "component name: server" );
+		RoboconfError def4 = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, component( "vm" ));
+		RoboconfError def5 = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, component( "server" ));
 		Assert.assertFalse( def4.equals( def5 ));
 		Assert.assertFalse( def5.equals( def4 ));
 	}

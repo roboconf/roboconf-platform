@@ -23,8 +23,9 @@
  * limitations under the License.
  */
 
-package net.roboconf.core;
+package net.roboconf.core.errors;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -39,7 +40,7 @@ import java.util.Objects;
 public class RoboconfError {
 
 	private ErrorCode errorCode;
-	private String details;
+	private ErrorDetails[] details;
 
 
 	/**
@@ -54,8 +55,9 @@ public class RoboconfError {
 	/**
 	 * Constructor.
 	 * @param errorCode an error code
+	 * @param details error details
 	 */
-	public RoboconfError( ErrorCode errorCode, String details ) {
+	public RoboconfError( ErrorCode errorCode, ErrorDetails... details ) {
 		this.errorCode = errorCode;
 		this.details = details;
 	}
@@ -75,16 +77,16 @@ public class RoboconfError {
 	}
 
 	/**
-	 * @return the details
+	 * @return the details (never null)
 	 */
-	public String getDetails() {
-		return this.details;
+	public ErrorDetails[] getDetails() {
+		return this.details != null ? this.details : new ErrorDetails[ 0 ];
 	}
 
 	/**
 	 * @param details the details to set
 	 */
-	public void setDetails( String details ) {
+	public void setDetails( ErrorDetails... details ) {
 		this.details = details;
 	}
 
@@ -94,7 +96,7 @@ public class RoboconfError {
 	 */
 	@Override
 	public String toString() {
-		return this.errorCode.getMsg();
+		return this.errorCode.name();
 	}
 
 	/*
@@ -106,7 +108,7 @@ public class RoboconfError {
 		return obj != null
 				&& obj.getClass().equals( getClass())
 				&& Objects.equals( this.errorCode, ((RoboconfError) obj).errorCode )
-				&& Objects.equals( this.details, ((RoboconfError) obj).details );
+				&& Arrays.deepEquals( this.details, ((RoboconfError) obj).details );
 	}
 
 	/* (non-Javadoc)

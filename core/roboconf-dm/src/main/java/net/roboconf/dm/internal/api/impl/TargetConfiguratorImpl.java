@@ -34,8 +34,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.ITargetConfigurator;
@@ -225,7 +225,7 @@ public class TargetConfiguratorImpl implements ITargetConfigurator {
 					script.setExecutable( true );
 					String[] command = { script.getAbsolutePath()};
 
-					String userData = DataHelpers.writeUserDataAsString(
+					String userData = UserDataHelpers.writeUserDataAsString(
 							this.parameters.getMessagingProperties(),
 							this.parameters.getDomain(),
 							this.parameters.getApplicationName(),

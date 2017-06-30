@@ -27,7 +27,7 @@ package net.roboconf.core.autonomic;
 
 import java.io.File;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 
 import org.junit.Assert;

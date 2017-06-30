@@ -25,6 +25,12 @@
 
 package net.roboconf.core.dsl.converters;
 
+import static net.roboconf.core.errors.ErrorDetails.component;
+import static net.roboconf.core.errors.ErrorDetails.facet;
+import static net.roboconf.core.errors.ErrorDetails.file;
+import static net.roboconf.core.errors.ErrorDetails.name;
+import static net.roboconf.core.errors.ErrorDetails.unrecognized;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -45,6 +50,9 @@ import net.roboconf.core.dsl.parsing.BlockComponent;
 import net.roboconf.core.dsl.parsing.BlockFacet;
 import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.dsl.parsing.FileDefinitionParser;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.SourceReference;
@@ -54,7 +62,6 @@ import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ModelUtils;
 import net.roboconf.core.utils.Utils;
 
@@ -158,7 +165,7 @@ public class FromGraphDefinition {
 
 			if( ! importedFile.exists()) {
 				ParsingError error = new ParsingError( ErrorCode.CO_UNREACHABLE_FILE, file, 0 );
-				error.setDetails( "File location: " + importedFile );
+				error.setDetails( file( importedFile ));
 				this.errors.add( error );
 				continue;
 			}
@@ -195,7 +202,7 @@ public class FromGraphDefinition {
 					&& currentDefinition.getFileType() != FileDefinition.EMPTY ) {
 
 				ParsingError error = new ParsingError( ErrorCode.CO_NOT_A_GRAPH, file, 0 );
-				error.setDetails( "Imported file  " + importedFile + " is of type " + FileDefinition.fileTypeAsString( currentDefinition.getFileType()) + "." );
+				error.setDetails( unrecognized( FileDefinition.fileTypeAsString( currentDefinition.getFileType())));
 				currentErrors.add( error );
 			}
 
@@ -319,10 +326,10 @@ public class FromGraphDefinition {
 
 		for( String name : names ) {
 			ComponentData cd = this.componentNameToComponentData.get( name );
-			this.errors.addAll( cd.error( ErrorCode.CO_CONFLICTING_NAME, "Name: " + name ));
+			this.errors.addAll( cd.error( ErrorCode.CO_CONFLICTING_NAME, name( name )));
 
 			FacetData fd = this.facetNameToFacetData.get( name );
-			this.errors.addAll( fd.error( ErrorCode.CO_CONFLICTING_NAME, "Name: " + name ));
+			this.errors.addAll( fd.error( ErrorCode.CO_CONFLICTING_NAME, name( name )));
 		}
 	}
 
@@ -332,13 +339,13 @@ public class FromGraphDefinition {
 		// Components
 		for( Data<?> data : this.componentNameToComponentData.values()) {
 			if( data.blocks.size() > 1 )
-				this.errors.addAll( data.error( ErrorCode.CO_ALREADY_DEFINED_COMPONENT, "Component name: " + data.object.getName()));
+				this.errors.addAll( data.error( ErrorCode.CO_ALREADY_DEFINED_COMPONENT, component( data.object.getName())));
 		}
 
 		// Facets
 		for( Data<?> data : this.facetNameToFacetData.values()) {
 			if( data.blocks.size() > 1 )
-				this.errors.addAll( data.error( ErrorCode.CO_ALREADY_DEFINED_FACET, "Facet name: " + data.object.getName()));
+				this.errors.addAll( data.error( ErrorCode.CO_ALREADY_DEFINED_FACET, facet( data.object.getName())));
 		}
 	}
 
@@ -358,7 +365,7 @@ public class FromGraphDefinition {
 				if( extendedComponentData != null )
 					data.object.extendComponent( extendedComponentData.object );
 				else
-					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_COMPONENT, "Component name: " + data.extendedComponentName ));
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_COMPONENT, component( data.extendedComponentName )));
 			}
 
 			// The facets
@@ -367,7 +374,7 @@ public class FromGraphDefinition {
 				if( facetData != null )
 					data.object.associateFacet( facetData.object );
 				else
-					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_FACET, "Facet name: " + s ));
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_FACET, facet( s )));
 			}
 
 			// The children
@@ -379,7 +386,7 @@ public class FromGraphDefinition {
 				else if( facetData != null )
 					data.object.addChild( facetData.object );
 				else
-					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_CHILD, "Name: " + s ));
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_CHILD, name( s )));
 			}
 		}
 	}
@@ -400,7 +407,7 @@ public class FromGraphDefinition {
 				if( facetData != null )
 					data.object.extendFacet( facetData.object );
 				else
-					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_FACET, "Facet name: " + s ));
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_FACET, facet( s )));
 			}
 
 			// The children
@@ -412,7 +419,7 @@ public class FromGraphDefinition {
 				else if( facetData != null )
 					data.object.addChild( facetData.object );
 				else
-					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_CHILD, "Name: " + s ));
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_CHILD, name( s )));
 			}
 		}
 	}
@@ -443,12 +450,11 @@ public class FromGraphDefinition {
 		Collection<String> childrenNames = new HashSet<> ();
 		List<AbstractBlockHolder> blocks = new ArrayList<> ();
 
-		List<ParsingError> error( ErrorCode code, String cause ) {
+		List<ParsingError> error( ErrorCode code, ErrorDetails... details ) {
 
 			List<ParsingError> errors = new ArrayList<> ();
 			for( AbstractBlockHolder block : this.blocks ) {
-				ParsingError error = new ParsingError( code, block.getDeclaringFile().getEditedFile(), block.getLine());
-				error.setDetails( cause );
+				ParsingError error = new ParsingError( code, block.getDeclaringFile().getEditedFile(), block.getLine(), details );
 				errors.add( error );
 			}
 

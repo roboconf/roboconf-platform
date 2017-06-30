@@ -41,8 +41,6 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.ErrorCode.ErrorCategory;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -53,6 +51,8 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorCode.ErrorCategory;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Component;

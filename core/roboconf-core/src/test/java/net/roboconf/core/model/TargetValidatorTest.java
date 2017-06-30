@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.utils.Utils;
 

@@ -29,11 +29,11 @@ import java.io.File;
 import java.util.UUID;
 
 import org.junit.Assert;
-import net.roboconf.core.utils.Utils;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -75,6 +75,10 @@ public class ApplicationTemplateDescriptorTest {
 		saveAndCompare( desc1 );
 
 		desc1.setExternalExportsPrefix( "whatever" );
+		saveAndCompare( desc1 );
+
+		desc1.tags.add( "t1" );
+		desc1.tags.add( "t45" );
 		saveAndCompare( desc1 );
 	}
 
@@ -134,6 +138,7 @@ public class ApplicationTemplateDescriptorTest {
 		Assert.assertEquals( desc1.getGraphEntryPoint(), desc2.getGraphEntryPoint());
 		Assert.assertEquals( desc1.getInstanceEntryPoint(), desc2.getInstanceEntryPoint());
 		Assert.assertEquals( desc1.externalExports, desc2.externalExports );
+		Assert.assertEquals( desc1.tags, desc2.tags );
 		Assert.assertEquals( desc1.invalidExternalExports, desc2.invalidExternalExports );
 	}
 }

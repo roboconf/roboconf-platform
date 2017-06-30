@@ -25,13 +25,15 @@
 
 package net.roboconf.core.model;
 
+import static net.roboconf.core.errors.ErrorDetails.value;
+
 import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,8 +46,8 @@ public class ParsingErrorTest {
 		File f = new File( "1" );
 		ParsingError def1 = new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 1 );
 		ParsingError def2 = new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 2 );
-		ParsingError def3 = new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 2, "details" );
-		RoboconfError def4 = new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, "details" );
+		ParsingError def3 = new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 2, value( "v" ));
+		RoboconfError def4 = new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, value( "v" ));
 
 		Assert.assertTrue( def1.equals( def1 ));
 		Assert.assertTrue( def1.equals( new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 1 )));
@@ -63,13 +65,13 @@ public class ParsingErrorTest {
 		Assert.assertFalse( def2.equals( def4 ));
 
 		Assert.assertTrue( def3.equals( def3 ));
-		Assert.assertTrue( def3.equals( new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 2, "details" )));
+		Assert.assertTrue( def3.equals( new ParsingError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, f, 2, value( "v" ))));
 		Assert.assertFalse( def3.equals( def1 ));
 		Assert.assertFalse( def3.equals( def2 ));
 		Assert.assertFalse( def3.equals( def4 ));
 
 		Assert.assertTrue( def4.equals( def4 ));
-		Assert.assertTrue( def4.equals( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, "details" )));
+		Assert.assertTrue( def4.equals( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, value( "v" ))));
 	}
 
 

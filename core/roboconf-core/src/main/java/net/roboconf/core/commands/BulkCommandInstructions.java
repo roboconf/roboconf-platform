@@ -25,6 +25,8 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.instance;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +35,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 
@@ -121,15 +123,15 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 
 		List<ParsingError> result = new ArrayList<> ();
 		if( this.changeStateInstruction == null )
-			result.add( error( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, "Instruction: " + this.changeStateInstruction ));
+			result.add( error( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION ));
 
 		if( this.instancePath != null
 				&& ! this.context.instanceExists( this.instancePath ))
-			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, "Instance path: " + this.instancePath ));
+			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, instance( this.instancePath )));
 
 		if( this.componentName != null
 				&& ComponentHelpers.findComponent( this.context.getApp(), this.componentName ) == null )
-			result.add( error( ErrorCode.CMD_INEXISTING_COMPONENT, "Instance path: " + this.instancePath ));
+			result.add( error( ErrorCode.CMD_INEXISTING_COMPONENT, instance( this.instancePath )));
 
 		return result;
 	}

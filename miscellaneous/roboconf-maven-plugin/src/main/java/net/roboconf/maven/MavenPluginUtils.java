@@ -23,49 +23,49 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.dsl;
+package net.roboconf.maven;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.apache.maven.plugin.logging.Log;
 
-import net.roboconf.core.dsl.converters.FromGraphDefinition;
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.errors.ErrorCode.ErrorLevel;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class IncopleteFilesParsingTest {
+public final class MavenPluginUtils {
 
-	@Test
-	public void testIncompleteFilesResultInEmptyGraphByDefault() throws Exception {
+	/**
+	 * Private empty constructor.
+	 */
+	private MavenPluginUtils() {
+		// nothing
+	}
 
-		List<File> files = TestUtils.findTestFiles( "/configurations/flexibles" );
-		Assert.assertNotSame( 0, files.size());
 
-		List<String> almostValids = Arrays.asList( new String[] {
-				"one-component-no-property.graph",
-				"two-components-no-property.graph"
-		});
+	/**
+	 * Formats a Roboconf errors and outputs it in the logs.
+	 * @param error an error
+	 * @param log the Maven logger
+	 * @return a string builder with the output
+	 */
+	public static StringBuilder formatErrors( Collection<? extends RoboconfError> errors, Log log ) {
 
-		File directory = files.iterator().next().getParentFile();
-		for( File f : files ) {
+		StringBuilder result = new StringBuilder();
+		for( Map.Entry<RoboconfError,String> entry : RoboconfErrorHelpers.formatErrors( errors, null, true ).entrySet()) {
+			if( entry.getKey().getErrorCode().getLevel() == ErrorLevel.WARNING )
+				log.warn( entry.getValue());
+			else
+				log.error( entry.getValue());
 
-			// There are some exceptions
-			if( almostValids.contains( f.getName()))
-				continue;
-
-			// Others contain syntactic errors and no component was found
-			FromGraphDefinition fromDef = new FromGraphDefinition( directory );
-			Graphs graph = fromDef.buildGraphs( f );
-
-			Assert.assertNotSame( f.getName(), 0, fromDef.getErrors().size());
-			Assert.assertEquals( f.getName(), 0, graph.getRootComponents().size());
-			Assert.assertEquals( f.getName(), 0, graph.getFacetNameToFacet().size());
+			result.append( entry.getValue());
+			result.append( "\n" );
 		}
+
+		return result;
 	}
 }

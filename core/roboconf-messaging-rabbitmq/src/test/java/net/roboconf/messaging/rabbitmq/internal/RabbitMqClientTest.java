@@ -39,6 +39,7 @@ import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRU
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_USE_SSL;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,6 +53,7 @@ import com.rabbitmq.client.Channel;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
@@ -150,33 +152,72 @@ public class RabbitMqClientTest {
 		configuration.put( RABBITMQ_SSL_TRUST_STORE_PATH, "7" );
 		configuration.put( RABBITMQ_SSL_TRUST_STORE_TYPE, "8" );
 		configuration.put( RABBITMQ_SSL_PROTOCOL, "9" );
+		configuration.put( RABBITMQ_USE_SSL, "true" );
 
 		final int beforeCpt = configuration.size();
 
 		// Remember we add the messaging type as a new property.
 		// We also set the value for "pass.as.user.data".
 		RabbitMqClient client = new RabbitMqClient( null, configuration, RecipientKind.DM );
-		Assert.assertEquals( beforeCpt + 2, client.getConfiguration().size());
+
+		Map<String,String> retrievedConfiguration = client.getConfiguration();
+		Assert.assertEquals( beforeCpt + 4, retrievedConfiguration.size());
+		Assert.assertEquals( "", retrievedConfiguration.get( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_KEY_STORE_PATH ));
+		Assert.assertEquals( "", retrievedConfiguration.get( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_TRUST_STORE_PATH ));
 
 		// "pass.as.user.data" is true => same behavior
 		configuration.put( RABBITMQ_SSL_AS_USER_DATA, "true" );
 		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
-		Assert.assertEquals( beforeCpt + 2, client.getConfiguration().size());
+		retrievedConfiguration = client.getConfiguration();
+
+		Assert.assertEquals( beforeCpt + 4, retrievedConfiguration.size());
+		Assert.assertEquals( "", retrievedConfiguration.get( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_KEY_STORE_PATH ));
+		Assert.assertEquals( "", retrievedConfiguration.get( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_TRUST_STORE_PATH ));
 
 		// "pass.as.user.data" is false => only the SSL protocol is kept
 		configuration.put( RABBITMQ_SSL_AS_USER_DATA, "false" );
 		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
-		Assert.assertEquals( 4 + 2, client.getConfiguration().size());
-		Assert.assertEquals( "localhost", client.getConfiguration().get( RABBITMQ_SERVER_IP ));
-		Assert.assertEquals( "guest", client.getConfiguration().get( RABBITMQ_SERVER_USERNAME ));
-		Assert.assertEquals( "guest", client.getConfiguration().get( RABBITMQ_SERVER_PASSWORD ));
-		Assert.assertEquals( "9", client.getConfiguration().get( RABBITMQ_SSL_PROTOCOL ));
-		Assert.assertEquals( FACTORY_RABBITMQ, client.getConfiguration().get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
+		retrievedConfiguration = client.getConfiguration();
+
+		Assert.assertEquals( 7, retrievedConfiguration.size());
+		Assert.assertEquals( "localhost", retrievedConfiguration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( "guest", retrievedConfiguration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( "guest", retrievedConfiguration.get( RABBITMQ_SERVER_PASSWORD ));
+		Assert.assertEquals( "9", retrievedConfiguration.get( RABBITMQ_SSL_PROTOCOL ));
+		Assert.assertEquals( FACTORY_RABBITMQ, retrievedConfiguration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
+		Assert.assertEquals( "false", retrievedConfiguration.get( RABBITMQ_SSL_AS_USER_DATA ));
+		Assert.assertEquals( "true", retrievedConfiguration.get( RABBITMQ_USE_SSL ));
 
 		// "pass.as.user.data" has an invalid value => same as "true"
 		configuration.put( RABBITMQ_SSL_AS_USER_DATA, "oops" );
 		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
-		Assert.assertEquals( beforeCpt + 2, client.getConfiguration().size());
-		Assert.assertEquals( "true", client.getConfiguration().get( RABBITMQ_SSL_AS_USER_DATA ));
+		retrievedConfiguration = client.getConfiguration();
+
+		Assert.assertEquals( beforeCpt + 4, retrievedConfiguration.size());
+		Assert.assertEquals( "true", retrievedConfiguration.get( RABBITMQ_SSL_AS_USER_DATA ));
+		Assert.assertEquals( "", retrievedConfiguration.get( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_KEY_STORE_PATH ));
+		Assert.assertEquals( "", retrievedConfiguration.get( UserDataHelpers.ENCODE_FILE_CONTENT_PREFIX + RABBITMQ_SSL_TRUST_STORE_PATH ));
+
+		// Disable SSL
+		configuration.put( RABBITMQ_USE_SSL, "false" );
+		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
+		retrievedConfiguration = client.getConfiguration();
+
+		Assert.assertEquals( 4, retrievedConfiguration.size());
+		Assert.assertEquals( "localhost", retrievedConfiguration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( "guest", retrievedConfiguration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( "guest", retrievedConfiguration.get( RABBITMQ_SERVER_PASSWORD ));
+		Assert.assertEquals( FACTORY_RABBITMQ, retrievedConfiguration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
+
+		// Disable SSL
+		configuration.remove( RABBITMQ_USE_SSL );
+		client = new RabbitMqClient( null, configuration, RecipientKind.DM );
+		retrievedConfiguration = client.getConfiguration();
+
+		Assert.assertEquals( 4, retrievedConfiguration.size());
+		Assert.assertEquals( "localhost", retrievedConfiguration.get( RABBITMQ_SERVER_IP ));
+		Assert.assertEquals( "guest", retrievedConfiguration.get( RABBITMQ_SERVER_USERNAME ));
+		Assert.assertEquals( "guest", retrievedConfiguration.get( RABBITMQ_SERVER_PASSWORD ));
+		Assert.assertEquals( FACTORY_RABBITMQ, retrievedConfiguration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
 	}
 }

@@ -31,9 +31,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 
 import javax.ws.rs.core.Response;
@@ -126,6 +128,7 @@ public class ApplicationResourceTest {
 
 		this.ma = new ManagedApplication( this.app );
 		this.managerWrapper.addManagedApplication( this.ma );
+		this.managerWrapper.getApplicationTemplates().put( this.app.getTemplate(), Boolean.TRUE );
 	}
 
 
@@ -1310,7 +1313,7 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void commandsTest() throws IOException {
+	public void testCommands() throws IOException {
 
 		// Inexisting application
 		Application inexisting = new Application( "inexisting", this.app.getTemplate());
@@ -1337,10 +1340,14 @@ public class ApplicationResourceTest {
 
 		// Delete it
 		this.manager.commandsMngr().deleteCommand( this.app, "toto");
-		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
+		resp = this.resource.getCommandInstructions( this.app.getName(), "toto" );
 		Assert.assertEquals( Status.NO_CONTENT.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( null, resp.getEntity());
 		Assert.assertEquals( 0, this.resource.listCommands( this.app.getName()).size());
+
+		// Inexisting application
+		resp = this.resource.getCommandInstructions( "inexisting-app", "toto" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 	}
 
 
@@ -1381,5 +1388,37 @@ public class ApplicationResourceTest {
 		Response resp = this.resource.executeCommand( this.app.getName(), "toto" );
 		Assert.assertTrue( f.exists());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testReplaceTags_success() throws Exception {
+
+		Set<String> tags = new HashSet<> ();
+		tags.add( "toto" );
+		tags.add( "titi" );
+		Response resp = this.resource.replaceTags(
+				this.app.getTemplate().getName(),
+				this.app.getTemplate().getVersion(),
+				new ArrayList<>( tags ));
+
+		Assert.assertEquals( tags, this.app.getTemplate().getTags());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testReplaceTags_notFound() throws Exception {
+
+		Set<String> tags = new HashSet<> ();
+		tags.add( "toto" );
+		tags.add( "titi" );
+		Response resp = this.resource.replaceTags(
+				"ao",
+				"9.0",
+				new ArrayList<>( tags ));
+
+		Assert.assertEquals( 0, this.app.getTemplate().getTags().size());
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 	}
 }

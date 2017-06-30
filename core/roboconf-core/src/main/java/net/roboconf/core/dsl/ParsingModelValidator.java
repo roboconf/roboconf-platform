@@ -25,6 +25,11 @@
 
 package net.roboconf.core.dsl;
 
+import static net.roboconf.core.errors.ErrorDetails.instruction;
+import static net.roboconf.core.errors.ErrorDetails.name;
+import static net.roboconf.core.errors.ErrorDetails.unexpected;
+import static net.roboconf.core.errors.ErrorDetails.variable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
 import net.roboconf.core.dsl.parsing.BlockBlank;
@@ -43,6 +47,7 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.internal.dsl.parsing.ExportedVariablesParser;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.ExportedVariable;
@@ -117,7 +122,7 @@ public final class ParsingModelValidator {
 		default:
 			result = new ArrayList<>( 1 );
 			ParsingError error = parsingError( ErrorCode.PM_INVALID_BLOCK_TYPE, block );
-			error.setDetails( "Instruction type: " + block.getInstructionType());
+			error.setDetails( instruction( String.valueOf( block.getInstructionType())));
 			result.add( error );
 			break;
 		}
@@ -173,7 +178,7 @@ public final class ParsingModelValidator {
 					&& region.getInstructionType() != AbstractBlock.INSTANCEOF ) {
 
 				ParsingError error = parsingError( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, region );
-				error.setDetails( "Invalid type found: " + region.getClass().getSimpleName());
+				error.setDetails( unexpected( region.getClass().getSimpleName()));
 				result.add( error );
 			}
 		}
@@ -211,7 +216,7 @@ public final class ParsingModelValidator {
 					continue;
 
 				ParsingError error = new ParsingError( ErrorCode.PM_INVALID_CHILD_NAME, block.getFile(), line );
-				error.setDetails( "Child name: " + s );
+				error.setDetails( name( s ));
 				result.add( error );
 			}
 
@@ -224,7 +229,7 @@ public final class ParsingModelValidator {
 
 				} else if( ! s.matches( ParsingConstants.PATTERN_ID )) {
 					ParsingError error = new ParsingError( ErrorCode.PM_INVALID_NAME, block.getFile(), line );
-					error.setDetails( "Invalid name: " + s );
+					error.setDetails( name( s ));
 					result.add( error );
 				}
 			}
@@ -245,10 +250,10 @@ public final class ParsingModelValidator {
 				if( Utils.isEmptyOrWhitespaces( s ))
 					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
 				else if( ! s.matches( patternForImports ))
-					result.add( new ParsingError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, block.getFile(), line, s ));
+					result.add( new ParsingError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, block.getFile(), line, variable( s )));
 				else if( ! s.contains( "." )
 						|| s.indexOf( '.' ) == s.length() -1 )
-					result.add( new ParsingError( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, block.getFile(), line, s ));
+					result.add( new ParsingError( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, block.getFile(), line, variable( s )));
 			}
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( name )) {
@@ -262,16 +267,16 @@ public final class ParsingModelValidator {
 				if( Utils.isEmptyOrWhitespaces( exportKey ))
 					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
 				else if( ! exportKey.matches( ParsingConstants.PATTERN_ID )) {
-					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, "Variable name: " + exportKey ));
+					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, variable( exportKey )));
 
 					if( exportKey.toLowerCase().startsWith( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " " ))
-						result.add( new ParsingError( ErrorCode.PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS, block.getFile(), line, "Variable name: " + exportKey ));
+						result.add( new ParsingError( ErrorCode.PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS, block.getFile(), line, variable( exportKey )));
 				}
 			}
 
 		} else if( ParsingConstants.PROPERTY_COMPONENT_INSTALLER.equals( name )) {
 			if( ! value.matches( ParsingConstants.PATTERN_FLEX_ID ))
-				result.add( new ParsingError( ErrorCode.PM_INVALID_INSTALLER_NAME, block.getFile(), line, value ));
+				result.add( new ParsingError( ErrorCode.PM_INVALID_INSTALLER_NAME, block.getFile(), line, name( value )));
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_NAME.equals( name )) {
 			// nothing
@@ -301,7 +306,7 @@ public final class ParsingModelValidator {
 
 		} else {
 			ParsingError error = new ParsingError( ErrorCode.PM_UNKNOWN_PROPERTY_NAME, block.getFile(), line );
-			error.setDetails( "Property name: " + name );
+			error.setDetails( name( name ));
 			result.add( error );
 		}
 
@@ -375,7 +380,7 @@ public final class ParsingModelValidator {
 						&& foundProperties.contains( p.getName())) {
 
 					ParsingError error = parsingError( ErrorCode.PM_DUPLICATE_PROPERTY, p );
-					error.setDetails( "Property name: " + p.getName());
+					error.setDetails( name( p.getName()));
 					result.add( error );
 				}
 
@@ -385,7 +390,7 @@ public final class ParsingModelValidator {
 
 				} else if( strict ) {
 					ParsingError error = parsingError( ErrorCode.PM_PROPERTY_NOT_APPLIABLE, p );
-					error.setDetails( "Property name: " + p.getName());
+					error.setDetails( name( p.getName()));
 					result.add( error );
 				}
 

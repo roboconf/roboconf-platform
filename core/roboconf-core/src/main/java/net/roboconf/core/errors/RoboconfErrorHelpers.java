@@ -23,21 +23,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.helpers;
+package net.roboconf.core.errors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.ErrorCode.ErrorLevel;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode.ErrorLevel;
+import net.roboconf.core.errors.i18n.TranslationBundle;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.SourceReference;
-import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -80,27 +83,6 @@ public final class RoboconfErrorHelpers {
 		for( RoboconfError error : errors ) {
 			if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
 				result.add( error );
-		}
-
-		return result;
-	}
-
-
-	/**
-	 * Extracts and formats warnings so that they can be displayed by a logger.
-	 * @param errors a non-null list of errors
-	 * @return a list of string, each one being readable information about a warning
-	 */
-	public static List<String> extractAndFormatWarnings( Collection<? extends RoboconfError> errors ) {
-
-		List<String> result = new ArrayList<> ();
-		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( errors )) {
-			StringBuilder sb = new StringBuilder();
-			sb.append( warning.getErrorCode().getMsg());
-			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
-				sb.append( " " + warning.getDetails());
-
-			result.add( sb.toString());
 		}
 
 		return result;
@@ -188,9 +170,9 @@ public final class RoboconfErrorHelpers {
 	 */
 	public static void filterErrors( Collection<? extends RoboconfError> errors, ErrorCode... errorCodes ) {
 
+		// No error code to filter? => errorCodes is an empty array (not null)
 		List<ErrorCode> codesToSkip = new ArrayList<> ();
-		if( errorCodes != null )
-			codesToSkip.addAll( Arrays.asList( errorCodes ));
+		codesToSkip.addAll( Arrays.asList( errorCodes ));
 
 		Collection<RoboconfError> toRemove = new ArrayList<> ();
 		for( RoboconfError error : errors ) {
@@ -199,5 +181,71 @@ public final class RoboconfErrorHelpers {
 		}
 
 		errors.removeAll( toRemove );
+	}
+
+
+	/**
+	 * Formats a Roboconf error as a string.
+	 * <p>
+	 * This class relies on a cached instance of {@link TranslationBundle}.
+	 * The cache is automatically refreshed if the user language changes.
+	 * </p>
+	 *
+	 * @param errors a non-null collection of errors
+	 * @param lang the language to use
+	 * @param addMetadata true to display meta-data, such as error categories
+	 * @return a non-null map (key = error, value = error message)
+	 * <p>
+	 * Insertion order is preserved.
+	 * </p>
+	 */
+	public static Map<RoboconfError,String> formatErrors(
+			Collection<? extends RoboconfError> errors,
+			String lang,
+			boolean addMetadata ) {
+
+		ResourceBundle resourceBundle = getResourceBundle( lang );
+		Map<RoboconfError,String> result = new LinkedHashMap<> ();
+		for( RoboconfError error : errors ) {
+
+			StringBuilder sb = new StringBuilder();
+			if( addMetadata ) {
+				sb.append( "[ " );
+				sb.append( error.getErrorCode().getCategory().toString().toLowerCase());
+				sb.append( " ] " );
+			}
+
+			sb.append( resourceBundle.getString( error.getErrorCode().name()));
+			sb.append( " " );
+			for( Iterator<ErrorDetails> it = Arrays.asList( error.getDetails()).iterator(); it.hasNext(); ) {
+				ErrorDetails details = it.next();
+				sb.append( resourceBundle.getString( details.getErrorDetailsKind().name()));
+				sb.append( details.getElementName());
+				if( it.hasNext())
+					sb.append( resourceBundle.getString( TranslationBundle.DETAILS_SEPARATOR ));
+			}
+
+			result.put( error, sb.toString().trim());
+		}
+
+		return result;
+	}
+
+
+	// We manage a private cache for our resource bundle
+
+
+	private static TranslationBundle resourceBundle = new TranslationBundle( null );
+	private static final Object LOCK = new Object();
+
+	private static ResourceBundle getResourceBundle( String lang ) {
+
+		synchronized( LOCK ) {
+			// Do we need to load a new resource bundle?
+			if( ! Objects.equals( resourceBundle.getLang(), TranslationBundle.resolve( lang )))
+				resourceBundle = new TranslationBundle( lang );
+		}
+
+		return resourceBundle;
 	}
 }

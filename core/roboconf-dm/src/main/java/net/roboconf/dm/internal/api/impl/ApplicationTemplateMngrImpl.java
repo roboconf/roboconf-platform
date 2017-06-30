@@ -27,6 +27,7 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,13 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
@@ -106,12 +107,12 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 
 	@Override
-	public ApplicationTemplate findTemplate( String name, String qualifier ) {
+	public ApplicationTemplate findTemplate( String name, String version ) {
 
 		ApplicationTemplate result = null;
 		for( ApplicationTemplate tpl : this.templates.keySet()) {
 			if( Objects.equals( tpl.getName(), name )
-					&& Objects.equals( tpl.getVersion(), qualifier )) {
+					&& Objects.equals( tpl.getVersion(), version )) {
 				result = tpl;
 				break;
 			}
@@ -123,7 +124,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 	@Override
 	public ApplicationTemplate loadApplicationTemplate( File applicationFilesDirectory )
-	throws AlreadyExistingException, InvalidApplicationException, IOException {
+	throws AlreadyExistingException, InvalidApplicationException, IOException, UnauthorizedActionException {
 
 		// This is a critical section.
 		synchronized( INSTALL_LOCK ) {
@@ -135,8 +136,10 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 			if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
 				throw new InvalidApplicationException( lr.getLoadErrors());
 
-			for( String warning : RoboconfErrorHelpers.extractAndFormatWarnings( lr.getLoadErrors()))
-				this.logger.warning( warning );
+			// By default, we always log in English
+			Collection<RoboconfError> warnings = RoboconfErrorHelpers.findWarnings( lr.getLoadErrors());
+			for( String warningMsg : RoboconfErrorHelpers.formatErrors( warnings, null, true ).values())
+				this.logger.warning( warningMsg );
 
 			ApplicationTemplate tpl = lr.getApplicationTemplate();
 			if( this.templates.containsKey( tpl ))
@@ -191,15 +194,15 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 
 
 	@Override
-	public void deleteApplicationTemplate( String tplName, String tplQualifier )
+	public void deleteApplicationTemplate( String tplName, String tplVersion )
 	throws UnauthorizedActionException, InvalidApplicationException, IOException {
 
-		ApplicationTemplate tpl = findTemplate( tplName, tplQualifier );
+		ApplicationTemplate tpl = findTemplate( tplName, tplVersion );
 		if( tpl == null )
 			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
 		if( this.applicationMngr.isTemplateUsed( tpl )) {
-			throw new UnauthorizedActionException( tplName + " (" + tplQualifier + ") is still used by applications. It cannot be deleted." );
+			throw new UnauthorizedActionException( tplName + " (" + tplVersion + ") is still used by applications. It cannot be deleted." );
 
 		} else {
 			this.logger.info( "Deleting the application template called " + tpl.getName() + "..." );
@@ -227,7 +230,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 			try {
 				loadApplicationTemplate( dir );
 
-			} catch( AlreadyExistingException | InvalidApplicationException | IOException e ) {
+			} catch( AlreadyExistingException | InvalidApplicationException | UnauthorizedActionException | IOException e ) {
 				this.logger.warning( "Cannot restore application template in " + dir + " (" + e.getClass().getSimpleName() + ")." );
 				Utils.logException( this.logger, e );
 			}
@@ -242,10 +245,10 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 	 * @param tpl a template
 	 * @return a set of target IDs, created from this template
 	 * @throws IOException
-	 * @throws InvalidApplicationException
+	 * @throws UnauthorizedActionException
 	 */
 	private Set<String> registerTargets( ApplicationTemplate tpl )
-	throws IOException, InvalidApplicationException {
+	throws IOException, UnauthorizedActionException {
 
 		// Find all the properties files and register them
 		IOException conflictException = null;
@@ -294,18 +297,13 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 		}
 
 		// Associate them with components.
-		try {
-			for( Map.Entry<Component,Set<String>> entry : componentToTargetIds.entrySet()) {
-				String key = "@" + entry.getKey().getName();
+		for( Map.Entry<Component,Set<String>> entry : componentToTargetIds.entrySet()) {
+			String key = "@" + entry.getKey().getName();
 
-				// More than one target for a component?
-				// => Do not register anything.
-				if( entry.getValue().size() == 1 )
-					this.targetsMngr.associateTargetWith( entry.getValue().iterator().next(), tpl, key );
-			}
-
-		} catch( UnauthorizedActionException e ) {
-			throw new InvalidApplicationException( e );
+			// More than one target for a component?
+			// => Do not register anything.
+			if( entry.getValue().size() == 1 )
+				this.targetsMngr.associateTargetWith( entry.getValue().iterator().next(), tpl, key );
 		}
 
 		return newTargetIds;

@@ -40,8 +40,8 @@ import net.roboconf.core.commands.ExecuteCommandInstruction;
 import net.roboconf.core.commands.RenameCommandInstruction;
 import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.commands.WriteCommandInstruction;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -121,6 +121,7 @@ public class CommandsExecutor {
 			throw e;
 
 		} catch( Exception e ) {
+			e.printStackTrace();
 			throw new CommandException( e );
 		}
 	}

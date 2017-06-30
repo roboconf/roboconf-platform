@@ -25,6 +25,10 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.conflicting;
+import static net.roboconf.core.errors.ErrorDetails.instance;
+import static net.roboconf.core.errors.ErrorDetails.name;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +36,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
@@ -76,16 +80,16 @@ public class RenameCommandInstruction extends AbstractCommandInstruction {
 		if( Utils.isEmptyOrWhitespaces( this.newInstanceName ))
 			result.add( error( ErrorCode.CMD_MISSING_INSTANCE_NAME ));
 		else if( ! this.newInstanceName.matches( ParsingConstants.PATTERN_FLEX_ID ))
-			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_NAME, "Invalid name: " + this.newInstanceName ));
+			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_NAME, name( this.newInstanceName )));
 
 		if( ! this.context.instanceExists( this.instancePath )) {
-			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, "Instance path: " + this.instancePath ));
+			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, instance( this.instancePath )));
 
 		} else {
 			String parentInstancePath = this.instancePath.replaceFirst( "/[^/]+$", "" );
 			String siblingPath = parentInstancePath + "/" + this.newInstanceName;
 			if( this.context.instanceExists( siblingPath ))
-				result.add( error( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, "Conflicting instance: " + siblingPath ));
+				result.add( error( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, conflicting( siblingPath )));
 		}
 
 		return result;

@@ -42,8 +42,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.ApplicationDescriptor;

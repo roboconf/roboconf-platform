@@ -26,37 +26,44 @@
 package net.roboconf.core.internal.dsl.parsing;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails.ErrorDetailsKind;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class ExportedVariablesParserTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+
 	@Test
-	public void testParserIsResetCorrectly() {
+	public void testParserIsResetCorrectly() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 0, parser.rawNameToVariables.size());
 
-		parser.parse( "ip", null, 1 );
+		parser.parse( "ip", this.folder.newFile(), 1 );
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 1, parser.rawNameToVariables.size());
 
-		parser.parse( "", null, 1 );
+		parser.parse( "", this.folder.newFile(), 1 );
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 0, parser.rawNameToVariables.size());
 	}
 
 
 	@Test
-	public void testParser_1() {
+	public void testParser_1() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip", null, 1 );
+		parser.parse( "ip", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 1, parser.rawNameToVariables.size());
@@ -66,10 +73,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_2() {
+	public void testParser_2() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip1, ip2", null, 1 );
+		parser.parse( "ip1, ip2", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -81,10 +88,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_3() {
+	public void testParser_3() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "port=8080", null, 1 );
+		parser.parse( "port=8080", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 1, parser.rawNameToVariables.size());
@@ -107,10 +114,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_4() {
+	public void testParser_4() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, port = 8080", null, 1 );
+		parser.parse( "ip, port = 8080", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -121,10 +128,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_5() {
+	public void testParser_5() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, port=8080", null, 1 );
+		parser.parse( "ip, port=8080", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -135,10 +142,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_6() {
+	public void testParser_6() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip  , port =  	8080 ", null, 1 );
+		parser.parse( "ip  , port =  	8080 ", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -149,10 +156,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_7() {
+	public void testParser_7() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "  path = \"test with quotes\" ", null, 1 );
+		parser.parse( "  path = \"test with quotes\" ", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 1, parser.rawNameToVariables.size());
@@ -161,10 +168,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_8() {
+	public void testParser_8() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, port=8080, port-b = \"9000\",  path = \"test with quotes\" ", null, 1 );
+		parser.parse( "ip, port=8080, port-b = \"9000\",  path = \"test with quotes\" ", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 4, parser.rawNameToVariables.size());
@@ -177,10 +184,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_9() {
+	public void testParser_9() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, random[port] port,  path = \"test with quotes\" ", null, 1 );
+		parser.parse( "ip, random[port] port,  path = \"test with quotes\" ", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 3, parser.rawNameToVariables.size());
@@ -193,10 +200,12 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_10() {
+	public void testParser_10() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, path1 = \"this path1, contains, commas('#') and special characters!*.\",  path = \"test with ; a semicolon\" ", null, 1 );
+		parser.parse(
+				"ip, path1 = \"this path1, contains, commas('#') and special characters!*.\",  path = \"test with ; a semicolon\" ",
+				this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 3, parser.rawNameToVariables.size());
@@ -208,10 +217,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_11() {
+	public void testParser_11() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "path1 = \"value1, value2\"", null, 1 );
+		parser.parse( "path1 = \"value1, value2\"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 1, parser.rawNameToVariables.size());
@@ -220,10 +229,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_12() {
+	public void testParser_12() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip = \"\", path1 = \"value1, value2\"", null, 1 );
+		parser.parse( "ip = \"\", path1 = \"value1, value2\"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -233,10 +242,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_13() {
+	public void testParser_13() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "path1 = \"value1, value2\", ip = \"  \"", null, 1 );
+		parser.parse( "path1 = \"value1, value2\", ip = \"  \"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -246,10 +255,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParser_14() {
+	public void testParser_14() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip = ", null, 1 );
+		parser.parse( "ip = ", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 1, parser.rawNameToVariables.size());
@@ -259,20 +268,25 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParserErrors_1() {
+	public void testParserErrors_1() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "path1 = \"value1, value2", null, 1 );
+		parser.parse( "path1 = \"value1, value2", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 1, parser.errors.size());
 		Assert.assertEquals( 0, parser.rawNameToVariables.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, parser.errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( "Variable name: path1", parser.errors.get( 0 ).getDetails());
+
+		Assert.assertEquals( 3, parser.errors.get( 0 ).getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.VARIABLE, parser.errors.get( 0 ).getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertEquals( "path1", parser.errors.get( 0 ).getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.FILE, parser.errors.get( 0 ).getDetails()[ 1 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.LINE, parser.errors.get( 0 ).getDetails()[ 2 ].getErrorDetailsKind());
 	}
 
 
 	@Test
-	public void testParserErrors_2() {
+	public void testParserErrors_2() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
 		parser.parse( "path1 = value1, value2\"", null, 1 );
@@ -286,10 +300,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParserErrors_3() {
+	public void testParserErrors_3() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, port = 8080, path1 = value1, value2\"", null, 1 );
+		parser.parse( "ip, port = 8080, path1 = value1, value2\"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 0, parser.errors.size());
 		Assert.assertEquals( 4, parser.rawNameToVariables.size());
@@ -304,15 +318,20 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParserErrors_4() {
+	public void testParserErrors_4() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, port = 8080, path1 = \"value1, value2, path2 = \"value3, value 4\"", null, 1 );
+		parser.parse( "ip, port = 8080, path1 = \"value1, value2, path2 = \"value3, value 4\"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 1, parser.errors.size());
 		Assert.assertEquals( 4, parser.rawNameToVariables.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, parser.errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( "Variable name: path1", parser.errors.get( 0 ).getDetails());
+
+		Assert.assertEquals( 3, parser.errors.get( 0 ).getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.VARIABLE, parser.errors.get( 0 ).getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertEquals( "path1", parser.errors.get( 0 ).getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.FILE, parser.errors.get( 0 ).getDetails()[ 1 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.LINE, parser.errors.get( 0 ).getDetails()[ 2 ].getErrorDetailsKind());
 
 		Assert.assertTrue( parser.rawNameToVariables.containsKey( "ip" ));
 		Assert.assertNull( parser.rawNameToVariables.get( "ip" ));
@@ -326,15 +345,20 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParserErrors_5() {
+	public void testParserErrors_5() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "ip, port = 8080, path1 = \"value1, value2, path2 = short", null, 1 );
+		parser.parse( "ip, port = 8080, path1 = \"value1, value2, path2 = short", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 1, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, parser.errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( "Variable name: path1", parser.errors.get( 0 ).getDetails());
+
+		Assert.assertEquals( 3, parser.errors.get( 0 ).getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.VARIABLE, parser.errors.get( 0 ).getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertEquals( "path1", parser.errors.get( 0 ).getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.FILE, parser.errors.get( 0 ).getDetails()[ 1 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.LINE, parser.errors.get( 0 ).getDetails()[ 2 ].getErrorDetailsKind());
 
 		Assert.assertTrue( parser.rawNameToVariables.containsKey( "ip" ));
 		Assert.assertNull( parser.rawNameToVariables.get( "ip" ));
@@ -343,10 +367,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParserErrors_6() {
+	public void testParserErrors_6() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "path1 = \"value1, value2\", , ip = \"  \"", null, 1 );
+		parser.parse( "path1 = \"value1, value2\", , ip = \"  \"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 1, parser.errors.size());
 		Assert.assertEquals( 2, parser.rawNameToVariables.size());
@@ -358,10 +382,10 @@ public class ExportedVariablesParserTest {
 
 
 	@Test
-	public void testParserErrors_7() {
+	public void testParserErrors_7() throws Exception {
 
 		ExportedVariablesParser parser = new ExportedVariablesParser();
-		parser.parse( "var2, var1 =value1\"", null, 1 );
+		parser.parse( "var2, var1 =value1\"", this.folder.newFile(), 1 );
 
 		Assert.assertEquals( 1, parser.errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORT_COMPLEX_VALUE, parser.errors.get( 0 ).getErrorCode());
