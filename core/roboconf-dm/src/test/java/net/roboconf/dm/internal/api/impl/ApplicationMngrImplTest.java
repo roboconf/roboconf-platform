@@ -42,8 +42,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.ApplicationDescriptor;
@@ -126,7 +126,7 @@ public class ApplicationMngrImplTest {
 		TestManagerWrapper.addManagedApplication( this.mngr, ma );
 		Assert.assertTrue( this.mngr.isTemplateUsed( tpl ));
 
-		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).qualifier( "v2" );
+		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).version( "v2" );
 		Assert.assertFalse( this.mngr.isTemplateUsed( tpl2 ));
 	}
 
@@ -185,10 +185,10 @@ public class ApplicationMngrImplTest {
 		tpl.setDirectory( this.folder.newFolder());
 
 		Mockito.verifyZeroInteractions( this.applicationTemplateMngr );
-		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getVersion())).thenReturn( tpl );
 
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
-		ManagedApplication ma = this.mngr.createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
+		ManagedApplication ma = this.mngr.createApplication( "toto", "desc", tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, TestManagerWrapper.getNameToManagedApplication( this.mngr ).size());
 
@@ -209,10 +209,10 @@ public class ApplicationMngrImplTest {
 		tpl.setDirectory( this.folder.newFolder());
 
 		Mockito.verifyZeroInteractions( this.applicationTemplateMngr );
-		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getVersion())).thenReturn( tpl );
 
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
-		ManagedApplication ma = this.mngr.createApplication( "ça débute", "desc", tpl.getName(), tpl.getQualifier());
+		ManagedApplication ma = this.mngr.createApplication( "ça débute", "desc", tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( "ca debute", ma.getName());
 		Assert.assertEquals( "ça débute", ma.getApplication().getDisplayName());
@@ -241,10 +241,10 @@ public class ApplicationMngrImplTest {
 		tpl.setDirectory( this.folder.newFolder());
 
 		Mockito.verifyZeroInteractions( this.applicationTemplateMngr );
-		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getVersion())).thenReturn( tpl );
 
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
-		ManagedApplication ma = this.mngr.createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
+		ManagedApplication ma = this.mngr.createApplication( "toto", "desc", tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, TestManagerWrapper.getNameToManagedApplication( this.mngr ).size());
 
@@ -318,13 +318,13 @@ public class ApplicationMngrImplTest {
 		File descriptorFile = new File( dir, Constants.PROJECT_FILE_DESCRIPTOR );
 		Assert.assertTrue( dir.mkdirs());
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).version( "v1" );
 		tpl.setDirectory( this.folder.newFolder());
 
 		Application app = new Application( "myApp", tpl );
 		ApplicationDescriptor.save( descriptorFile, app );
 
-		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getVersion())).thenReturn( tpl );
 
 		Mockito.verifyZeroInteractions( this.dmClientMock );
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
@@ -337,7 +337,7 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
 		Assert.assertEquals( app.getName(), ma.getName());
 		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
-		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+		Assert.assertEquals( tpl.getVersion(), app.getTemplate().getVersion());
 		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());
 
 		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
@@ -351,13 +351,13 @@ public class ApplicationMngrImplTest {
 		File descriptorFile = new File( dir, Constants.PROJECT_FILE_DESCRIPTOR );
 		Assert.assertTrue( dir.mkdirs());
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).version( "v1" );
 		tpl.setDirectory( this.folder.newFolder());
 
 		Application app = new Application( "ça débute bien", tpl );
 		ApplicationDescriptor.save( descriptorFile, app );
 
-		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getVersion())).thenReturn( tpl );
 
 		Mockito.verifyZeroInteractions( this.dmClientMock );
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
@@ -371,7 +371,7 @@ public class ApplicationMngrImplTest {
 		Assert.assertEquals( "ca debute bien", ma.getName());
 		Assert.assertEquals( "ça débute bien", ma.getApplication().getDisplayName());
 		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
-		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+		Assert.assertEquals( tpl.getVersion(), app.getTemplate().getVersion());
 		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());
 
 		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
@@ -381,7 +381,7 @@ public class ApplicationMngrImplTest {
 	@Test
 	public void testRestoreApplications_withConflict() throws Exception {
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).qualifier( "v1" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "myTpl" ).version( "v1" );
 		tpl.setDirectory( this.folder.newFolder());
 		Application app = new Application( "myApp", tpl );
 
@@ -394,7 +394,7 @@ public class ApplicationMngrImplTest {
 			ApplicationDescriptor.save( descriptorFile, app );
 		}
 
-		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
+		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getVersion())).thenReturn( tpl );
 
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
 		this.mngr.restoreApplications();
@@ -403,7 +403,7 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
 		Assert.assertEquals( app.getName(), ma.getName());
 		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
-		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+		Assert.assertEquals( tpl.getVersion(), app.getTemplate().getVersion());
 
 		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
 	}
@@ -428,7 +428,7 @@ public class ApplicationMngrImplTest {
 		File descriptorFile = new File( dir, Constants.PROJECT_FILE_DESCRIPTOR );
 		Assert.assertTrue( dir.mkdirs());
 
-		Application app = new Application( "myApp", new ApplicationTemplate( "not" ).qualifier( "valid" ));
+		Application app = new Application( "myApp", new ApplicationTemplate( "not" ).version( "valid" ));
 		ApplicationDescriptor.save( descriptorFile, app );
 
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());

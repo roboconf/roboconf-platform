@@ -25,6 +25,23 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import static net.roboconf.core.errors.ErrorCode.REST_DELETION_ERROR;
+import static net.roboconf.core.errors.ErrorCode.REST_INEXISTING;
+import static net.roboconf.core.errors.ErrorCode.REST_IO_ERROR;
+import static net.roboconf.core.errors.ErrorCode.REST_MNGMT_APP_SHUTDOWN_ERROR;
+import static net.roboconf.core.errors.ErrorCode.REST_MNGMT_CONFLICT;
+import static net.roboconf.core.errors.ErrorCode.REST_MNGMT_INVALID_IMAGE;
+import static net.roboconf.core.errors.ErrorCode.REST_MNGMT_INVALID_TPL;
+import static net.roboconf.core.errors.ErrorCode.REST_MNGMT_INVALID_URL;
+import static net.roboconf.core.errors.ErrorCode.REST_MNGMT_ZIP_ERROR;
+import static net.roboconf.core.errors.ErrorCode.REST_SAVE_ERROR;
+import static net.roboconf.core.errors.ErrorDetails.application;
+import static net.roboconf.core.errors.ErrorDetails.applicationTpl;
+import static net.roboconf.core.errors.ErrorDetails.name;
+import static net.roboconf.core.errors.ErrorDetails.value;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.handleError;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.lang;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +64,7 @@ import org.ops4j.pax.url.mvn.MavenResolver;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.urlresolvers.DefaultUrlResolver;
@@ -58,6 +76,7 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.dm.rest.services.internal.utils.MavenUrlResolver;
 import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
@@ -126,7 +145,10 @@ public class ManagementResource implements IManagementResource {
 			response = loadZippedApplicationTemplate( tempZipFile.toURI().toURL().toString());
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application template could not be loaded.", e ).build();
+			response = handleError(
+					Status.NOT_ACCEPTABLE,
+					new RestError( REST_MNGMT_ZIP_ERROR, e ),
+					lang( this.manager )).build();
 
 		} finally {
 			Utils.closeQuietly( uploadedInputStream );
@@ -152,11 +174,15 @@ public class ManagementResource implements IManagementResource {
 		ResolvedFile resolvedFile = null;
 		File extractionDir = null;
 		Response response;
-		try {
-			// Retrieve the file as a local one
-			if( Utils.isEmptyOrWhitespaces( url ))
-				throw new InvalidApplicationException( "Null or empty URLs are forbidden." );
 
+		// Retrieve the file as a local one
+		if( Utils.isEmptyOrWhitespaces( url )) {
+			response = handleError(
+					Status.NOT_ACCEPTABLE,
+					new RestError( REST_MNGMT_INVALID_URL, value( url )),
+					lang( this.manager )).build();
+
+		} else try {
 			// Get a resolver...
 			IUrlResolver resolver = this.mavenResolver != null ? new MavenUrlResolver( this.mavenResolver ) : new DefaultUrlResolver();
 			resolvedFile = resolver.resolve( url );
@@ -168,11 +194,11 @@ public class ManagementResource implements IManagementResource {
 			// Load the application template
 			response = loadUnzippedApplicationTemplate( extractionDir.getAbsolutePath());
 
-		} catch( InvalidApplicationException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application template could not be loaded.", e ).build();
-
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.UNAUTHORIZED, "A new application template could not be loaded.", e ).build();
+			response = handleError(
+					Status.UNAUTHORIZED,
+					new RestError( REST_SAVE_ERROR, e ),
+					lang( this.manager )).build();
 
 		} finally {
 			// We do not need the extracted application anymore.
@@ -206,13 +232,28 @@ public class ManagementResource implements IManagementResource {
 			response = Response.ok().entity( tpl ).build();
 
 		} catch( AlreadyExistingException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "A new application template could not be loaded.", e ).build();
+			response = handleError(
+					Status.FORBIDDEN,
+					new RestError( REST_MNGMT_CONFLICT, e ),
+					lang( this.manager )).build();
 
 		} catch( InvalidApplicationException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application template could not be loaded.", e ).build();
+			response = handleError(
+					Status.NOT_ACCEPTABLE,
+					new RestError( REST_MNGMT_INVALID_TPL, e ),
+					lang( this.manager )).build();
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.UNAUTHORIZED, "A new application template could not be loaded.", e ).build();
+			response = handleError(
+					Status.UNAUTHORIZED,
+					new RestError( REST_SAVE_ERROR, e ),
+					lang( this.manager )).build();
+
+		} catch( UnauthorizedActionException e ) {
+			response = handleError(
+					Status.CONFLICT,
+					new RestError( REST_MNGMT_CONFLICT, e ),
+					lang( this.manager )).build();
 		}
 
 		return response;
@@ -222,10 +263,10 @@ public class ManagementResource implements IManagementResource {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
-	 * #listApplicationTemplates(java.lang.String, java.lang.String)
+	 * #listApplicationTemplates(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<ApplicationTemplate> listApplicationTemplates( String exactName, String exactQualifier ) {
+	public List<ApplicationTemplate> listApplicationTemplates( String exactName, String exactQualifier, String tag ) {
 
 		// Log
 		if( this.logger.isLoggable( Level.FINE )) {
@@ -257,7 +298,8 @@ public class ManagementResource implements IManagementResource {
 		for( ApplicationTemplate tpl : this.manager.applicationTemplateMngr().getApplicationTemplates()) {
 			// Equality is on the name, not on the display name
 			if(( exactName == null || exactName.equals( tpl.getName()))
-					&& (exactQualifier == null || exactQualifier.equals( tpl.getQualifier())))
+					&& (exactQualifier == null || exactQualifier.equals( tpl.getVersion())
+					&& (tag == null || tpl.getTags().contains( tag ))))
 				result.add( tpl );
 		}
 
@@ -272,7 +314,7 @@ public class ManagementResource implements IManagementResource {
 	 */
 	@Override
 	public List<ApplicationTemplate> listApplicationTemplates() {
-		return listApplicationTemplates( null, null );
+		return listApplicationTemplates( null, null, null );
 	}
 
 
@@ -282,19 +324,24 @@ public class ManagementResource implements IManagementResource {
 	 * #deleteApplicationTemplate(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response deleteApplicationTemplate( String tplName, String tplQualifier ) {
+	public Response deleteApplicationTemplate( String tplName, String tplVersion ) {
 
-		String id = tplName + " (qualifier = " + tplQualifier + ")";
-		this.logger.fine( "Request: delete application template " + id + "." );
+		this.logger.fine( "Request: delete application template " + tplName + " (version = " + tplVersion + ")." );
 		Response result = Response.ok().build();
 		try {
-			this.manager.applicationTemplateMngr().deleteApplicationTemplate( tplName, tplQualifier );
+			this.manager.applicationTemplateMngr().deleteApplicationTemplate( tplName, tplVersion );
 
 		} catch( InvalidApplicationException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Application template " + id + " was not found.", e ).build();
+			result = handleError(
+					Status.NOT_FOUND,
+					new RestError( ErrorCode.REST_INEXISTING, e, applicationTpl( tplName, tplVersion )),
+					lang( this.manager )).build();
 
 		} catch( UnauthorizedActionException | IOException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application template " + id + " could not be deleted.", e ).build();
+			result = RestServicesUtils.handleError(
+					Status.FORBIDDEN,
+					new RestError( ErrorCode.REST_DELETION_ERROR, e, applicationTpl( tplName, tplVersion )),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -313,19 +360,28 @@ public class ManagementResource implements IManagementResource {
 		Response result;
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
-			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
+			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getVersion();
 			String appName = app.getDisplayName() != null ? app.getDisplayName() : app.getName();
 			ManagedApplication ma = this.manager.applicationMngr().createApplication( appName, app.getDescription(), tplName, tplQualifier );
 			result = Response.ok().entity( ma.getApplication()).build();
 
 		} catch( InvalidApplicationException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Application " + app + " references an invalid template.", e ).build();
+			result = handleError(
+					Status.NOT_FOUND,
+					new RestError( REST_MNGMT_INVALID_TPL, e, application( app )),
+					lang( this.manager )).build();
 
 		} catch( AlreadyExistingException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + app + " already exists.", e ).build();
+			result = handleError(
+					Status.FORBIDDEN,
+					new RestError( REST_MNGMT_CONFLICT, e, application( app )),
+					lang( this.manager )).build();
 
 		} catch( IOException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.UNAUTHORIZED, "Application " + app + " could not be created.", e ).build();
+			result = handleError(
+					Status.UNAUTHORIZED,
+					new RestError( REST_SAVE_ERROR, e, application( app )),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -379,12 +435,18 @@ public class ManagementResource implements IManagementResource {
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null )
-				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
+				result = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang( this.manager )).build();
 			else
 				this.manager.applicationMngr().deleteApplication( ma );
 
 		} catch( UnauthorizedActionException | IOException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
+			result = handleError(
+					Status.FORBIDDEN,
+					new RestError( REST_DELETION_ERROR, e, application( applicationName )),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -403,13 +465,21 @@ public class ManagementResource implements IManagementResource {
 		Response result = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
-			if( ma == null )
-				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
-			else
+			if( ma == null ) {
+				result = handleError(
+						Status.NOT_FOUND,
+						new RestError( REST_INEXISTING, application( applicationName )),
+						lang( this.manager )).build();
+
+			} else {
 				this.manager.instancesMngr().undeployAll( ma, null );
+			}
 
 		} catch( Exception e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be shutdown.", e ).build();
+			result = handleError(
+					Status.FORBIDDEN,
+					new RestError( REST_MNGMT_APP_SHUTDOWN_ERROR, e ),
+					lang( this.manager )).build();
 		}
 
 		return result;
@@ -430,15 +500,28 @@ public class ManagementResource implements IManagementResource {
 
 		// Do set the image, and wrap exceptions in a HTTP response.
 		Response response;
+		String id = name + " (qualifier = " + qualifier + ")";
 		try {
 			doSetImage(name, qualifier, image, fileDetail);
 			response = Response.noContent().build();
 
-		} catch (final NoSuchElementException | IllegalArgumentException e) {
-			response = RestServicesUtils.handleException(this.logger, Status.BAD_REQUEST, e.getMessage(), e).build();
+		} catch( IllegalArgumentException e ) {
+			response = handleError(
+					Status.BAD_REQUEST,
+					new RestError( REST_MNGMT_INVALID_IMAGE, e ),
+					lang( this.manager )).build();
 
-		} catch (final IOException e) {
-			response = RestServicesUtils.handleException(this.logger, Status.INTERNAL_SERVER_ERROR, e.getMessage(), e).build();
+		} catch( NoSuchElementException e ) {
+			response = handleError(
+					Status.BAD_REQUEST,
+					new RestError( REST_INEXISTING, e, name( id )),
+					lang( this.manager )).build();
+
+		} catch( IOException e ) {
+			response = handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( REST_IO_ERROR, e ),
+					lang( this.manager )).build();
 		}
 
 		return response;

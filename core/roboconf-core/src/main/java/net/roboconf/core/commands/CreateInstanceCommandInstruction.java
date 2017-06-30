@@ -25,13 +25,16 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.component;
+import static net.roboconf.core.errors.ErrorDetails.instance;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -90,7 +93,7 @@ public class CreateInstanceCommandInstruction extends AbstractCommandInstruction
 			result.add( error( ErrorCode.CMD_MISSING_COMPONENT_NAME ));
 
 		else if( this.component == null )
-			result.add( error( ErrorCode.CMD_INEXISTING_COMPONENT, "Component name: " + this.componentName ));
+			result.add( error( ErrorCode.CMD_INEXISTING_COMPONENT, component( this.componentName )));
 
 		else if( ! this.component.getAncestors().isEmpty()) {
 
@@ -98,19 +101,19 @@ public class CreateInstanceCommandInstruction extends AbstractCommandInstruction
 			if( this.parentInstancePath == null )
 				result.add( error( ErrorCode.CMD_MISSING_PARENT_INSTANCE ));
 			else if(( resolvedParentInstance = this.context.resolveInstance( this.parentInstancePath )) == null )
-				result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, "Instance path: " + this.parentInstancePath ));
+				result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, instance( this.parentInstancePath )));
 			else if( ! this.component.getAncestors().contains( resolvedParentInstance.getComponent()))
-				result.add( error( ErrorCode.CMD_NOT_AN_ACCEPTABLE_PARENT, "Component name: " + this.componentName ));
+				result.add( error( ErrorCode.CMD_NOT_AN_ACCEPTABLE_PARENT, component( this.componentName )));
 
 		} else if( this.parentInstancePath != null ) {
-			result.add( error( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, "Component name: " + this.componentName ));
+			result.add( error( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, component( this.componentName )));
 		}
 
 		// Instance stuff
 		if( Utils.isEmptyOrWhitespaces( this.instanceName ))
 			result.add( error( ErrorCode.CMD_MISSING_INSTANCE_NAME ));
 		else if( ! this.instanceName.matches( ParsingConstants.PATTERN_FLEX_ID ))
-			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_NAME, "Invalid name: " + this.instanceName ));
+			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_NAME, instance( this.instanceName )));
 
 		String newInstancePath = (this.parentInstancePath == null ? "" : this.parentInstancePath) + "/" + this.instanceName;
 		if( this.context.instancePathToComponentName.containsKey( newInstancePath ))

@@ -25,6 +25,9 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.handleError;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.lang;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,18 +45,21 @@ import javax.ws.rs.core.Response.Status;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.TargetValidator;
 import net.roboconf.core.model.beans.AbstractApplication;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
-import net.roboconf.dm.rest.services.internal.utils.RestServicesUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -125,7 +131,10 @@ public class TargetResource implements ITargetResource {
 
 		} catch( IOException | UnauthorizedActionException e ) {
 			Status status = this.exceptionclassToErrorCode.get( e.getClass());
-			response = RestServicesUtils.handleException( this.logger, status, null, e ).build();
+			response = handleError(
+					status,
+					new RestError( ErrorCode.REST_SAVE_ERROR, e, ErrorDetails.name( targetId )),
+					lang( this.manager )).build();
 		}
 
 		return response;
@@ -153,7 +162,10 @@ public class TargetResource implements ITargetResource {
 			// Validate the content
 			List<ModelError> errors = TargetValidator.parseDirectory( dir );
 			if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
-				response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Target properties contain errors." ).build();
+				response = handleError(
+						Status.FORBIDDEN,
+						new RestError( ErrorCode.REST_TARGET_CONTAINS_ERROR ),
+						lang( this.manager )).build();
 			}
 
 			// Register the properties
@@ -166,7 +178,10 @@ public class TargetResource implements ITargetResource {
 			}
 
 		} catch( Exception e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "Target properties could not be loaded.", e ).build();
+			response = handleError(
+					Status.NOT_ACCEPTABLE,
+					new RestError( ErrorCode.REST_IO_ERROR, e ),
+					lang( this.manager )).build();
 
 			// Unregister the targets
 			this.logger.fine( "An error occurred while deploying targets. Unregistering those that were in the same archive." );
@@ -203,7 +218,10 @@ public class TargetResource implements ITargetResource {
 
 		} catch( IOException | UnauthorizedActionException e ) {
 			Status status = this.exceptionclassToErrorCode.get( e.getClass());
-			response = RestServicesUtils.handleException( this.logger, status, null, e ).build();
+			response = handleError(
+					status,
+					new RestError( ErrorCode.REST_DELETION_ERROR, e, ErrorDetails.name( targetId )),
+					lang( this.manager )).build();
 		}
 
 		return response;
@@ -214,12 +232,12 @@ public class TargetResource implements ITargetResource {
 	public Response getTargetProperties( String targetId ) {
 
 		this.logger.fine( "Request: get properties for target " + targetId + "." );
-		String content = this.manager.targetsMngr().findRawTargetProperties( targetId );
+		TargetProperties props = this.manager.targetsMngr().findTargetProperties( targetId );
 		Response response;
-		if( content == null )
+		if( props.getSourceFile() == null )
 			response = Response.status( Status.NOT_FOUND ).build();
 		else
-			response = Response.ok().entity( new StringWrapper( content )).build();
+			response = Response.ok().entity( new StringWrapper( props.asString())).build();
 
 		return response;
 	}
@@ -265,7 +283,10 @@ public class TargetResource implements ITargetResource {
 
 		} catch( IOException | UnauthorizedActionException e ) {
 			Status status = this.exceptionclassToErrorCode.get( e.getClass());
-			response = RestServicesUtils.handleException( this.logger, status, null, e ).build();
+			response = handleError(
+					status,
+					new RestError( ErrorCode.REST_TARGET_ASSOCIATION_ERROR, e ),
+					lang( this.manager )).build();
 		}
 
 		return response;
@@ -295,7 +316,10 @@ public class TargetResource implements ITargetResource {
 				this.manager.targetsMngr().removeHint( targetId, app );
 
 		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+			response = handleError(
+					Status.INTERNAL_SERVER_ERROR,
+					new RestError( ErrorCode.REST_TARGET_HINT_ERROR, e ),
+					lang( this.manager )).build();
 		}
 
 		return response;

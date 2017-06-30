@@ -36,9 +36,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.beans.Application;
@@ -46,7 +47,6 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
@@ -268,7 +268,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 				// Read the descriptor
 				File descriptorFile = new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
 				ApplicationDescriptor desc = ApplicationDescriptor.load( descriptorFile );
-				ApplicationTemplate tpl = this.applicationTemplateMngr.findTemplate( desc.getTemplateName(), desc.getTemplateQualifier());
+				ApplicationTemplate tpl = this.applicationTemplateMngr.findTemplate( desc.getTemplateName(), desc.getTemplateVersion());
 				if( tpl == null )
 					throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
@@ -339,8 +339,10 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( RoboconfErrorHelpers.containsCriticalErrors( errors ))
 			throw new InvalidApplicationException( errors );
 
-		for( String warning : RoboconfErrorHelpers.extractAndFormatWarnings( errors ))
-			logger.warning( warning );
+		// Null language => English (right language for logs)
+		Collection<RoboconfError> warnings = RoboconfErrorHelpers.findWarnings( errors );
+		for( String warningMsg : RoboconfErrorHelpers.formatErrors( warnings, null, true ).values())
+			logger.warning( warningMsg );
 	}
 
 

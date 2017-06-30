@@ -25,12 +25,14 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.value;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 
@@ -74,7 +76,7 @@ public class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 
 		List<ParsingError> result = new ArrayList<> ();
 		if( this.targetStatus == null )
-			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_STATUS, "Invalid status: " + this.targetStatusAsString ));
+			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_STATUS, value( this.targetStatusAsString )));
 		else if( ! this.targetStatus.isStable())
 			result.add( error( ErrorCode.CMD_INSTABLE_INSTANCE_STATUS ));
 

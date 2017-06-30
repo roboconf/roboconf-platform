@@ -48,7 +48,7 @@
 			<property name="ip-address-of-the-agent" method="setIpAddress" />
 			<property name="network-interface" method="setNetworkInterface" />
 			<property name="domain" method="setDomain" />
-			<property name="target-id" method="setTargetId" type="java.lang.String" />
+			<property name="parameters" method="setParameters" type="java.lang.String" />
 			<property name="override-properties-with-user-data" method="setOverrideProperties" value="true" />
 			<property name="simulate-plugins" method="setSimulatePlugins" value="false" />
 		</properties>
@@ -77,11 +77,21 @@
 			<property name="domain" method="setDomain" />
 			
 			<!-- Predefined Values -->
-			<property name="target-id" method="setTargetId" value="in-memory" />
+			<property name="parameters" method="setParameters" value="@in-memory" />
 			<property name="override-properties-with-user-data" method="setOverrideProperties" value="false" />
 			<property name="simulate-plugins" method="setSimulatePlugins" value="true" />
 		</properties>
 		
 		<!-- This agent does not expose ANY service -->
 	</component>
+
+	<!-- MBean to monitor plugin activity -->
+	<component classname="net.roboconf.agent.jmx.PluginStats" name="roboconf-plugin-mbean" public="false">
+		<provides specifications="net.roboconf.agent.jmx.PluginStatsMBean" >
+			<property name="jmx.objectname" value="net.roboconf:type=agent" type="java.lang.String" />
+		</provides>
+	</component>
+
+	<instance component="roboconf-plugin-mbean" name="Roboconf - Agent MBean" />
+
 </ipojo>

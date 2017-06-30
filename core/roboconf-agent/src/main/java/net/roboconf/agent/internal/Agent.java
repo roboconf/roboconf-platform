@@ -39,7 +39,7 @@ import net.roboconf.agent.internal.misc.AgentConstants;
 import net.roboconf.agent.internal.misc.AgentUtils;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.agent.internal.misc.UserDataUtils;
+import net.roboconf.agent.internal.misc.UserDataHelper;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -58,7 +58,7 @@ import net.roboconf.plugin.api.PluginInterface;
 public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	// Component properties (ipojo)
-	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
+	String applicationName, scopedInstancePath, ipAddress, parameters, messagingType;
 	String domain = Constants.DEFAULT_DOMAIN;
 	String networkInterface = AgentConstants.DEFAULT_NETWORK_INTERFACE;
 	boolean overrideProperties = false, simulatePlugins = true;
@@ -75,6 +75,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	// Set as a class attribute to be overridden for tests.
 	String karafEtc = System.getProperty( Constants.KARAF_ETC );
 	String karafData = System.getProperty( Constants.KARAF_DATA );
+	UserDataHelper userDataHelper = new UserDataHelper();
 
 
 
@@ -94,65 +95,24 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	 */
 	public void start() {
 
+		// Basic properties
 		this.logger.info( "Agent '" + getAgentId() + "' is about to be launched." );
-		this.ipAddress = AgentUtils.findIpAddress( this.networkInterface );
-		this.logger.info( "IP address resolved to " + this.ipAddress );
+		if( Utils.isEmptyOrWhitespaces( this.ipAddress )) {
+			this.ipAddress = AgentUtils.findIpAddress( this.networkInterface );
+			this.logger.info( "IP address resolved to " + this.ipAddress );
+		}
 
+		// Create a messaging client
 		this.messagingClient = new ReconfigurableClientAgent();
 		this.messagingClient.setDomain( this.domain );
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
-		// Do we need to override properties with user data?
-		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
-			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
-
-		} else if( ! this.overrideProperties ) {
-			this.logger.fine( "User data are NOT supposed to be used." );
-
-		} else {
-
-			AgentProperties props = null;
-			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
-			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.targetId )
-					|| AgentConstants.PLATFORM_OPENSTACK.equalsIgnoreCase( this.targetId ))
-				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
-
-			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
-				props = UserDataUtils.findParametersForAzure( this.logger );
-
-			else if(AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase(this.targetId))
-				props = UserDataUtils.findParametersForVmware( this.logger );
-
-			else
-				this.logger.warning( "Unknown target ID. No user data will be retrieved." );
-
-			if( props != null ) {
-				String errorMessage = props.validate();
-				if( errorMessage != null )
-					this.logger.severe( "An error was found in user data. " + errorMessage );
-
-				this.applicationName = props.getApplicationName();
-				this.scopedInstancePath = props.getScopedInstancePath();
-				if( ! Utils.isEmptyOrWhitespaces( props.getIpAddress())) {
-					this.ipAddress = props.getIpAddress();
-					this.logger.info( "The agent's address was overwritten from user data and set to " + this.ipAddress );
-				}
-
-				try {
-					this.logger.info( "Reconfiguring the agent with user data." );
-					UserDataUtils.reconfigureMessaging(
-						this.karafEtc,
-						props.getMessagingConfiguration());
-
-				} catch(IOException e) {
-					this.logger.severe("Error in messaging reconfiguration from user data: " + e);
-				}
-			}
-		}
-
+		// Deal with dynamic parameters
+		reloadUserData();
 		reconfigure();
 
+		// Prepare the timer for scheduled tasks
 		TimerTask timerTask = new HeartbeatTask( this );
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, Constants.HEARTBEAT_PERIOD, Constants.HEARTBEAT_PERIOD );
@@ -251,6 +211,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		// Find a plug-in
 		PluginInterface result = null;
 		if( this.simulatePlugins ) {
+			this.logger.finer( "Simulating plugins..." );
 			result = new PluginMock();
 
 		} else {
@@ -274,7 +235,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		if( result != null )
 			result.setNames( this.applicationName, this.scopedInstancePath );
 
-		return result;
+		return result == null ? null : new PluginProxy( result );
 	}
 
 
@@ -381,6 +342,61 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 
 	/**
+	 * Reloads user data.
+	 */
+	void reloadUserData() {
+
+		if( Utils.isEmptyOrWhitespaces( this.parameters )) {
+			this.logger.warning( "No parameters were specified in the agent configuration. No user data will be retrieved." );
+
+		} else if( ! this.overrideProperties ) {
+			this.logger.fine( "User data are NOT supposed to be used." );
+
+		} else {
+
+			AgentProperties props = null;
+			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
+			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.parameters )
+					|| AgentConstants.PLATFORM_OPENSTACK.equalsIgnoreCase( this.parameters ))
+				props = this.userDataHelper.findParametersForAmazonOrOpenStack( this.logger );
+
+			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.parameters ))
+				props = this.userDataHelper.findParametersForAzure( this.logger );
+
+			else if( AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase( this.parameters ))
+				props = this.userDataHelper.findParametersForVmware( this.logger );
+
+			else
+				props = this.userDataHelper.findParametersFromUrl( this.parameters, this.logger );
+
+			if( props != null ) {
+				String errorMessage = props.validate();
+				if( errorMessage != null )
+					this.logger.severe( "An error was found in user data. " + errorMessage );
+
+				this.applicationName = props.getApplicationName();
+				this.domain = props.getDomain();
+				this.scopedInstancePath = props.getScopedInstancePath();
+				if( ! Utils.isEmptyOrWhitespaces( props.getIpAddress())) {
+					this.ipAddress = props.getIpAddress();
+					this.logger.info( "The agent's address was overwritten from user data and set to " + this.ipAddress );
+				}
+
+				try {
+					this.logger.info( "Reconfiguring the agent with user data." );
+					this.userDataHelper.reconfigureMessaging(
+						this.karafEtc,
+						props.getMessagingConfiguration());
+
+				} catch( Exception e ) {
+					this.logger.severe("Error in messaging reconfiguration from user data: " + e);
+				}
+			}
+		}
+	}
+
+
+	/**
 	 * @return the application name
 	 */
 	@Override
@@ -431,6 +447,18 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 
 	/**
+	 * @param parameters the parameters to set
+	 */
+	public void setParameters( String parameters ) {
+		this.parameters = parameters;
+
+		// Parameters can be changed dynamically
+		reloadUserData();
+		reconfigure();
+	}
+
+
+	/**
 	 * @param ipAddress the ipAddress to set
 	 */
 	public void setIpAddress( String ipAddress ) {
@@ -438,14 +466,6 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 			this.ipAddress = ipAddress;
 			this.logger.finer( "New IP address set in the agent: " + ipAddress );
 		}
-	}
-
-
-	/**
-	 * @param targetId the targetId to set
-	 */
-	public void setTargetId( String targetId ) {
-		this.targetId = targetId;
 	}
 
 

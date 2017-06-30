@@ -25,108 +25,145 @@
 
 package net.roboconf.target.docker.internal;
 
+import static net.roboconf.target.docker.internal.DockerUtils.extractBoolean;
+
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
 
+import net.roboconf.agent.internal.AgentProperties;
+import net.roboconf.agent.internal.misc.UserDataHelper;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
 import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfBuildImageResultCallback;
+import net.roboconf.target.docker.internal.test.DockerTestUtils;
 
 /**
+ * We just check basic behavior like launching Docker images.
+ * <p>
+ * We would like to go fast. So, we do not need a real agent image.
+ * We can use a minimalist image, like Alpine.
+ * </p>
+ *
  * @author Pierre-Yves Gibello - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerHandlerWithContainerTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+	private static final String TAG = "roboconf-test-img";
+
+	private static boolean dockerIsInstalled = true;
+	private static String dockerImageId;
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
-
-	private boolean dockerIsInstalled = true;
 	private DockerClient docker;
-	private String dockerImageId;
-	private Map<String, String> msgCfg = new LinkedHashMap<>();
 
 
-	@Before
-	public void setMessagingConfiguration() {
-		this.msgCfg = new LinkedHashMap<>();
-		this.msgCfg.put("net.roboconf.messaging.type", "telepathy");
-		this.msgCfg.put("mindControl", "false");
-		this.msgCfg.put("psychosisProtection", "active");
-	}
 
+	@BeforeClass
+	public static void prepareDockerEnv() throws Exception {
 
-	@Before
-	public void checkDockerIsInstalled() throws Exception {
-
-		Assume.assumeTrue( this.dockerIsInstalled );
+		final Logger logger = Logger.getLogger( DockerHandlerWithContainerTest.class.getName());
 		try {
+			// Is Docker installed?
 			DockerTestUtils.checkDockerIsInstalled();
-			prepareDockerTest();
+
+			// Prepare the environment
+			DockerClient docker = buildDockerClient();
+			File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource( "./image/alpine" ).getFile());
+			Assert.assertTrue( baseDir.exists());
+
+			String builtImageId = docker.buildImageCmd(baseDir)
+					.withNoCache( true ).withTags( new HashSet<>( Arrays.asList( TAG )))
+					.exec( new RoboconfBuildImageResultCallback())
+					.awaitImageId();
+
+			logger.finest( "Built image ID: " + builtImageId );
+
+			List<Image> images = docker.listImagesCmd().exec();
+			images = images == null ? new ArrayList<Image>( 0 ) : images;
+			Image img = DockerUtils.findImageByTag( TAG, images );
+
+			Assert.assertNotNull( img );
+			dockerImageId = img.getId();
+			docker.close();
 
 		} catch( IOException | InterruptedException e ) {
-			this.logger.warning( "Tests are skipped because Docker is not installed or misconfigured." );
-			Utils.logException( this.logger, e );
+			logger.warning( "Tests are skipped because Docker is not installed or misconfigured." );
+			Utils.logException( logger, e );
 
-			this.dockerIsInstalled = false;
+			dockerIsInstalled = false;
 			Assume.assumeNoException( e );
 		}
 	}
 
 
-	@After
-	public void dockerCleanup() {
+	@AfterClass
+	public static void cleanDockerEnv() throws Exception {
 
-		if( this.docker != null ) {
-			DockerUtils.deleteImageIfItExists( this.dockerImageId, this.docker );
-			try {
-				this.docker.close();
-
-			} catch( IOException e ) {
-				// nothing
-			}
-		}
+		DockerClient docker = buildDockerClient();
+		DockerUtils.deleteImageIfItExists( dockerImageId, docker );
+		docker.close();
 	}
 
 
-	@Test
-	public void testValidConfiguration() throws Exception {
+	private static DockerClient buildDockerClient() {
 
-		Assume.assumeTrue( this.dockerIsInstalled );
-		Map<String, String> targetProperties = loadTargetProperties();
-		DockerClient client = DockerUtils.createDockerClient( targetProperties );
-		Assert.assertNotNull( client );
+		Builder config = DefaultDockerClientConfig.createDefaultConfigBuilder();
+		config.withDockerHost( "tcp://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
+		return DockerClientBuilder.getInstance( config.build()).build();
+	}
+
+
+
+	@Before
+	public void newClient() {
+		this.docker = buildDockerClient();
+	}
+
+
+	@After
+	public void closedClient() throws Exception {
+		this.docker.close();
 	}
 
 
 	@Test
 	public void testCreateAndTerminateVM() throws Exception {
 
-		Assume.assumeTrue( this.dockerIsInstalled );
-		Map<String,String> targetProperties = loadTargetProperties();
+		Assume.assumeTrue( dockerIsInstalled );
+		Map<String,String> targetProperties = new HashMap<>( 1 );
+		targetProperties.put( DockerHandler.IMAGE_ID, TAG );
+
 		testCreateAndTerminateVM( targetProperties );
 	}
 
@@ -134,54 +171,12 @@ public class DockerHandlerWithContainerTest {
 	@Test
 	public void testCreateAndTerminateVM_withOptions() throws Exception {
 
-		Assume.assumeTrue( this.dockerIsInstalled );
-		Map<String,String> targetProperties = loadTargetProperties();
+		Assume.assumeTrue( dockerIsInstalled );
+		Map<String,String> targetProperties = new HashMap<>( 2 );
+		targetProperties.put( DockerHandler.IMAGE_ID, TAG );
 		targetProperties.put( DockerHandler.OPTION_PREFIX_RUN + "cap-add", "SYS_PTRACE" );
 
 		testCreateAndTerminateVM( targetProperties );
-	}
-
-
-	@Test( expected = TargetException.class )
-	public void testConfigureVM_invalidBaseImage() throws Exception {
-
-		Assume.assumeTrue( this.dockerIsInstalled );
-		Map<String,String> targetProperties = loadTargetProperties();
-		targetProperties.put( DockerHandler.IMAGE_ID, "will-not-be-generated" );
-		targetProperties.put( DockerHandler.BASE_IMAGE, "oops81:unknown" );
-
-		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
-				targetProperties, this.msgCfg, "656sdf6sd", "/test", "app",	new Instance());
-
-		try {
-			configurator.dockerClient = this.docker;
-			configurator.createImage( "will-not-be-generated" );
-
-		} finally {
-			configurator.dockerClient = null;
-			configurator.close();
-			Assert.assertNull( DockerUtils.findImageByIdOrByTag( "will-not-be-generated", this.docker ));
-		}
-	}
-
-
-	@Test( expected = TargetException.class )
-	public void testCreateVM_missingParameters() throws Exception {
-
-		Assume.assumeTrue( this.dockerIsInstalled );
-		DockerHandler target = new DockerHandler();
-
-		Map<String,String> targetProperties = loadTargetProperties();
-		targetProperties.remove( DockerHandler.IMAGE_ID );
-
-		TargetHandlerParameters parameters = new TargetHandlerParameters()
-				.targetProperties( targetProperties )
-				.messagingProperties( this.msgCfg )
-				.applicationName( "roboconf" )
-				.domain( "my-domain" )
-				.scopedInstancePath( "test" );
-
-		target.createMachine( parameters );
 	}
 
 
@@ -196,6 +191,7 @@ public class DockerHandlerWithContainerTest {
 
 	@Test
 	public void testDockerUtils_onLimits() {
+
 		DockerUtils.deleteImageIfItExists( null, this.docker );
 		Assert.assertTrue( "No exception is thrown trying to delete a null image ID.", true );
 
@@ -214,54 +210,6 @@ public class DockerHandlerWithContainerTest {
 
 
 	/**
-	 * Loads the target properties for the configuration of Docker.
-	 */
-	private Map<String,String> loadTargetProperties() throws Exception {
-
-		URL res = Thread.currentThread().getContextClassLoader().getResource("conf/docker.properties");
-		File propertiesFile = new File( res.getFile());
-		Properties p = Utils.readPropertiesFile( propertiesFile );
-
-		HashMap<String,String> targetProperties = new HashMap<>();
-		for( Map.Entry<Object,Object> entry : p.entrySet())
-			targetProperties.put( entry.getKey().toString(), entry.getValue().toString());
-
-		if( this.dockerImageId != null )
-			targetProperties.put( DockerHandler.IMAGE_ID, this.dockerImageId );
-
-		return targetProperties;
-	}
-
-
-	/**
-	 * Prepares the docker environment (image, etc...) for testing.
-	 * @throws IOException
-	 */
-	private void prepareDockerTest() throws Exception {
-		final String tag = "roboconf-test";
-
-		Builder config = DefaultDockerClientConfig.createDefaultConfigBuilder();
-		config.withDockerHost( "tcp://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
-
-		this.docker = DockerClientBuilder.getInstance( config.build()).build();
-		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("./image").getFile());
-
-		String builtImageId = this.docker.buildImageCmd(baseDir)
-				.withNoCache( true ).withTag( tag )
-				.exec( new RoboconfBuildImageResultCallback())
-				.awaitImageId();
-
-		this.logger.finest( "Built image ID: " + builtImageId );
-
-		List<Image> images = this.docker.listImagesCmd().exec();
-		images = images == null ? new ArrayList<Image>( 0 ) : images;
-		Image img = DockerUtils.findImageByTag( tag, images );
-
-		this.dockerImageId = img.getId();
-	}
-
-
-	/**
 	 * Creates, checks and terminates a Docker container.
 	 * @param targetProperties the target properties
 	 * @throws Exception
@@ -269,19 +217,27 @@ public class DockerHandlerWithContainerTest {
 	private void testCreateAndTerminateVM( Map<String,String> targetProperties ) throws Exception {
 
 		DockerHandler target = new DockerHandler();
+		target.userDataVolume = this.folder.newFolder();
+
 		Instance scopedInstance = new Instance( "test-596598515" );
 		String path = InstanceHelpers.computeInstancePath( scopedInstance );
 
+		Map<String,String> msgCfg = new LinkedHashMap<>();
+		msgCfg.put("net.roboconf.messaging.type", "telepathy");
+		msgCfg.put("mindControl", "false");
+		msgCfg.put("psychosisProtection", "active");
+
 		TargetHandlerParameters parameters = new TargetHandlerParameters()
 				.targetProperties( targetProperties )
-				.messagingProperties( this.msgCfg )
+				.messagingProperties( msgCfg )
 				.applicationName( "roboconf" )
 				.domain( "my-domain" )
 				.scopedInstancePath( path );
 
+		String containerId = null;
 		try {
 			target.start();
-			String containerId = target.createMachine( parameters );
+			containerId = target.createMachine( parameters );
 			Assert.assertNotNull( containerId );
 			Assert.assertNull( scopedInstance.data.get( Instance.MACHINE_ID ));
 
@@ -301,6 +257,23 @@ public class DockerHandlerWithContainerTest {
 			// Check the machine is running
 			Assert.assertTrue( target.isMachineRunning( parameters, containerId ));
 
+			// Verify user data were passed correctly (read like an agent)
+			File[] children = target.userDataVolume.listFiles();
+			Assert.assertNotNull( children );
+			Assert.assertEquals( 1, children.length );
+
+			File userDataDirectory = children[ 0 ];
+			File userDataFile = new File( userDataDirectory, DockerMachineConfigurator.USER_DATA_FILE );
+			Assert.assertTrue( userDataFile.exists());
+
+			AgentProperties agentProps = new UserDataHelper().findParametersFromUrl( userDataFile.toURI().toString(), this.logger );
+			Assert.assertNotNull( agentProps );
+			Assert.assertEquals( parameters.getApplicationName(), agentProps.getApplicationName());
+			Assert.assertEquals( parameters.getDomain(), agentProps.getDomain());
+			Assert.assertEquals( parameters.getScopedInstancePath(), agentProps.getScopedInstancePath());
+			Assert.assertEquals( parameters.getMessagingProperties(), agentProps.getMessagingConfiguration());
+			Assert.assertNull( agentProps.validate());
+
 			// Just for verification, try to terminate an invalid container
 			target.terminateMachine( parameters, "invalid identifier" );
 			Assert.assertTrue( target.isMachineRunning( parameters, containerId ));
@@ -309,7 +282,18 @@ public class DockerHandlerWithContainerTest {
 			target.terminateMachine( parameters, containerId );
 			Assert.assertFalse( target.isMachineRunning( parameters, containerId ));
 
+			// Verify user data were deleted
+			Assert.assertFalse( userDataFile.exists());
+			Assert.assertFalse( userDataDirectory.exists());
+			Assert.assertTrue( userDataDirectory.getParentFile().exists());
+
 		} finally {
+			if( containerId != null ) {
+				ContainerState state = DockerUtils.getContainerState( containerId, this.docker );
+				if( state != null && extractBoolean( state.getRunning()))
+					this.docker.removeContainerCmd( containerId ).withForce( true ).exec();
+			}
+
 			target.stop();
 		}
 	}

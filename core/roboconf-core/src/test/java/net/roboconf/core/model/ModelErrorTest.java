@@ -25,11 +25,13 @@
 
 package net.roboconf.core.model;
 
+import static net.roboconf.core.errors.ErrorDetails.value;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -43,9 +45,9 @@ public class ModelErrorTest {
 		Object obj2 = new Object();
 
 		ModelError def1 = new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj1 );
-		ModelError def2 = new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj1, "details" );
+		ModelError def2 = new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj1, value( "v" ));
 		ModelError def3 = new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj2 );
-		RoboconfError def4 = new RoboconfError( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, "details" );
+		RoboconfError def4 = new RoboconfError( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, value( "v" ));
 
 		Assert.assertTrue( def1.equals( def1 ));
 		Assert.assertTrue( def1.equals( new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj1 )));
@@ -56,7 +58,7 @@ public class ModelErrorTest {
 		Assert.assertFalse( def1.equals( def4 ));
 
 		Assert.assertTrue( def2.equals( def2 ));
-		Assert.assertTrue( def2.equals( new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj1, "details" )));
+		Assert.assertTrue( def2.equals( new ModelError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, obj1, value( "v" ))));
 		Assert.assertFalse( def2.equals( def1 ));
 		Assert.assertFalse( def2.equals( def3 ));
 		Assert.assertFalse( def2.equals( def4 ));
@@ -68,7 +70,7 @@ public class ModelErrorTest {
 		Assert.assertFalse( def2.equals( def4 ));
 
 		Assert.assertTrue( def4.equals( def4 ));
-		Assert.assertTrue( def4.equals( new RoboconfError( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, "details" )));
+		Assert.assertTrue( def4.equals( new RoboconfError( ErrorCode.CMD_CONFLICTING_INSTANCE_NAME, value( "v" ))));
 		Assert.assertFalse( def4.equals( def1 ));
 		Assert.assertFalse( def4.equals( def2 ));
 		Assert.assertFalse( def4.equals( def3 ));

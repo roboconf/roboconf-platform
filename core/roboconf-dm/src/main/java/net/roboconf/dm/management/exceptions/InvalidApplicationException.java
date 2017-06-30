@@ -28,65 +28,37 @@ package net.roboconf.dm.management.exceptions;
 import java.util.Arrays;
 import java.util.Collection;
 
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.RoboconfError;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class InvalidApplicationException extends Exception {
+
 	private static final long serialVersionUID = -648674838264717185L;
+	private final Collection<RoboconfError> errors;
 
 
 	/**
 	 * Constructor.
+	 * @param errors
 	 */
 	public InvalidApplicationException( Collection<RoboconfError> errors ) {
-		super( convertErrorsListToString( errors ));
+		this.errors = errors;
 	}
 
 	/**
 	 * Constructor.
+	 * @param error
 	 */
 	public InvalidApplicationException( RoboconfError error ) {
-		super( convertErrorsListToString( Arrays.asList( error )));
+		this.errors = Arrays.asList( error );
 	}
 
 	/**
-	 * Constructor.
-	 * @param e
+	 * @return the errors
 	 */
-	public InvalidApplicationException( Exception e ) {
-		super( e );
-	}
-
-	/**
-	 * Constructor.
-	 * @param message
-	 */
-	public InvalidApplicationException( String message ) {
-		super( message );
-	}
-
-	/**
-	 * @param errors a non-null list of errors
-	 * @return a detailed string
-	 */
-	private static String convertErrorsListToString( Collection<RoboconfError> errors ) {
-
-		StringBuilder sb = new StringBuilder();
-		sb.append( "The application contains errors." );
-
-		for( RoboconfError error : errors ) {
-			sb.append( "\n[ " );
-			sb.append( error.getErrorCode().getLevel());
-			sb.append( " ] " );
-			sb.append( error.getErrorCode().getMsg());
-			if( error.getDetails() != null ) {
-				sb.append( "\nDetails: " );
-				sb.append( error.getDetails());
-			}
-		}
-
-		return sb.toString();
+	public Collection<RoboconfError> getErrors() {
+		return this.errors;
 	}
 }

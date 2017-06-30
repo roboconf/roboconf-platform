@@ -50,6 +50,7 @@ import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.misc.AgentUtils;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.agent.internal.misc.UserDataHelper;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -108,6 +109,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 		probe.addTest( PluginMock.class );
 		probe.addTest( HeartbeatTask.class );
 		probe.addTest( AgentMessageProcessor.class );
+		probe.addTest( UserDataHelper.class );
 
 		return probe;
 	}

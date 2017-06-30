@@ -25,6 +25,8 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.instruction;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.utils.Utils;
@@ -79,7 +81,9 @@ public class CommandsParser {
 	public List<ParsingError> getParsingErrors() {
 
 		List<ParsingError> result = new ArrayList<>( this.parsingErrors );
-		if( this.instructions.isEmpty())
+		if( this.context.getCommandFile() != null && ! this.context.getCommandFile().exists())
+			result.add( 0, new ParsingError( ErrorCode.CMD_INEXISTING_COMMAND_FILE, this.context.getCommandFile(), 1 ));
+		else if( this.instructions.isEmpty())
 			result.add( 0, new ParsingError( ErrorCode.CMD_NO_INSTRUCTION, this.context.getCommandFile(), 1 ));
 
 		return result;
@@ -181,7 +185,7 @@ public class CommandsParser {
 						ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION,
 						this.context.getCommandFile(),
 						lineNumber,
-						"Instruction: " + line ));
+						instruction( line )));
 			}
 
 			// Update the line number

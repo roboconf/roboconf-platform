@@ -25,25 +25,18 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
-import org.ops4j.pax.url.mvn.MavenResolver;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Capability;
 
-import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
 /**
@@ -51,34 +44,10 @@ import net.roboconf.target.api.TargetException;
  */
 public class DockerUtilsTest {
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
-
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_noImage_noGeneration() throws Exception {
-
-		Map<String,String> map = new HashMap<> ();
-		map.put( DockerHandler.ENDPOINT, "whatever" );
-		DockerUtils.createDockerClient( map );
-	}
-
-
 	@Test
-	public void testIncompleteConfiguration_noEndpoint_withImage() throws Exception {
+	public void testEmptyConfiguration() throws Exception {
 
 		Map<String,String> map = new HashMap<> ();
-		map.put( DockerHandler.IMAGE_ID, "whatever" );
-		DockerClient client = DockerUtils.createDockerClient( map );
-		Assert.assertNotNull( client );
-	}
-
-
-	@Test
-	public void testIncompleteConfiguration_noEndpoint_withGeneration() throws Exception {
-
-		Map<String,String> map = new HashMap<> ();
-		map.put( DockerHandler.GENERATE_IMAGE, "true" );
 		DockerClient client = DockerUtils.createDockerClient( map );
 		Assert.assertNotNull( client );
 	}
@@ -240,129 +209,6 @@ public class DockerUtilsTest {
 
 
 	@Test
-	public void testParseRunExecLine() {
-
-		Assert.assertNull( DockerUtils.parseRunExecLine( null ));
-		Assert.assertNull( DockerUtils.parseRunExecLine( "" ));
-		Assert.assertNull( DockerUtils.parseRunExecLine( "   " ));
-
-		List<String> args = DockerUtils.parseRunExecLine( "[ toto, titi" );
-		Assert.assertNull( args );
-
-		args = DockerUtils.parseRunExecLine( "[ toto, titi ]" );
-		Assert.assertEquals( 2, args.size());
-		Assert.assertTrue( args.contains( "toto" ));
-		Assert.assertTrue( args.contains( "titi" ));
-
-		args = DockerUtils.parseRunExecLine( "[ \"toto\", \"titi\" ]" );
-		Assert.assertEquals( 2, args.size());
-		Assert.assertTrue( args.contains( "toto" ));
-		Assert.assertTrue( args.contains( "titi" ));
-	}
-
-
-	@Test
-	public void testBuildRunCommand_defaultValue_emptyMessaging() {
-
-		List<String> args = DockerUtils.buildRunCommand( null, new HashMap<String,String>( 0 ), "app", "/root" );
-		Assert.assertEquals( 5, args.size());
-		Assert.assertTrue( args.get( 0 ).endsWith( "/start.sh" ));
-		Assert.assertEquals( "etc/net.roboconf.messaging..cfg", args.get( 1 ));
-		Assert.assertEquals( "agent.application-name=app", args.get( 2 ));
-		Assert.assertEquals( "agent.scoped-instance-path=/root", args.get( 3 ));
-		Assert.assertEquals( "agent.messaging-type=", args.get( 4 ));
-
-		// No messaging parameter, so no sixth argument
-	}
-
-
-	@Test
-	public void testBuildRunCommand_defaultValue_withMessaging() {
-
-		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
-		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
-		messagingConfiguration.put( "paper", "with somethig written on it" );
-		messagingConfiguration.put( "pen", "to write the answer" );
-
-		List<String> args = DockerUtils.buildRunCommand( null, messagingConfiguration, "app", "/root" );
-		Assert.assertEquals( 7, args.size());
-		Assert.assertTrue( args.get( 0 ).endsWith( "/start.sh" ));
-		Assert.assertEquals( "etc/net.roboconf.messaging.bird.cfg", args.get( 1 ));
-		Assert.assertEquals( "agent.application-name=app", args.get( 2 ));
-		Assert.assertEquals( "agent.scoped-instance-path=/root", args.get( 3 ));
-		Assert.assertEquals( "agent.messaging-type=bird", args.get( 4 ));
-		Assert.assertEquals( "msg.paper=with somethig written on it", args.get( 5 ));
-		Assert.assertEquals( "msg.pen=to write the answer", args.get( 6 ));
-	}
-
-
-	@Test
-	public void testBuildRunCommand_overriding_noCommand() {
-
-		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
-		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
-		messagingConfiguration.put( "paper", "with somethig written on it" );
-		messagingConfiguration.put( "pen", "to write the answer" );
-
-		List<String> args = DockerUtils.buildRunCommand( "[]", messagingConfiguration, "app", "/root" );
-		Assert.assertEquals( 0, args.size());
-	}
-
-
-	@Test
-	public void testBuildRunCommand_overriding_extraCommand() {
-
-		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
-		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
-		messagingConfiguration.put( "paper", "with somethig written on it" );
-		messagingConfiguration.put( "pen", "to write the answer" );
-
-		List<String> args = DockerUtils.buildRunCommand( "[ start.sh ]", messagingConfiguration, "app", "/root" );
-		Assert.assertEquals( 1, args.size());
-		Assert.assertEquals( "start.sh", args.get( 0 ));
-	}
-
-
-	@Test
-	public void testBuildRunCommand_overriding_mixCommand() {
-
-		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
-		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
-		messagingConfiguration.put( "paper", "with somethig written on it" );
-		messagingConfiguration.put( "pen", "to write the answer" );
-
-		List<String> args = DockerUtils.buildRunCommand(
-				"[ \"agent.application-name=$applicationName$\", \"start.sh\", \"$messagingType$\" ]",
-				messagingConfiguration, "app", "/root" );
-
-		Assert.assertEquals( 3, args.size());
-		Assert.assertEquals( "agent.application-name=app", args.get( 0 ));
-		Assert.assertEquals( "start.sh", args.get( 1 ));
-		Assert.assertEquals( "bird", args.get( 2 ));
-	}
-
-
-	@Test
-	public void testBuildRunCommand_overriding_mixCommandAndMessaging() {
-
-		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
-		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
-		messagingConfiguration.put( "paper", "with somethig written on it" );
-		messagingConfiguration.put( "pen", "to write the answer" );
-
-		List<String> args = DockerUtils.buildRunCommand(
-				"[ \"$msgConfig$\", \"start.sh\", \"etc/net.roboconf.messaging.$messagingType$.cfg\" ]",
-				messagingConfiguration, "app", "/root" );
-
-		Assert.assertEquals( 4, args.size());
-		Assert.assertEquals( "msg.paper=with somethig written on it", args.get( 0 ));
-		Assert.assertEquals( "msg.pen=to write the answer", args.get( 1 ));
-		Assert.assertEquals( "start.sh", args.get( 2 ));
-		Assert.assertEquals( "etc/net.roboconf.messaging.bird.cfg", args.get( 3 ));
-	}
-
-
-	@Test
 	public void testExtractBoolean() {
 
 		Assert.assertEquals( true, DockerUtils.extractBoolean( Boolean.TRUE ));
@@ -372,30 +218,26 @@ public class DockerUtilsTest {
 
 
 	@Test
-	public void testDownloadRemotePackage() throws Exception {
+	public void testFindDefaultImageVersion() {
 
-		// Copy a usual URL
-		File toCopy = this.folder.newFile();
-		Utils.writeStringInto( "this", toCopy );
+		Assert.assertEquals( DockerUtils.LATEST, DockerUtils.findDefaultImageVersion( null ));
+		Assert.assertEquals( DockerUtils.LATEST, DockerUtils.findDefaultImageVersion( "0.1-snapshot" ));
+		Assert.assertEquals( DockerUtils.LATEST, DockerUtils.findDefaultImageVersion( "1-SNAPshot" ));
+		Assert.assertEquals( "0.8", DockerUtils.findDefaultImageVersion( "0.8" ));
+		Assert.assertEquals( "0.8.1", DockerUtils.findDefaultImageVersion( "0.8.1" ));
+	}
 
-		File targetFile = this.folder.newFile();
-		DockerUtils.downloadRemotePackage( toCopy.toURI().toString(), targetFile, null );
-		Assert.assertEquals( "this", Utils.readFileContent( targetFile ));
 
-		// Maven resolver
-		MavenResolver mavenResolver = Mockito.mock( MavenResolver.class );
-		Mockito.when( mavenResolver.resolve( Mockito.anyString())).thenReturn( targetFile );
+	@Test
+	public void testBuildContainerNameFrom() {
 
-		DockerUtils.downloadRemotePackage( "mvn://something", targetFile, mavenResolver );
-		Mockito.verify( mavenResolver, Mockito.only()).resolve( "mvn://something" );
+		Assert.assertEquals( "vm_from_app", DockerUtils.buildContainerNameFrom( "vm", "app" ));
+		Assert.assertEquals( "vm_from_app", DockerUtils.buildContainerNameFrom( "/vm", "app" ));
+		Assert.assertEquals( "vm-pop_from_app", DockerUtils.buildContainerNameFrom( "/vm/pop", "app" ));
 
-		// Null resolver
-		try {
-			DockerUtils.downloadRemotePackage( "mvn://something", targetFile, null );
-			Assert.fail( "An exception was expected." );
-
-		} catch( Exception e ) {
-			// nothing
-		}
+		String scopedInstancePath = StringUtils.repeat( "a", 80 );
+		String name = DockerUtils.buildContainerNameFrom( scopedInstancePath, "app" );
+		Assert.assertEquals( 61, name.length());
+		Assert.assertTrue( name.matches( "^a{61}$" ));
 	}
 }

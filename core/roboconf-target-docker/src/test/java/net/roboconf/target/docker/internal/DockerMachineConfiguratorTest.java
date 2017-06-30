@@ -25,261 +25,380 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import static net.roboconf.target.docker.internal.DockerHandler.GENERATE_IMAGE_FROM;
+import static net.roboconf.target.docker.internal.DockerHandler.OPTION_PREFIX_ENV;
+import static net.roboconf.target.docker.internal.DockerMachineConfigurator.USER_DATA_DIR;
+import static net.roboconf.target.docker.internal.DockerMachineConfigurator.USER_DATA_FILE;
 
-import net.roboconf.target.api.TargetException;
-import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfBuildImageResultCallback;
-import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfPullImageResultCallback;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.command.ListImagesCmd;
-import com.github.dockerjava.api.command.PullImageCmd;
-import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Volume;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
+import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfBuildImageResultCallback;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class DockerMachineConfiguratorTest {
 
-	private DockerfileGenerator dockerfileGenerator;
-	private DockerClient dockerClient;
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
+	private DockerClient dockerClient;
 	private DockerMachineConfigurator configurator;
-	private Map<String,String> targetProperties;
+	private Map<String,File> containerIdToVolume;
 
 
 	@Before
-	public void prepareConfigurator() {
+	public void prepareConfigurator() throws Exception {
 
-		this.targetProperties = new HashMap<> ();
+		TargetHandlerParameters parameters= new TargetHandlerParameters();
+		parameters.setTargetProperties( new LinkedHashMap<String,String>( 0 ));
+		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
+		parameters.setApplicationName( "applicationName" );
+		parameters.setScopedInstancePath( "/vm" );
+
+		this.containerIdToVolume = new HashMap<> ();
 		this.configurator = new DockerMachineConfigurator(
-				this.targetProperties,
-				new HashMap<String,String>( 0 ),
-				"machineId", "scopedInstancePath", "applicationName", null );
+				parameters,
+				"machineId",
+				new Instance(),
+				this.folder.newFolder(),
+				this.containerIdToVolume );
 
+		this.dockerClient = Mockito.mock( DockerClient.class );
+		this.configurator.dockerClient = this.dockerClient;
 		this.configurator = Mockito.spy( this.configurator );
-		this.configurator.dockerClient = Mockito.mock( DockerClient.class );
-		this.dockerClient = this.configurator.dockerClient;
-
-		this.dockerfileGenerator = Mockito.mock( DockerfileGenerator.class );
-		Mockito.when( this.configurator.dockerfileGenerator(
-				Mockito.anyString(),
-				Mockito.anyString(),
-				Mockito.anyListOf( String.class ),
-				Mockito.anyString())).thenReturn( this.dockerfileGenerator );
-	}
-
-
-	@Test
-	public void testFixImageId() {
-
-		Assert.assertEquals(
-				DockerMachineConfigurator.DEFAULT_IMG_NAME,
-				DockerMachineConfigurator.fixImageId( null ));
-
-		Assert.assertEquals(
-				DockerMachineConfigurator.DEFAULT_IMG_NAME,
-				DockerMachineConfigurator.fixImageId( " " ));
-
-		Assert.assertEquals(
-				"test1",
-				DockerMachineConfigurator.fixImageId( "test1" ));
 	}
 
 
 	@Test
 	public void testClose() throws Exception {
 
-		Mockito.verifyZeroInteractions( this.dockerfileGenerator );
+		// Docker client is not null
 		Mockito.verifyZeroInteractions( this.dockerClient );
 		this.configurator.close();
 		Mockito.verify( this.dockerClient, Mockito.times( 1 )).close();
+
+		// When it is null
+		Mockito.reset( this.dockerClient );
+		this.configurator.dockerClient = null;
+		this.configurator.close();
+		Mockito.verifyNoMoreInteractions( this.dockerClient );
 	}
 
 
 	@Test
-	public void testCreateImage_noDownload_noBaseImage_withAgentPackage() throws Exception {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void testCreateContainer_success() throws Exception {
 
-		// No base image, agent URL specified, no download required.
-		// => no error.
-		// => no request to download an image.
-		this.targetProperties.put( DockerHandler.AGENT_PACKAGE_URL, "file://somewhere" );
+		CreateContainerCmd ccc = Mockito.mock( CreateContainerCmd.class );
+		Mockito.when( ccc.withEnv( Mockito.anyListOf( String.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withBinds( Mockito.anyListOf( Bind.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withVolumes( Mockito.anyListOf( Volume.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withName( Mockito.anyString())).thenReturn( ccc );
 
-		BuildImageCmd buildImageCmd = Mockito.mock( BuildImageCmd.class );
-		Mockito.when( this.dockerClient.buildImageCmd( Mockito.any( File.class ))).thenReturn( buildImageCmd );
-		Mockito.when( buildImageCmd.withTag( Mockito.anyString())).thenReturn( buildImageCmd );
+		Mockito.when( this.dockerClient.createContainerCmd( Mockito.anyString())).thenReturn( ccc );
+		CreateContainerResponse containerResponse = Mockito.mock( CreateContainerResponse.class );
+		Mockito.when( ccc.exec()).thenReturn( containerResponse );
+		Mockito.when( containerResponse.getId()).thenReturn( "cid" );
 
-		RoboconfBuildImageResultCallback callback = Mockito.mock( RoboconfBuildImageResultCallback.class );
-		Mockito.when( buildImageCmd.exec( Mockito.any( RoboconfBuildImageResultCallback.class ))).thenReturn( callback );
-		Mockito.when( callback.awaitImageId()).thenReturn( "xxxx" );
+		StartContainerCmd scc = Mockito.mock( StartContainerCmd.class );
+		Mockito.when( this.dockerClient.startContainerCmd( Mockito.anyString())).thenReturn( scc );
 
-		this.configurator.createImage( "invalid" );
-		Mockito.verify( this.dockerClient, Mockito.never()).pullImageCmd( Mockito.anyString());
+		// Create the container (mock)
+		final String imageId = "toto";
+		this.configurator.createContainer( imageId );
+
+		// Check the client
+		Mockito.verify( this.dockerClient ).createContainerCmd( imageId );
+		Mockito.verify( this.dockerClient ).startContainerCmd( "cid" );
+		Mockito.verifyNoMoreInteractions( this.dockerClient );
+
+		// Check the user data
+		Assert.assertEquals( 1, this.containerIdToVolume.size());
+		File dir = this.containerIdToVolume.values().iterator().next();
+		Assert.assertTrue( dir.isDirectory());
+		Assert.assertTrue( new File( dir, USER_DATA_FILE ).isFile());
+
+		// Check the creation request
+		Mockito.verify( ccc ).withName( Mockito.anyString());
+
+		ArgumentCaptor<List> env = ArgumentCaptor.forClass( List.class );
+		Mockito.verify( ccc ).withEnv( env.capture());
+
+		List<String> effectiveEnv = env.getValue();
+		Assert.assertEquals( 2, effectiveEnv.size());
+		Assert.assertEquals( "RBCF_VERSION=latest", effectiveEnv.get( 0 ));
+		Assert.assertEquals( "AGENT_PARAMETERS=file:" + USER_DATA_DIR + USER_DATA_FILE, effectiveEnv.get( 1 ));
+
+		// Volumes
+		ArgumentCaptor<List> volumes = ArgumentCaptor.forClass( List.class );
+		Mockito.verify( ccc ).withVolumes( volumes.capture());
+
+		List<Volume> effectiveVolumes = volumes.getValue();
+		Assert.assertNotNull( effectiveVolumes );
+		Assert.assertEquals( 1, effectiveVolumes.size());
+
+		Volume effectiveVolume = effectiveVolumes.get( 0 );
+		Assert.assertNotNull( effectiveVolume );
+		Assert.assertEquals( USER_DATA_DIR, effectiveVolume.getPath());
+
+		// Bounds
+		ArgumentCaptor<List> bounds = ArgumentCaptor.forClass( List.class );
+		Mockito.verify( ccc ).withBinds( bounds.capture());
+
+		List<Bind> effectiveBounds = bounds.getValue();
+		Assert.assertNotNull( effectiveBounds );
+		Assert.assertEquals( 1, effectiveBounds.size());
+
+		Bind effectiveBind = effectiveBounds.get( 0 );
+		Assert.assertNotNull( effectiveBind );
+		Assert.assertEquals( dir.getAbsolutePath(), effectiveBind.getPath());
+		Assert.assertEquals( effectiveVolume, effectiveBind.getVolume());
+	}
+
+
+	@Test
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void testCreateContainer_withEnv() throws Exception {
+
+		CreateContainerCmd ccc = Mockito.mock( CreateContainerCmd.class );
+		Mockito.when( ccc.withEnv( Mockito.anyListOf( String.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withBinds( Mockito.anyListOf( Bind.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withVolumes( Mockito.anyListOf( Volume.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withName( Mockito.anyString())).thenReturn( ccc );
+
+		Mockito.when( this.dockerClient.createContainerCmd( Mockito.anyString())).thenReturn( ccc );
+		CreateContainerResponse containerResponse = Mockito.mock( CreateContainerResponse.class );
+		Mockito.when( ccc.exec()).thenReturn( containerResponse );
+		Mockito.when( containerResponse.getId()).thenReturn( "cid" );
+
+		StartContainerCmd scc = Mockito.mock( StartContainerCmd.class );
+		Mockito.when( this.dockerClient.startContainerCmd( Mockito.anyString())).thenReturn( scc );
+
+		// Prepare the parameters
+		final String imageId = "toto";
+		this.configurator.getParameters().getMessagingProperties().put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "bird" );
+
+		this.configurator.getParameters().getTargetProperties().put( OPTION_PREFIX_ENV + "t1", "v1" );
+		this.configurator.getParameters().getTargetProperties().put( OPTION_PREFIX_ENV + "t2", "<application-name>" );
+		this.configurator.getParameters().getTargetProperties().put( OPTION_PREFIX_ENV + "t3", "<application-name>_2" );
+		this.configurator.getParameters().getTargetProperties().put( OPTION_PREFIX_ENV + "t4", "<scoped-instance-path>" );
+		this.configurator.getParameters().getTargetProperties().put( OPTION_PREFIX_ENV + "t5", "<scoped-messaging_type>" );
+
+		// Create the container (mock)
+		this.configurator.createContainer( imageId );
+
+		// Check the client
+		Mockito.verify( this.dockerClient ).createContainerCmd( imageId );
+		Mockito.verify( this.dockerClient ).startContainerCmd( "cid" );
+		Mockito.verifyNoMoreInteractions( this.dockerClient );
+
+		// Check the user data
+		Assert.assertEquals( 1, this.containerIdToVolume.size());
+		File dir = this.containerIdToVolume.values().iterator().next();
+		Assert.assertTrue( dir.isDirectory());
+		Assert.assertTrue( new File( dir, USER_DATA_FILE ).isFile());
+
+		// Check the creation request
+		Mockito.verify( ccc ).withName( Mockito.anyString());
+
+		ArgumentCaptor<List> env = ArgumentCaptor.forClass( List.class );
+		Mockito.verify( ccc ).withEnv( env.capture());
+
+		List<String> effectiveEnv = env.getValue();
+		Assert.assertEquals( 7, effectiveEnv.size());
+		Assert.assertEquals( "t1=v1", effectiveEnv.get( 0 ));
+		Assert.assertEquals( "t2=applicationName", effectiveEnv.get( 1 ));
+		Assert.assertEquals( "t3=applicationName_2", effectiveEnv.get( 2 ));
+		Assert.assertEquals( "t4=/vm", effectiveEnv.get( 3 ));
+		Assert.assertEquals( "t5=bird", effectiveEnv.get( 4 ));
+		Assert.assertEquals( "RBCF_VERSION=latest", effectiveEnv.get( 5 ));
+		Assert.assertEquals( "AGENT_PARAMETERS=file:" + USER_DATA_DIR + USER_DATA_FILE, effectiveEnv.get( 6 ));
+
+		// Volumes
+		ArgumentCaptor<List> volumes = ArgumentCaptor.forClass( List.class );
+		Mockito.verify( ccc ).withVolumes( volumes.capture());
+
+		List<Volume> effectiveVolumes = volumes.getValue();
+		Assert.assertNotNull( effectiveVolumes );
+		Assert.assertEquals( 1, effectiveVolumes.size());
+
+		Volume effectiveVolume = effectiveVolumes.get( 0 );
+		Assert.assertNotNull( effectiveVolume );
+		Assert.assertEquals( USER_DATA_DIR, effectiveVolume.getPath());
+
+		// Bounds
+		ArgumentCaptor<List> bounds = ArgumentCaptor.forClass( List.class );
+		Mockito.verify( ccc ).withBinds( bounds.capture());
+
+		List<Bind> effectiveBounds = bounds.getValue();
+		Assert.assertNotNull( effectiveBounds );
+		Assert.assertEquals( 1, effectiveBounds.size());
+
+		Bind effectiveBind = effectiveBounds.get( 0 );
+		Assert.assertNotNull( effectiveBind );
+		Assert.assertEquals( dir.getAbsolutePath(), effectiveBind.getPath());
+		Assert.assertEquals( effectiveVolume, effectiveBind.getVolume());
+	}
+
+
+	@Test
+	public void testCreateContainer_loggedWarnings() throws Exception {
+
+		CreateContainerCmd ccc = Mockito.mock( CreateContainerCmd.class );
+		Mockito.when( ccc.withEnv( Mockito.anyListOf( String.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withBinds( Mockito.anyListOf( Bind.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withVolumes( Mockito.anyListOf( Volume.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withName( Mockito.anyString())).thenReturn( ccc );
+
+		CreateContainerResponse containerResponse = Mockito.mock( CreateContainerResponse.class );
+		Mockito.when( this.dockerClient.createContainerCmd( Mockito.anyString())).thenReturn( ccc );
+		Mockito.when( ccc.exec()).thenReturn( containerResponse );
+		Mockito.when( containerResponse.getId()).thenReturn( "cid" );
+
+		StartContainerCmd scc = Mockito.mock( StartContainerCmd.class );
+		Mockito.when( this.dockerClient.startContainerCmd( Mockito.anyString())).thenReturn( scc );
+
+		this.configurator.logger = Mockito.mock( Logger.class );
+		Mockito.when( this.configurator.logger.isLoggable( Level.FINE )).thenReturn( true );
+		Mockito.when( containerResponse.getWarnings()).thenReturn( new String[]{ "Not good.", "Stay well." });
+
+		// Create the container (mock)
+		final String imageId = "toto";
+		this.configurator.createContainer( imageId );
+
+		// Check the client
+		Mockito.verify( this.dockerClient ).createContainerCmd( imageId );
+		Mockito.verify( this.dockerClient ).startContainerCmd( "cid" );
+		Mockito.verifyNoMoreInteractions( this.dockerClient );
+
+		// Check the logs were correctly handled
+		Mockito.verify( containerResponse, Mockito.times( 3 )).getWarnings();
+		Mockito.verify( this.configurator.logger ).fine( "The following warnings have been found.\nNot good.\nStay well." );
 	}
 
 
 	@Test( expected = TargetException.class )
-	public void testCreateImage_withErrorOnCreation() throws Exception {
+	public void testCreateContainer_exception() throws Exception {
 
-		// No base image, agent URL specified, no download required.
-		// => no error.
-		// => no request to download an image.
-		this.targetProperties.put( DockerHandler.AGENT_PACKAGE_URL, "file://somewhere" );
+		CreateContainerCmd ccc = Mockito.mock( CreateContainerCmd.class );
+		Mockito.when( ccc.withEnv( Mockito.anyListOf( String.class ))).thenReturn( ccc );
+		Mockito.when( ccc.withName( Mockito.anyString())).thenReturn( ccc );
 
-		BuildImageCmd buildImageCmd = Mockito.mock( BuildImageCmd.class );
-		Mockito.when( this.dockerClient.buildImageCmd( Mockito.any( File.class ))).thenReturn( buildImageCmd );
-		Mockito.when( buildImageCmd.withTag( Mockito.anyString())).thenReturn( buildImageCmd );
+		Mockito.when( this.dockerClient.createContainerCmd( Mockito.anyString())).thenThrow( new RuntimeException( "for test" ));
 
-		RoboconfBuildImageResultCallback callback = Mockito.mock( RoboconfBuildImageResultCallback.class );
-		Mockito.when( buildImageCmd.exec( Mockito.any( RoboconfBuildImageResultCallback.class ))).thenReturn( callback );
-
-		// We simply simulate the occurrence of an exception at the end.
-		Mockito.when( callback.awaitImageId()).thenThrow( new RuntimeException( "for test" ));
-
-		this.configurator.createImage( "invalid" );
+		final String imageId = "toto";
+		this.configurator.createContainer( imageId );
 	}
 
 
 	@Test
-	public void testCreateImage_noDownload_withBaseImage_notFound_withAgentPackage() throws Exception {
+	public void testCreateImage_noGenerateFrom() throws Exception {
 
-		// A base image and the agent URL are specified, no download required.
-		// The image is not found => error.
-		this.targetProperties.put( DockerHandler.AGENT_PACKAGE_URL, "file://somewhere" );
-		this.targetProperties.put( DockerHandler.BASE_IMAGE, "something" );
-		this.targetProperties.put( DockerHandler.DOWNLOAD_BASE_IMAGE, "false" );
-
-		// This section deals with the (successful) creation of an image.
-		BuildImageCmd buildImageCmd = Mockito.mock( BuildImageCmd.class );
-		Mockito.when( this.dockerClient.buildImageCmd( Mockito.any( File.class ))).thenReturn( buildImageCmd );
-		Mockito.when( buildImageCmd.withTag( Mockito.anyString())).thenReturn( buildImageCmd );
-
-		RoboconfBuildImageResultCallback callback = Mockito.mock( RoboconfBuildImageResultCallback.class );
-		Mockito.when( buildImageCmd.exec( Mockito.any( RoboconfBuildImageResultCallback.class ))).thenReturn( callback );
-		Mockito.when( callback.awaitImageId()).thenReturn( "xxxx" );
-		// End of section
-
-		// Make sure the image is not found.
-		ListImagesCmd listImagesCmd = Mockito.mock( ListImagesCmd.class );
-		Mockito.when( this.dockerClient.listImagesCmd()).thenReturn( listImagesCmd );
-		Mockito.when( listImagesCmd.exec()).thenReturn( new ArrayList<Image>( 0 ));
-
-		try {
-			this.configurator.createImage( "invalid" );
-			Assert.fail( "Creation should have failed. The base image was not supposed to be found." );
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
-		// We did not try to download anything
-		Mockito.verify( this.dockerClient, Mockito.never()).pullImageCmd( Mockito.anyString());
+		final String imageId = "toto";
+		this.configurator.createImage( imageId );
+		Mockito.verifyZeroInteractions( this.dockerClient );
 	}
 
 
 	@Test
-	public void testCreateImage_withDownload_withBaseImage_notFound_withAgentPackage() throws Exception {
+	public void testCreateImage_noTargetDirectory() throws Exception {
 
-		// A base image and the agent URL are specified, download is required.
-		// By the end, the image will not be found. => error.
-		this.targetProperties.put( DockerHandler.AGENT_PACKAGE_URL, "file://somewhere" );
-		this.targetProperties.put( DockerHandler.BASE_IMAGE, "something" );
-		this.targetProperties.put( DockerHandler.DOWNLOAD_BASE_IMAGE, "true" );
-
-		// This section deals with the (successful) creation of an image.
-		BuildImageCmd buildImageCmd = Mockito.mock( BuildImageCmd.class );
-		Mockito.when( this.dockerClient.buildImageCmd( Mockito.any( File.class ))).thenReturn( buildImageCmd );
-		Mockito.when( buildImageCmd.withTag( Mockito.anyString())).thenReturn( buildImageCmd );
-
-		RoboconfBuildImageResultCallback callback = Mockito.mock( RoboconfBuildImageResultCallback.class );
-		Mockito.when( buildImageCmd.exec( Mockito.any( RoboconfBuildImageResultCallback.class ))).thenReturn( callback );
-		Mockito.when( callback.awaitImageId()).thenReturn( "xxxx" );
-		// End of section
-
-		// Make sure the image is not found.
-		ListImagesCmd listImagesCmd = Mockito.mock( ListImagesCmd.class );
-		Mockito.when( this.dockerClient.listImagesCmd()).thenReturn( listImagesCmd );
-		Mockito.when( listImagesCmd.exec()).thenReturn( new ArrayList<Image>( 0 ));
-
-		// Make sure there is no error thrown by the pull request.
-		ArgumentCaptor<String> tagArg = ArgumentCaptor.forClass( String.class );
-		ArgumentCaptor<String> imageNameArg = ArgumentCaptor.forClass( String.class );
-
-		PullImageCmd pullImageCmd = Mockito.mock( PullImageCmd.class );
-		Mockito.when( this.dockerClient.pullImageCmd( imageNameArg.capture())).thenReturn( pullImageCmd );
-		Mockito.when( pullImageCmd.withRegistry( Mockito.anyString())).thenReturn( pullImageCmd );
-		Mockito.when( pullImageCmd.withTag( tagArg.capture())).thenReturn( pullImageCmd );
-
-		RoboconfPullImageResultCallback pullCallback = Mockito.mock( RoboconfPullImageResultCallback.class );
-		Mockito.when( pullImageCmd.exec( Mockito.any( RoboconfPullImageResultCallback.class ))).thenReturn( pullCallback );
-
-		// Execution
-		try {
-			this.configurator.createImage( "invalid" );
-			Assert.fail( "Creation should have failed. The base image was not supposed to be found." );
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
-		// We tried to download something
-		Mockito.verify( this.dockerClient, Mockito.times( 1 )).pullImageCmd( Mockito.anyString());
-		Assert.assertEquals( "something", imageNameArg.getValue());
-		Assert.assertEquals( 0, tagArg.getAllValues().size());
-
-		// Try with an image name using a tag
-		this.targetProperties.put( DockerHandler.BASE_IMAGE, "something:else" );
-		try {
-			this.configurator.createImage( "invalid" );
-			Assert.fail( "Creation should have failed. The base image was not supposed to be found." );
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
-		// We tried to download something
-		Mockito.verify( this.dockerClient, Mockito.times( 2 )).pullImageCmd( Mockito.anyString());
-		Assert.assertEquals( "something", imageNameArg.getValue());
-		Assert.assertEquals( "else", tagArg.getValue());
+		final String imageId = "toto";
+		this.configurator.getParameters().getTargetProperties().put( GENERATE_IMAGE_FROM, "img" );
+		this.configurator.createImage( imageId );
+		Mockito.verifyZeroInteractions( this.dockerClient );
 	}
 
 
 	@Test( expected = TargetException.class )
-	public void testCreateImage_withDownload_withBaseImage_withAgentPackage_withErrorOnPull() throws Exception {
+	public void testCreateImage_invalidDockerfilePath() throws Exception {
 
-		// A base image and the agent URL are specified, download is required.
-		// By the end, the image will not be found. => error.
-		this.targetProperties.put( DockerHandler.AGENT_PACKAGE_URL, "file://somewhere" );
-		this.targetProperties.put( DockerHandler.BASE_IMAGE, "something" );
-		this.targetProperties.put( DockerHandler.DOWNLOAD_BASE_IMAGE, "true" );
+		final String imageId = "toto";
+		this.configurator.getParameters().setTargetPropertiesDirectory( this.folder.newFolder());
+		this.configurator.getParameters().getTargetProperties().put( GENERATE_IMAGE_FROM, "img" );
 
-		// Make sure the image is not found.
-		ListImagesCmd listImagesCmd = Mockito.mock( ListImagesCmd.class );
-		Mockito.when( this.dockerClient.listImagesCmd()).thenReturn( listImagesCmd );
-		Mockito.when( listImagesCmd.exec()).thenReturn( new ArrayList<Image>( 0 ));
+		this.configurator.createImage( imageId );
+	}
 
-		// Normal flow for the pull request.
-		ArgumentCaptor<String> tagArg = ArgumentCaptor.forClass( String.class );
-		ArgumentCaptor<String> imageNameArg = ArgumentCaptor.forClass( String.class );
 
-		PullImageCmd pullImageCmd = Mockito.mock( PullImageCmd.class );
-		Mockito.when( this.dockerClient.pullImageCmd( imageNameArg.capture())).thenReturn( pullImageCmd );
-		Mockito.when( pullImageCmd.withRegistry( Mockito.anyString())).thenReturn( pullImageCmd );
-		Mockito.when( pullImageCmd.withTag( tagArg.capture())).thenReturn( pullImageCmd );
+	@Test
+	public void testCreateImage_success() throws Exception {
 
-		// Execution => exception.
-		Mockito.when( pullImageCmd.exec( Mockito.any( RoboconfPullImageResultCallback.class ))).thenThrow( new RuntimeException( "for test" ));
+		// Prepare the mocks
+		BuildImageCmd buildImageCmd = Mockito.mock( BuildImageCmd.class );
+		Mockito.when( this.dockerClient.buildImageCmd( Mockito.any( File.class ))).thenReturn( buildImageCmd );
 
-		this.configurator.createImage( "invalid" );
+		Mockito.when( buildImageCmd.withPull( true )).thenReturn( buildImageCmd );
+		Mockito.when( buildImageCmd.withTags( Mockito.anySetOf( String.class ))).thenReturn( buildImageCmd );
+
+		RoboconfBuildImageResultCallback cb = Mockito.mock( RoboconfBuildImageResultCallback.class );
+		Mockito.when( buildImageCmd.exec( Mockito.any( RoboconfBuildImageResultCallback.class ))).thenReturn( cb );
+		Mockito.when( cb.awaitImageId()).thenReturn( "my-img-id" );
+
+		// Create the container (mock)
+		final String imageId = "toto";
+		this.configurator.getParameters().setTargetPropertiesDirectory( this.folder.newFolder());
+		this.configurator.getParameters().getTargetProperties().put( GENERATE_IMAGE_FROM, "img" );
+
+		File dockerfileDir = new File( this.configurator.getParameters().getTargetPropertiesDirectory(), "img" );
+		Utils.createDirectory( dockerfileDir );
+
+		this.configurator.createImage( imageId );
+
+		// Check the client
+		Mockito.verify( this.dockerClient, Mockito.only()).buildImageCmd( dockerfileDir );
+		Mockito.verify( buildImageCmd ).withPull( true );
+		Mockito.verify( buildImageCmd ).withTags( new HashSet<>( Arrays.asList( imageId )));
+		Mockito.verify( buildImageCmd ).exec( Mockito.any( RoboconfBuildImageResultCallback.class ));
+		Mockito.verifyNoMoreInteractions( buildImageCmd );
+		Mockito.verify( cb, Mockito.only()).awaitImageId();
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testCreateImage_error() throws Exception {
+
+		// Prepare the mocks
+		Mockito.when( this.dockerClient.buildImageCmd( Mockito.any( File.class ))).thenThrow( new RuntimeException( "for test" ));
+
+		// Create the container (mock)
+		final String imageId = "toto";
+		this.configurator.getParameters().setTargetPropertiesDirectory( this.folder.newFolder());
+		this.configurator.getParameters().getTargetProperties().put( GENERATE_IMAGE_FROM, "img" );
+
+		File dockerfileDir = new File( this.configurator.getParameters().getTargetPropertiesDirectory(), "img" );
+		Utils.createDirectory( dockerfileDir );
+
+		this.configurator.createImage( imageId );
 	}
 }

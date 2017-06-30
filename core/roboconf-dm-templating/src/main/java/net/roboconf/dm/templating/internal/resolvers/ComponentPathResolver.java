@@ -31,7 +31,7 @@ import java.util.Set;
 import com.github.jknack.handlebars.ValueResolver;
 
 /**
- * A resolver that associated a component path with a context.
+ * A resolver that associates a component path with a context.
  * <p>
  * With this resolver, <code>{{#all VM ...}}</code> will send a "Vm" context
  * to the ALL helper.

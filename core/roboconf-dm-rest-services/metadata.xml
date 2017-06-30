@@ -32,40 +32,46 @@
 
 	<!-- Servlets registration -->
 	<component classname="net.roboconf.dm.rest.services.internal.ServletRegistrationComponent" name="roboconf-dm-rest-component" immediate="true" public="false">
-		
+
 		<!-- Mandatory -->
 		<requires field="manager" optional="false" />
 		<requires field="httpService" optional="false" />
-		
+
 		<!-- Optional: Maven resolver -->
 		<requires field="mavenResolver" optional="true">
 			<callback type="bind" method="mavenResolverAppears" />
 			<callback type="unbind" method="mavenResolverDisappears" />
 		</requires>
-		
+
 		<!-- Optional: scheduler -->
 		<requires field="scheduler" optional="true">
 			<callback type="bind" method="schedulerAppears" />
 			<callback type="unbind" method="schedulerDisappears" />
 		</requires>
-		
+
 		<callback transition="validate" method="starting" />
 		<callback transition="invalidate" method="stopping" />
-		
+
 		<properties pid="net.roboconf.dm.rest.services.configuration">
 			<property name="enable-cors" method="setEnableCors" value="false" />
 			<property name="enable-authentication" method="setEnableAuthentication" value="false" />
 			<property name="authentication-realm" method="setAuthenticationRealm" value="karaf" />
 			<property name="session-period" method="setSessionPeriod" value="-1" />
 		</properties>
+
+		<!-- Register OSGi services -->
+		<!-- The implementation class also registers additional services... -->
+		<provides specifications="net.roboconf.dm.rest.services.jmx.RestServicesMBean">
+			<property name="jmx.objectname" value="net.roboconf:type=web" type="java.lang.String" />
+		</provides>
 	</component>
-	
+
 	<instance component="roboconf-dm-rest-component" name="Roboconf - DM REST services" />
-	
+
 	<!-- Web Socket handler injected in the DM as a listener. -->
 	<component classname="net.roboconf.dm.rest.services.internal.websocket.WebSocketHandler" name="roboconf-dm-websocket-component" immediate="true" public="false">
 		<provides />
 	</component>
-	
+
 	<instance component="roboconf-dm-websocket-component" name="Roboconf - DM Websocket" />
 </ipojo>

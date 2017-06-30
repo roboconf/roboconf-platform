@@ -25,11 +25,18 @@
 
 package net.roboconf.core.model;
 
-import java.io.File;
-import java.util.Objects;
+import static net.roboconf.core.errors.ErrorDetails.file;
+import static net.roboconf.core.errors.ErrorDetails.line;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
+import net.roboconf.core.errors.RoboconfError;
 
 /**
  * A parsing error instantiates and localizes an {@link ErrorCode}.
@@ -48,9 +55,7 @@ public class ParsingError extends RoboconfError {
 	 * @param line a line number
 	 */
 	public ParsingError( ErrorCode errorCode, File file, int line ) {
-		super( errorCode );
-		this.line = line;
-		this.file = file;
+		this( errorCode, file, line, new ErrorDetails[ 0 ]);
 	}
 
 	/**
@@ -60,8 +65,8 @@ public class ParsingError extends RoboconfError {
 	 * @param line a line number
 	 * @param details the error details
 	 */
-	public ParsingError( ErrorCode errorCode, File file, int line, String details ) {
-		super( errorCode, details );
+	public ParsingError( ErrorCode errorCode, File file, int line, ErrorDetails... details ) {
+		super( errorCode, addLineAndFile( line, file, details ));
 		this.line = line;
 		this.file = file;
 	}
@@ -99,5 +104,27 @@ public class ParsingError extends RoboconfError {
 	public int hashCode() {
 		// Keep for Findbugs.
 		return super.hashCode();
+	}
+
+
+	/**
+	 * Adds details about the line number and the file.
+	 * @param line
+	 * @param file
+	 * @param details
+	 * @return a non-null array
+	 */
+	private static ErrorDetails[] addLineAndFile( int line, File file, ErrorDetails... details ) {
+
+		Set<ErrorDetails> updatedDetails = new LinkedHashSet<> ();
+		if( details != null )
+			updatedDetails.addAll( Arrays.asList( details ));
+
+		if( file != null ) {
+			updatedDetails.add( file( file ));
+			updatedDetails.add( line( line ));
+		}
+
+		return updatedDetails.toArray( new ErrorDetails[ updatedDetails.size()]);
 	}
 }

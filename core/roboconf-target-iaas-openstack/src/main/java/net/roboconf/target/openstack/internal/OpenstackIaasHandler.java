@@ -26,6 +26,7 @@
 package net.roboconf.target.openstack.internal;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,9 +53,9 @@ import org.jclouds.openstack.v2_0.domain.Resource;
 
 import com.google.common.base.Predicate;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -179,7 +180,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		metadata.put( "Created by", "Roboconf" );
 
 		try {
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
@@ -188,7 +189,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			CreateServerOptions options = CreateServerOptions.Builder
 					.keyPairName( targetProperties.get( OpenstackIaasHandler.KEY_PAIR ))
 					.securityGroupNames( targetProperties.get( OpenstackIaasHandler.SECURITY_GROUP ))
-					.userData( userData.getBytes( "UTF-8" ))
+					.userData( userData.getBytes( StandardCharsets.UTF_8 ))
 					.metadata( metadata );
 
 			String networkId = targetProperties.get( OpenstackIaasHandler.NETWORK_ID );

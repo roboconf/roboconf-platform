@@ -371,7 +371,8 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		try {
 			logger.fine( "The reconfigurable client is requesting its internal connection to be closed." );
-			client.closeConnection();
+			if( client != null )
+				client.closeConnection();
 
 		} catch( Exception e ) {
 			logger.warning( errorMessage + " " + e.getMessage());

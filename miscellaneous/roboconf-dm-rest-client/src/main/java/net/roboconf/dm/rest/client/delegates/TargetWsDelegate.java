@@ -150,7 +150,7 @@ public class TargetWsDelegate {
 			path = path.queryParam( "elt", instancePathOrComponentName );
 
 		if( app instanceof ApplicationTemplate )
-			path = path.queryParam( "qualifier", ((ApplicationTemplate) app).getQualifier());
+			path = path.queryParam( "qualifier", ((ApplicationTemplate) app).getVersion());
 
 		ClientResponse response = this.wsClient.createBuilder( path )
 						.accept( MediaType.APPLICATION_JSON )

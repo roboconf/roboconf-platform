@@ -44,12 +44,15 @@ public class DockerHandlerWithoutContainerTest {
 	}
 
 
-	@Test( expected = TargetException.class )
-	public void testTerminate_noConnection() throws Exception {
+	@Test
+	public void testUserDataDirectory() {
+		Assert.assertTrue( new DockerHandler().userDataVolume.getParentFile().exists());
+	}
 
-		TargetHandlerParameters parameters = new TargetHandlerParameters();
-		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
-		new DockerHandler().terminateMachine( parameters, "whatever" );
+
+	@Test
+	public void testRetrieveIpAddress() throws Exception {
+		Assert.assertEquals( DockerHandler.LOCALHOST, new DockerHandler().retrievePublicIpAddress( null, null ));
 	}
 
 
@@ -63,8 +66,27 @@ public class DockerHandlerWithoutContainerTest {
 	}
 
 
+	@Test
+	public void testIsRunning_clientException() throws Exception {
+
+		// Just an invalid end-point...
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 1 ));
+		parameters.getTargetProperties().put( DockerHandler.ENDPOINT, "unknown:/local:87945" );
+
+		boolean running = new DockerHandler().isMachineRunning( parameters, "whatever" );
+		Assert.assertFalse( running );
+	}
+
+
 	@Test( expected = TargetException.class )
-	public void testCreateMachine_invalidConfiguration() throws Exception {
-		new DockerHandler().createMachine( new TargetHandlerParameters().targetProperties( new HashMap<String,String>( 0 )));
+	public void testTerminateMachine_clientException() throws Exception {
+
+		// Just an invalid end-point...
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 1 ));
+		parameters.getTargetProperties().put( DockerHandler.ENDPOINT, "unknown:/local:87945" );
+
+		new DockerHandler().terminateMachine( parameters, "whatever" );
 	}
 }

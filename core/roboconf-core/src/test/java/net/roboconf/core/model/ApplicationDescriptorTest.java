@@ -60,7 +60,7 @@ public class ApplicationDescriptorTest {
 		desc1.setTemplateName( "my-tpl" );
 		saveAndCompare( desc1 );
 
-		desc1.setTemplateQualifier( "version 1" );
+		desc1.setTemplateVersion( "version 1" );
 		saveAndCompare( desc1 );
 
 		desc1.setDescription( "A string\nwith\nmany\n\tline\nbreaks!" );
@@ -75,7 +75,7 @@ public class ApplicationDescriptorTest {
 
 		File f = this.folder.newFile();
 
-		ApplicationTemplate tpl = new ApplicationTemplate( desc.getTemplateName()).qualifier( desc.getTemplateQualifier());
+		ApplicationTemplate tpl = new ApplicationTemplate( desc.getTemplateName()).version( desc.getTemplateVersion());
 		Application app = new Application( desc.getName(), tpl ).description( desc.getDescription());
 
 		ApplicationDescriptor.save( f, app );
@@ -84,6 +84,6 @@ public class ApplicationDescriptorTest {
 		Assert.assertEquals( desc.getDescription(), desc2.getDescription());
 		Assert.assertEquals( desc.getName(), desc2.getName());
 		Assert.assertEquals( desc.getTemplateName(), desc2.getTemplateName());
-		Assert.assertEquals( desc.getTemplateQualifier(), desc2.getTemplateQualifier());
+		Assert.assertEquals( desc.getTemplateVersion(), desc2.getTemplateVersion());
 	}
 }

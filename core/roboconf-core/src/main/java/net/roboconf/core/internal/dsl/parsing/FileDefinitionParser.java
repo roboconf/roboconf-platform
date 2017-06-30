@@ -25,19 +25,21 @@
 
 package net.roboconf.core.internal.dsl.parsing;
 
+import static net.roboconf.core.errors.ErrorDetails.exception;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
@@ -51,6 +53,8 @@ import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.BlockUnknown;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
@@ -103,7 +107,7 @@ public class FileDefinitionParser {
 			mergeContiguousRegions( this.definitionFile.getBlocks());
 
 		} catch( IOException e ) {
-			addModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber, e.getMessage());
+			addModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber, exception( e ));
 		}
 
 		// Determine file type
@@ -573,7 +577,7 @@ public class FileDefinitionParser {
 		InputStream in = null;
 		try {
 			in = new FileInputStream( this.definitionFile.getEditedFile());
-			br = new BufferedReader( new InputStreamReader( in, "UTF-8" ));
+			br = new BufferedReader( new InputStreamReader( in, StandardCharsets.UTF_8 ));
 
 			String line;
 			while(( line = nextLine( br )) != null ) {
@@ -644,18 +648,9 @@ public class FileDefinitionParser {
 	/**
 	 * @param errorCode
 	 * @param line
-	 */
-	private void addModelError( ErrorCode errorCode, int line ) {
-		addModelError( errorCode, line, null );
-	}
-
-
-	/**
-	 * @param errorCode
-	 * @param line
 	 * @param details
 	 */
-	private void addModelError( ErrorCode errorCode, int line, String details ) {
+	private void addModelError( ErrorCode errorCode, int line, ErrorDetails... details ) {
 		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), line, details );
 		this.definitionFile.getParsingErrors().add( me );
 	}

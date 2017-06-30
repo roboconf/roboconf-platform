@@ -31,18 +31,19 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
-import net.roboconf.core.ErrorCode;
+import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails.ErrorDetailsKind;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-
-import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -287,10 +288,24 @@ public class RecipesValidatorTest {
 
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 2, errors.size());
+
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, errors.get( 0 ).getErrorCode());
-		Assert.assertTrue( errors.get( 0 ).getDetails().contains( "Parameter: test" ));
+		Assert.assertEquals( 3, errors.get( 0 ).getDetails().length );
+
+		Assert.assertEquals( ErrorDetailsKind.NAME, errors.get( 0 ).getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertEquals( "toto", errors.get( 0 ).getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.FILE, errors.get( 0 ).getDetails()[ 1 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.EXPECTED, errors.get( 0 ).getDetails()[ 2 ].getErrorDetailsKind());
+		Assert.assertEquals( "test", errors.get( 0 ).getDetails()[ 2 ].getElementName());
+
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, errors.get( 1 ).getErrorCode());
-		Assert.assertTrue( errors.get( 1 ).getDetails().contains( "Parameter: oops" ));
+		Assert.assertEquals( 3, errors.get( 1 ).getDetails().length );
+
+		Assert.assertEquals( ErrorDetailsKind.NAME, errors.get( 1 ).getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertEquals( "toto", errors.get( 1 ).getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.FILE, errors.get( 1 ).getDetails()[ 1 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.EXPECTED, errors.get( 1 ).getDetails()[ 2 ].getErrorDetailsKind());
+		Assert.assertEquals( "oops", errors.get( 1 ).getDetails()[ 2 ].getElementName());
 	}
 
 

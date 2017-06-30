@@ -25,6 +25,8 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.name;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
@@ -88,12 +90,12 @@ public class ExecuteCommandInstruction extends AbstractCommandInstruction {
 		else if( this.context.getCommandFile() != null
 				&& fileName.equals( this.context.getCommandFile().getName())) {
 
-			result.add( error( ErrorCode.CMD_LOOPING_COMMAND, "Command name: " + this.commandName ));
+			result.add( error( ErrorCode.CMD_LOOPING_COMMAND, name( this.commandName )));
 		}
 
 		// The commands file to execute must exist.
 		else if( ! ( commandFileToExecute = new File( commandsDirectory, fileName )).exists()) {
-			result.add( error( ErrorCode.CMD_INEXISTING_COMMAND, "Command name: " + this.commandName ));
+			result.add( error( ErrorCode.CMD_INEXISTING_COMMAND, name( this.commandName )));
 		}
 
 		// If it exists, we do not want it to contain the same instruction.
@@ -104,7 +106,7 @@ public class ExecuteCommandInstruction extends AbstractCommandInstruction {
 				String content = Utils.readFileContent( commandFileToExecute );
 				Pattern p = Pattern.compile( PREFIX + "\\s+" + Pattern.quote( this.commandName ), Pattern.CASE_INSENSITIVE );
 				if( p.matcher( content ).find())
-					result.add( error( ErrorCode.CMD_NASTY_LOOPING_COMMAND, "Command name: " + this.commandName ));
+					result.add( error( ErrorCode.CMD_NASTY_LOOPING_COMMAND, name( this.commandName )));
 
 			} catch( IOException e ) {
 				// If we cannot load the file's content, do not push the validation further...

@@ -267,6 +267,35 @@ public class UtilsTest {
 
 
 	@Test
+	public void testReadFileContentQuietly() throws Exception {
+
+		String s = "this is\na\test\t";
+		File output = this.folder.newFile();
+		Utils.writeStringInto( s, output );
+
+		String readS = Utils.readFileContentQuietly( output, Logger.getLogger( getClass().getName()));
+		Assert.assertEquals( s, readS );
+	}
+
+
+	@Test
+	public void testReadFileContentQuietly_exception() throws Exception {
+
+		File output = this.folder.newFolder();
+		String readS = Utils.readFileContentQuietly( output, Logger.getLogger( getClass().getName()));
+		Assert.assertEquals( "", readS );
+	}
+
+
+	@Test
+	public void testReadFileContentQuietly_inexistingFile() throws Exception {
+
+		String readS = Utils.readFileContentQuietly( new File( "inexisting" ), Logger.getLogger( getClass().getName()));
+		Assert.assertEquals( "", readS );
+	}
+
+
+	@Test
 	public void testIsEmptyOrWhitespaces() {
 
 		Assert.assertTrue( Utils.isEmptyOrWhitespaces( null ));
@@ -298,6 +327,7 @@ public class UtilsTest {
 		tmpl = "This is an {{ unknown }} parameter";
 		Assert.assertEquals( tmpl, Utils.expandTemplate(tmpl, params));
 	}
+
 
 	@Test
 	public void testExtractZipArchive() throws Exception {
@@ -607,7 +637,7 @@ public class UtilsTest {
 	public void testWriteException() {
 
 		String msg = "Hello from Roboconf.";
-		String stackTrace = Utils.writeException( new Exception( msg ));
+		String stackTrace = Utils.writeExceptionButDoNotUseItForLogging( new Exception( msg ));
 		Assert.assertTrue( stackTrace.contains( msg ));
 	}
 
@@ -888,6 +918,12 @@ public class UtilsTest {
 
 		Utils.logException( logger, Level.INFO, new Exception( "boo!" ));
 		Assert.assertTrue( logHandler.getLogs().startsWith( "java.lang.Exception: boo!" ));
+
+		// With an additional message
+		logHandler.getStringBuilder().setLength( 0 );
+		Assert.assertEquals( "", logHandler.getLogs());
+		Utils.logException( logger, Level.INFO, new Exception( "nice try!" ), "again" );
+		Assert.assertTrue( logHandler.getLogs().startsWith( "again\njava.lang.Exception: nice try!" ));
 	}
 
 
@@ -976,6 +1012,29 @@ public class UtilsTest {
 
 		// Inexisting file
 		props = Utils.readPropertiesFileQuietly( new File( "inexisting" ), logger );
+		Assert.assertEquals( 0, props.size());
+	}
+
+
+	@Test
+	public void testReadProperties() throws Exception {
+
+		// Normal
+		Logger logger = Logger.getLogger( getClass().getName());
+		String s = "\np1: value1 \\ok\np2 = value2\n\n";
+		Properties props = Utils.readPropertiesQuietly( s, logger );
+
+		Assert.assertEquals( 2, props.size());
+		Assert.assertEquals( "value1 ok", props.get( "p1" ));
+		Assert.assertEquals( "value2", props.get( "p2" ));
+
+		// Null string
+		props = Utils.readPropertiesQuietly( null, logger );
+		Assert.assertEquals( 0, props.size());
+
+		// Check exceptions
+		s = "";
+		props = Utils.readPropertiesQuietly( s, logger );
 		Assert.assertEquals( 0, props.size());
 	}
 

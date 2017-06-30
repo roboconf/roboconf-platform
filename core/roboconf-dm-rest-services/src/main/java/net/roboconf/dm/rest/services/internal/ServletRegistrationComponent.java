@@ -27,6 +27,7 @@ package net.roboconf.dm.rest.services.internal;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import javax.servlet.Filter;
@@ -44,6 +45,8 @@ import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.internal.filters.AuthenticationFilter;
 import net.roboconf.dm.rest.services.internal.icons.IconServlet;
 import net.roboconf.dm.rest.services.internal.websocket.RoboconfWebSocketServlet;
+import net.roboconf.dm.rest.services.internal.websocket.WebSocketHandler;
+import net.roboconf.dm.rest.services.jmx.RestServicesMBean;
 import net.roboconf.dm.scheduler.IScheduler;
 
 /**
@@ -55,7 +58,7 @@ import net.roboconf.dm.scheduler.IScheduler;
  *
  * @author Vincent Zurczak - Linagora
  */
-public class ServletRegistrationComponent {
+public class ServletRegistrationComponent implements RestServicesMBean {
 
 	// Constants
 	public static final String REST_CONTEXT = "/roboconf-dm";
@@ -134,7 +137,7 @@ public class ServletRegistrationComponent {
 		this.httpService.registerServlet( WEBSOCKET_CONTEXT, websocketServlet, initParams, null );
 
 		// Register a filter for authentication
-		this.authenticationFilter = new AuthenticationFilter();
+		this.authenticationFilter = new AuthenticationFilter( this );
 		this.authenticationFilter.setAuthenticationEnabled( this.enableAuthentication );
 		this.authenticationFilter.setAuthenticationManager( this.authenticationMngr );
 		this.authenticationFilter.setSessionPeriod( this.sessionPeriod );
@@ -336,5 +339,59 @@ public class ServletRegistrationComponent {
 	 */
 	public void setMavenResolver( MavenResolver mavenResolver ) {
 		this.mavenResolver = mavenResolver;
+	}
+
+
+	// MBeans
+
+	public final AtomicLong restRequestsCount = new AtomicLong();
+	public final AtomicLong restRequestsWithAuthFailureCount = new AtomicLong();
+
+	// Web socket handlers are not created by us directly.
+	// Static access is the most simple solution.
+	public static final AtomicLong WS_CONNECTION_ERRORS_COUNT = new AtomicLong();
+
+
+	@Override
+	public int getCurrentWebSocketClientsCount() {
+		return WebSocketHandler.getSessionsCount();
+	}
+
+
+	@Override
+	public long getWebSocketConnectionErrorsCount() {
+		return WS_CONNECTION_ERRORS_COUNT.get();
+	}
+
+
+	@Override
+	public long getRestRequestsWithAuthFailureCount() {
+		return this.restRequestsWithAuthFailureCount.get();
+	}
+
+
+	@Override
+	public long getRestRequestsCount() {
+		return this.restRequestsCount.get();
+	}
+
+
+	@Override
+	public boolean isAuthenticationRequired() {
+		return this.enableAuthentication;
+	}
+
+
+	@Override
+	public boolean isCorsEnabled() {
+		return this.enableCors;
+	}
+
+
+	@Override
+	public void reset() {
+		this.restRequestsCount.set( 0 );
+		this.restRequestsWithAuthFailureCount.set( 0 );
+		WS_CONNECTION_ERRORS_COUNT.set( 0 );
 	}
 }

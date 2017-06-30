@@ -49,7 +49,7 @@ public class TestApplicationTemplate extends ApplicationTemplate {
 	public TestApplicationTemplate() {
 		super();
 		setName( "test-app" );
-		setQualifier( "test" );
+		setVersion( "1.0.1" );
 
 		// Root instances
 		Component vmComponent = new Component( "vm" ).installerName( Constants.TARGET_INSTALLER );

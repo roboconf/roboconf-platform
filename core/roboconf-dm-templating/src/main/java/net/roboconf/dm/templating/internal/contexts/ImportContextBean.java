@@ -36,7 +36,8 @@ public class ImportContextBean {
 
 	String component;
 	InstanceContextBean instance;
-	final Set<VariableContextBean> variables = new LinkedHashSet<VariableContextBean>();
+	final Set<VariableContextBean> variables = new LinkedHashSet<>();
+
 
 	public String getComponent() {
 		return this.component;

@@ -25,6 +25,13 @@
 
 package net.roboconf.core.dsl.converters;
 
+import static net.roboconf.core.errors.ErrorDetails.alreadyDefined;
+import static net.roboconf.core.errors.ErrorDetails.component;
+import static net.roboconf.core.errors.ErrorDetails.file;
+import static net.roboconf.core.errors.ErrorDetails.instance;
+import static net.roboconf.core.errors.ErrorDetails.line;
+import static net.roboconf.core.errors.ErrorDetails.unrecognized;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -45,6 +51,9 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.dsl.parsing.FileDefinitionParser;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.SourceReference;
@@ -53,7 +62,6 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ModelUtils;
 
 /**
@@ -134,7 +142,7 @@ public class FromInstanceDefinition {
 
 			if( ! importedFile.exists()) {
 				ParsingError error = new ParsingError( ErrorCode.CO_UNREACHABLE_FILE, file, 0 );
-				error.setDetails( "Import location: " + importedFile );
+				error.setDetails( file( importedFile ));
 				this.errors.add( error );
 				continue;
 			}
@@ -152,7 +160,7 @@ public class FromInstanceDefinition {
 					&& currentDefinition.getFileType() != FileDefinition.EMPTY ) {
 
 				ParsingError error = new ParsingError( ErrorCode.CO_NOT_INSTANCES, file, 0 );
-				error.setDetails( "Imported file  " + importedFile + " is of type " + FileDefinition.fileTypeAsString( currentDefinition.getFileType()) + "." );
+				error.setDetails( unrecognized( FileDefinition.fileTypeAsString( currentDefinition.getFileType())));
 				currentErrors.add( error );
 			}
 
@@ -186,7 +194,7 @@ public class FromInstanceDefinition {
 			tempNewRootInstances.retainAll( rootInstances );
 			for( Instance instance : tempNewRootInstances ) {
 				ParsingError error = new ParsingError( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, file, 1 );
-				error.setDetails( "Instance path: " + InstanceHelpers.computeInstancePath( instance ));
+				error.setDetails( instance( instance ));
 				this.errors.add( error );
 			}
 
@@ -262,7 +270,7 @@ public class FromInstanceDefinition {
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
 			if( instance.getComponent() == null ) {
 				ParsingError error = new ParsingError( ErrorCode.CO_INEXISTING_COMPONENT, block.getDeclaringFile().getEditedFile(), currentBlock.getLine());
-				error.setDetails( "Component name: " + currentBlock.getName());
+				error.setDetails( component( currentBlock.getName()));
 				this.errors.add( error );
 				continue;
 			}
@@ -388,27 +396,19 @@ public class FromInstanceDefinition {
 			if( entry.getValue().size() == 1 )
 				continue;
 
-			StringBuilder sb = new StringBuilder();
-			sb.append( "Instance " );
-			sb.append( entry.getKey());
-			sb.append( " is defined in:\n" );
 			for( AbstractBlockHolder holder : entry.getValue()) {
-				sb.append( " - " );
+				List<ErrorDetails> details = new ArrayList<> ();
 
-				FileDefinition file = holder.getDeclaringFile();
-				sb.append( file.getEditedFile().getName());
+				details.add( instance( entry.getKey()));
+				details.add( alreadyDefined( entry.getKey()));
+				details.add( file( holder.getDeclaringFile().getEditedFile()));
+				details.add( line( holder.getLine()));
 
-				sb.append( " - line " );
-				sb.append( holder.getLine());
-				sb.append( "\n" );
-			}
-
-			for( AbstractBlockHolder holder : entry.getValue()) {
 				this.errors.add( new ParsingError(
 						ErrorCode.CO_ALREADY_DEFINED_INSTANCE,
 						holder.getFile(),
 						holder.getLine(),
-						sb.toString()));
+						details.toArray( new ErrorDetails[ details.size()])));
 			}
 		}
 	}

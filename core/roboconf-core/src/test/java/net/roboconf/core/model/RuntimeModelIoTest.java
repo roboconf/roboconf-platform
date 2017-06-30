@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -44,9 +45,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.ErrorCode.ErrorLevel;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorCode.ErrorLevel;
+import net.roboconf.core.errors.ErrorDetails.ErrorDetailsKind;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.RuntimeModelIo.GraphFileFilter;
@@ -59,7 +62,6 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -84,7 +86,10 @@ public class RuntimeModelIoTest {
 
 		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
 		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
-		Assert.assertEquals( "sample", result.applicationTemplate.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", result.applicationTemplate.getVersion());
+
+		List<String> tags = Arrays.asList( "test", "lamp", "example" );
+		Assert.assertEquals( new TreeSet<>( tags ), result.applicationTemplate.getTags());
 
 		Assert.assertNotNull( result.applicationTemplate.getGraphs());
 		Graphs g = result.applicationTemplate.getGraphs();
@@ -214,7 +219,7 @@ public class RuntimeModelIoTest {
 		// Test the graph and descriptor
 		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
 		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
-		Assert.assertEquals( "sample", result.applicationTemplate.getQualifier());
+		Assert.assertEquals( "1.0.1-SNAPSHOT", result.applicationTemplate.getVersion());
 		Assert.assertEquals( "roboconf-1.0", result.applicationTemplate.getDslId());
 
 		Assert.assertNotNull( result.applicationTemplate.getGraphs());
@@ -458,7 +463,7 @@ public class RuntimeModelIoTest {
 
 		Properties props = new Properties();
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_NAME, "app-name" );
-		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_QUALIFIER, "snapshot" );
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_VERSION, "1.0" );
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
 		Utils.writePropertiesFile( props, new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
@@ -672,7 +677,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setInstanceEntryPoint( "model.instances" );
 		desc.setDslId( "roboconf-1.0" );
 
@@ -701,7 +706,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -727,7 +732,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -772,7 +777,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -800,7 +805,7 @@ public class RuntimeModelIoTest {
 
 		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
-		desc.setQualifier( "qualifier" );
+		desc.setVersion( "3.0" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
 		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
@@ -867,7 +872,11 @@ public class RuntimeModelIoTest {
 		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
 		Assert.assertEquals( 1, alr.getLoadErrors().size());
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, alr.getLoadErrors().iterator().next().getErrorCode());
-		Assert.assertTrue( alr.getLoadErrors().iterator().next().getDetails().contains( "f.*" ));
+
+		RoboconfError error = alr.getLoadErrors().iterator().next();
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( ErrorDetailsKind.VARIABLE, error.getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertTrue( error.getDetails()[ 0 ].getElementName().contains( "f.*" ));
 	}
 
 
@@ -971,10 +980,9 @@ public class RuntimeModelIoTest {
 				criticalErrors.add( error );
 		}
 
-		Assert.assertEquals( 3, criticalErrors.size());
-		Assert.assertEquals( ErrorCode.CMD_NO_INSTRUCTION, criticalErrors.get( 0 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, criticalErrors.get( 1 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.PROJ_INVALID_COMMAND_EXT, criticalErrors.get( 2 ).getErrorCode());
+		Assert.assertEquals( 2, criticalErrors.size());
+		Assert.assertEquals( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, criticalErrors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_COMMAND_EXT, criticalErrors.get( 1 ).getErrorCode());
 	}
 
 

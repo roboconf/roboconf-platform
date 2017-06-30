@@ -161,7 +161,7 @@ public class KibanaExtensionServlet extends HttpServlet {
 			resp.sendError( HttpServletResponse.SC_NOT_FOUND );
 
 		} else {
-			ByteArrayInputStream in = new ByteArrayInputStream( content.getBytes( "UTF-8" ));
+			ByteArrayInputStream in = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ));
 			Utils.copyStreamUnsafelyUseWithCaution( in, resp.getOutputStream());
 		}
 	}

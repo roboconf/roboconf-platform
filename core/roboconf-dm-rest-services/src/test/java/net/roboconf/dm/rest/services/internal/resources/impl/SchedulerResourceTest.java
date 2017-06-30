@@ -36,10 +36,13 @@ import javax.ws.rs.core.Response.Status;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.scheduler.IScheduler;
 
@@ -48,13 +51,22 @@ import net.roboconf.dm.scheduler.IScheduler;
  */
 public class SchedulerResourceTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 	private SchedulerResource resource;
 	private IScheduler scheduler;
 
 
 	@Before
-	public void prepare() {
-		this.resource = new SchedulerResource();
+	public void prepare() throws Exception {
+
+		// Simple manager
+		Manager manager = new Manager();
+		manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+
+		// Create the scheduler
+		this.resource = new SchedulerResource( manager );
 		this.scheduler = Mockito.mock( IScheduler.class );
 		this.resource.scheduler = this.scheduler;
 	}

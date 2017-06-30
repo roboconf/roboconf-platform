@@ -35,10 +35,10 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 

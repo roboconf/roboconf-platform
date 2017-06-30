@@ -35,7 +35,8 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails.ErrorDetailsKind;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
@@ -365,7 +366,12 @@ public class FromGraphDefinitionTest {
 
 		ParsingError[] errors = fromDef.getErrors().toArray( new ParsingError[ 1 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 0 ].getErrorCode());
-		Assert.assertTrue( errors[ 0 ].getDetails().contains( "Fa3" ));
+		Assert.assertEquals( 3, errors[ 0 ].getDetails().length );
+
+		Assert.assertEquals( "Fa3", errors[ 0 ].getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.NAME, errors[ 0 ].getDetails()[ 0 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.FILE, errors[ 0 ].getDetails()[ 1 ].getErrorDetailsKind());
+		Assert.assertEquals( ErrorDetailsKind.LINE, errors[ 0 ].getDetails()[ 2 ].getErrorDetailsKind());
 	}
 
 
@@ -700,14 +706,20 @@ public class FromGraphDefinitionTest {
 
 		error = iterator.next();
 		Assert.assertEquals( ErrorCode.PM_INVALID_CHILD_NAME, error.getErrorCode());
-		Assert.assertEquals( "Child name: \"toto\"", error.getDetails());
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( "\"toto\"", error.getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.NAME, error.getDetails()[ 0 ].getErrorDetailsKind());
 
 		error = iterator.next();
 		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, error.getErrorCode());
-		Assert.assertEquals( "Invalid name: \"A\"", error.getDetails());
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( "\"A\"", error.getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.NAME, error.getDetails()[ 0 ].getErrorDetailsKind());
 
 		error = iterator.next();
 		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, error.getErrorCode());
-		Assert.assertEquals( "Invalid name: \"component\"", error.getDetails());
+		Assert.assertEquals( 1, error.getDetails().length );
+		Assert.assertEquals( "\"component\"", error.getDetails()[ 0 ].getElementName());
+		Assert.assertEquals( ErrorDetailsKind.NAME, error.getDetails()[ 0 ].getErrorDetailsKind());
 	}
 }

@@ -46,6 +46,12 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -77,16 +83,64 @@
 			</plugin>
 			
 			<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>cobertura-maven-plugin</artifactId>
-					<configuration>
-						<instrumentation>
-							<excludes>
-								<exclude>**/MavenUtils.class</exclude>
-							</excludes>
-						</instrumentation>
-					</configuration>
-				</plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>cobertura-maven-plugin</artifactId>
+				<configuration>
+					<instrumentation>
+						<excludes>
+							<exclude>**/MavenUtils.class</exclude>
+						</excludes>
+					</instrumentation>
+				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>enforce-json-files-exist</id>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireFilesExist>
+									<files>
+										<file>${project.build.outputDirectory}/en_EN.json</file>
+										<file>${project.build.outputDirectory}/fr_FR.json</file>
+									</files>
+								</requireFilesExist>
+							</rules>
+							<fail>true</fail>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>com.collaborne.maven</groupId>
+				<artifactId>json-schema-validator-maven-plugin</artifactId>
+				<version>1.0-beta-1</version>
+				<executions>
+					<execution>
+						<id>validate-json</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>validate</goal>
+						</goals>
+						<configuration>
+							<sourceDirectory>src/main/resources</sourceDirectory>
+							<includes>
+								<include>*.json</include>
+							</includes>
+							<requireSchema>false</requireSchema>
+							<deepCheck>true</deepCheck>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

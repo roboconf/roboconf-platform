@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -64,12 +65,15 @@ public class DefaultUrlResolverTest {
 		// Run a socket server
 		final int portNumber = 11200;
 		final String content = "something";
+		final CountDownLatch latch = new CountDownLatch( 1 );
+
 		Runnable serverRunnable = new Runnable() {
 			@Override
 			public void run() {
 
 				try {
 					ServerSocket serverSocket = new ServerSocket( portNumber );
+					latch.countDown();
 					Socket clientSocket = serverSocket.accept();
 
 					clientSocket.getOutputStream().write( "HTTP/1.0 200 OK\r\n\r\n".getBytes( "UTF-8" ));
@@ -87,7 +91,12 @@ public class DefaultUrlResolverTest {
 
 		Thread t = new Thread( serverRunnable );
 		t.start();
-		Thread.sleep( 500 );
+
+		// Wait the thread to be started
+		latch.await();
+
+		// Wait the server to be accepting requests
+		Thread.sleep( 200 );
 
 		// Prepare our test
 		DefaultUrlResolver resolver = new DefaultUrlResolver();

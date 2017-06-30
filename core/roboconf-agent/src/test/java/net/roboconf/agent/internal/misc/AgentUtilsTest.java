@@ -354,7 +354,7 @@ public class AgentUtilsTest {
 
 		// Skipped (not templates or invalid target file)
 		Utils.writeStringInto( "ip = <ip-address>\napp = <application-name>", new File( injectionDir, "not-a-template.cfg" ));
-		Utils.writeStringInto( "I am <scoped-instance-path>", new File( injectionDir, UserDataUtils.CONF_FILE_AGENT + ".tpl" ));
+		Utils.writeStringInto( "I am <scoped-instance-path>", new File( injectionDir, UserDataHelper.CONF_FILE_AGENT + ".tpl" ));
 
 		// Check
 		Assert.assertEquals( 1, karafEtc.listFiles().length );

@@ -25,8 +25,12 @@
 
 package net.roboconf.core.model;
 
+import static net.roboconf.core.errors.ErrorDetails.directory;
+import static net.roboconf.core.errors.ErrorDetails.name;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +39,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
@@ -63,7 +68,7 @@ public class TargetValidator {
 
 		this.props = new Properties();
 		try {
-			this.props.load( new ByteArrayInputStream( propertiesFileContent.getBytes( "UTF-8" )));
+			this.props.load( new ByteArrayInputStream( propertiesFileContent.getBytes( StandardCharsets.UTF_8 )));
 
 		} catch( Exception e ) {
 			this.failed = true;
@@ -105,9 +110,9 @@ public class TargetValidator {
 	 */
 	public void validate() {
 
-		String details = null;
+		ErrorDetails details = null;
 		if( this.fileName != null )
-			details = "File name: " + this.fileName;
+			details = ErrorDetails.file( this.fileName );
 
 		if( this.failed ) {
 			this.errors.add( new ModelError( ErrorCode.REC_TARGET_INVALID_FILE_OR_CONTENT, this.modelObject, details ));
@@ -172,14 +177,14 @@ public class TargetValidator {
 
 			String id = tv.getProperties().getProperty( Constants.TARGET_PROPERTY_ID );
 			if( targetIds.contains( id ))
-				result.add( new ModelError( ErrorCode.REC_TARGET_CONFLICTING_ID, tv.modelObject, "Target ID: " + id ));
+				result.add( new ModelError( ErrorCode.REC_TARGET_CONFLICTING_ID, tv.modelObject, name( id )));
 
 			targetIds.add( id );
 		}
 
 		// There should be properties files
 		if( targetIds.isEmpty())
-			result.add( new ModelError( ErrorCode.REC_TARGET_NO_PROPERTIES, null, "Directory: " + directory.getAbsolutePath()));
+			result.add( new ModelError( ErrorCode.REC_TARGET_NO_PROPERTIES, null, directory( directory )));
 
 		return result;
 	}

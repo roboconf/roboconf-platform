@@ -29,7 +29,8 @@ import java.io.File;
 import java.util.List;
 
 import org.junit.Assert;
-import net.roboconf.core.ErrorCode;
+
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.ParsingError;
 

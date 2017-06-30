@@ -25,18 +25,29 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.File;
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
+import net.roboconf.agent.internal.misc.AgentConstants;
 import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.agent.internal.misc.UserDataHelper;
 import net.roboconf.agent.internal.test.AgentTestUtils;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.ProcessStore;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
@@ -51,6 +62,9 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
  */
 public class AgentBasicsTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 	private Agent agent;
 	private MessagingClientFactoryRegistry registry;
 
@@ -61,6 +75,9 @@ public class AgentBasicsTest {
 		this.registry = new MessagingClientFactoryRegistry();
 		this.registry.addMessagingClientFactory( new TestClientFactory());
 		this.agent = new Agent();
+
+		this.agent.karafEtc = this.folder.newFolder().getAbsolutePath();
+		this.agent.karafData = this.folder.newFolder().getAbsolutePath();
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
 		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
@@ -98,6 +115,14 @@ public class AgentBasicsTest {
 		this.agent.forceHeartbeatSending();
 		Assert.assertEquals( 1, client.messagesForTheDm.size());
 		Assert.assertEquals( MsgNotifHeartbeat.class, client.messagesForTheDm.get( 0 ).getClass());
+	}
+
+
+	@Test
+	public void testSetParameters_noNPE() {
+
+		this.agent.setParameters( null );
+		Assert.assertNull( this.agent.parameters );
 	}
 
 
@@ -302,5 +327,176 @@ public class AgentBasicsTest {
 		Assert.assertFalse( status.startsWith( "There is no message" ));
 		Assert.assertFalse( status.contains( "No recipe is under execution." ));
 		Assert.assertTrue( status.contains( "Be careful. A recipe is under execution." ));
+	}
+
+
+	@Test
+	public void testReloadUserData_empty() {
+
+		String oldIpAddress = this.agent.ipAddress;
+		this.agent.parameters = "";
+		this.agent.overrideProperties = true;
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( "", this.agent.parameters );
+		Assert.assertNull( this.agent.applicationName );
+		Assert.assertNull( this.agent.scopedInstancePath );
+		Assert.assertEquals( oldIpAddress, this.agent.ipAddress );
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, this.agent.domain );
+	}
+
+
+	@Test
+	public void testReloadUserData_fromFile() throws Exception {
+
+		Map<String,String> messagingConfiguration = new HashMap<> ();
+		String s = UserDataHelpers.writeUserDataAsString( messagingConfiguration, "d1", "app", "/vm2" );
+
+		File outputFile = this.folder.newFile();
+		Utils.writeStringInto( s, outputFile );
+		String url = outputFile.toURI().toURL().toString();
+
+		String oldIpAddress = this.agent.ipAddress;
+		this.agent.parameters = url;
+		this.agent.overrideProperties = true;
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( url, this.agent.parameters );
+		Assert.assertEquals( "app", this.agent.applicationName );
+		Assert.assertEquals( "/vm2", this.agent.scopedInstancePath );
+		Assert.assertEquals( "d1", this.agent.domain );
+		Assert.assertEquals( oldIpAddress, this.agent.ipAddress );
+	}
+
+
+	@Test
+	public void testReloadUserData_fromInexistingFile() throws Exception {
+
+		String oldIpAddress = this.agent.ipAddress;
+		this.agent.parameters = "file:/something";
+		this.agent.overrideProperties = true;
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( "file:/something", this.agent.parameters );
+		Assert.assertNull( this.agent.applicationName );
+		Assert.assertNull( this.agent.scopedInstancePath );
+		Assert.assertEquals( oldIpAddress, this.agent.ipAddress );
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, this.agent.domain );
+	}
+
+
+	@Test
+	public void testReloadUserData_fromFile_propertiesCannotBeOverwritten() throws Exception {
+
+		Map<String,String> messagingConfiguration = new HashMap<> ();
+		String s = UserDataHelpers.writeUserDataAsString( messagingConfiguration, "d1", "app", "/vm2" );
+
+		File outputFile = this.folder.newFile();
+		Utils.writeStringInto( s, outputFile );
+		String url = outputFile.toURI().toURL().toString();
+
+		String oldIpAddress = this.agent.ipAddress;
+		this.agent.parameters = url;
+		this.agent.overrideProperties = false;
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( url, this.agent.parameters );
+		Assert.assertNull( this.agent.applicationName );
+		Assert.assertNull( this.agent.scopedInstancePath );
+		Assert.assertEquals( oldIpAddress, this.agent.ipAddress );
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, this.agent.domain );
+	}
+
+
+	@Test
+	public void testReloadUserData_ec2() throws Exception {
+
+		this.agent.parameters = AgentConstants.PLATFORM_EC2;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( AgentConstants.PLATFORM_EC2, this.agent.parameters );
+		Mockito.verify( this.agent.userDataHelper, Mockito.only()).findParametersForAmazonOrOpenStack( Mockito.any( Logger.class ));
+	}
+
+
+	@Test
+	public void testReloadUserData_openstack() throws Exception {
+
+		this.agent.parameters = AgentConstants.PLATFORM_OPENSTACK;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( AgentConstants.PLATFORM_OPENSTACK, this.agent.parameters );
+		Mockito.verify( this.agent.userDataHelper, Mockito.only()).findParametersForAmazonOrOpenStack( Mockito.any( Logger.class ));
+	}
+
+
+	@Test
+	public void testReloadUserData_azure() throws Exception {
+
+		this.agent.parameters = AgentConstants.PLATFORM_AZURE;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( AgentConstants.PLATFORM_AZURE, this.agent.parameters );
+		Mockito.verify( this.agent.userDataHelper, Mockito.only()).findParametersForAzure( Mockito.any( Logger.class ));
+	}
+
+
+	@Test
+	public void testReloadUserData_vmware() throws Exception {
+
+		this.agent.parameters = AgentConstants.PLATFORM_VMWARE;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( AgentConstants.PLATFORM_VMWARE, this.agent.parameters );
+		Mockito.verify( this.agent.userDataHelper, Mockito.only()).findParametersForVmware( Mockito.any( Logger.class ));
+	}
+
+
+	@Test
+	public void testReloadUserData_ec2_withIpAddress_withReconfigurationException() throws Exception {
+
+		this.agent.parameters = AgentConstants.PLATFORM_EC2;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+
+		AgentProperties props = new AgentProperties();
+		props.setApplicationName( "a1" );
+		props.setIpAddress( "192.168.1.17" );
+		props.setScopedInstancePath( "/root-vm" );
+
+		Map<String,String> messagingConfiguration = new HashMap<> ();
+		messagingConfiguration.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "bird" );
+		props.setMessagingConfiguration( messagingConfiguration );
+
+		// We do not set the domain.
+		// It will be set to its default value.
+
+		Mockito
+		.when( this.agent.userDataHelper.findParametersForAmazonOrOpenStack( Mockito.any( Logger.class )))
+		.thenReturn( props );
+
+		Mockito
+		.doThrow( new RuntimeException( "for test" ))
+		.when( this.agent.userDataHelper ).reconfigureMessaging( Mockito.anyString(), Mockito.anyMapOf( String.class, String.class ));
+
+		this.agent.reloadUserData();
+
+		Assert.assertEquals( AgentConstants.PLATFORM_EC2, this.agent.parameters );
+		Mockito.verify( this.agent.userDataHelper ).findParametersForAmazonOrOpenStack( Mockito.any( Logger.class ));
+		Mockito.verify( this.agent.userDataHelper ).reconfigureMessaging( Mockito.anyString(), Mockito.anyMapOf( String.class, String.class ));
+		Mockito.verifyNoMoreInteractions( this.agent.userDataHelper );
+
+		Assert.assertEquals( "a1", this.agent.applicationName );
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, this.agent.domain );
+		Assert.assertEquals( "192.168.1.17", this.agent.ipAddress );
+		Assert.assertEquals( "/root-vm", this.agent.scopedInstancePath );
 	}
 }

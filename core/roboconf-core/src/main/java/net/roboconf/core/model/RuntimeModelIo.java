@@ -25,6 +25,11 @@
 
 package net.roboconf.core.model;
 
+import static net.roboconf.core.errors.ErrorDetails.directory;
+import static net.roboconf.core.errors.ErrorDetails.exception;
+import static net.roboconf.core.errors.ErrorDetails.expected;
+import static net.roboconf.core.errors.ErrorDetails.name;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -37,8 +42,6 @@ import java.util.Map;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.autonomic.RuleParser;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.dsl.ParsingModelIo;
@@ -46,10 +49,12 @@ import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.converters.FromInstanceDefinition;
 import net.roboconf.core.dsl.converters.FromInstances;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -91,8 +96,7 @@ public final class RuntimeModelIo {
 
 		// Read the application descriptor
 		DESC: if( ! descDirectory.exists()) {
-			RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_DESC_DIR );
-			error.setDetails( "Directory path: " + projectDirectory.getAbsolutePath());
+			RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_DESC_DIR, directory( projectDirectory ));
 			result.loadErrors.add( error );
 
 		} else {
@@ -106,9 +110,10 @@ public final class RuntimeModelIo {
 				appDescriptor = ApplicationTemplateDescriptor.load( descriptorFile );
 				app.setName( appDescriptor.getName());
 				app.setDescription( appDescriptor.getDescription());
-				app.setQualifier( appDescriptor.getQualifier());
+				app.setVersion( appDescriptor.getVersion());
 				app.setDslId( appDescriptor.getDslId());
 				app.setExternalExportsPrefix( appDescriptor.getExternalExportsPrefix());
+				app.setTags( appDescriptor.tags );
 
 				for( Map.Entry<String,String> entry : appDescriptor.externalExports.entrySet())
 					app.externalExports.put( entry.getKey(), app.getExternalExportsPrefix() + "." + entry.getValue());
@@ -117,14 +122,7 @@ public final class RuntimeModelIo {
 				result.loadErrors.addAll( errors );
 
 			} catch( IOException e ) {
-				RoboconfError error = new RoboconfError( ErrorCode.PROJ_READ_DESC_FILE );
-				StringBuilder sb = new StringBuilder( "IO exception." );
-				if( e.getMessage() != null ) {
-					sb.append( " " );
-					sb.append( e.getMessage());
-				}
-
-				error.setDetails( sb.toString());
+				RoboconfError error = new RoboconfError( ErrorCode.PROJ_READ_DESC_FILE, exception( e ));
 				result.loadErrors.add( error );
 			}
 		}
@@ -155,10 +153,10 @@ public final class RuntimeModelIo {
 			ApplicationTemplateDescriptor appDescriptor = new ApplicationTemplateDescriptor();
 			appDescriptor.setName( Constants.GENERATED );
 			appDescriptor.setDslId( Constants.GENERATED );
-			appDescriptor.setQualifier( Constants.GENERATED );
+			appDescriptor.setVersion( Constants.GENERATED );
 
 			ApplicationLoadResult alr = new ApplicationLoadResult();
-			alr.applicationTemplate = new ApplicationTemplate( Constants.GENERATED ).dslId( Constants.GENERATED ).qualifier( Constants.GENERATED );
+			alr.applicationTemplate = new ApplicationTemplate( Constants.GENERATED ).dslId( Constants.GENERATED ).version( Constants.GENERATED );
 
 			File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 			File[] graphFiles = graphDirectory.listFiles( new GraphFileFilter());
@@ -191,8 +189,7 @@ public final class RuntimeModelIo {
 		// Load the graph
 		File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 		GRAPH: if( ! graphDirectory.exists()) {
-			RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_GRAPH_DIR );
-			error.setDetails( "Directory path: " + projectDirectory.getAbsolutePath());
+			RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_GRAPH_DIR, directory( projectDirectory ));
 			result.loadErrors.add( error );
 
 		} else if( appDescriptor != null
@@ -200,8 +197,7 @@ public final class RuntimeModelIo {
 
 			File mainGraphFile = new File( graphDirectory, appDescriptor.getGraphEntryPoint());
 			if( ! mainGraphFile.exists()) {
-				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_GRAPH_EP );
-				error.setDetails( "Expected path: " + mainGraphFile.getAbsolutePath());
+				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_GRAPH_EP, expected( mainGraphFile.getAbsolutePath()));
 				result.loadErrors.add( error );
 				break GRAPH;
 			}
@@ -270,7 +266,7 @@ public final class RuntimeModelIo {
 					List<String> coll = new ArrayList<>( parser.getRule().getCommandsToInvoke());
 					coll.removeAll( commandNames );
 					for( String commandName : coll )
-						result.loadErrors.add( new RoboconfError( ErrorCode.RULE_UNKNOWN_COMMAND, "Command name: " + commandName ));
+						result.loadErrors.add( new RoboconfError( ErrorCode.RULE_UNKNOWN_COMMAND, name( commandName )));
 				}
 			}
 		}
@@ -445,7 +441,7 @@ public final class RuntimeModelIo {
 		INST: {
 			if( ! instancesFile.exists()) {
 				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_INSTANCE_EP );
-				error.setDetails( "Expected path: " + instancesFile.getAbsolutePath());
+				error.setDetails( expected( instancesFile.getAbsolutePath()));
 				result.loadErrors.add( error );
 				break INST;
 			}

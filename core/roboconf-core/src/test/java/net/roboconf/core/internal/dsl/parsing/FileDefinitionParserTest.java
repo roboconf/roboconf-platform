@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -40,8 +41,6 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.ErrorCode.ErrorCategory;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -52,6 +51,8 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorCode.ErrorCategory;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Component;
@@ -574,7 +575,7 @@ public class FileDefinitionParserTest {
 				Assert.assertNotNull( f );
 				Assert.assertTrue( f.getName(), f.exists());
 
-				br = new BufferedReader( new InputStreamReader( new FileInputStream( f ), "UTF-8" ));
+				br = new BufferedReader( new InputStreamReader( new FileInputStream( f ), StandardCharsets.UTF_8 ));
 				String line = br.readLine();
 				Assert.assertNotNull( line );
 

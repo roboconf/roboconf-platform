@@ -25,6 +25,16 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import static net.roboconf.core.errors.ErrorCode.REST_DEBUG_AGENT_KO;
+import static net.roboconf.core.errors.ErrorCode.REST_INEXISTING;
+import static net.roboconf.core.errors.ErrorCode.REST_MESSAGING_ERROR;
+import static net.roboconf.core.errors.ErrorDetails.application;
+import static net.roboconf.core.errors.ErrorDetails.instance;
+import static net.roboconf.core.errors.ErrorDetails.name;
+import static net.roboconf.core.errors.ErrorDetails.value;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.handleError;
+import static net.roboconf.dm.rest.services.internal.utils.RestServicesUtils.lang;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +54,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
+import net.roboconf.dm.rest.services.internal.errors.RestError;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 
 /**
@@ -76,10 +87,11 @@ public class DebugResource implements IDebugResource {
 
 		this.logger.fine( "Request: check the connection to the message queue. message=" + message );
 		Response response;
+		String lang = lang( this.manager );
 		if( this.manager.debugMngr().pingMessageQueue( message ))
-			response = Response.status( Status.OK ).entity( "An Echo message (" + message + ") was sent. Wait for the echo on websocket." ).build();
+			response = handleError( Status.OK, new RestError( REST_DEBUG_AGENT_KO, name( "ECHO" ), value( message )), lang ).build();
 		else
-			response = Response .status( Status.INTERNAL_SERVER_ERROR ).entity( "An error occured with the messaging, no ECHO message was sent." ).build();
+			response = handleError( Status.INTERNAL_SERVER_ERROR, new RestError( REST_MESSAGING_ERROR ), lang ).build();
 
 		return response;
 	}
@@ -98,20 +110,22 @@ public class DebugResource implements IDebugResource {
 
 		this.logger.fine( "Request: check the connection with agent " + applicationName + " :: " + scopedInstancePath + ". message=" + message );
 		final ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+		String lang = lang( this.manager );
+
 		Response response;
 		int pingResult;
 		final Instance instance;
 
 		if( ma == null )
-			response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
+			response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( applicationName )), lang ).build();
 		else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), scopedInstancePath )) == null )
-			response = Response .status( Status.NOT_FOUND ).entity( "Instance " + scopedInstancePath + " was not found in application " + applicationName ).build();
+			response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, instance( scopedInstancePath ), application( applicationName )), lang ).build();
 		else if(( pingResult = this.manager.debugMngr().pingAgent( ma, instance, message )) == 1 )
-			response = Response .status( Status.BAD_REQUEST ).entity( "No PING request was sent, the agent is not started." ).build();
+			response = handleError( Status.BAD_REQUEST, new RestError( REST_DEBUG_AGENT_KO ), lang ).build();
 		else if( pingResult == 2 )
-			response = Response .status( Status.INTERNAL_SERVER_ERROR ).entity( "An error occured with the messaging, no PING request was sent." ).build();
+			response = handleError( Status.INTERNAL_SERVER_ERROR, new RestError( REST_MESSAGING_ERROR ), lang ).build();
 		else
-			response = Response.status( Status.OK ).entity( "A PING request (" + message + ") was sent. Wait for the echo on websocket." ).build();
+			response = handleError( Status.OK, new RestError( REST_DEBUG_AGENT_KO, name( "PING" ), value( message )), lang ).build();
 
 		return response;
 	}
@@ -126,13 +140,15 @@ public class DebugResource implements IDebugResource {
 
 		this.logger.fine( "Request: create a diagnostic for " + instancePath + " in application " + applicationName );
 		final Application application = this.manager.applicationMngr().findApplicationByName( applicationName );
+		String lang = lang( this.manager );
+
 		final Instance instance;
 		final Response response;
 
 		if( application == null )
-			response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
+			response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( applicationName )), lang ).build();
 		else if(( instance = InstanceHelpers.findInstanceByPath( application, instancePath )) == null )
-			response = Response .status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found in application " + applicationName ).build();
+			response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, instance( instancePath ), application( applicationName )), lang ).build();
 		else
 			response = Response.status( Status.OK ).entity( createDiagnostic( instance )).build();
 
@@ -149,7 +165,7 @@ public class DebugResource implements IDebugResource {
 	public List<Diagnostic> diagnoseApplication( String applicationName ) {
 
 		this.logger.fine( "Request: create a diagnostic for the application called " + applicationName + "." );
-		List<Diagnostic> result = new ArrayList<Diagnostic> ();
+		List<Diagnostic> result = new ArrayList<> ();
 		final Application application = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( application != null ) {
 			for( Instance inst : InstanceHelpers.getAllInstances( application ))

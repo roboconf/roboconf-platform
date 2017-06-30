@@ -35,8 +35,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.RoboconfError;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.utils.Utils;

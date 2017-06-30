@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -239,13 +240,13 @@ public final class ProgramUtils {
 			BufferedReader br = null;
 			try {
 				InputStream is = this.errorLevel ? this.process.getErrorStream() : this.process.getInputStream();
-				br = new BufferedReader( new InputStreamReader( is, "UTF-8" ));
+				br = new BufferedReader( new InputStreamReader( is, StandardCharsets.UTF_8 ));
 
 				for( String line = br.readLine(); line != null; line = br.readLine())
 					this.sb.append( prefix + line + "\n" );
 
 			} catch( IOException e ) {
-				this.logger.severe( Utils.writeException( e ));
+				this.logger.severe( Utils.writeExceptionButDoNotUseItForLogging( e ));
 
 			} finally {
 				Utils.closeQuietly( br );

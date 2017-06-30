@@ -75,8 +75,8 @@ public class RestApplication extends DefaultResourceConfig {
 		this.debugResource = new DebugResource( manager );
 		this.targetResource = new TargetResource( manager );
 		this.preferencesResource = new PreferencesResource( manager );
-		this.schedulerResource = new SchedulerResource();
-		this.authenticationResource = new AuthenticationResource();
+		this.schedulerResource = new SchedulerResource( manager );
+		this.authenticationResource = new AuthenticationResource( manager );
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );

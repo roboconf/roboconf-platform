@@ -89,9 +89,9 @@ public final class ConfigurationUtils {
 		StringBuilder sb = new StringBuilder( TEMPLATES );
 		sb.append( "/" );
 		sb.append( tpl.getName());
-		if( ! Utils.isEmptyOrWhitespaces( tpl.getQualifier())) {
+		if( ! Utils.isEmptyOrWhitespaces( tpl.getVersion())) {
 			sb.append( " - " );
-			sb.append( tpl.getQualifier());
+			sb.append( tpl.getVersion());
 		}
 
 		return new File( configurationDirectory, sb.toString());
@@ -162,7 +162,7 @@ public final class ConfigurationUtils {
 		// Find the root directory
 		File root;
 		if( ! Utils.isEmptyOrWhitespaces( qualifier )) {
-			ApplicationTemplate tpl = new ApplicationTemplate( name ).qualifier( qualifier );
+			ApplicationTemplate tpl = new ApplicationTemplate( name ).version( qualifier );
 			root = ConfigurationUtils.findTemplateDirectory( tpl, configurationDirectory );
 		} else {
 			root = ConfigurationUtils.findApplicationDirectory( name, configurationDirectory );

@@ -31,20 +31,29 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
 
-import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.target.api.TargetHandlerParameters;
+import net.roboconf.target.docker.internal.test.DockerTestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class ToRunByHandDockerImageGenerationTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
 	@Ignore
@@ -52,9 +61,8 @@ public class ToRunByHandDockerImageGenerationTest {
 
 		// Verify no image exists
 		final String tag = "roboconf-test-by-hand";
-
 		Builder config = DefaultDockerClientConfig.createDefaultConfigBuilder();
-		config.withDockerHost( "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
+		config.withDockerHost( "tcp://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 
 		DockerClient docker = DockerClientBuilder.getInstance( config.build()).build();
 		Image img = DockerUtils.findImageByIdOrByTag( tag, docker );
@@ -66,31 +74,57 @@ public class ToRunByHandDockerImageGenerationTest {
 		Assert.assertNull( img );
 
 		// Prepare the parameters
-		File agentTarGz = TestUtils.findTestFile( "/archives/roboconf-fake-agent.tar.gz" );
+		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource( "./image/roboconf" ).getFile());
+		Assert.assertTrue( baseDir.exists());
 
 		Map<String,String> targetProperties = new HashMap<> ();
-		targetProperties.put( DockerHandler.AGENT_PACKAGE_URL, agentTarGz.getAbsolutePath());
+		targetProperties.put( DockerHandler.IMAGE_ID, tag );
+		targetProperties.put( DockerHandler.GENERATE_IMAGE_FROM, "." );
 
+		TargetHandlerParameters parameters= new TargetHandlerParameters();
+		parameters.setTargetProperties( targetProperties );
+		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
+		parameters.setApplicationName( "applicationName" );
+		parameters.setScopedInstancePath( "/vm" );
+		parameters.setTargetPropertiesDirectory( baseDir );
+
+		File tmpFolder = this.folder.newFolder();
+		Map<String,File> containerIdToVolume = new HashMap<> ();
 		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
-				targetProperties,
-				new HashMap<String,String>( 0 ),
-				"machineId", "scopedInstancePath", "applicationName", null );
+				parameters,
+				"machineId",
+				new Instance(),
+				tmpFolder,
+				containerIdToVolume );
 
 		// Test the creation
+		Container container = null;
 		try {
-			configurator.dockerClient = docker;
-			configurator.createImage( tag );
-
+			configurator.configure();
 			img = DockerUtils.findImageByIdOrByTag( tag, docker );
 			Assert.assertNotNull( img );
+
+			String containerName = DockerUtils.buildContainerNameFrom(
+					parameters.getScopedInstancePath(),
+					parameters.getApplicationName());
+
+			container = DockerUtils.findContainerByIdOrByName( containerName, docker );
+			Assert.assertNotNull( container );
 
 		} finally {
 			if( img != null )
 				docker.removeImageCmd( tag ).exec();
 
 			img = DockerUtils.findImageByIdOrByTag( tag, docker );
-			configurator.close();
 			Assert.assertNull( img );
+
+			if( container != null ) {
+				docker.removeContainerCmd( container.getId()).withForce( true ).exec();
+				container = DockerUtils.findContainerByIdOrByName( container.getId(), docker );
+				Assert.assertNull( container );
+			}
+
+			configurator.close();
 		}
 	}
 }

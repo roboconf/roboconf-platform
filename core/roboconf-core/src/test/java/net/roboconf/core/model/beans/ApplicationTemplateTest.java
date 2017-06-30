@@ -26,6 +26,7 @@
 package net.roboconf.core.model.beans;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,11 +41,11 @@ public class ApplicationTemplateTest {
 
 		ApplicationTemplate app1 = new ApplicationTemplate();
 		app1.setName( "app" );
-		app1.setQualifier( "snapshot" );
+		app1.setVersion( "snapshot" );
 
 		ApplicationTemplate app2 = new ApplicationTemplate();
 		app2.setName( "app" );
-		app2.setQualifier( "snapshot" );
+		app2.setVersion( "snapshot" );
 
 		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
@@ -73,7 +74,7 @@ public class ApplicationTemplateTest {
 	public void testEqualsAndHashCode_3() {
 
 		ApplicationTemplate app1 = new ApplicationTemplate();
-		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "whatever" );
+		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).version( "whatever" );
 
 		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
@@ -85,8 +86,8 @@ public class ApplicationTemplateTest {
 	@Test
 	public void testEqualsAndHashCode_4() {
 
-		ApplicationTemplate app1 = new ApplicationTemplate( "app" ).qualifier( "v1" );
-		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "v3" );
+		ApplicationTemplate app1 = new ApplicationTemplate( "app" ).version( "v1" );
+		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).version( "v3" );
 
 		HashSet<ApplicationTemplate> set = new HashSet<>( 2 );
 		set.add( app1 );
@@ -101,7 +102,7 @@ public class ApplicationTemplateTest {
 		ApplicationTemplate app = new ApplicationTemplate( "app" );
 		Assert.assertFalse( app.equals( null ));
 		Assert.assertFalse( app.equals( new ApplicationTemplate()));
-		Assert.assertFalse( app.equals( new ApplicationTemplate( "app" ).qualifier( "something" )));
+		Assert.assertFalse( app.equals( new ApplicationTemplate( "app" ).version( "something" )));
 		Assert.assertFalse( app.equals( new Object()));
 
 		Assert.assertEquals( app, app );
@@ -112,10 +113,10 @@ public class ApplicationTemplateTest {
 	@Test
 	public void testChain() {
 
-		ApplicationTemplate app = new ApplicationTemplate().name( "ins" ).description( "desc" ).qualifier( "snapshot" ).graphs( new Graphs());
+		ApplicationTemplate app = new ApplicationTemplate().name( "ins" ).description( "desc" ).version( "snapshot" ).graphs( new Graphs());
 		Assert.assertEquals( "ins", app.getName());
 		Assert.assertEquals( "desc", app.getDescription());
-		Assert.assertEquals( "snapshot", app.getQualifier());
+		Assert.assertEquals( "snapshot", app.getVersion());
 		Assert.assertNotNull( app.getGraphs());
 	}
 
@@ -138,5 +139,23 @@ public class ApplicationTemplateTest {
 		app.setName( " âêû éèà " );
 		Assert.assertEquals( "aeu eea", app.getName());
 		Assert.assertEquals( "âêû éèà", app.getDisplayName());
+	}
+
+
+	@Test
+	public void testTags() {
+
+		ApplicationTemplate app = new ApplicationTemplate();
+		Assert.assertEquals( 0, app.getTags().size());
+
+		app.addTag( "toto" );
+		Assert.assertEquals( 1, app.getTags().size());
+		Assert.assertEquals( "toto", app.getTags().iterator().next());
+
+		Set<String> newTags = new HashSet<> ();
+		newTags.add( "titi" );
+		newTags.add( "tutu" );
+		app.setTags( newTags );
+		Assert.assertEquals( newTags, app.getTags());
 	}
 }

@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -57,13 +58,13 @@ public final class DockerfileParser {
 	 */
 	public static List<DockerCommand> dockerfileToCommandList( File dockerfile ) throws IOException {
 
-		List<DockerCommand> result = new ArrayList<DockerCommand>();
+		List<DockerCommand> result = new ArrayList<>();
 		FileInputStream in = new FileInputStream( dockerfile );
 		Logger logger = Logger.getLogger( DockerfileParser.class.getName());
 		BufferedReader br = null;
 
 		try {
-			br = new BufferedReader( new InputStreamReader( in, "UTF-8" ));
+			br = new BufferedReader( new InputStreamReader( in, StandardCharsets.UTF_8 ));
 			String line;
 			while((line = br.readLine()) != null) {
 

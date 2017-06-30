@@ -28,11 +28,14 @@ package net.roboconf.core.model.beans;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * An application template groups an identifier, graph definitions and instances.
@@ -42,12 +45,18 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 
 	private static final long serialVersionUID = -4753958407033243184L;
 
-	private String qualifier, dslId, externalExportsPrefix;
+	private String version, dslId, externalExportsPrefix;
 	private Graphs graphs;
 
 	// We use a list because an application's attributes may be modified.
 	// With a set, this could result in unpredictable behaviors.
 	private final List<Application> associatedApplications = new ArrayList<> ();
+
+	/**
+	 * Tags associated with this template.
+	 */
+	// Private to guarantee atomic operations on it.
+	private final Set<String> tags = new TreeSet<> ();
 
 	/**
 	 * External exports.
@@ -81,17 +90,17 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	}
 
 	/**
-	 * @return the qualifier
+	 * @return the version
 	 */
-	public String getQualifier() {
-		return this.qualifier;
+	public String getVersion() {
+		return this.version;
 	}
 
 	/**
-	 * @param qualifier the qualifier to set
+	 * @param version the version to set
 	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public void setVersion( String version ) {
+		this.version = version;
 	}
 
 	/**
@@ -141,13 +150,13 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	public boolean equals( Object obj ) {
 		return obj instanceof ApplicationTemplate
 				&& Objects.equals( this.name, ((ApplicationTemplate) obj ).getName())
-				&& Objects.equals( this.qualifier, ((ApplicationTemplate) obj ).getQualifier());
+				&& Objects.equals( this.version, ((ApplicationTemplate) obj ).getVersion());
 	}
 
 	@Override
 	public int hashCode() {
 		int i1 = this.name == null ? 29 : this.name.hashCode();
-		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
+		int i2 = this.version == null ? 11 : this.version.hashCode();
 		return i1 * i2;
 	}
 
@@ -160,10 +169,10 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	}
 
 	/**
-	 * Sets the qualifier in a chain approach.
+	 * Sets the version in a chain approach.
 	 */
-	public ApplicationTemplate qualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public ApplicationTemplate version( String version ) {
+		this.version = version;
 		return this;
 	}
 
@@ -226,5 +235,35 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 		synchronized( this.associatedApplications ) {
 			this.associatedApplications.remove( app );
 		}
+	}
+
+	/**
+	 * Adds a tag.
+	 * @param tag
+	 */
+	public void addTag( String tag ) {
+		synchronized( this.tags ) {
+			this.tags.add( tag );
+		}
+	}
+
+	/**
+	 * Replaces all the tags.
+	 * @param tags a (potentially null) collection of tags
+	 */
+	public void setTags( Collection<String> tags ) {
+
+		synchronized( this.tags ) {
+			this.tags.clear();
+			if( tags != null )
+				this.tags.addAll( tags );
+		}
+	}
+
+	/**
+	 * @return the tags
+	 */
+	public Set<String> getTags() {
+		return Collections.unmodifiableSet( this.tags );
 	}
 }

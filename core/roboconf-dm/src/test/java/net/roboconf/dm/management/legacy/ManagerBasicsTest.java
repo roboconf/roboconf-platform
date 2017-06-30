@@ -361,7 +361,7 @@ public class ManagerBasicsTest {
 		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
 		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
@@ -385,7 +385,7 @@ public class ManagerBasicsTest {
 		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
 		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl.getName(), tpl.getVersion());
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
@@ -489,7 +489,7 @@ public class ManagerBasicsTest {
 		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
 
 		// Undeploy it
-		this.manager.applicationTemplateMngr().deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		this.manager.applicationTemplateMngr().deleteApplicationTemplate( tpl.getName(), tpl.getVersion());
 		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
 
@@ -505,7 +505,7 @@ public class ManagerBasicsTest {
 		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
 
 		// Undeploy it, again
-		this.manager.applicationTemplateMngr().deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		this.manager.applicationTemplateMngr().deleteApplicationTemplate( tpl.getName(), tpl.getVersion());
 		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 		Assert.assertEquals( 1, this.manager.targetsMngr().listAllTargets().size());
 
@@ -530,7 +530,7 @@ public class ManagerBasicsTest {
 		Assert.assertTrue( firstDirectory.exists());
 
 		File normalTplDirectory = ConfigurationUtils.findTemplateDirectory(
-				new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" ),
+				new ApplicationTemplate( "Legacy LAMP" ).version( "1.0.1-SNAPSHOT" ),
 				this.manager.configurationMngr().getWorkingDirectory());
 
 		File directory = new File( normalTplDirectory, "intermediate/subdir" );

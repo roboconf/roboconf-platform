@@ -25,14 +25,15 @@
 
 package net.roboconf.target.occi.internal;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
@@ -83,7 +84,7 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 			UUID id = UUID.randomUUID();
 			Map<String, String> targetProperties = parameters.getTargetProperties();
 
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
@@ -126,16 +127,22 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	public MachineConfigurator machineConfigurator(
 			TargetHandlerParameters parameters,
 			String machineId,
-			Instance scopedInstance ) {
+			Instance scopedInstance )
+	throws TargetException {
 
-		Properties userData = DataHelpers.writeUserDataAsProperties(
-					parameters.getMessagingProperties(),
-					parameters.getDomain(),
-					parameters.getApplicationName(),
-					parameters.getScopedInstancePath());
+		try {
+			Properties userData = UserDataHelpers.writeUserDataAsProperties(
+						parameters.getMessagingProperties(),
+						parameters.getDomain(),
+						parameters.getApplicationName(),
+						parameters.getScopedInstancePath());
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
-		return new OcciMachineConfigurator(machineId, parameters.getTargetProperties(), userData, rootInstanceName, scopedInstance );
+			String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
+			return new OcciMachineConfigurator( machineId, parameters.getTargetProperties(), userData, rootInstanceName, scopedInstance );
+
+		} catch( IOException e ) {
+			throw new TargetException( e );
+		}
 	}
 
 

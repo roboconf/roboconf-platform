@@ -27,8 +27,9 @@ package net.roboconf.core.model;
 
 import java.util.Objects;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
+import net.roboconf.core.errors.RoboconfError;
 
 /**
  * A model error instantiates and localizes an {@link ErrorCode}.
@@ -54,7 +55,7 @@ public class ModelError extends RoboconfError {
 	 * @param modelObject the model object that contain an error
 	 * @param details the error details
 	 */
-	public ModelError( ErrorCode errorCode, Object modelObject, String details ) {
+	public ModelError( ErrorCode errorCode, Object modelObject, ErrorDetails... details ) {
 		super( errorCode, details );
 		this.modelObject = modelObject;
 	}

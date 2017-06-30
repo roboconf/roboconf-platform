@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -309,7 +310,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	 */
 	private boolean validateHtml( String content ) throws Exception {
 
-		InputStream in = new ByteArrayInputStream( content.getBytes( "UTF-8" ));
+		InputStream in = new ByteArrayInputStream( content.getBytes( StandardCharsets.UTF_8 ));
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
 		SourceCode sourceCode = new SourceCode();

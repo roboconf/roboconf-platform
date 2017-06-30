@@ -25,6 +25,11 @@
 
 package net.roboconf.core.model;
 
+import static net.roboconf.core.errors.ErrorDetails.component;
+import static net.roboconf.core.errors.ErrorDetails.expected;
+import static net.roboconf.core.errors.ErrorDetails.file;
+import static net.roboconf.core.errors.ErrorDetails.name;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +44,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
+import net.roboconf.core.errors.ErrorCode;
+import net.roboconf.core.errors.ErrorDetails;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -104,13 +110,13 @@ public final class RecipesValidator {
 	 * @return a non-null list of errors
 	 */
 	private static List<ModelError> validateScriptComponent( File applicationFilesDirectory, Component component ) {
-		List<ModelError> result = new ArrayList<ModelError> ();
+		List<ModelError> result = new ArrayList<> ();
 
 		// There must be a "scripts" directory
 		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
 		File scriptsDir = new File( directory, SCRIPTS_DIR_NAME );
 		if( ! scriptsDir.exists())
-			result.add( new ModelError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, "Component: " + component ));
+			result.add( new ModelError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, component( component )));
 
 		return result;
 	}
@@ -123,12 +129,12 @@ public final class RecipesValidator {
 	 * @return a non-null list of errors
 	 */
 	private static List<ModelError> validatePuppetComponent( File applicationFilesDirectory, Component component ) {
-		List<ModelError> result = new ArrayList<ModelError> ();
+		List<ModelError> result = new ArrayList<> ();
 
 		// Check imports
 		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
 			if( var.getName().endsWith( "." + Constants.WILDCARD )) {
-				result.add( new ModelError( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, component, "Component: " + component ));
+				result.add( new ModelError( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, component, component( component )));
 				break;
 			}
 		}
@@ -137,16 +143,16 @@ public final class RecipesValidator {
 		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
 		File[] children = directory.listFiles();
 		children = children == null ? new File[ 0 ] : children;
-		List<File> modules = new ArrayList<File> ();
+		List<File> modules = new ArrayList<> ();
 		for( File f : children ) {
 			if( f.isDirectory() && f.getName().toLowerCase().startsWith( "roboconf_" ))
 				modules.add( f );
 		}
 
 		if( modules.isEmpty())
-			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, component, "Component: " + component ));
+			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, component, component( component )));
 		else if( modules.size() > 1 )
-			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, component, "Component: " + component ));
+			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, component, component( component )));
 
 		// Analyze the module parameters
 		if( modules.size() == 1 ) {
@@ -191,7 +197,7 @@ public final class RecipesValidator {
 		try {
 			int execCode = ProgramUtils.executeCommand( logger, cmd, null, null, null, null );
 			if( execCode != 0 )
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_SYNTAX_ERROR, component, "Component: " + component + ", File: " + pp ));
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_SYNTAX_ERROR, component, component( component ), file( pp )));
 
 		} catch( Exception e ) {
 			logger.info( "Puppet parser is not available on the machine." );
@@ -205,7 +211,7 @@ public final class RecipesValidator {
 		String content = Utils.readFileContent( pp );
 		Matcher m = pattern.matcher( content );
 
-		Set<String> params = new HashSet<String> ();
+		Set<String> params = new HashSet<> ();
 		if( ! m.find())
 			return;
 
@@ -217,7 +223,7 @@ public final class RecipesValidator {
 		// Check the update parameters
 		if( withUpdateParams ) {
 			if( ! params.remove( "$importDiff" ))
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, component, "Component: " + component + ", File: " + pp ));
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, component, component( component ), file( pp )));
 		}
 
 		// Prevent errors with start.pp, etc
@@ -225,14 +231,20 @@ public final class RecipesValidator {
 
 		// Check the other ones
 		if( ! params.remove( "$runningState" ))
-			errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, component, "Component: " + component + ", File: " + pp ));
+			errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, component, component( component ), file( pp )));
 
 		// Imports imply some variables are expected
 		Instance fake = new Instance( "fake" ).component( component );
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( fake )) {
-			String details = "Component: " + component + ", File: " + pp + ", Parameter: " + facetOrComponentName.toLowerCase();
-			if( ! params.remove( "$" + facetOrComponentName.toLowerCase()))
+			if( ! params.remove( "$" + facetOrComponentName.toLowerCase())) {
+				ErrorDetails[] details = new ErrorDetails[] {
+						name( component.getName()),
+						file( pp ),
+						expected( facetOrComponentName.toLowerCase())
+				};
+
 				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, component, details ));
+			}
 		}
 	}
 }

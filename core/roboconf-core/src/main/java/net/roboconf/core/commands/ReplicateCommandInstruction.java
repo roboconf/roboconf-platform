@@ -25,6 +25,8 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.errors.ErrorDetails.instance;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +34,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
@@ -73,16 +75,16 @@ public class ReplicateCommandInstruction extends AbstractCommandInstruction {
 	@Override
 	public List<ParsingError> doValidate() {
 
-		List<ParsingError> result = new ArrayList<ParsingError> ();
+		List<ParsingError> result = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( this.newInstanceName ))
 			result.add( error( ErrorCode.CMD_MISSING_INSTANCE_NAME ));
 		else if( ! this.newInstanceName.matches( ParsingConstants.PATTERN_FLEX_ID ))
 			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_NAME ));
 
 		if( ! this.context.instanceExists( this.replicatedInstancePath ))
-			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, "Instance path: " + this.replicatedInstancePath ));
+			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, instance( this.replicatedInstancePath )));
 		else if( InstanceHelpers.countInstances( this.replicatedInstancePath ) > 1 )
-			result.add( error( ErrorCode.CMD_NOT_A_ROOT_INSTANCE, "Only root instances can be replicated." ));
+			result.add( error( ErrorCode.CMD_NOT_A_ROOT_INSTANCE, instance( this.replicatedInstancePath )));
 
 		return result;
 	}

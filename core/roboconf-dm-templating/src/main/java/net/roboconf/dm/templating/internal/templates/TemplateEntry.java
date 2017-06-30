@@ -35,20 +35,22 @@ import com.github.jknack.handlebars.Template;
  */
 public final class TemplateEntry {
 
-	final File file;
-	final String appName;
+	final File templateFile;
+	final String appName, targetFilePath;
 	final Template template;
 
 
 	/**
 	 * Constructor.
-	 * @param file the template file
+	 * @param templateFile the template file
+	 * @param targetFilePath the path of the target file (null to output in the default's directory)
 	 * @param appName the name of the application scoped by this template, or {@code null} for a global template entry
 	 * @param template the compiled Handlebars template
 	 * @param root true if the template is in the root directory, false if it is in a child directory
 	 */
-	public TemplateEntry( File file, Template template, String appName ) {
-		this.file = file;
+	public TemplateEntry( File templateFile, String targetFilePath, Template template, String appName ) {
+		this.templateFile = templateFile;
+		this.targetFilePath = targetFilePath;
 		this.appName = appName;
 		this.template = template;
 	}
@@ -56,8 +58,8 @@ public final class TemplateEntry {
 	/**
 	 * @return the file
 	 */
-	public File getFile() {
-		return this.file;
+	public File getTemplateFile() {
+		return this.templateFile;
 	}
 
 	/**
@@ -72,5 +74,12 @@ public final class TemplateEntry {
 	 */
 	public Template getTemplate() {
 		return this.template;
+	}
+
+	/**
+	 * @return the targetFilePath
+	 */
+	public String getTargetFilePath() {
+		return this.targetFilePath;
 	}
 }

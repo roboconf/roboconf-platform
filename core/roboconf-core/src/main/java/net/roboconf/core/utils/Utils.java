@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -394,7 +395,7 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void writeStringInto( String s, File outputFile ) throws IOException {
-		InputStream in = new ByteArrayInputStream( s.getBytes( "UTF-8" ));
+		InputStream in = new ByteArrayInputStream( s.getBytes( StandardCharsets.UTF_8 ));
 		copyStream( in, outputFile );
 	}
 
@@ -410,7 +411,7 @@ public final class Utils {
 
 		OutputStreamWriter fw = null;
 		try {
-			fw = new OutputStreamWriter( new FileOutputStream( outputFile, true ), "UTF-8" );
+			fw = new OutputStreamWriter( new FileOutputStream( outputFile, true ), StandardCharsets.UTF_8 );
 			fw.append( s );
 
 		} finally {
@@ -436,6 +437,33 @@ public final class Utils {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		Utils.copyStream( file, os );
 		result = os.toString( "UTF-8" );
+
+		return result;
+	}
+
+
+	/**
+	 * Reads a text file content and returns it as a string.
+	 * <p>
+	 * The file is tried to be read with UTF-8 encoding.
+	 * If it fails, the default system encoding is used.
+	 * </p>
+	 *
+	 * @param file the file whose content must be loaded
+	 * @param logger a logger (not null)
+	 * @return the file content or the empty string if an error occurred
+	 */
+	public static String readFileContentQuietly( File file, Logger logger ) {
+
+		String result = "";
+		try {
+			if( file.exists())
+				result = readFileContent( file );
+
+		} catch( Exception e ) {
+			logger.severe( "File " + file + " could not be read." );
+			logException( logger, e );
+		}
 
 		return result;
 	}
@@ -480,6 +508,31 @@ public final class Utils {
 			logger.severe( "Properties file " + file + " could not be read." );
 			logException( logger, e );
 		}
+
+		return result;
+	}
+
+
+	/**
+	 * Reads properties from a string.
+	 * @param file a properties file
+	 * @param logger a logger (not null)
+	 * @return a {@link Properties} instance
+	 */
+	public static Properties readPropertiesQuietly( String fileContent, Logger logger ) {
+
+		Properties result = new Properties();
+		try {
+			if( fileContent != null ) {
+				InputStream in = new ByteArrayInputStream( fileContent.getBytes( StandardCharsets.UTF_8 ));
+				result.load( in );
+			}
+
+		} catch( Exception e ) {
+			logger.severe( "Properties could not be read from a string." );
+			logException( logger, e );
+		}
+
 		return result;
 	}
 
@@ -745,7 +798,7 @@ public final class Utils {
 		Map<String,byte[]> map = storeDirectoryResourcesAsBytes( directory );
 		Map<String,String> result = new HashMap<>( map.size());
 		for( Map.Entry<String,byte[]> entry : map.entrySet())
-			result.put( entry.getKey(), new String( entry.getValue(), "UTF-8" ));
+			result.put( entry.getKey(), new String( entry.getValue(), StandardCharsets.UTF_8 ));
 
 		return result;
 	}
@@ -928,15 +981,14 @@ public final class Utils {
 	/**
 	 * Writes an exception's stack trace into a string.
 	 * <p>
-	 * This method used to be public.<br>
-	 * Its visibility was reduced to promote {@link #logException(Logger, Exception)},
-	 * which has better performances.
+	 * {@link #logException(Logger, Exception)} has better performances
+	 * and should be used for logging purpose.
 	 * </p>
 	 *
 	 * @param t an exception or a throwable (not null)
 	 * @return a string
 	 */
-	static String writeException( Throwable t ) {
+	public static String writeExceptionButDoNotUseItForLogging( Throwable t ) {
 
 		StringWriter sw = new StringWriter();
 		t.printStackTrace( new PrintWriter( sw ));
@@ -956,11 +1008,37 @@ public final class Utils {
 	 * @param logger the logger
 	 * @param t an exception or a throwable
 	 * @param logLevel the log level (see {@link Level})
+	 * @param message a message to insert before the stack trace
+	 */
+	public static void logException( Logger logger, Level logLevel, Throwable t, String message ) {
+
+		if( logger.isLoggable( logLevel )) {
+			StringBuilder sb = new StringBuilder();
+			if( message != null ) {
+				sb.append( message );
+				sb.append( "\n" );
+			}
+
+			sb.append( writeExceptionButDoNotUseItForLogging( t ));
+			logger.log( logLevel, sb.toString());
+		}
+	}
+
+
+	/**
+	 * Logs an exception with the given logger and the given level.
+	 * <p>
+	 * Writing a stack trace may be time-consuming in some environments.
+	 * To prevent useless computing, this method checks the current log level
+	 * before trying to log anything.
+	 * </p>
+	 *
+	 * @param logger the logger
+	 * @param t an exception or a throwable
+	 * @param logLevel the log level (see {@link Level})
 	 */
 	public static void logException( Logger logger, Level logLevel, Throwable t ) {
-
-		if( logger.isLoggable( logLevel ))
-			logger.log( logLevel, writeException( t ));
+		logException( logger, logLevel, t, null );
 	}
 
 

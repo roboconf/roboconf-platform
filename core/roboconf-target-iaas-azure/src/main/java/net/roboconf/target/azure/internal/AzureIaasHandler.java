@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -59,9 +60,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -107,13 +108,13 @@ public class AzureIaasHandler implements TargetHandler {
 			// When the VM is up, it will be able to read this data.
 			// TODO: Azure does not allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
 			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
-			String userData = DataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
 					rootInstanceName );
 
-			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
+			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( StandardCharsets.UTF_8 )), "UTF-8" );
 
 			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
 			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "Location", azureProperties.getLocation());
@@ -342,7 +343,7 @@ public class AzureIaasHandler implements TargetHandler {
 		DocumentBuilder b;
 		b = f.newDocumentBuilder();
 		Document doc;
-		doc = b.parse(new ByteArrayInputStream(xmlStr.getBytes("UTF-8")));
+		doc = b.parse(new ByteArrayInputStream(xmlStr.getBytes( StandardCharsets.UTF_8 )));
 		NodeList nodes = doc.getElementsByTagName(nameOfNode);
 		String result = "false";
 		for (int i = 0; i < nodes.getLength(); i++) {

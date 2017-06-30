@@ -205,16 +205,16 @@ public class TargetResourceTest {
 		this.managerWrapper.getApplicationTemplates().put( tpl1, Boolean.TRUE );
 		this.managerWrapper.getApplicationTemplates().put( tpl2, Boolean.TRUE );
 
-		Assert.assertEquals( 2, this.resource.listTargets( tpl1.getName(), tpl1.getQualifier()).size());
-		Assert.assertEquals( 2, this.resource.listTargets( tpl2.getName(), tpl2.getQualifier()).size());
+		Assert.assertEquals( 2, this.resource.listTargets( tpl1.getName(), tpl1.getVersion()).size());
+		Assert.assertEquals( 2, this.resource.listTargets( tpl2.getName(), tpl2.getVersion()).size());
 
-		this.resource.updateHint( tpl1.getName(), tpl1.getQualifier(), t1, true );
-		Assert.assertEquals( 2, this.resource.listTargets( tpl1.getName(), tpl1.getQualifier()).size());
-		Assert.assertEquals( 1, this.resource.listTargets( tpl2.getName(), tpl2.getQualifier()).size());
+		this.resource.updateHint( tpl1.getName(), tpl1.getVersion(), t1, true );
+		Assert.assertEquals( 2, this.resource.listTargets( tpl1.getName(), tpl1.getVersion()).size());
+		Assert.assertEquals( 1, this.resource.listTargets( tpl2.getName(), tpl2.getVersion()).size());
 
-		this.resource.updateHint( tpl1.getName(), tpl1.getQualifier(), t1, false );
-		Assert.assertEquals( 2, this.resource.listTargets( tpl1.getName(), tpl1.getQualifier()).size());
-		Assert.assertEquals( 2, this.resource.listTargets( tpl2.getName(), tpl2.getQualifier()).size());
+		this.resource.updateHint( tpl1.getName(), tpl1.getVersion(), t1, false );
+		Assert.assertEquals( 2, this.resource.listTargets( tpl1.getName(), tpl1.getVersion()).size());
+		Assert.assertEquals( 2, this.resource.listTargets( tpl2.getName(), tpl2.getVersion()).size());
 	}
 
 
@@ -430,7 +430,7 @@ public class TargetResourceTest {
 
 		TargetUsageItem item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -439,7 +439,7 @@ public class TargetResourceTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -454,7 +454,7 @@ public class TargetResourceTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -466,7 +466,7 @@ public class TargetResourceTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertTrue( item.isReferencing());
 
 		// The change is here!
@@ -480,7 +480,7 @@ public class TargetResourceTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -489,7 +489,7 @@ public class TargetResourceTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 
@@ -507,7 +507,7 @@ public class TargetResourceTest {
 
 		item = items.get( 0 );
 		Assert.assertEquals( app.getName(), item.getName());
-		Assert.assertNull( item.getQualifier());
+		Assert.assertNull( item.getVersion());
 		Assert.assertFalse( item.isUsing());
 		Assert.assertTrue( item.isReferencing());
 

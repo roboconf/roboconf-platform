@@ -137,7 +137,7 @@ public final class JSonBindingUtils {
 
 	private static final String NAME = "name";
 	private static final String DISPLAY_NAME = "displayName";
-	private static final String QUALIFIER = "qualifier";
+	private static final String VERSION = "version";
 	private static final String DESC = "desc";
 	private static final String EEP = "eep";
 	private static final String EXT_VARS = "extVars";
@@ -152,10 +152,11 @@ public final class JSonBindingUtils {
 	private static final String APP_INFO = "info";
 
 	private static final String APP_INST_TPL_NAME = "tplName";
-	private static final String APP_INST_TPL_QUALIFIER = "tplQualifier";
+	private static final String APP_INST_TPL_VERSION = "tplVersion";
 	private static final String APP_INST_TPL_EEP = "tplEep";
 
 	private static final String APP_TPL_APPS = "apps";
+	private static final String APP_TPL_TAGS = "tags";
 	private static final String COMP_INSTALLER = "installer";
 
 	private static final String INST_CHANNELS = "channels";
@@ -241,8 +242,8 @@ public final class JSonBindingUtils {
 			if( item.getName() != null )
 				generator.writeStringField( NAME, item.getName());
 
-			if( item.getQualifier() != null )
-				generator.writeStringField( QUALIFIER, item.getQualifier());
+			if( item.getVersion() != null )
+				generator.writeStringField( VERSION, item.getVersion());
 
 			if( item.isUsing())
 				generator.writeStringField( TARGET_STATS_USING, "true" );
@@ -591,8 +592,8 @@ public final class JSonBindingUtils {
 			if( app.getDescription() != null )
 				generator.writeStringField( DESC, app.getDescription());
 
-			if( app.getQualifier() != null )
-				generator.writeStringField( QUALIFIER, app.getQualifier());
+			if( app.getVersion() != null )
+				generator.writeStringField( VERSION, app.getVersion());
 
 			if( app.getExternalExportsPrefix() != null )
 				generator.writeStringField( EEP, app.getExternalExportsPrefix());
@@ -625,7 +626,7 @@ public final class JSonBindingUtils {
 			for( Application associatedApp : app.getAssociatedApplications()) {
 
 				// #483 We do not know why, but after we delete an application
-				// from the web console, the resulting JSon array sometimes contain null.
+				// from the web console, the resulting JSon array sometimes contains null.
 				// This prevents the deletion of a template that does not have applications anymore.
 				// The "IF" is a WORKAROUND.
 				if( associatedApp != null
@@ -636,6 +637,17 @@ public final class JSonBindingUtils {
 			}
 
 			generator.writeEndArray();
+
+			// Tags
+			Set<String> tags = app.getTags();
+			if( ! tags.isEmpty()) {
+				generator.writeArrayFieldStart( APP_TPL_TAGS );
+				for( String s : tags )
+					generator.writeString( s );
+
+				generator.writeEndArray();
+			}
+
 			generator.writeEndObject();
 		}
 	}
@@ -693,11 +705,16 @@ public final class JSonBindingUtils {
 			if(( n = node.get( DESC )) != null )
 				application.setDescription( n.textValue());
 
-			if(( n = node.get( QUALIFIER )) != null )
-				application.setQualifier( n.textValue());
+			if(( n = node.get( VERSION )) != null )
+				application.setVersion( n.textValue());
 
 			if(( n = node.get( EEP )) != null )
 				application.setExternalExportsPrefix( n.textValue());
+
+			if(( n = node.get( APP_TPL_TAGS )) != null ) {
+				for( JsonNode arrayNodeItem : n )
+					application.addTag( arrayNodeItem.textValue());
+			}
 
 			return application;
 		}
@@ -905,8 +922,8 @@ public final class JSonBindingUtils {
 
 			if( app.getTemplate() != null ) {
 				generator.writeStringField( APP_INST_TPL_NAME, app.getTemplate().getName());
-				if( app.getTemplate().getQualifier() != null )
-					generator.writeStringField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
+				if( app.getTemplate().getVersion() != null )
+					generator.writeStringField( APP_INST_TPL_VERSION, app.getTemplate().getVersion());
 
 				if( app.getTemplate().getExternalExportsPrefix() != null )
 					generator.writeStringField( APP_INST_TPL_EEP, app.getTemplate().getExternalExportsPrefix());
@@ -975,9 +992,9 @@ public final class JSonBindingUtils {
 				ApplicationTemplate appTemplate = new ApplicationTemplate();
 				appTemplate.setName( n.textValue());
 
-				n = node.get( APP_INST_TPL_QUALIFIER );
+				n = node.get( APP_INST_TPL_VERSION );
 				if( n != null )
-					appTemplate.setQualifier( n.textValue());
+					appTemplate.setVersion( n.textValue());
 
 				n = node.get( APP_INST_TPL_EEP );
 				if( n != null )
