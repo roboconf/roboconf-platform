@@ -106,9 +106,14 @@
         <bundle dependency='true'>mvn:org.apache.jclouds/jclouds-scriptbuilder/${jclouds.version}</bundle>
         <bundle>mvn:org.apache.jclouds/jclouds-compute/${jclouds.version}</bundle>
         
+        <!-- JClouds blob -->
+        <bundle>mvn:org.apache.jclouds/jclouds-blobstore/${jclouds.version}</bundle>
+        
         <!-- JClouds Openstack -->
         <bundle dependency='true'>mvn:org.apache.jclouds.common/openstack-common/${jclouds.version}</bundle>
         <bundle>mvn:org.apache.jclouds.api/openstack-nova/${jclouds.version}</bundle>
         <bundle>mvn:org.apache.jclouds.api/openstack-keystone/${jclouds.version}</bundle>
+        <bundle>mvn:org.apache.jclouds.api/openstack-swift/${jclouds.version}</bundle>
+
 	</feature>
 </features>
