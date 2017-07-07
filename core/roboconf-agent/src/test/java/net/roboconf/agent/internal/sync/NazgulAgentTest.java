@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.runners;
+package net.roboconf.agent.internal.sync;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.junit.Assert;
+import org.junit.Test;
+
+import net.roboconf.agent.internal.AgentMessageProcessor;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RoboconfITConfiguration {
+public class NazgulAgentTest {
 
-	/**
-	 * @return true if the test requires RabbitMQ running with default credentials
-	 */
-	boolean withRabbitMq() default true;
+	@Test
+	public void testBasics() {
 
-	/**
-	 * @return true if the test requires RabbitMQ running with "advanced" credentials
-	 */
-	boolean withComplexRabbitMq() default false;
-
-	/**
-	 * @return true if the test requires Docker to be installed on the local machine
-	 */
-	boolean withDocker() default false;
-
-	/**
-	 * @return true if the test requires a Linux system
-	 */
-	boolean withLinux() default false;
+		NazgulAgent nazgul = new NazgulAgent();
+		AgentMessageProcessor processor = nazgul.newMessageProcessor();
+		Assert.assertEquals( NazgulMessageProcessor.class, processor.getClass());
+		nazgul.reconfigure();
+	}
 }

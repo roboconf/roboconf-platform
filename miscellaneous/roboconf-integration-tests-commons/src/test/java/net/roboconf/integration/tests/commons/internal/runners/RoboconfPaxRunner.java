@@ -25,6 +25,7 @@
 
 package net.roboconf.integration.tests.commons.internal.runners;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -84,6 +85,15 @@ public class RoboconfPaxRunner extends PaxExam {
 					&& ! RabbitMqTestUtils.checkRabbitMqIsRunning( "127.0.0.1", RBCF_USER, RBCF_USER )) {
 				Description description = Description.createSuiteDescription( this.testClass );
 				notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running with the '" + RBCF_USER + "' user." )));
+				runTheTest = false;
+			}
+
+			// Linux
+			else if( annotation.withLinux()
+					&& ! new File( "/tmp" ).exists()) {
+
+				Description description = Description.createSuiteDescription( this.testClass );
+				notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "The test can only run on a Linux system." )));
 				runTheTest = false;
 			}
 

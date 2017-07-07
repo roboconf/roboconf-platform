@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,45 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.runners;
+package net.roboconf.agent.internal.sync;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RoboconfITConfiguration {
+public class SauronMessageProcessorTest {
 
-	/**
-	 * @return true if the test requires RabbitMQ running with default credentials
-	 */
-	boolean withRabbitMq() default true;
+	@Test
+	public void testProcessMessage_noNazgul() {
 
-	/**
-	 * @return true if the test requires RabbitMQ running with "advanced" credentials
-	 */
-	boolean withComplexRabbitMq() default false;
+		SauronAgent sauron = new SauronAgent();
+		SauronMessageProcessor processor = new SauronMessageProcessor( sauron );
+		Message msg = new MsgEcho( "ko" );
+		processor.processMessage( msg );
 
-	/**
-	 * @return true if the test requires Docker to be installed on the local machine
-	 */
-	boolean withDocker() default false;
+		// No error
+	}
 
-	/**
-	 * @return true if the test requires a Linux system
-	 */
-	boolean withLinux() default false;
+
+	@Test
+	public void testProcessMessage_withNazgul() {
+
+		NazgulMessageProcessor nazgul = Mockito.mock( NazgulMessageProcessor.class );
+		SauronAgent sauron = new SauronAgent();
+
+		Message msg = new MsgEcho( "ko" );
+		SauronMessageProcessor.THE_SINGLE_MQ.put( msg, nazgul );
+
+		SauronMessageProcessor processor = new SauronMessageProcessor( sauron );
+		processor.processMessage( msg );
+
+		Mockito.verify( nazgul, Mockito.times( 1 )).processMessageForReal( msg );
+		Mockito.verify( nazgul, Mockito.times( 1 )).getAgentId();
+		Mockito.verifyNoMoreInteractions( nazgul );
+	}
 }

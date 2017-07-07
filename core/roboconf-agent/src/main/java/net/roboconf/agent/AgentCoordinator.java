@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,19 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.runners;
+package net.roboconf.agent;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * An interface used when multiple agents run in a same JVM.
  * @author Vincent Zurczak - Linagora
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RoboconfITConfiguration {
+public interface AgentCoordinator {
 
 	/**
-	 * @return true if the test requires RabbitMQ running with default credentials
+	 * Stores a message for its delayed processing.
+	 * @param message a non-null message
 	 */
-	boolean withRabbitMq() default true;
-
-	/**
-	 * @return true if the test requires RabbitMQ running with "advanced" credentials
-	 */
-	boolean withComplexRabbitMq() default false;
-
-	/**
-	 * @return true if the test requires Docker to be installed on the local machine
-	 */
-	boolean withDocker() default false;
-
-	/**
-	 * @return true if the test requires a Linux system
-	 */
-	boolean withLinux() default false;
+	void processMessageInSequence( Message message );
 }

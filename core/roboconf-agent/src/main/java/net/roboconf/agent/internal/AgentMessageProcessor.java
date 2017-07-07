@@ -94,7 +94,7 @@ import net.roboconf.plugin.api.PluginInterface;
 public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient> {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final Agent agent;
+	protected final Agent agent;
 	Instance scopedInstance;
 
 	/**

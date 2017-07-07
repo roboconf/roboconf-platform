@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,50 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.runners;
+package net.roboconf.agent.internal.sync;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import net.roboconf.agent.AgentCoordinator;
+import net.roboconf.agent.internal.AgentMessageProcessor;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * An agent that forwards all its messages to Sauron.
+ * <p>
+ * Sauron will tell it when to process it for real.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RoboconfITConfiguration {
+public class NazgulMessageProcessor extends AgentMessageProcessor {
+
+	private final AgentCoordinator sauron;
+
 
 	/**
-	 * @return true if the test requires RabbitMQ running with default credentials
+	 * Constructor.
+	 * @param nazgulAgent a Nazgul agent
+	 * @param sauron <strong>the</strong> Sauron agent
 	 */
-	boolean withRabbitMq() default true;
+	public NazgulMessageProcessor( NazgulAgent nazgulAgent, AgentCoordinator sauron ) {
+		super( nazgulAgent );
+		this.sauron = sauron;
+	}
 
-	/**
-	 * @return true if the test requires RabbitMQ running with "advanced" credentials
-	 */
-	boolean withComplexRabbitMq() default false;
 
-	/**
-	 * @return true if the test requires Docker to be installed on the local machine
-	 */
-	boolean withDocker() default false;
+	@Override
+	protected void processMessage( Message message ) {
+		// In this order! Map first, queue then.
+		SauronMessageProcessor.THE_SINGLE_MQ.put( message, this );
+		this.sauron.processMessageInSequence( message );
+	}
 
-	/**
-	 * @return true if the test requires a Linux system
-	 */
-	boolean withLinux() default false;
+
+	public void processMessageForReal( Message message ) {
+		super.processMessage( message );
+	}
+
+
+	public String getAgentId() {
+		return this.agent.getAgentId();
+	}
 }

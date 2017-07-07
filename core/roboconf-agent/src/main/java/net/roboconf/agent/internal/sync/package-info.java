@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,19 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.runners;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 /**
+ * A package that provides specific agent implementations for in-memory use cases.
+ * <p>
+ * This was designed to prevent concurrent execution of (real) recipes
+ * on a same machine when several agents run in memory.
+ * </p>
+ * <p>
+ * This solution introduces two kinds of agents: Nazgul, that replace in-memory
+ * agents, and Sauron, that synchronizes messages processing across all the
+ * Nazgul agents. They are used only by the in-memory target, that relies on
+ * iPojo API to manage such agents.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RoboconfITConfiguration {
-
-	/**
-	 * @return true if the test requires RabbitMQ running with default credentials
-	 */
-	boolean withRabbitMq() default true;
-
-	/**
-	 * @return true if the test requires RabbitMQ running with "advanced" credentials
-	 */
-	boolean withComplexRabbitMq() default false;
-
-	/**
-	 * @return true if the test requires Docker to be installed on the local machine
-	 */
-	boolean withDocker() default false;
-
-	/**
-	 * @return true if the test requires a Linux system
-	 */
-	boolean withLinux() default false;
-}
+package net.roboconf.agent.internal.sync;
