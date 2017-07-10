@@ -32,7 +32,14 @@ import org.junit.Ignore;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 /**
+ * Test messaging with RabbitMQ over SSL.
+ * <p>
+ * User data do not matter here as it only tests messaging clients.
+ * There is no real agent behind.
+ * </p>
+ * <p>
  * These tests should be run locally and are disabled by default.
+ * </p>
  * <p>
  * Clone https://github.com/roboconf/rabbitmq-with-ssl-in-docker and
  * follow the instructions to launch a Docker container with RabbitMQ and
@@ -49,6 +56,7 @@ public class RabbitMqWithSslTest extends RabbitMqTest {
 
 		Map<String,String> configuration = super.getMessagingConfiguration();
 		configuration.put( RabbitMqConstants.RABBITMQ_USE_SSL, "true" );
+		configuration.put( RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA, "false" );
 
 		// Use default values
 		// configuration.put( RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_TYPE, null );

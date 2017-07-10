@@ -37,7 +37,7 @@
 
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-karaf-decanter-collector-dm</artifactId>
-	<name>Roboconf :: Karaf collector for the DM</name>
+	<name>Roboconf :: Karaf Collector for the DM</name>
 	<packaging>bundle</packaging>
 
 	<dependencies>

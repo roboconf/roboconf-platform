@@ -28,6 +28,7 @@ package net.roboconf.integration.tests.commons.internal.parameterized;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_SSL_KEY_STORE_TYPE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.FACTORY_RABBITMQ;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PASSPHRASE;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PASSPHRASE;
@@ -46,7 +47,7 @@ import net.roboconf.core.Constants;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqWithSslConfiguration implements IMessagingConfiguration {
+public class RabbitMqWithSslConfigurationWithoutUserData implements IMessagingConfiguration {
 
 	@Override
 	public List<Option> options() {
@@ -69,6 +70,11 @@ public class RabbitMqWithSslConfiguration implements IMessagingConfiguration {
 				"etc/net.roboconf.messaging.rabbitmq.cfg",
 				RABBITMQ_USE_SSL,
 				"true" ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				RABBITMQ_SSL_AS_USER_DATA,
+				"false" ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.messaging.rabbitmq.cfg",

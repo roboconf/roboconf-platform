@@ -77,7 +77,7 @@ import net.roboconf.integration.tests.dm.with.agents.in.memory.probes.DmWithAgen
 @ExamReactorStrategy( PerMethod.class )
 public abstract class AbstractAgentInMemoryTest extends DmWithAgentInMemoryTest {
 
-	private static final String APP_LOCATION = "my.app.location";
+	protected static final String APP_LOCATION = "my.app.location";
 
 	@Inject
 	@Filter( "(factory.name=roboconf-agent-in-memory)" )
@@ -148,7 +148,7 @@ public abstract class AbstractAgentInMemoryTest extends DmWithAgentInMemoryTest 
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Associate a default target for this application
-		String targetId = this.manager.targetsMngr().createTarget( "id: tid\nhandler: in-memory" );
+		String targetId = this.manager.targetsMngr().createTarget( createTargetProperties());
 		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), null );
 
 		// There is no agent yet (no root instance was deployed)
@@ -175,5 +175,10 @@ public abstract class AbstractAgentInMemoryTest extends DmWithAgentInMemoryTest 
 		// Undeploy
 		this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
+	}
+
+
+	protected String createTargetProperties() {
+		return "id: tid\nhandler: in-memory";
 	}
 }

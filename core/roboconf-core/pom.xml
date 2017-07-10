@@ -65,7 +65,10 @@
 							!net.roboconf.core.internal.*,
 							net.roboconf.core.*
 						</Export-Package>
-						<Import-Package>net.roboconf.*;version="${version.range}"</Import-Package>
+						<Import-Package>
+							net.roboconf.*;version="${version.range}",
+							javax.xml.bind.*
+						</Import-Package>
 					</instructions>
 				</configuration>
 			</plugin>

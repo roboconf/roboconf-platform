@@ -145,7 +145,7 @@
 							org.xml.*,
 							org.w3c.*,
 							org.slf4j.*,
-							org.apache.log4.*
+							org.apache.commons.logging
 						</Import-Package>
 						<Embed-Dependency>
 							*;scope=compile|runtime;inline=true;groupId=!net.roboconf
