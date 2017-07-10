@@ -66,10 +66,9 @@ public class InMemoryHandler implements TargetHandler {
 	static final String EXECUTE_REAL_RECIPES = "in-memory.execute-real-recipes";
 	static final String AGENT_IP_ADDRESS = "in-memory.ip-address-of-the-agent";
 	static final String WRITE_USER_DATA = "in-memory.write-user-data";
-	static final String SAURON = "sauron";
 
 	// Injected by iPojo
-	Factory standardAgentFactory, sauronAgentFactory, nazgulAgentFactory;
+	Factory standardAgentFactory, nazgulAgentFactory;
 	Manager manager;
 
 	// Internal fields
@@ -86,32 +85,19 @@ public class InMemoryHandler implements TargetHandler {
 
 
 	/**
-	 * Invoked by iPojo (creates a Sauron agent).
-	 */
-	public void start() throws Exception {
-
-		Map<String,String> messagingProperties = new HashMap<>( 1 );
-		messagingProperties.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "none" );
-		createIPojo(
-				new HashMap<String,String>( 0 ),
-				messagingProperties,
-				SAURON,
-				"", "", "",
-				this.sauronAgentFactory );
-	}
-
-
-	/**
 	 * Invoked by iPojo (deletes all the in-memory agent).
 	 */
 	public void stop() throws Exception {
 
-		deleteIPojo( this.sauronAgentFactory, SAURON );
-		for( ComponentInstance nazgul : this.nazgulAgentFactory.getInstances())
-			deleteIPojoInstance( nazgul );
+		if( this.nazgulAgentFactory != null ) {
+			for( ComponentInstance nazgul : this.nazgulAgentFactory.getInstances())
+				deleteIPojoInstance( nazgul );
+		}
 
-		for( ComponentInstance agent : this.standardAgentFactory.getInstances())
-			deleteIPojoInstance( agent );
+		if( this.standardAgentFactory != null ) {
+			for( ComponentInstance agent : this.standardAgentFactory.getInstances())
+				deleteIPojoInstance( agent );
+		}
 	}
 
 

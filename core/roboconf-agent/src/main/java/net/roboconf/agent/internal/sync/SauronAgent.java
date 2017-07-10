@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentCoordinator;
 import net.roboconf.agent.internal.Agent;
@@ -73,6 +74,7 @@ public class SauronAgent extends Agent implements AgentCoordinator {
 
 	@Override
 	protected AgentMessageProcessor newMessageProcessor() {
+		Logger.getLogger( getClass().getName()).finer( "Sauron is starting..." );
 		this.processor = new SauronMessageProcessor( this );
 		return this.processor;
 	}

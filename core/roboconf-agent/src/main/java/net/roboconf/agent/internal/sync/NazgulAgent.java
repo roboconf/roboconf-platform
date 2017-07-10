@@ -25,6 +25,8 @@
 
 package net.roboconf.agent.internal.sync;
 
+import java.util.logging.Logger;
+
 import net.roboconf.agent.AgentCoordinator;
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.AgentMessageProcessor;
@@ -40,6 +42,7 @@ public class NazgulAgent extends Agent {
 
 	@Override
 	protected AgentMessageProcessor newMessageProcessor() {
+		Logger.getLogger( getClass().getName()).finer( "Nazgul is starting..." );
 		return new NazgulMessageProcessor( this, this.sauron );
 	}
 

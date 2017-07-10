@@ -322,41 +322,9 @@ public class InMemoryHandlerWithoutManagerTest {
 
 
 	@Test
-	@SuppressWarnings( "rawtypes" )
-	public void testStart() throws Exception {
-
-		this.target.standardAgentFactory = Mockito.mock( Factory.class );
-		this.target.sauronAgentFactory = Mockito.mock( Factory.class );
-		this.target.nazgulAgentFactory = Mockito.mock( Factory.class );
-
-		this.target.setMessagingFactoryRegistry( new MessagingClientFactoryRegistry());
-		ComponentInstance sauronMock = Mockito.mock( ComponentInstance.class );
-		Mockito.when( this.target.sauronAgentFactory.createComponentInstance( Mockito.any( Dictionary.class ))).thenReturn( sauronMock );
-
-		this.target.start();
-		Mockito.verifyZeroInteractions( this.target.nazgulAgentFactory );
-		Mockito.verifyZeroInteractions( this.target.standardAgentFactory );
-
-		ArgumentCaptor<Dictionary> arg = ArgumentCaptor.forClass( Dictionary.class );
-		Mockito.verify( this.target.sauronAgentFactory, Mockito.only()).createComponentInstance( arg.capture());
-
-		Dictionary dico = arg.getValue();
-		Assert.assertEquals( 7, dico.size());
-		Assert.assertEquals( "", dico.get( "domain" ));
-		Assert.assertEquals( "", dico.get( "application-name" ));
-		Assert.assertEquals( "", dico.get( "scoped-instance-path" ));
-		Assert.assertEquals( "none", dico.get( Constants.MESSAGING_TYPE ));
-		Assert.assertEquals( InMemoryHandler.SAURON, dico.get( Factory.INSTANCE_NAME_PROPERTY ));
-
-		Mockito.verify( sauronMock, Mockito.only()).start();
-	}
-
-
-	@Test
 	public void testStop() throws Exception {
 
 		this.target.standardAgentFactory = Mockito.mock( Factory.class );
-		this.target.sauronAgentFactory = Mockito.mock( Factory.class );
 		this.target.nazgulAgentFactory = Mockito.mock( Factory.class );
 
 		ComponentInstance agentMock = Mockito.mock( ComponentInstance.class );
@@ -365,17 +333,21 @@ public class InMemoryHandlerWithoutManagerTest {
 		ComponentInstance nazgulMock = Mockito.mock( ComponentInstance.class );
 		Mockito.when( this.target.nazgulAgentFactory .getInstances()).thenReturn( Arrays.asList( nazgulMock ));
 
-		ComponentInstance sauronMock = Mockito.mock( ComponentInstance.class );
-		Mockito.when( sauronMock.getInstanceName()).thenReturn( InMemoryHandler.SAURON );
-		Mockito.when( this.target.sauronAgentFactory .getInstances()).thenReturn( Arrays.asList( sauronMock ));
-
 		this.target.stop();
 		Mockito.verify( this.target.standardAgentFactory, Mockito.only()).getInstances();
 		Mockito.verify( this.target.nazgulAgentFactory, Mockito.only()).getInstances();
-		Mockito.verify( this.target.sauronAgentFactory, Mockito.only()).getInstances();
 
-		Mockito.verify( sauronMock ).dispose();
 		Mockito.verify( agentMock ).dispose();
 		Mockito.verify( nazgulMock ).dispose();
+	}
+
+
+	@Test
+	public void testStop_facotiriesAreNull() throws Exception {
+
+		this.target.standardAgentFactory = null;
+		this.target.nazgulAgentFactory = null;
+		this.target.stop();
+		// No error
 	}
 }

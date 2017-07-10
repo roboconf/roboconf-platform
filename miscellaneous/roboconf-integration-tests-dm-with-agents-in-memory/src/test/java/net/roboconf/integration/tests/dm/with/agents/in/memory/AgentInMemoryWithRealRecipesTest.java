@@ -137,31 +137,26 @@ public class AgentInMemoryWithRealRecipesTest extends DmWithAgentInMemoryTest {
 		String[] recipes = { "deploy", "start", "stop", "undeploy" };
 
 		int cpt = 0;
-		for( Component c : allComponents ) {
-			if( ! "script".equalsIgnoreCase( c.getInstallerName()))
+		for( Instance i : InstanceHelpers.getAllInstances( tpl )) {
+			if( ! "script".equalsIgnoreCase( i.getComponent().getInstallerName()))
 				continue;
 
 			cpt ++;
-			File scriptDir = new File( appDirectory, Constants.PROJECT_DIR_GRAPH + "/" + c.getName() + "/scripts/" );
+			File scriptDir = new File( appDirectory, Constants.PROJECT_DIR_GRAPH + "/" + i.getName() + "/scripts/" );
 			Utils.createDirectory( scriptDir );
 			for( String recipe : recipes ) {
 
-				// We write the same string in a same file
-				// within a period of 1 second
+				// We write the same string in a same file within a period of 1 second
 				StringBuilder sb = new StringBuilder();
 				sb.append( "#!/bin/sh\n" );
-				sb.append( "echo \"" );
-				sb.append( c.getName());
-				sb.append( " - " );
+				sb.append( "echo \"${ROBOCONF_CLEAN_INSTANCE_PATH} - " );
 				sb.append( recipe );
 				sb.append( "\" >> " );
 				sb.append( this.outputFilePath );
 
 				sb.append( "\nsleep 1\n" );
 
-				sb.append( "echo \"" );
-				sb.append( c.getName());
-				sb.append( " - " );
+				sb.append( "echo \"${ROBOCONF_CLEAN_INSTANCE_PATH} - " );
 				sb.append( recipe );
 				sb.append( "\" >> " );
 				sb.append( this.outputFilePath );
@@ -189,18 +184,29 @@ public class AgentInMemoryWithRealRecipesTest extends DmWithAgentInMemoryTest {
 		String targetId = this.manager.targetsMngr().createTarget( "id:tid\nhandler: in-memory\nin-memory.execute-real-recipes: true" );
 		this.manager.targetsMngr().associateTargetWith( targetId, ma.getApplication(), null );
 
+		// Create several new instances of our Tomcat
+		Component tomcat = ComponentHelpers.findComponent( tpl, "Tomcat" );
+		Component vm = ComponentHelpers.findComponent( tpl, "VM" );
+		for( int i=0; i<4; i++) {
+			Instance newVm = new Instance( "vm " + i ).component( vm );
+			this.manager.instancesMngr().addInstance( ma, null, newVm );
+			this.manager.instancesMngr().addInstance( ma, newVm, new Instance( "tomcat" ).component( tomcat ));
+		}
+
+		// So, we have 7 instances that execute scripts!
+
 		// Start everything
-		// Each deploy and start script sleeps one second => 6 seconds
+		// Each deploy and start script sleeps one second => 7 x 2 = 14 seconds
 		this.manager.instancesMngr().deployAndStartAll( ma, null );
-		Thread.sleep( 7000 );
+		Thread.sleep( 14500 );
 
 		for( Instance i : InstanceHelpers.getAllInstances( ma.getApplication()))
 			Assert.assertEquals( i.getName(), InstanceStatus.DEPLOYED_STARTED, i.getStatus());
 
 		// Stop everything
-		// Each stop script sleeps one second => 3 seconds
+		// Each stop script sleeps one second => 7 seconds
 		this.manager.instancesMngr().stopAll( ma, null );
-		Thread.sleep( 3500 );
+		Thread.sleep( 7500 );
 
 		for( Instance i : InstanceHelpers.getAllInstances( ma.getApplication())) {
 			if( ! InstanceHelpers.isTarget( i ))
@@ -208,9 +214,9 @@ public class AgentInMemoryWithRealRecipesTest extends DmWithAgentInMemoryTest {
 		}
 
 		// Undeploy everything
-		// Each undeploy script sleeps one second => 3 seconds
+		// Each undeploy script sleeps one second => 7 seconds
 		this.manager.instancesMngr().undeployAll( ma, null );
-		Thread.sleep( 3500 );
+		Thread.sleep( 7500 );
 
 		for( Instance i : InstanceHelpers.getAllInstances( ma.getApplication()))
 			Assert.assertEquals( i.getName(), InstanceStatus.NOT_DEPLOYED, i.getStatus());
