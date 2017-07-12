@@ -217,6 +217,7 @@ public enum ErrorCode {
 	CMD_NASTY_LOOPING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS ),
 	CMD_INVALID_DATE_PATTERN( ErrorLevel.SEVERE, ErrorCategory.COMMANDS ),
 	CMD_NO_MIX_FOR_PATTERNS( ErrorLevel.SEVERE, ErrorCategory.COMMANDS ),
+	CMD_INVALID_INDEX_PATTERN( ErrorLevel.SEVERE, ErrorCategory.COMMANDS ),
 
 	// Rule errors
 	RULE_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.RULES ),

@@ -31,7 +31,11 @@ import static net.roboconf.core.errors.ErrorDetails.variable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -51,8 +55,13 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 	public static final String MILLI_TIME = "$(MILLI_TIME)";
 	public static final String NANO_TIME = "$(NANO_TIME)";
 	public static final String FORMATTED_TIME_PREFIX = "$(FORMATTED_TIME ";
+	public static final String EXISTING_INDEX_PREFIX = "$(EXISTING_INDEX ";
 	public static final String RANDOM_UUID = "$(UUID)";
 	public static final String SMART_INDEX = "$(SMART_INDEX)";
+
+	static final String FAKE_COMPONENT_NAME = "@fake-component@";
+	private static final String EXISTING_INDEX_PATTERN =
+			"(.*)" + Pattern.quote( EXISTING_INDEX_PREFIX ) + "\\s*((MIN)|(MAX))\\s*([<>]\\s*\\d+)?\\s*\\)(.*)";
 
 	private String key, value, instancePath;
 
@@ -120,6 +129,13 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 			result.add( error( ErrorCode.CMD_NO_MIX_FOR_PATTERNS, variable( this.value )));
 		}
 
+		// The index variable is very strict
+		Pattern indexPattern = Pattern.compile( EXISTING_INDEX_PATTERN );
+		if( this.value.contains( EXISTING_INDEX_PREFIX )
+				&& ! indexPattern.matcher( this.value ).matches()) {
+			result.add( error( ErrorCode.CMD_INVALID_INDEX_PATTERN, variable( this.value )));
+		}
+
 		// Validate instance existence at the end, and only if no error was found before
 		if( result.isEmpty()
 				&& this.instancePath != null
@@ -136,8 +152,25 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 	 */
 	@Override
 	public void updateContext() {
+
 		String newValue = replaceVariables( this.value, this.context, this.instancePath );
-		this.context.variables.put( this.key, newValue );
+		if( newValue != null ) {
+			this.context.variables.put( this.key, newValue );
+		}
+
+		// When not resolved, we disable it.
+		// We also replace it by a mock value so that we can perform
+		// validation. It implies populating the context.
+		else {
+			setDisabled( true );
+			this.context.disabledVariables.add( this.key );
+			this.context.variables.put( this.key, "fake" );
+			String path = "/fake";
+			if( this.instancePath != null )
+				path = this.instancePath + path;
+
+			this.context.instancePathToComponentName.put( path, FAKE_COMPONENT_NAME );
+		}
 	}
 
 
@@ -157,7 +190,8 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 		for( String var : this.context.variables.keySet())
 			variablesToIgnore.add( "^\\$\\(" + Pattern.quote( var ) + "\\)$" );
 
-		variablesToIgnore.add( "^" + Pattern.quote( FORMATTED_TIME_PREFIX ) + ".*\\)$" );
+		variablesToIgnore.add( "^" + Pattern.quote( FORMATTED_TIME_PREFIX ) + "[^)]*\\)$" );
+		variablesToIgnore.add( "^" + Pattern.quote( EXISTING_INDEX_PREFIX ) + "[^)]*\\)$" );
 		return variablesToIgnore;
 	}
 
@@ -174,38 +208,38 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 
 	/**
 	 * Replaces variables in instance names.
-	 * @param name an instance name (not null)
+	 * @param value an expression that can reference other variables (not null)
 	 * @param context a context (not null)
 	 * @param parentInstancePath the parent instance path (may be null)
 	 * @param context a non-null map with context information
-	 * @return the updated name
+	 * @return the updated value, or null if an <code>$(existing_index ...)</code> variable failed to be resolved
 	 */
-	static String replaceVariables( String name, Context context, String parentInstancePath ) {
+	static String replaceVariables( String value, Context context, String parentInstancePath ) {
 
 		long nanoTime = System.nanoTime();
 		long milliTime = TimeUnit.MILLISECONDS.convert( nanoTime, TimeUnit.NANOSECONDS );
 
 		// Simple replacements
-		name = name.replace( NANO_TIME, String.valueOf( nanoTime ));
-		name = name.replace( MILLI_TIME, String.valueOf( milliTime ));
-		name = name.replace( RANDOM_UUID, UUID.randomUUID().toString());
+		value = value.replace( NANO_TIME, String.valueOf( nanoTime ));
+		value = value.replace( MILLI_TIME, String.valueOf( milliTime ));
+		value = value.replace( RANDOM_UUID, UUID.randomUUID().toString());
 
 		// A little more complex
-		if( name.startsWith( FORMATTED_TIME_PREFIX )
-				&& name.endsWith( ")" )) {
+		if( value.startsWith( FORMATTED_TIME_PREFIX )
+				&& value.endsWith( ")" )) {
 
-			String datePattern = extractDatePattern( name );
+			String datePattern = extractDatePattern( value );
 			SimpleDateFormat sdf = new SimpleDateFormat( datePattern );
 
 			// We replace the whole value as such variables were validated and span over a entire line
-			name = sdf.format( new Date( milliTime ));
+			value = sdf.format( new Date( milliTime ));
 		}
 
 		// Even more complex
 		int smartCpt = 0;
-		if( name.contains( SMART_INDEX )) {
+		if( value.contains( SMART_INDEX )) {
 			for( int cpt = 1; smartCpt == 0; cpt++ ) {
-				String testName = name.replace( SMART_INDEX, String.valueOf( cpt ));
+				String testName = value.replace( SMART_INDEX, String.valueOf( cpt ));
 				String testPath = "/" + testName;
 				if( parentInstancePath != null )
 					testPath = parentInstancePath + testPath;
@@ -216,11 +250,96 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 			}
 		}
 
-		name = name.replace( SMART_INDEX, String.valueOf( smartCpt ));
+		value = value.replace( SMART_INDEX, String.valueOf( smartCpt ));
 
-		// Inject other variables, if necessary
-		name = CommandsParser.injectContextVariables( name, context.variables );
+		// To perform in last: deal with existing indexes
+		boolean disabled = false;
+		Pattern fullPattern = Pattern.compile( EXISTING_INDEX_PATTERN );
+		Matcher m = fullPattern.matcher( value );
+		if( value.contains( EXISTING_INDEX_PREFIX )
+				&& m.matches()) {
 
-		return name;
+			String minOrMax = m.group( 2 );
+			String prefix = m.group( 1 );
+			String suffix = m.group( 6 );
+			String bound = m.group( 5 );
+			String instanceNamePattern = "/" + prefix + "(\\d+)" + suffix;
+			if( parentInstancePath != null )
+				instanceNamePattern = parentInstancePath + instanceNamePattern;
+
+			// Find the index
+			int cpt = findIndex( instanceNamePattern, context, bound, "MIN".equals( minOrMax ));
+
+			// If cpt is negative, do not replace anything, nothing matches the requirements.
+			// We just return null for the variable's value.
+			if( cpt < 0 )
+				disabled = true;
+			else
+				value = m.replaceAll( "$1" + String.valueOf( cpt ) + "$6" );
+		}
+
+		// Disabled variable => return null
+		if( disabled )
+			value = null;
+
+		// Inject other variables, if necessary.
+		// Disabled variables are contagious, this is managed during the parsing.
+		else
+			value = CommandsParser.injectContextVariables( value, context.variables );
+
+		return value;
+	}
+
+
+	/**
+	 * @param instanceNamePattern
+	 * @param context
+	 * @param bound
+	 * @param findMinimum true to get the minimum value, false for the maximum
+	 * @return -1 if no matching instance was found, a positive integer otherwise
+	 */
+	private static int findIndex( String instanceNamePattern, Context context, String bound, boolean findMinimum ) {
+
+		// Find all the matching indexes?
+		Pattern pattern = Pattern.compile( instanceNamePattern );
+		SortedSet<Integer> foundIndexes = new TreeSet<> ();
+		for( String instancePath : context.instancePathToComponentName.keySet()) {
+			Matcher m = pattern.matcher( instancePath );
+			if( ! m .find())
+				continue;
+
+			int index = Integer.parseInt( m.group( 1 ));
+			foundIndexes.add( index );
+		}
+
+		// Exclude indexes that are out of bound
+		if( bound != null ) {
+			bound = bound.trim();
+			int min = 0, max = Integer.MAX_VALUE;
+			int value = Integer.parseInt( bound.substring( 1 ).trim());
+			if( '<' == bound.charAt( 0 ))
+				max = value;
+			else
+				min = value;
+
+			Set<Integer> toRemove = new HashSet<> ();
+			for( Integer index : foundIndexes ) {
+				if( index <= min || index >= max )
+					toRemove.add( index );
+			}
+
+			foundIndexes.removeAll( toRemove );
+		}
+
+		// Eventually, decide whether we want the tail or the head
+		int result;
+		if( foundIndexes.isEmpty())
+			result = -1;
+		else if( findMinimum )
+			result = foundIndexes.first();
+		else
+			result = foundIndexes.last();
+
+		return result;
 	}
 }

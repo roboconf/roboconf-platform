@@ -107,6 +107,11 @@ public class CommandsExecutor {
 				throw new CommandException( "Invalid command file. " + this.commandsFile.getName() + " contains errors." );
 
 			for( AbstractCommandInstruction instr : parser.getInstructions()) {
+				if( instr.isDisabled()) {
+					this.logger.fine( "Skipping disabled instruction: " + instr.getClass().getSimpleName());
+					continue;
+				}
+
 				AbstractCommandExecution executor = findExecutor( instr );
 				if( executor == null ) {
 					this.logger.fine( "Skipping non-executable instruction: " + instr.getClass().getSimpleName());
@@ -121,7 +126,6 @@ public class CommandsExecutor {
 			throw e;
 
 		} catch( Exception e ) {
-			e.printStackTrace();
 			throw new CommandException( e );
 		}
 	}
