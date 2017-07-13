@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -46,8 +48,6 @@ import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -164,7 +164,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testFindAllExportedVariables() {
 
-		Instance instance = new Instance( "inst 1" );
+		Instance instance = new Instance( "inst 1" ).component( new Component( "c" ));
 		Assert.assertEquals( 0, InstanceHelpers.findAllExportedVariables( instance ).size());
 
 		instance.overriddenExports.put( "var1", "value1" );
