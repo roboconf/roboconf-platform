@@ -106,6 +106,17 @@ public class Instance implements Serializable {
 	 */
 	public static final String RUNNING_FROM = "running.from";
 
+	/**
+	 * A constant to indicate this instance should be removed from the model once it is not deployed.
+	 * <p>
+	 * This constant is used for batch instructions where we want to delete instance eventually.
+	 * A batch could indicate to undeploy and instance and then delete it. Since the undeployment may
+	 * take some time, the deletion would fail if we did not have an asynchronous solution to delete
+	 * an instance. We do it by adding this marker on the instance.
+	 * </p>
+	 */
+	public static final String DELETE_WHEN_NOT_DEPLOYED = "delete.when.not.deployed";
+
 
 	private static final long serialVersionUID = -3320865356277185064L;
 

@@ -189,8 +189,8 @@ public class AgentInMemoryWithRealRecipesTest extends DmWithAgentInMemoryTest {
 		Component vm = ComponentHelpers.findComponent( tpl, "VM" );
 		for( int i=0; i<4; i++) {
 			Instance newVm = new Instance( "vm " + i ).component( vm );
-			this.manager.instancesMngr().addInstance( ma, null, newVm );
-			this.manager.instancesMngr().addInstance( ma, newVm, new Instance( "tomcat" ).component( tomcat ));
+			ma.getApplication().getRootInstances().add( newVm );
+			InstanceHelpers.insertChild( newVm, new Instance( "tomcat" ).component( tomcat ));
 		}
 
 		// So, we have 7 instances that execute scripts!

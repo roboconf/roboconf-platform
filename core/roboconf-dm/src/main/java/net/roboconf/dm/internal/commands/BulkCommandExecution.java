@@ -96,7 +96,7 @@ class BulkCommandExecution extends AbstractCommandExecution {
 			case DELETE:
 				try {
 					for( Instance inst : instances )
-						this.manager.instancesMngr().removeInstance( ma, inst );
+						this.manager.instancesMngr().removeInstance( ma, inst, false );
 
 				} catch( Exception e ) {
 					// Ignore errors related to deletion.

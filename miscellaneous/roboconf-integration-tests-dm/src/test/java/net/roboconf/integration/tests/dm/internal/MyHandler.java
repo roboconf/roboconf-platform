@@ -27,7 +27,6 @@ package net.roboconf.integration.tests.dm.internal;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.core.model.beans.Instance;
@@ -70,9 +69,6 @@ public class MyHandler implements TargetHandler {
 
 		String key = parameters.getScopedInstancePath() + " @ " + parameters.getApplicationName();
 		this.agentIdToAgent.put( key, agent );
-
-		// TODO
-		Logger.getLogger( getClass().getName()).severe( "\n\n\nmerde\n\n\n" );
 
 		return key;
 	}
