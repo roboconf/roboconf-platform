@@ -160,7 +160,7 @@ public class WebSocketHandler implements IDmListener {
 			result = writer.toString();
 
 		} catch( IOException e ) {
-			this.logger.severe( "A notification could not be prepare. It will not be sent. " + e.getMessage());
+			this.logger.severe( "A notification could not be prepared. It will not be sent. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
 

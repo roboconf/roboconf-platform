@@ -61,7 +61,6 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 	private File karafDirectory, tmpFile;
 
 
-
 	@Test
 	public void run() throws Exception {
 

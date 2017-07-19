@@ -739,7 +739,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_5() throws Exception {
 
-		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"ip\":\"127.0.0.1\",\"any field\":\"some value\"}}";
+		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"any field\":\"some value\",\"ip\":\"127.0.0.1\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "instance" );
