@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,21 +23,63 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.core.model.runtime;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class CommandHistoryItem {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
-	String SCHEDULER = "scheduler";
-	String AUTHENTICATION = "auth";
-	String HISTORY = "history";
+	private final String applicationName, commandName, origin, executionResult;
+	private final long start, duration;
 
-	String SESSION_ID = "roboconf-sid";
+
+	/**
+	 * Constructor.
+	 * @param applicationName
+	 * @param commandName
+	 * @param origin
+	 * @param executionResult
+	 * @param start (in nanoseconds)
+	 * @param duration (in nanoseconds)
+	 */
+	public CommandHistoryItem(
+			String applicationName,
+			String commandName,
+			String origin,
+			String executionResult,
+			long start,
+			long duration ) {
+
+		this.applicationName = applicationName;
+		this.commandName = commandName;
+		this.origin = origin;
+		this.executionResult = executionResult;
+		this.start = start;
+		this.duration = duration;
+	}
+
+	public String getApplicationName() {
+		return this.applicationName;
+	}
+
+	public String getCommandName() {
+		return this.commandName;
+	}
+
+	public String getOrigin() {
+		return this.origin;
+	}
+
+	public String getExecutionResult() {
+		return this.executionResult;
+	}
+
+	public long getStart() {
+		return this.start;
+	}
+
+	public long getDuration() {
+		return this.duration;
+	}
 }

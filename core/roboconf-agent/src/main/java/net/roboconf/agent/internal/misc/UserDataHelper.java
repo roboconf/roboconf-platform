@@ -72,56 +72,28 @@ public class UserDataHelper {
 		logger.info( "User data are being retrieved for AWS / Openstack..." );
 
 		// Copy the user data
-		String userData = "";
-		InputStream in = null;
-		try {
-			URL userDataUrl = new URL( "http://169.254.169.254/latest/user-data" );
-			in = userDataUrl.openStream();
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-			Utils.copyStreamSafely( in, os );
-			userData = os.toString( "UTF-8" );
-
-		} catch( IOException e ) {
-			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			Utils.logException( logger, e );
-		}
+		String userData = Utils.readUrlContentQuietly( "http://169.254.169.254/latest/user-data", logger );
+		String ip = Utils.readUrlContentQuietly( "http://169.254.169.254/latest/meta-data/public-ipv4", logger );
 
 		AgentProperties result = null;
-		in = null;
 		try {
 			// Parse the user data
 			result = AgentProperties.readIaasProperties( userData, logger );
 
-			// We need to ask our IP address because we may have several network interfaces.
-			URL userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/public-ipv4" );
-			in = userDataUrl.openStream();
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-			Utils.copyStreamSafely( in, os );
-			String ip = os.toString( "UTF-8" );
-			if(! AgentUtils.isValidIP( ip )) {
+			// Verify the IP
+			if( ! AgentUtils.isValidIP( ip )) {
 				// Failed retrieving public IP: try private one instead
-				Utils.closeQuietly( in );
-				userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/local-ipv4" );
-				in = userDataUrl.openStream();
-				os = new ByteArrayOutputStream();
-
-				Utils.copyStreamSafely( in, os );
-				ip = os.toString( "UTF-8" );
+				ip = Utils.readUrlContentQuietly( "http://169.254.169.254/latest/meta-data/local-ipv4", logger );
 			}
 
-			if( ! AgentUtils.isValidIP( ip ))
-				throw new IOException("No IP address could be retrieved (either public-ipv4 or local-ipv4)");
-
-			result.setIpAddress( os.toString( "UTF-8" ));
+			if( AgentUtils.isValidIP( ip ))
+				result.setIpAddress( ip );
+			else
+				logger.severe( "No IP address could be retrieved (either public-ipv4 or local-ipv4)." );
 
 		} catch( IOException e ) {
 			logger.severe( "The network properties could not be read. " + e.getMessage());
 			Utils.logException( logger, e );
-
-		} finally {
-			Utils.closeQuietly( in );
 		}
 
 		return result;

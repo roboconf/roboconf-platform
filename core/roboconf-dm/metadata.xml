@@ -33,6 +33,7 @@
 	<!-- A component for the DM -->
 	<component classname="net.roboconf.dm.management.Manager" name="roboconf-dm" public="false">
 
+		<requires field="dataSource" optional="true" filter="(dataSourceName=roboconf-dm-db)" />
 		<requires optional="false" field="preferencesMngr" />
 		<requires aggregate="true" optional="true">
 			<callback type="bind" method="targetAppears" />

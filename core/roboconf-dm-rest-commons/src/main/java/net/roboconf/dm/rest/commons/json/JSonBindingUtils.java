@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -56,6 +57,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.ScheduledJob;
@@ -124,6 +126,7 @@ public final class JSonBindingUtils {
 		SERIALIZERS.put( TargetAssociation.class, new TargetAssociationSerializer());
 		SERIALIZERS.put( ApplicationBindings.class, new ApplicationBindingsSerializer());
 		SERIALIZERS.put( WebSocketMessage.class, new WebSocketMessageSerializer());
+		SERIALIZERS.put( CommandHistoryItem.class, new CommandHistoryItemSerializer());
 	}
 
 
@@ -351,6 +354,45 @@ public final class JSonBindingUtils {
 			if( item.getTargetDescriptor() != null )
 				generator.writeObjectField( DESC, item.getTargetDescriptor());
 
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for a bean describing a command execution.
+	 * <p>
+	 * No deserializer is provided, as it does not make sense for the REST API.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class CommandHistoryItemSerializer extends JsonSerializer<CommandHistoryItem> {
+
+		@Override
+		public void serialize(
+				CommandHistoryItem item,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( item.getApplicationName() != null )
+				generator.writeStringField( "app", item.getApplicationName());
+
+			if( item.getCommandName() != null )
+				generator.writeStringField( "cmd", item.getCommandName());
+
+			if( item.getExecutionResult() != null )
+				generator.writeStringField( "result", item.getExecutionResult());
+
+			if( item.getOrigin() != null )
+				generator.writeStringField( "origin", item.getOrigin());
+
+			long startInMilliSec = TimeUnit.MILLISECONDS.convert( item.getStart(), TimeUnit.NANOSECONDS );
+			long durationInMilliSec = TimeUnit.MILLISECONDS.convert( item.getDuration(), TimeUnit.NANOSECONDS );
+			generator.writeNumberField( "start", startInMilliSec );
+			generator.writeNumberField( "duration", durationInMilliSec );
 			generator.writeEndObject();
 		}
 	}

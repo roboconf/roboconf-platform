@@ -25,10 +25,17 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,7 +47,9 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier
@@ -134,7 +143,7 @@ public class CommandsMngrImplTest {
 
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
-		this.cmdMngr.execute( this.app, cmdName );
+		this.cmdMngr.execute( this.app, cmdName, "some source" );
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
 	}
@@ -143,6 +152,143 @@ public class CommandsMngrImplTest {
 	@Test( expected = NoSuchFileException.class )
 	public void testExecute_noSuchCommand() throws Exception {
 
-		this.cmdMngr.execute( this.app, "my-command" );
+		this.cmdMngr.execute( this.app, "my-command", "some source" );
+	}
+
+
+	@Test
+	public void testWithHistory_realDataSource() throws Exception {
+
+		// Create a H2 data source
+		JdbcDataSource ds = new JdbcDataSource();
+		File dataFile = this.folder.newFile();
+		ds.setURL( "jdbc:h2:" + dataFile.getAbsolutePath());
+		ds.setUser( "roboconf" );
+		ds.setPassword( "roboconf" );
+
+		// Prepare the mock
+		Mockito.when( this.manager.getDataSource()).thenReturn( ds );
+
+		// Execute a command once
+		String cmdName = "my-command";
+		String line = "rename /tomcat-vm as tomcat-vm-copy";
+		this.cmdMngr.createOrUpdateCommand( this.app, cmdName, line );
+
+		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
+		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null ).size());
+		this.cmdMngr.execute( this.app, cmdName, "some source" );
+
+		// Verify things were updated
+		Assert.assertEquals( 1, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
+		Assert.assertEquals( 1, this.cmdMngr.getHistory( 0, 10, null, null ).size());
+
+		// Execute it again
+		final int repeatCount = 15;
+		for( int i=0; i<repeatCount; i++ ) {
+			try {
+				this.cmdMngr.execute( this.app, cmdName, "some source 2" );
+				Assert.fail( "An error was expected, the instance to rename does not exist anymore." );
+
+			} catch( CommandException e ) {
+				// nothing
+			}
+		}
+
+		Assert.assertEquals( 2, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
+
+		List<CommandHistoryItem> items = this.cmdMngr.getHistory( 0, 10, null, null );
+		Assert.assertEquals( 10, items.size());
+
+		items = this.cmdMngr.getHistory( 0, 20, null, null );
+		Assert.assertEquals( repeatCount + 1, items.size());
+		CommandHistoryItem item = items.get( 0 );
+
+		Assert.assertEquals( this.app.getName(), item.getApplicationName());
+		Assert.assertEquals( "my-command", item.getCommandName());
+		Assert.assertEquals( "some source", item.getOrigin());
+		Assert.assertEquals( "OK", item.getExecutionResult());
+		Assert.assertTrue( item.getDuration() > 0L );
+		Assert.assertTrue( item.getStart() > 0L );
+
+		for( int i=0; i<repeatCount; i++ ) {
+			item = items.get( i + 1 );
+
+			Assert.assertEquals( this.app.getName(), item.getApplicationName());
+			Assert.assertEquals( "my-command", item.getCommandName());
+			Assert.assertEquals( "some source 2", item.getOrigin());
+			Assert.assertEquals( "Error", item.getExecutionResult());
+			Assert.assertTrue( item.getDuration() > 0L );
+			Assert.assertTrue( item.getStart() > 0L );
+		}
+
+		// Filter by application name
+		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, "inexisting app" ));
+		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, "inexisting app" ).size());
+
+		Assert.assertEquals( 2, this.cmdMngr.getHistoryNumberOfPages( 10, this.app.getName()));
+		Assert.assertEquals( 1, this.cmdMngr.getHistoryNumberOfPages( -1, this.app.getName()));
+
+		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( 0, 20, "result", this.app.getName()).size());
+		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( -1, -1, "result", this.app.getName()).size());
+	}
+
+
+	@Test
+	public void testWithHistory_noSource() throws Exception {
+
+		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
+		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null ).size());
+	}
+
+
+	@Test
+	public void testCloseConnection() throws Exception {
+
+		this.cmdMngr.closeConnection( null );
+		// No exception
+
+		Connection conn = Mockito.mock( Connection.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( conn ).close();
+		this.cmdMngr.closeConnection( conn );
+		// No exception
+	}
+
+
+	@Test
+	public void testClosePreparedStatement() throws Exception {
+
+		this.cmdMngr.closeStatement((PreparedStatement) null );
+		// No exception
+
+		PreparedStatement ps = Mockito.mock( PreparedStatement.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( ps ).close();
+		this.cmdMngr.closeStatement( ps );
+		// No exception
+	}
+
+
+	@Test
+	public void testCloseStatement() throws Exception {
+
+		this.cmdMngr.closeStatement((Statement) null );
+		// No exception
+
+		Statement st = Mockito.mock( Statement.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( st ).close();
+		this.cmdMngr.closeStatement( st );
+		// No exception
+	}
+
+
+	@Test
+	public void testResultSet() throws Exception {
+
+		this.cmdMngr.closeResultSet( null );
+		// No exception
+
+		ResultSet resultSet = Mockito.mock( ResultSet.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( resultSet ).close();
+		this.cmdMngr.closeResultSet( resultSet );
+		// No exception
 	}
 }

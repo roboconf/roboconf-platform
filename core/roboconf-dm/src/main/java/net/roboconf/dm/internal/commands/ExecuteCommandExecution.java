@@ -56,7 +56,10 @@ class ExecuteCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		try {
-			this.manager.commandsMngr().execute((Application) this.instr.getApplication(), this.instr.getCommandName());
+			this.manager.commandsMngr().execute(
+					(Application) this.instr.getApplication(),
+					this.instr.getCommandName(),
+					"Command Instruction" );
 
 		} catch( NoSuchFileException e ) {
 			throw new CommandException( e );

@@ -57,6 +57,7 @@ public class CommandsExecutor {
 	private final Application app;
 	private final Manager manager;
 	private final CommandExecutionContext executionContext;
+	private boolean instructionSkipped = false;
 
 
 	/**
@@ -109,6 +110,7 @@ public class CommandsExecutor {
 			for( AbstractCommandInstruction instr : parser.getInstructions()) {
 				if( instr.isDisabled()) {
 					this.logger.fine( "Skipping disabled instruction: " + instr.getClass().getSimpleName());
+					this.instructionSkipped = true;
 					continue;
 				}
 
@@ -128,6 +130,14 @@ public class CommandsExecutor {
 		} catch( Exception e ) {
 			throw new CommandException( e );
 		}
+	}
+
+
+	/**
+	 * @return true if one or several instructions were skipped during the execution
+	 */
+	public boolean wereInstructionSkipped() {
+		return this.instructionSkipped;
 	}
 
 

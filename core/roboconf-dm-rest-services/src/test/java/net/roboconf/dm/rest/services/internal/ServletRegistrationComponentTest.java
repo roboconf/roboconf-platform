@@ -55,7 +55,7 @@ import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -195,7 +195,7 @@ public class ServletRegistrationComponentTest {
 			httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
 			Assert.assertTrue( httpServer.isStarted());
 			URI targetUri = UriBuilder.fromUri( uri ).path( UrlConstants.APPLICATIONS ).build();
-			received = TestUtils.readUriContent( targetUri );
+			received = Utils.readUrlContent( targetUri.toString());
 
 		} finally {
 			if( httpServer != null )
@@ -226,7 +226,7 @@ public class ServletRegistrationComponentTest {
 					.path( UrlConstants.APP ).path( this.app.getName()).path( "instances" )
 					.queryParam( "instance-path", "/tomcat-vm" ).build();
 
-			received = TestUtils.readUriContent( targetUri );
+			received = Utils.readUrlContent( targetUri.toString());
 
 		} finally {
 			if( httpServer != null )

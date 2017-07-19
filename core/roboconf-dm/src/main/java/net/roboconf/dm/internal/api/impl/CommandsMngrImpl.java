@@ -28,13 +28,22 @@ package net.roboconf.dm.internal.api.impl;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+
+import javax.sql.DataSource;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.commands.CommandsExecutor;
 import net.roboconf.dm.management.Manager;
@@ -43,9 +52,12 @@ import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier
+ * @author Vincent Zurczak - Linagora
  */
 public class CommandsMngrImpl implements ICommandsMngr {
 
+	static final int DEFAULT_ITEMS_PER_PAGE = 20;
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
 
 
@@ -111,23 +123,349 @@ public class CommandsMngrImpl implements ICommandsMngr {
 	}
 
 
+	/*
+	 * This class uses a data source to interact with a database.
+	 * We use raw SQL queries, which urges us to correctly close
+	 * database resources.
+	 *
+	 * We could have used JPA to reduce a little bit the size of the code.
+	 * Here is an example of using JPA within OSGi:
+	 *
+	 * https://github.com/cschneider/Karaf-Tutorial/tree/master/db/examplejpa
+	 *
+	 * The main difference for use would be use iPojo instead of Blueprint
+	 * to create services. And we would not need Karaf commands. We do not
+	 * use JPA as we have very limited interactions with a database and also
+	 * because we would like to reduce the number of dependencies for the DM.
+	 *
+	 * Right now, the "roboconf-dm" bundle can be used as a usual Java library
+	 * and only depends on JRE (and Roboconf) classes.
+	 */
+
+
 	@Override
-	public void execute( Application app, String commandName )
-	throws CommandException, NoSuchFileException {
-		execute( app, commandName, null );
+	public int getHistoryNumberOfPages( int itemsPerPage, String applicationName ) {
+
+		int result = 0;
+		DataSource dataSource = this.manager.getDataSource();
+
+		// Fix invalid values for the query
+		if( itemsPerPage < 1 )
+			itemsPerPage = DEFAULT_ITEMS_PER_PAGE;
+
+		// The data source is optional.
+		if( dataSource != null ) {
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet sqlRes = null;
+			try {
+				conn = dataSource.getConnection();
+
+				StringBuilder sb = new StringBuilder();
+				sb.append( "SELECT count( * ) FROM commands_history" );
+				if( ! Utils.isEmptyOrWhitespaces( applicationName ))
+					sb.append( " WHERE application = ?" );
+
+				// Use PreparedStatement to prevent SQL injection
+				ps = conn.prepareStatement( sb.toString());
+				if( ! Utils.isEmptyOrWhitespaces( applicationName ))
+					ps.setString( 1, applicationName );
+
+				// Execute
+				sqlRes = ps.executeQuery();
+				if( sqlRes.next()) {
+					int count = sqlRes.getInt( 1 );
+					result = count == 0 ? 0 : count / itemsPerPage + 1;
+				}
+
+			} catch( SQLException e ) {
+				this.logger.severe( "An error occurred while counting pages in commands history." );
+				Utils.logException( this.logger, e );
+
+			} finally {
+				closeResultSet( sqlRes );
+				closeStatement( ps );
+				closeConnection( conn );
+			}
+		}
+
+		return result;
 	}
 
 
 	@Override
-	public void execute( Application app, String commandName, CommandExecutionContext executionContext )
+	public List<CommandHistoryItem> getHistory(
+			int start,
+			int maxEntry,
+			String sortCriteria,
+			String applicationName ) {
+
+		List<CommandHistoryItem> result = new ArrayList<> ();
+		DataSource dataSource = this.manager.getDataSource();
+
+		// Fix invalid values for the query
+		if( start < 0 )
+			start = 0;
+
+		if( maxEntry < 1 )
+			maxEntry = DEFAULT_ITEMS_PER_PAGE;
+
+		// The data source is optional.
+		if( dataSource != null ) {
+			Connection conn = null;
+			PreparedStatement ps = null;
+			ResultSet sqlRes = null;
+			try {
+				conn = dataSource.getConnection();
+
+				StringBuilder sb = new StringBuilder();
+				sb.append( "SELECT * FROM commands_history " );
+				if( ! Utils.isEmptyOrWhitespaces( applicationName ))
+					sb.append( " WHERE application = ?" );
+
+				sb.append( " ORDER BY " );
+				sb.append( sortCriteria == null ? "start" : sortCriteria );
+				sb.append( " LIMIT " );
+				sb.append( maxEntry );
+				sb.append( " OFFSET " );
+				sb.append( start );
+
+				// Use PreparedStatement to prevent SQL injection
+				ps = conn.prepareStatement( sb.toString());
+				if( ! Utils.isEmptyOrWhitespaces( applicationName ))
+					ps.setString( 1, applicationName );
+
+				// Build the result
+				for( sqlRes = ps.executeQuery(); sqlRes.next(); ) {
+					String appName = sqlRes.getString( "application" );
+					String commandName = sqlRes.getString( "command" );
+					String origin = sqlRes.getString( "origin" );
+					String executionResult = sqlRes.getString( "result" );
+					long executionStart = sqlRes.getLong( "start" );
+					long duration = sqlRes.getLong( "duration" );
+
+					result.add( new CommandHistoryItem(
+							appName, commandName, origin,
+							executionResult, executionStart, duration ));
+				}
+
+			} catch( SQLException e ) {
+				this.logger.severe( "An error occurred while retrieving commands history from database." );
+				Utils.logException( this.logger, e );
+
+			} finally {
+				closeResultSet( sqlRes );
+				closeStatement( ps );
+				closeConnection( conn );
+			}
+		}
+
+		return result;
+	}
+
+
+	@Override
+	public void execute( Application app, String commandName, String origin )
+	throws CommandException, NoSuchFileException {
+		execute( app, commandName, null, origin );
+	}
+
+
+	@Override
+	public void execute( Application app, String commandName, CommandExecutionContext executionContext, String origin )
 	throws CommandException, NoSuchFileException {
 
 		File cmdFile = findCommandFile( app, commandName );
 		if( ! cmdFile.isFile())
 			throw new NoSuchFileException( cmdFile.getAbsolutePath());
 
-		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
-		executor.execute();
+		String result = "OK";
+		long start = System.nanoTime();
+		try {
+			CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
+			executor.execute();
+			if( executor.wereInstructionSkipped())
+				result = "OK with skipped";
+
+		} catch( CommandException e ) {
+			result = "Error";
+			throw e;
+
+		} finally {
+			recordInHistory( start, result, app.getName(), commandName, origin );
+		}
+	}
+
+
+	/**
+	 * Closes a connection to a database.
+	 * @param conn
+	 */
+	void closeConnection( Connection conn ) {
+
+		try {
+			if( conn != null )
+				conn.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( this.logger, e );
+		}
+	}
+
+
+	/**
+	 * Closes a prepared statement.
+	 * @param ps
+	 */
+	void closeStatement( PreparedStatement ps ) {
+
+		try {
+			if( ps != null )
+				ps.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( this.logger, e );
+		}
+	}
+
+
+	/**
+	 * Closes a statement.
+	 * @param st
+	 */
+	void closeStatement( Statement st ) {
+
+		try {
+			if( st != null )
+				st.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( this.logger, e );
+		}
+	}
+
+
+	/**
+	 * Closes a result set.
+	 * @param st
+	 */
+	void closeResultSet( ResultSet resultSet ) {
+
+		try {
+			if( resultSet != null )
+				resultSet.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( this.logger, e );
+		}
+	}
+
+
+	/**
+	 * @param start
+	 * @param result
+	 * @param name
+	 * @param commandName
+	 * @param origin
+	 */
+	private void recordInHistory(
+			long start,
+			String result,
+			String applicationName,
+			String commandName,
+			String origin ) {
+
+		long end = System.nanoTime();
+		DataSource dataSource = this.manager.getDataSource();
+
+		// The data source is optional.
+		if( dataSource != null ) {
+
+			// We try to insert the record.
+			boolean failed = false;
+			Connection conn = null;
+			try {
+				conn = dataSource.getConnection();
+				recordEntry( conn, start, end - start, result, applicationName, commandName, origin );
+
+			} catch( SQLException e ) {
+				failed = true;
+			}
+
+			// If it fails, we assume the table does not exist.
+			// We thus try to create it and retry the insertion.
+			// It avoids executing two SQL statements every time we try to insert it.
+
+			// In Karaf, the data source can be configured / modified dynamically.
+			// So, it is better to have a resilient implementation.
+			try {
+				if( failed ) {
+					createTable( conn );
+					recordEntry( conn, start, end, result, applicationName, commandName, origin );
+				}
+
+			} catch( SQLException e ) {
+				this.logger.severe( "An error occurred while storing the result of a command execution in database." );
+				Utils.logException( this.logger, e );
+
+			} finally {
+				closeConnection( conn );
+			}
+		}
+	}
+
+
+	private void recordEntry(
+			Connection conn,
+			long start,
+			long duration,
+			String result,
+			String applicationName,
+			String commandName,
+			String origin ) throws SQLException {
+
+		String req = "INSERT INTO commands_history( application, command, start, duration, result, origin ) values( ?, ?, ?, ?, ?, ? )";
+		PreparedStatement ps = null;
+		try {
+			ps = conn.prepareStatement( req );
+			ps.setString( 1, applicationName );
+			ps.setString( 2, commandName );
+			ps.setLong( 3, start );
+			ps.setLong( 4, duration );
+			ps.setString( 5, result );
+			ps.setString( 6, origin );
+			ps.execute();
+
+		} finally {
+			closeStatement( ps );
+		}
+	}
+
+
+	private void createTable( Connection conn ) throws SQLException {
+
+		StringBuilder sb = new StringBuilder( "CREATE TABLE IF NOT EXISTS commands_history (" );
+		sb.append( "id INT NOT NULL AUTO_INCREMENT," );
+		sb.append( "application VARCHAR(255)," );
+		sb.append( "command VARCHAR(255)," );
+		sb.append( "start BIGINT," );
+		sb.append( "duration BIGINT," );
+		sb.append( "result VARCHAR(20)," );
+		sb.append( "origin VARCHAR(255)," );
+		sb.append( "PRIMARY KEY( id ))" );
+
+		Statement st = null;
+		try {
+			st = conn.createStatement();
+			st.execute( sb.toString());
+
+		} finally {
+			closeStatement( st );
+		}
 	}
 
 

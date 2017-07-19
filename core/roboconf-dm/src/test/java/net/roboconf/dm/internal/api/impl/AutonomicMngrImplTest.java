@@ -167,7 +167,8 @@ public class AutonomicMngrImplTest {
 		Mockito.verify( this.commandsMngr, Mockito.times( 3 )).execute(
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
-				Mockito.any( CommandExecutionContext.class ));
+				Mockito.any( CommandExecutionContext.class ),
+				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
 			Assert.assertEquals( 5, c.getMaxVm());
@@ -188,7 +189,8 @@ public class AutonomicMngrImplTest {
 		Mockito.verify( this.commandsMngr, Mockito.times( 3 )).execute(
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
-				execCtx.capture());
+				execCtx.capture(),
+				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
 			Assert.assertEquals( Integer.MAX_VALUE, c.getMaxVm());
@@ -213,7 +215,8 @@ public class AutonomicMngrImplTest {
 		Mockito.verify( this.commandsMngr, Mockito.times( 3 )).execute(
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
-				execCtx.capture());
+				execCtx.capture(),
+				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
 			Assert.assertEquals( 4, c.getMaxVm());
@@ -236,7 +239,8 @@ public class AutonomicMngrImplTest {
 		Mockito.verify( this.commandsMngr, Mockito.times( 3 )).execute(
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
-				execCtx.capture());
+				execCtx.capture(),
+				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
 			Assert.assertEquals( 5, c.getMaxVm());
@@ -251,7 +255,8 @@ public class AutonomicMngrImplTest {
 		Mockito.doThrow( new CommandException( "for test" )).when( this.commandsMngr ).execute(
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
-				Mockito.any( CommandExecutionContext.class ));
+				Mockito.any( CommandExecutionContext.class ),
+				Mockito.anyString());
 
 		ManagedApplication ma = factorizeConfiguration();
 		this.autonomicMngr.handleEvent( ma, new MsgNotifAutonomic( "app", "/root", "event", null ));

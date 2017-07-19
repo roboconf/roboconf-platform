@@ -54,7 +54,7 @@ public class CommandExecutionJob implements Job {
 		try {
 			Manager manager = (Manager) context.getScheduler().getContext().get( RoboconfScheduler.MANAGER );
 			Application app = manager.applicationMngr().findApplicationByName( appName );
-			manager.commandsMngr().execute( app, commandsFileName );
+			manager.commandsMngr().execute( app, commandsFileName, "Scheduler - " + jobName );
 
 		} catch( Exception e ) {
 			this.logger.warning( "An error occurred while executing job " + jobName + " (command file =" + commandsFileName + ")." );

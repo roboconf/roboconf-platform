@@ -142,6 +142,11 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, cmdNames.size());
 		Assert.assertEquals( "append something", cmdNames.get( 0 ));
 
+		// Verify no command was listed in the history
+		String historyUrl = "http://localhost:" + getCurrentPort() + "/roboconf-dm/history/commands";
+		String historyContent = Utils.readUrlContent( historyUrl );
+		Assert.assertEquals( "[]", historyContent );
+
 		// Create a scheduled job (every second)
 		Assert.assertFalse( this.tmpFile.exists());
 		Assert.assertEquals( 0, client.getSchedulerDelegate().listAllJobs( null, null ).size());
@@ -180,5 +185,12 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 
 		cmdNames = client.getApplicationDelegate().listAllCommands( receivedApp.getName());
 		Assert.assertEquals( 1, cmdNames.size());
+
+		// Verify the execution appears in the history
+		historyContent = Utils.readUrlContent( historyUrl );
+		Assert.assertNotEquals( "[]", historyContent );
+		Assert.assertTrue( historyContent.startsWith( "[{" ));
+		Assert.assertTrue( historyContent.endsWith( "}]" ));
+		Assert.assertTrue( historyContent.contains( "\"origin\":\"Scheduler - job1\"" ));
 	}
 }

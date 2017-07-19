@@ -40,6 +40,8 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -462,6 +464,53 @@ public final class Utils {
 
 		} catch( Exception e ) {
 			logger.severe( "File " + file + " could not be read." );
+			logException( logger, e );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Reads the content of an URL (assumed to be text content).
+	 * @param url an URL
+	 * @return a non-null string
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	public static String readUrlContent( String url )
+	throws IOException, URISyntaxException {
+
+		InputStream in = null;
+		try {
+			URI uri = UriUtils.urlToUri( url );
+			in = uri.toURL().openStream();
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+			Utils.copyStreamSafely( in, os );
+			return os.toString( "UTF-8" );
+
+		} finally {
+			closeQuietly( in );
+		}
+	}
+
+
+	/**
+	 * Reads the content of an URL (assumed to be text content).
+	 * @param url an URL
+	 * @return a non-null string
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	public static String readUrlContentQuietly( String url, Logger logger ) {
+
+		String result = "";
+		try {
+			result = readUrlContent( url );
+
+		} catch( Exception e ) {
+			logger.severe( "Content of URL " + url + " could not be read." );
 			logException( logger, e );
 		}
 

@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,6 +52,7 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
@@ -1324,5 +1326,32 @@ public class JSonBindingUtilsTest {
 
 		String s = writer.toString();
 		Assert.assertEquals( "{\"msg\":\"my message\"}", s );
+	}
+
+
+	@Test
+	public void testCommandHistoryItem() throws Exception {
+
+		// All fields set
+		String expected = "{\"app\":\"test\",\"cmd\":\"scale\",\"result\":\"OK\",\"origin\":\"REST API\",\"start\":1542,\"duration\":21}";
+
+		long start = TimeUnit.NANOSECONDS.convert( 1542, TimeUnit.MILLISECONDS );
+		long duration = TimeUnit.NANOSECONDS.convert( 21, TimeUnit.MILLISECONDS );
+		Assert.assertEquals( 21000000, duration );
+		CommandHistoryItem item = new CommandHistoryItem( "test", "scale", "REST API", "OK", start, duration );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, item );
+		Assert.assertEquals( expected, writer.toString());
+
+		// Only mandatory fields are set
+		start = TimeUnit.NANOSECONDS.convert( 21, TimeUnit.MILLISECONDS );
+		duration = TimeUnit.NANOSECONDS.convert( 1, TimeUnit.MILLISECONDS );
+		item = new CommandHistoryItem( null, null, null, null, start, duration );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, item );
+		Assert.assertEquals( "{\"start\":21,\"duration\":1}", writer.toString());
 	}
 }

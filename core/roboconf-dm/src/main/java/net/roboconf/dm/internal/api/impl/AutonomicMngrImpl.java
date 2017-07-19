@@ -172,7 +172,7 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 						this.logger.fine( "Applying rule '" + rule.getRuleName() + "' for event '" + event.getEventName() + "'." );
 						ctx.recordPreExecution( rule.getRuleName());
 						for( String commandName : rule.getCommandsToInvoke())
-							this.commandsMngr.execute( ma.getApplication(), commandName, execCtx );
+							this.commandsMngr.execute( ma.getApplication(), commandName, execCtx, "Autonomic - " + rule.getRuleName());
 					}
 				}
 			}

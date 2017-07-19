@@ -825,7 +825,7 @@ public class ApplicationResource implements IApplicationResource {
 			if( application == null )
 				response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( app )), lang ).build();
 			else
-				this.manager.commandsMngr().execute( application, commandName );
+				this.manager.commandsMngr().execute( application, commandName, "REST API" );
 
 		} catch( NoSuchFileException e ) {
 			response = RestServicesUtils.handleError(

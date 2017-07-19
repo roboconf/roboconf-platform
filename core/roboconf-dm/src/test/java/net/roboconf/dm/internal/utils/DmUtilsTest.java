@@ -71,4 +71,24 @@ public class DmUtilsTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Mockito.verify( instanceMngr ).removeInstance( ma, app.getMySqlVm(), true );
 	}
+
+
+	@Test
+	public void testDeletionOfInstances_withInstanceMarked_andExceptions() throws Exception {
+
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IInstancesMngr instanceMngr = Mockito.mock( IInstancesMngr.class );
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		Mockito.doThrow( new RuntimeException( "for test" )).when( instanceMngr ).removeInstance( ma, app.getMySqlVm(), true );
+
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getMySqlVm().data.put( Instance.DELETE_WHEN_NOT_DEPLOYED, "whatever" );
+
+		DmUtils.markScopedInstanceAsNotDeployed( app.getMySqlVm(), ma, notificationMngr, instanceMngr );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Mockito.verify( instanceMngr ).removeInstance( ma, app.getMySqlVm(), true );
+	}
 }

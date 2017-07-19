@@ -1123,4 +1123,21 @@ public class UtilsTest {
 		Assert.assertFalse( Utils.isAncestor( dir, new File( "somewhere/over/the/rainbows" )));
 		Assert.assertFalse( Utils.isAncestor( dir, new File( "somewhere/over/the/rainbo" )));
 	}
+
+
+	@Test
+	public void testReadUrlContent() throws Exception {
+
+		File f = this.folder.newFile();
+		Utils.writeStringInto( "kikou", f );
+		String readContent = Utils.readUrlContent( f.toURI().toURL().toString());
+		Assert.assertEquals( "kikou", readContent );
+
+		Utils.deleteFilesRecursively( f );
+		Assert.assertFalse( f.exists());
+
+		Logger logger = Logger.getLogger( getClass().getName());
+		readContent = Utils.readUrlContentQuietly( f.toURI().toURL().toString(), logger );
+		Assert.assertEquals( "", readContent );
+	}
 }
