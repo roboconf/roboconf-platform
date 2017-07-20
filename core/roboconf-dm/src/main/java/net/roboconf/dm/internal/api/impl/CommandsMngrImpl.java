@@ -379,7 +379,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			String commandName,
 			String origin ) {
 
-		long end = System.nanoTime();
+		long duration = System.nanoTime() - start;
 		DataSource dataSource = this.manager.getDataSource();
 
 		// The data source is optional.
@@ -390,7 +390,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			Connection conn = null;
 			try {
 				conn = dataSource.getConnection();
-				recordEntry( conn, start, end - start, result, applicationName, commandName, origin );
+				recordEntry( conn, start, duration, result, applicationName, commandName, origin );
 
 			} catch( SQLException e ) {
 				failed = true;
@@ -405,7 +405,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			try {
 				if( failed ) {
 					createTable( conn );
-					recordEntry( conn, start, end, result, applicationName, commandName, origin );
+					recordEntry( conn, start, duration, result, applicationName, commandName, origin );
 				}
 
 			} catch( SQLException e ) {
