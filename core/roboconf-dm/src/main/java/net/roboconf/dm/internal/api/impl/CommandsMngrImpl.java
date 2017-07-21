@@ -280,7 +280,8 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			throw new NoSuchFileException( cmdFile.getAbsolutePath());
 
 		String result = "OK";
-		long start = System.nanoTime();
+		long startInMilliSeconds = System.currentTimeMillis();
+		long startInNanoSeconds = System.nanoTime();
 		try {
 			CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
 			executor.execute();
@@ -292,7 +293,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			throw e;
 
 		} finally {
-			recordInHistory( start, result, app.getName(), commandName, origin );
+			recordInHistory( startInMilliSeconds, startInNanoSeconds, result, app.getName(), commandName, origin );
 		}
 	}
 
@@ -366,20 +367,22 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 
 	/**
-	 * @param start
+	 * @param startInMilliSeconds
+	 * @param startInNanoSeconds
 	 * @param result
-	 * @param name
+	 * @param applicationName
 	 * @param commandName
 	 * @param origin
 	 */
 	private void recordInHistory(
-			long start,
+			long startInMilliSeconds,
+			long startInNanoSeconds,
 			String result,
 			String applicationName,
 			String commandName,
 			String origin ) {
 
-		long duration = System.nanoTime() - start;
+		long duration = System.nanoTime() - startInNanoSeconds;
 		DataSource dataSource = this.manager.getDataSource();
 
 		// The data source is optional.
@@ -390,7 +393,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			Connection conn = null;
 			try {
 				conn = dataSource.getConnection();
-				recordEntry( conn, start, duration, result, applicationName, commandName, origin );
+				recordEntry( conn, startInMilliSeconds, duration, result, applicationName, commandName, origin );
 
 			} catch( SQLException e ) {
 				failed = true;
@@ -405,7 +408,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			try {
 				if( failed ) {
 					createTable( conn );
-					recordEntry( conn, start, duration, result, applicationName, commandName, origin );
+					recordEntry( conn, startInMilliSeconds, duration, result, applicationName, commandName, origin );
 				}
 
 			} catch( SQLException e ) {

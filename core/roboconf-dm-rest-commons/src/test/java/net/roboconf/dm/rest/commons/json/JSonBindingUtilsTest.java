@@ -1335,10 +1335,9 @@ public class JSonBindingUtilsTest {
 		// All fields set
 		String expected = "{\"app\":\"test\",\"cmd\":\"scale\",\"result\":\"OK\",\"origin\":\"REST API\",\"start\":1542,\"duration\":21}";
 
-		long start = TimeUnit.NANOSECONDS.convert( 1542, TimeUnit.MILLISECONDS );
 		long duration = TimeUnit.NANOSECONDS.convert( 21, TimeUnit.MILLISECONDS );
 		Assert.assertEquals( 21000000, duration );
-		CommandHistoryItem item = new CommandHistoryItem( "test", "scale", "REST API", "OK", start, duration );
+		CommandHistoryItem item = new CommandHistoryItem( "test", "scale", "REST API", "OK", 1542, duration );
 
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 		StringWriter writer = new StringWriter();
@@ -1346,9 +1345,8 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( expected, writer.toString());
 
 		// Only mandatory fields are set
-		start = TimeUnit.NANOSECONDS.convert( 21, TimeUnit.MILLISECONDS );
 		duration = TimeUnit.NANOSECONDS.convert( 1, TimeUnit.MILLISECONDS );
-		item = new CommandHistoryItem( null, null, null, null, start, duration );
+		item = new CommandHistoryItem( null, null, null, null, 21, duration );
 
 		writer = new StringWriter();
 		mapper.writeValue( writer, item );

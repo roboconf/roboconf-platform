@@ -389,7 +389,7 @@ public final class JSonBindingUtils {
 			if( item.getOrigin() != null )
 				generator.writeStringField( "origin", item.getOrigin());
 
-			long startInMilliSec = TimeUnit.MILLISECONDS.convert( item.getStart(), TimeUnit.NANOSECONDS );
+			long startInMilliSec = item.getStart();
 			long durationInMilliSec = TimeUnit.MILLISECONDS.convert( item.getDuration(), TimeUnit.NANOSECONDS );
 			generator.writeNumberField( "start", startInMilliSec );
 			generator.writeNumberField( "duration", durationInMilliSec );
