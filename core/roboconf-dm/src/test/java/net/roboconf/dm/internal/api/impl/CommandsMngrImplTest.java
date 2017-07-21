@@ -175,12 +175,12 @@ public class CommandsMngrImplTest {
 		this.cmdMngr.createOrUpdateCommand( this.app, cmdName, line );
 
 		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
-		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null ).size());
+		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null, null ).size());
 		this.cmdMngr.execute( this.app, cmdName, CommandHistoryItem.ORIGIN_REST_API, "some source" );
 
 		// Verify things were updated
 		Assert.assertEquals( 1, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
-		Assert.assertEquals( 1, this.cmdMngr.getHistory( 0, 10, null, null ).size());
+		Assert.assertEquals( 1, this.cmdMngr.getHistory( 0, 10, null, null, null ).size());
 
 		// Execute it again
 		final int repeatCount = 15;
@@ -196,10 +196,10 @@ public class CommandsMngrImplTest {
 
 		Assert.assertEquals( 2, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
 
-		List<CommandHistoryItem> items = this.cmdMngr.getHistory( 0, 10, null, null );
+		List<CommandHistoryItem> items = this.cmdMngr.getHistory( 0, 10, null, null, null );
 		Assert.assertEquals( 10, items.size());
 
-		items = this.cmdMngr.getHistory( 0, 20, null, null );
+		items = this.cmdMngr.getHistory( 0, 20, null, null, null );
 		Assert.assertEquals( repeatCount + 1, items.size());
 		CommandHistoryItem item = items.get( 0 );
 
@@ -225,34 +225,32 @@ public class CommandsMngrImplTest {
 
 		// Filter by application name
 		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, "inexisting app" ));
-		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, "inexisting app" ).size());
+		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null, "inexisting app" ).size());
 
 		Assert.assertEquals( 2, this.cmdMngr.getHistoryNumberOfPages( 10, this.app.getName()));
 		Assert.assertEquals( 1, this.cmdMngr.getHistoryNumberOfPages( -1, this.app.getName()));
 
-		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( 0, 20, "result", this.app.getName()).size());
-		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( -1, -1, "result", this.app.getName()).size());
+		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( 0, 20, "result", null, this.app.getName()).size());
+		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( -1, -1, "result", null, this.app.getName()).size());
 
 		// Verify sorting: the first in history was the only successful one
-		items = this.cmdMngr.getHistory( -1, -1, "start", this.app.getName());
+		items = this.cmdMngr.getHistory( -1, -1, "start", "asc", this.app.getName());
 		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( 0 ).getExecutionResult());
 		Assert.assertEquals( "some source", items.get( 0 ).getOriginDetails());
 		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( 0 ).getOrigin());
 
-		items = this.cmdMngr.getHistory( -1, -1, null, this.app.getName());
+		items = this.cmdMngr.getHistory( -1, -1, null, "asc", this.app.getName());
 		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( 0 ).getExecutionResult());
 		Assert.assertEquals( "some source", items.get( 0 ).getOriginDetails());
 		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( 0 ).getOrigin());
 
-		/*
-		items = this.cmdMngr.getHistory( -1, -1, "result", this.app.getName());
+		items = this.cmdMngr.getHistory( -1, -1, "result", "desc", this.app.getName());
 		Assert.assertEquals( CommandHistoryItem.EXECUTION_ERROR, items.get( 0 ).getExecutionResult());
 		Assert.assertEquals( CommandHistoryItem.ORIGIN_SCHEDULER, items.get( 0 ).getOrigin());
 
 		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( items.size() - 1 ).getExecutionResult());
 		Assert.assertEquals( "some source", items.get( items.size() - 1 ).getOriginDetails());
 		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( items.size() - 1 ).getOrigin());
-		*/
 	}
 
 
@@ -260,7 +258,7 @@ public class CommandsMngrImplTest {
 	public void testWithHistory_noSource() throws Exception {
 
 		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
-		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null ).size());
+		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null, null ).size());
 	}
 
 

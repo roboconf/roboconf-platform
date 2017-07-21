@@ -51,7 +51,8 @@ public interface IHistoryResource {
 	 * @param applicationName the expected application (can be null for all applications)
 	 * @param pageNumber the page number
 	 * @param itemsPerPage the number of items per page
-	 * @param sortCriteria the sort criteria (start / application / command / result / origin)
+	 * @param sortingCriteria the sort criteria (start / application / command / result / origin)
+	 * @param sortingOrder the sorting order ("asc" or "desc")
 	 * @return the commands history (never null)
 	 *
 	 * @HTTP 200 Everything went fine.
@@ -63,7 +64,8 @@ public interface IHistoryResource {
 			@QueryParam("page") int pageNumber,
 			@QueryParam("name") String applicationName,
 			@QueryParam("itemsPerPage") int itemsPerPage,
-			@QueryParam("sort") String sortCriteria );
+			@QueryParam("sortingCriteria") String sortingCriteria,
+			@QueryParam("sortingOrder") String sortingOrder );
 
 
 	/**

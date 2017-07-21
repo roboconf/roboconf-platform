@@ -146,10 +146,11 @@ public interface ICommandsMngr {
 	 * @param start where to start (for pagination, set to 0 if &lt; 0)
 	 * @param maxEntry how many entries (for pagination, set to 20 if value &lt; 1)
 	 * @param sortCriteria sort criteria (names: start / application / command / origin / result)
+	 * @param sortingOrder the sorting order (asc / desc)
 	 * @param applicationName the application name to filter the result (can be null for all applications)
 	 * @return a non-null list
 	 */
-	List<CommandHistoryItem> getHistory( int start, int maxEntry, String sortCriteria, String applicationName );
+	List<CommandHistoryItem> getHistory( int start, int maxEntry, String sortCriteria, String sortingOrder, String applicationName );
 
 
 	/**

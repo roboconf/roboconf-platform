@@ -199,6 +199,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			int start,
 			int maxEntry,
 			String sortCriteria,
+			String sortingOrder,
 			String applicationName ) {
 
 		List<CommandHistoryItem> result = new ArrayList<> ();
@@ -215,6 +216,9 @@ public class CommandsMngrImpl implements ICommandsMngr {
 		if( ! Arrays.asList( "start", "application", "command", "origin", "result" ).contains( sortCriteria ))
 			sortCriteria = "start";
 
+		if( ! Arrays.asList( "asc", "desc" ).contains( sortingOrder ))
+			sortingOrder = "asc";
+
 		// The data source is optional.
 		if( dataSource != null ) {
 			Connection conn = null;
@@ -230,6 +234,8 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 				sb.append( " ORDER BY " );
 				sb.append( sortCriteria );
+				sb.append( " " );
+				sb.append( sortingOrder );
 				sb.append( " LIMIT " );
 				sb.append( maxEntry );
 				sb.append( " OFFSET " );

@@ -68,21 +68,28 @@ public class HistoryResource implements IHistoryResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
-	 * #getCommandHistory(java.lang.String, int, int, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IHistoryResource
+	 * #getCommandHistory(int, java.lang.String, int, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public List<CommandHistoryItem> getCommandHistory(
 			int pageNumber,
 			String applicationName,
 			int itemsPerPage,
-			String sortCriteria ) {
+			String sortingCriteria,
+			String sortingOrder ) {
 
 		if( pageNumber < 1 )
 			pageNumber = 1;
 
 		this.logger.fine( "Request: get the history of commands execution (page = " + pageNumber + ")." );
-		return this.manager.commandsMngr().getHistory((pageNumber -1) * itemsPerPage, itemsPerPage, sortCriteria, applicationName );
+		return this.manager.commandsMngr().getHistory(
+				(pageNumber -1) * itemsPerPage,
+				itemsPerPage,
+				sortingCriteria,
+				sortingOrder,
+				applicationName );
 	}
 }

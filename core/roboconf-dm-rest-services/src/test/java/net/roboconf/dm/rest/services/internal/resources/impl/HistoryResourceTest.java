@@ -101,10 +101,10 @@ public class HistoryResourceTest {
 	public void testGetCommandHistory() {
 
 		// There is no data source
-		List<CommandHistoryItem> items = this.resource.getCommandHistory( 10, null, 10, "start" );
+		List<CommandHistoryItem> items = this.resource.getCommandHistory( 10, null, 10, "start", null );
 		Assert.assertEquals( 0, items.size());
 
-		items = this.resource.getCommandHistory( -2, null, 10, "start" );
+		items = this.resource.getCommandHistory( -2, null, 10, "start", "asc" );
 		Assert.assertEquals( 0, items.size());
 	}
 }
