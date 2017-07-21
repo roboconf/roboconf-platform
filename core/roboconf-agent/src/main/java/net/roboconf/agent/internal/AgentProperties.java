@@ -161,18 +161,11 @@ public final class AgentProperties {
 	 * @param rawProperties a non-null string
 	 * @param logger a logger (not null)
 	 * @return a non-null bean
-	 * @throws IOException
+	 * @throws IOException if there were files that failed to be written
 	 */
 	public static AgentProperties readIaasProperties( String rawProperties, Logger logger ) throws IOException {
 
-		// Store files in the system's temporary directory.
-		// In Karaf, this will point to the "data/tmp" directory.
-		Properties props = new Properties();
-		if( rawProperties != null ) {
-			File msgResourcesDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-messaging" );
-			props = UserDataHelpers.readUserData( rawProperties, msgResourcesDirectory );
-		}
-
+		Properties props = Utils.readPropertiesQuietly( rawProperties, logger );
 		return readIaasProperties( props );
 	}
 
@@ -181,8 +174,15 @@ public final class AgentProperties {
 	 * Creates a new bean from properties.
 	 * @param props non-null properties
 	 * @return a non-null bean
+	 * @throws IOException if there were files that failed to be written
 	 */
-	public static AgentProperties readIaasProperties( Properties props ) {
+	public static AgentProperties readIaasProperties( Properties props ) throws IOException {
+
+		// Deal with files transferred through user data.
+		// Store files in the system's temporary directory.
+		// In Karaf, this will point to the "data/tmp" directory.
+		File msgResourcesDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-messaging" );
+		props = UserDataHelpers.processUserData( props, msgResourcesDirectory );
 
 		// Given #213, we have to replace some characters escaped by AWS (and probably Openstack too).
 		AgentProperties result = new AgentProperties();

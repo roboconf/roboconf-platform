@@ -50,7 +50,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryHandlerMockedIPojoTest {
+public class InMemoryHandlerMockedManagerTest {
 
 	private Map<String, String> msgCfg = new LinkedHashMap<> ();
 
@@ -124,6 +124,17 @@ public class InMemoryHandlerMockedIPojoTest {
 		List<ComponentInstance> instances = new ArrayList<> ();
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
 
+		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
+		// No error, even if no iPojo instance was found (e.g. if it was killed from the Ipojo console)
+
+		Mockito.verifyZeroInteractions( this.manager );
+	}
+
+
+	@Test
+	public void testTerminateMachine_simulatePlugins_noFactory() throws Exception {
+
+		this.handler.agentFactory = null;
 		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
 		// No error, even if no iPojo instance was found (e.g. if it was killed from the Ipojo console)
 

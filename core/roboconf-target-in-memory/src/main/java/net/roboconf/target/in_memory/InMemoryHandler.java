@@ -25,24 +25,29 @@
 
 package net.roboconf.target.in_memory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
@@ -60,6 +65,7 @@ public class InMemoryHandler implements TargetHandler {
 	static final String DELAY = "in-memory.delay";
 	static final String EXECUTE_REAL_RECIPES = "in-memory.execute-real-recipes";
 	static final String AGENT_IP_ADDRESS = "in-memory.ip-address-of-the-agent";
+	static final String WRITE_USER_DATA = "in-memory.write-user-data";
 
 	// Injected by iPojo
 	Factory agentFactory;
@@ -67,6 +73,7 @@ public class InMemoryHandler implements TargetHandler {
 
 	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Map<String,String> ipojoNameToUserDataFile = new HashMap<> ();
 	private final AtomicLong defaultDelay = new AtomicLong( 0L );
 	private MessagingClientFactoryRegistry registry;
 
@@ -203,6 +210,10 @@ public class InMemoryHandler implements TargetHandler {
 		if( this.agentFactory != null ) {
 			for( ComponentInstance instance : this.agentFactory.getInstances()) {
 				if( machineId.equals( instance.getInstanceName())) {
+					String userDataFilePath = this.ipojoNameToUserDataFile.get( machineId );
+					if( userDataFilePath != null )
+						Utils.deleteFilesRecursivelyAndQuietly( new File( userDataFilePath ));
+
 					instance.dispose();
 					break;
 				}
@@ -269,17 +280,34 @@ public class InMemoryHandler implements TargetHandler {
 	throws TargetException {
 
 		// Reconfigure the messaging factory.
-		final String messagingType = messagingConfiguration.get("net.roboconf.messaging.type");
+		final String messagingType = messagingConfiguration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
 		IMessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory(messagingType);
-		if (messagingFactory != null)
+		if( messagingFactory != null )
 			messagingFactory.setConfiguration(messagingConfiguration);
 
 		// Prepare the properties of the new POJO
 		Dictionary<String,Object> configuration = new Hashtable<> ();
 		configuration.put( "application-name", applicationName );
 		configuration.put( "scoped-instance-path", scopedInstancePath );
-		configuration.put( "messaging-type", messagingType );
+		configuration.put( Constants.MESSAGING_TYPE, messagingType );
 		configuration.put( "domain", domain );
+
+		// Write user data?
+		File userDataFile = null;
+		try {
+			if( "true".equalsIgnoreCase( targetProperties.get( WRITE_USER_DATA ))) {
+				this.logger.fine( "Writing user data for in-memory agent..." );
+				String s = UserDataHelpers.writeUserDataAsString( messagingConfiguration, domain, applicationName, scopedInstancePath );
+				userDataFile = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString() + Constants.FILE_EXT_PROPERTIES );
+				Utils.writeStringInto( s, userDataFile );
+				configuration.put( "parameters", userDataFile.toURI().toURL().toString());
+				configuration.put( "override-properties-with-user-data", "true" );
+				this.logger.finer( "User data written in " + userDataFile.getAbsolutePath());
+			}
+
+		} catch( Exception e ) {
+			throw new TargetException( "User data could not be written for an in-memory agent. Scoped instance path: " + scopedInstancePath, e );
+		}
 
 		// Execute real recipes?
 		boolean simulatePlugins = simulatePlugins( targetProperties );
@@ -305,8 +333,11 @@ public class InMemoryHandler implements TargetHandler {
 		try {
 			ComponentInstance instance = this.agentFactory.createComponentInstance( configuration );
 			instance.start();
+			if( userDataFile != null )
+				this.ipojoNameToUserDataFile.put( instance.getInstanceName(), userDataFile.getAbsolutePath());
 
 		} catch( Exception e ) {
+			Utils.deleteFilesRecursivelyAndQuietly( userDataFile );
 			throw new TargetException( "An in-memory agent could not be launched. Scoped instance path: " + scopedInstancePath, e );
 		}
 	}

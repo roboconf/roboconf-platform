@@ -47,6 +47,7 @@ import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
 public class RecipesValidatorTest {
 
@@ -110,6 +111,18 @@ public class RecipesValidatorTest {
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, errors.get( 0 ).getErrorCode());
+	}
+
+	@Test
+	public void testEmptyRecipeDirectory() throws Exception {
+
+		File appDir = this.folder.newFolder();
+		Component comp = new Component("toto").installerName("script");
+		File directory = ResourceUtils.findInstanceResourcesDirectory(appDir, comp);
+		Assert.assertTrue(directory.mkdirs());
+
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes(appDir, comp);
+		Assert.assertEquals(0, errors.size());
 	}
 
 

@@ -39,13 +39,14 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.integration.tests.commons.AbstractIntegrationTest;
 import net.roboconf.integration.tests.commons.ItConfigurationBean;
 import net.roboconf.integration.tests.commons.internal.parameterized.IMessagingConfiguration;
+import net.roboconf.integration.tests.commons.internal.parameterized.RabbitMqWithSslConfigurationWithUserData;
 import net.roboconf.integration.tests.commons.internal.parameterized.RabbitMqWithSslConfigurationWithoutUserData;
 import net.roboconf.integration.tests.commons.internal.runners.RoboconfITConfiguration;
 import net.roboconf.integration.tests.dm.with.agents.in.memory.probes.DmWithAgentInMemoryTest;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 /**
- * Test messaging with RabbitMQ over SSL without sending SSL configuration as user data.
+ * Test messaging with RabbitMQ over SSL and sending SSL configuration as user data.
  * <p>
  * These tests should be run locally and are disabled by default.
  * </p>
@@ -62,13 +63,13 @@ import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 // is running. A specific environment must be setup for this test to run.
 // And since it uses Docker, we wrote the test based on a Linux file system.
 @RoboconfITConfiguration( withRabbitMq = false )
-public class AgentInMemoryWithRabbitMqAndSslTest extends AbstractAgentInMemoryTest {
+public class AgentInMemoryWithRabbitMqAndSslAsUserDataTest extends AbstractAgentInMemoryTest {
 
 	/**
 	 * Constructor.
 	 */
-	public AgentInMemoryWithRabbitMqAndSslTest() {
-		super( new RabbitMqWithSslConfigurationWithoutUserData(), "Rabbit MQ and SSL without user data" );
+	public AgentInMemoryWithRabbitMqAndSslAsUserDataTest() {
+		super( new RabbitMqWithSslConfigurationWithUserData(), "Rabbit MQ and SSL as user data" );
 	}
 
 
@@ -98,9 +99,23 @@ public class AgentInMemoryWithRabbitMqAndSslTest extends AbstractAgentInMemoryTe
 		// This will create the agents in-memory.
 		super.run();
 
-		// Verify (after) that SSL files were NOT transmitted.
-		// The messaging configuration was left untouched
-		// (unlike what happens with SSL configuration being passed through user data with agent in-memory).
+		// Verify (after) that SSL files were transmitted correctly.
+		File agentPropertiesDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-messaging" );
+		Assert.assertTrue( agentPropertiesDirectory.isDirectory());
+
+		File trustStore = new File( agentPropertiesDirectory, "trust-store.p12" );
+		Assert.assertTrue( trustStore.isFile());
+		Assert.assertEquals(
+				Utils.readFileContent( trustStore ),
+				Utils.readFileContent( new File( "/tmp/docker-test/trust-store.p12" )));
+
+		File keyStore = new File( agentPropertiesDirectory, "key-store.p12" );
+		Assert.assertTrue( keyStore.isFile());
+		Assert.assertEquals(
+				Utils.readFileContent( keyStore ),
+				Utils.readFileContent( new File( "/tmp/docker-test/key-store.p12" )));
+
+		// Verify the messaging configuration
 		File karafEtc = new File( System.getProperty( Constants.KARAF_ETC ));
 		Assert.assertTrue( karafEtc.isDirectory());
 
@@ -112,9 +127,13 @@ public class AgentInMemoryWithRabbitMqAndSslTest extends AbstractAgentInMemoryTe
 		File messagingConfigurationFile = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
 		Assert.assertTrue( messagingConfigurationFile.isFile());
 		props = Utils.readPropertiesFile( messagingConfigurationFile );
-		Assert.assertEquals( "false", props.get( RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA ));
-		Assert.assertEquals( "/tmp/docker-test/trust-store.p12", props.get( RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH ));
-		Assert.assertEquals( "/tmp/docker-test/key-store.p12", props.get( RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH ));
+		Assert.assertEquals( "true", props.get( RabbitMqConstants.RABBITMQ_SSL_AS_USER_DATA ));
+		Assert.assertEquals( trustStore.getAbsolutePath(), props.get( RabbitMqConstants.RABBITMQ_SSL_TRUST_STORE_PATH ));
+		Assert.assertEquals( keyStore.getAbsolutePath(), props.get( RabbitMqConstants.RABBITMQ_SSL_KEY_STORE_PATH ));
+
+		// Indeed...
+		// For what is related to the messaging, in-memory agents write in the
+		// same configuration files than the DM. That's not a problem as the file contents are the same.
 	}
 
 

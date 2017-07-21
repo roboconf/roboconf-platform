@@ -69,6 +69,7 @@ import net.roboconf.core.utils.Utils;
  * </p>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra -  UGA
  */
 public final class RecipesValidator {
 
@@ -114,9 +115,13 @@ public final class RecipesValidator {
 
 		// There must be a "scripts" directory
 		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
-		File scriptsDir = new File( directory, SCRIPTS_DIR_NAME );
-		if( ! scriptsDir.exists())
-			result.add( new ModelError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, component( component )));
+		List<File> subDirs = Utils.listAllFiles( directory );
+
+		if( !subDirs.isEmpty()) {
+			File scriptsDir = new File( directory, SCRIPTS_DIR_NAME );
+			if( ! scriptsDir.exists())
+				result.add( new ModelError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, component( component )));
+		}
 
 		return result;
 	}
