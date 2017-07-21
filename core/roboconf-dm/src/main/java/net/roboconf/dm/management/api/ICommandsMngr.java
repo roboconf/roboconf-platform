@@ -128,7 +128,7 @@ public interface ICommandsMngr {
 	 * Gets the history of the executed commands.
 	 * @param start where to start (for pagination, set to 0 if &lt; 0)
 	 * @param maxEntry how many entries (for pagination, set to 20 if value &lt; 1)
-	 * @param sortCriteria sort criteria (names: application / command / origin / result)
+	 * @param sortCriteria sort criteria (names: start / application / command / origin / result)
 	 * @param applicationName the application name to filter the result (can be null for all applications)
 	 * @return a non-null list
 	 */

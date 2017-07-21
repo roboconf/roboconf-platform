@@ -34,6 +34,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -210,6 +211,10 @@ public class CommandsMngrImpl implements ICommandsMngr {
 		if( maxEntry < 1 )
 			maxEntry = DEFAULT_ITEMS_PER_PAGE;
 
+		// Verify the sort criteria
+		if( ! Arrays.asList( "start", "application", "command", "origin", "result" ).contains( sortCriteria ))
+			sortCriteria = "start";
+
 		// The data source is optional.
 		if( dataSource != null ) {
 			Connection conn = null;
@@ -224,7 +229,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 					sb.append( " WHERE application = ?" );
 
 				sb.append( " ORDER BY " );
-				sb.append( sortCriteria == null ? "start" : sortCriteria );
+				sb.append( sortCriteria );
 				sb.append( " LIMIT " );
 				sb.append( maxEntry );
 				sb.append( " OFFSET " );

@@ -230,6 +230,20 @@ public class CommandsMngrImplTest {
 
 		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( 0, 20, "result", this.app.getName()).size());
 		Assert.assertEquals( repeatCount + 1, this.cmdMngr.getHistory( -1, -1, "result", this.app.getName()).size());
+
+		// Verify sorting: the first in history was the only successful one
+		items = this.cmdMngr.getHistory( -1, -1, "start", this.app.getName());
+		Assert.assertEquals( "OK", items.get( 0 ).getExecutionResult());
+		Assert.assertEquals( "some source", items.get( 0 ).getOrigin());
+
+		items = this.cmdMngr.getHistory( -1, -1, null, this.app.getName());
+		Assert.assertEquals( "OK", items.get( 0 ).getExecutionResult());
+		Assert.assertEquals( "some source", items.get( 0 ).getOrigin());
+
+		items = this.cmdMngr.getHistory( -1, -1, "result", this.app.getName());
+		Assert.assertEquals( "Error", items.get( 0 ).getExecutionResult());
+		Assert.assertEquals( "OK", items.get( items.size() - 1 ).getExecutionResult());
+		Assert.assertEquals( "some source", items.get( items.size() - 1 ).getOrigin());
 	}
 
 
