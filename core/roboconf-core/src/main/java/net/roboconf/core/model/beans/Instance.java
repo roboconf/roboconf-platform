@@ -91,7 +91,7 @@ public class Instance implements Serializable {
 	 * Storing this information in a scoped instance is enough.
 	 * </p>
 	 */
-	public static final String READY_FOR_CFG_MARKER = "ready.for.local.script.configuation";
+	public static final String READY_FOR_CFG_MARKER = "ready.for.local.script.configuration";
 
 	/**
 	 * A constant to store the timestamp of the first heart beat received for this instance.
