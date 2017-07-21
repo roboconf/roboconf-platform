@@ -64,7 +64,7 @@ public class HistoryResource implements IHistoryResource {
 
 		this.logger.fine("Request: get the number of pages for commands history.");
 		int number = this.manager.commandsMngr().getHistoryNumberOfPages( itemsPerPage, applicationName );
-		return Response.ok( number ).build();
+		return Response.ok( String.valueOf( number )).build();
 	}
 
 

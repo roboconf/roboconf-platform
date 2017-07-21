@@ -93,7 +93,7 @@ public class HistoryResourceTest {
 		// There is no data source
 		Response resp = this.resource.getCommandHistoryNumberOfPages( null, 10 );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 0, resp.getEntity());
+		Assert.assertEquals( "0", resp.getEntity());
 	}
 
 
