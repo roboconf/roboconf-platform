@@ -8,5 +8,5 @@ vm {
 }
 
 server {
-	installer: bash;
+	installer: script;
 }
