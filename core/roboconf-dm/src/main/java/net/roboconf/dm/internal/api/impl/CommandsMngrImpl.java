@@ -244,13 +244,14 @@ public class CommandsMngrImpl implements ICommandsMngr {
 				for( sqlRes = ps.executeQuery(); sqlRes.next(); ) {
 					String appName = sqlRes.getString( "application" );
 					String commandName = sqlRes.getString( "command" );
-					String origin = sqlRes.getString( "origin" );
-					String executionResult = sqlRes.getString( "result" );
+					int origin = sqlRes.getInt( "origin" );
+					String originDetails = sqlRes.getString( "details" );
+					int executionResult = sqlRes.getInt( "result" );
 					long executionStart = sqlRes.getLong( "start" );
 					long duration = sqlRes.getLong( "duration" );
 
 					result.add( new CommandHistoryItem(
-							appName, commandName, origin,
+							appName, commandName, origin, originDetails,
 							executionResult, executionStart, duration ));
 				}
 
@@ -270,35 +271,40 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 
 	@Override
-	public void execute( Application app, String commandName, String origin )
+	public void execute( Application app, String commandName, int origin, String originDetails )
 	throws CommandException, NoSuchFileException {
-		execute( app, commandName, null, origin );
+		execute( app, commandName, null, origin, originDetails );
 	}
 
 
 	@Override
-	public void execute( Application app, String commandName, CommandExecutionContext executionContext, String origin )
+	public void execute(
+			Application app,
+			String commandName,
+			CommandExecutionContext executionContext,
+			int origin,
+			String originDetails )
 	throws CommandException, NoSuchFileException {
 
 		File cmdFile = findCommandFile( app, commandName );
 		if( ! cmdFile.isFile())
 			throw new NoSuchFileException( cmdFile.getAbsolutePath());
 
-		String result = "OK";
+		int result = CommandHistoryItem.EXECUTION_OK;
 		long startInMilliSeconds = System.currentTimeMillis();
 		long startInNanoSeconds = System.nanoTime();
 		try {
 			CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
 			executor.execute();
 			if( executor.wereInstructionSkipped())
-				result = "OK with skipped";
+				result = CommandHistoryItem.EXECUTION_OK_WITH_SKIPPED;
 
 		} catch( CommandException e ) {
-			result = "Error";
+			result = CommandHistoryItem.EXECUTION_ERROR;
 			throw e;
 
 		} finally {
-			recordInHistory( startInMilliSeconds, startInNanoSeconds, result, app.getName(), commandName, origin );
+			recordInHistory( startInMilliSeconds, startInNanoSeconds, result, app.getName(), commandName, origin, originDetails );
 		}
 	}
 
@@ -382,10 +388,11 @@ public class CommandsMngrImpl implements ICommandsMngr {
 	private void recordInHistory(
 			long startInMilliSeconds,
 			long startInNanoSeconds,
-			String result,
+			int result,
 			String applicationName,
 			String commandName,
-			String origin ) {
+			int origin,
+			String originDetails ) {
 
 		long duration = System.nanoTime() - startInNanoSeconds;
 		DataSource dataSource = this.manager.getDataSource();
@@ -398,7 +405,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			Connection conn = null;
 			try {
 				conn = dataSource.getConnection();
-				recordEntry( conn, startInMilliSeconds, duration, result, applicationName, commandName, origin );
+				recordEntry( conn, startInMilliSeconds, duration, result, applicationName, commandName, origin, originDetails );
 
 			} catch( SQLException e ) {
 				failed = true;
@@ -413,7 +420,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			try {
 				if( failed ) {
 					createTable( conn );
-					recordEntry( conn, startInMilliSeconds, duration, result, applicationName, commandName, origin );
+					recordEntry( conn, startInMilliSeconds, duration, result, applicationName, commandName, origin, originDetails );
 				}
 
 			} catch( SQLException e ) {
@@ -431,12 +438,13 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			Connection conn,
 			long start,
 			long duration,
-			String result,
+			int result,
 			String applicationName,
 			String commandName,
-			String origin ) throws SQLException {
+			int origin,
+			String originDetails ) throws SQLException {
 
-		String req = "INSERT INTO commands_history( application, command, start, duration, result, origin ) values( ?, ?, ?, ?, ?, ? )";
+		String req = "INSERT INTO commands_history( application, command, start, duration, result, origin, details ) values( ?, ?, ?, ?, ?, ?, ? )";
 		PreparedStatement ps = null;
 		try {
 			ps = conn.prepareStatement( req );
@@ -444,8 +452,9 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			ps.setString( 2, commandName );
 			ps.setLong( 3, start );
 			ps.setLong( 4, duration );
-			ps.setString( 5, result );
-			ps.setString( 6, origin );
+			ps.setInt( 5, result );
+			ps.setInt( 6, origin );
+			ps.setString( 7, originDetails );
 			ps.execute();
 
 		} finally {
@@ -462,8 +471,9 @@ public class CommandsMngrImpl implements ICommandsMngr {
 		sb.append( "command VARCHAR(255)," );
 		sb.append( "start BIGINT," );
 		sb.append( "duration BIGINT," );
-		sb.append( "result VARCHAR(20)," );
-		sb.append( "origin VARCHAR(255)," );
+		sb.append( "result SMALLINT," );
+		sb.append( "origin SMALLINT," );
+		sb.append( "details VARCHAR(255)," );
 		sb.append( "PRIMARY KEY( id ))" );
 
 		Statement st = null;

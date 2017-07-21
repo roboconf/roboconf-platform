@@ -25,6 +25,10 @@
 
 package net.roboconf.dm.rest.commons.json;
 
+import static net.roboconf.core.model.runtime.CommandHistoryItem.EXECUTION_OK;
+import static net.roboconf.core.model.runtime.CommandHistoryItem.EXECUTION_OK_WITH_SKIPPED;
+import static net.roboconf.core.model.runtime.CommandHistoryItem.ORIGIN_REST_API;
+import static net.roboconf.core.model.runtime.CommandHistoryItem.ORIGIN_SCHEDULER;
 import static net.roboconf.dm.rest.commons.json.JSonBindingUtils.AT_INSTANCE_PATH;
 
 import java.io.StringWriter;
@@ -1333,11 +1337,13 @@ public class JSonBindingUtilsTest {
 	public void testCommandHistoryItem() throws Exception {
 
 		// All fields set
-		String expected = "{\"app\":\"test\",\"cmd\":\"scale\",\"result\":\"OK\",\"origin\":\"REST API\",\"start\":1542,\"duration\":21}";
+		String expected =
+				"{\"app\":\"test\",\"cmd\":\"scale\",\"details\":\"me\",\"start\":1542,\"duration\":21,\"result\":"
+				+ EXECUTION_OK + ",\"origin\":" + ORIGIN_REST_API + "}";
 
 		long duration = TimeUnit.NANOSECONDS.convert( 21, TimeUnit.MILLISECONDS );
 		Assert.assertEquals( 21000000, duration );
-		CommandHistoryItem item = new CommandHistoryItem( "test", "scale", "REST API", "OK", 1542, duration );
+		CommandHistoryItem item = new CommandHistoryItem( "test", "scale", ORIGIN_REST_API, "me", EXECUTION_OK, 1542, duration );
 
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 		StringWriter writer = new StringWriter();
@@ -1346,10 +1352,12 @@ public class JSonBindingUtilsTest {
 
 		// Only mandatory fields are set
 		duration = TimeUnit.NANOSECONDS.convert( 1, TimeUnit.MILLISECONDS );
-		item = new CommandHistoryItem( null, null, null, null, 21, duration );
+		item = new CommandHistoryItem( null, null, ORIGIN_SCHEDULER, null, EXECUTION_OK_WITH_SKIPPED, 21, duration );
 
 		writer = new StringWriter();
 		mapper.writeValue( writer, item );
-		Assert.assertEquals( "{\"start\":21,\"duration\":1}", writer.toString());
+		Assert.assertEquals(
+				"{\"start\":21,\"duration\":1,\"result\":"
+				+ EXECUTION_OK_WITH_SKIPPED + ",\"origin\":" + ORIGIN_SCHEDULER + "}", writer.toString());
 	}
 }

@@ -30,30 +30,69 @@ package net.roboconf.core.model.runtime;
  */
 public class CommandHistoryItem {
 
-	private final String applicationName, commandName, origin, executionResult;
+	/**
+	 * Code indicating a command execution was successful.
+	 */
+	public static final int EXECUTION_OK = 1;
+
+	/**
+	 * Code indicating a command execution was successful but that instructions were skipped.
+	 */
+	public static final int EXECUTION_OK_WITH_SKIPPED = 2;
+
+	/**
+	 * Code indicating a command execution failed.
+	 */
+	public static final int EXECUTION_ERROR = 3;
+
+	/**
+	 * Code indicating a command was executed by the scheduler.
+	 */
+	public static final int ORIGIN_SCHEDULER = 1;
+
+	/**
+	 * Code indicating a command was executed from the REST API.
+	 */
+	public static final int ORIGIN_REST_API = 2;
+
+	/**
+	 * Code indicating a command was executed by the autonomic.
+	 */
+	public static final int ORIGIN_AUTONOMIC = 3;
+
+	/**
+	 * Code indicating a command was executed from another command.
+	 */
+	public static final int ORIGIN_OTHER_COMMAND = 4;
+
+	private final String applicationName, commandName, originDetails;
+	private final int origin, executionResult;
 	private final long start, duration;
 
 
 	/**
 	 * Constructor.
-	 * @param applicationName
-	 * @param commandName
-	 * @param origin
-	 * @param executionResult
-	 * @param start (in nanoseconds)
+	 * @param applicationName the application name
+	 * @param commandName the command name
+	 * @param origin one of {@link #ORIGIN_AUTONOMIC}, {@link #ORIGIN_REST_API} or {@link #ORIGIN_SCHEDULER}
+	 * @param originDetails a string indicating the origin details (e.g. job name)
+	 * @param executionResult one of {@link #EXECUTION_OK}, {@link #EXECUTION_OK_WITH_SKIPPED} or {@link #EXECUTION_ERROR}
+	 * @param start (in milliseconds)
 	 * @param duration (in nanoseconds)
 	 */
 	public CommandHistoryItem(
 			String applicationName,
 			String commandName,
-			String origin,
-			String executionResult,
+			int origin,
+			String originDetails,
+			int executionResult,
 			long start,
 			long duration ) {
 
 		this.applicationName = applicationName;
 		this.commandName = commandName;
 		this.origin = origin;
+		this.originDetails = originDetails;
 		this.executionResult = executionResult;
 		this.start = start;
 		this.duration = duration;
@@ -67,19 +106,23 @@ public class CommandHistoryItem {
 		return this.commandName;
 	}
 
-	public String getOrigin() {
-		return this.origin;
-	}
-
-	public String getExecutionResult() {
-		return this.executionResult;
-	}
-
 	public long getStart() {
 		return this.start;
 	}
 
 	public long getDuration() {
 		return this.duration;
+	}
+
+	public String getOriginDetails() {
+		return this.originDetails;
+	}
+
+	public int getOrigin() {
+		return this.origin;
+	}
+
+	public int getExecutionResult() {
+		return this.executionResult;
 	}
 }

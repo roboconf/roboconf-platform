@@ -103,11 +103,17 @@ public interface ICommandsMngr {
 	 *
 	 * @param app the associated application
 	 * @param commandName a command name (the file extension is optional)
-	 * @param origin who is executing the command
+	 * @param origin who is executing the command (see {@link CommandHistoryItem} constants)
+	 * <p>
+	 * It is possible to use a different number. It is up to the client to interpret
+	 * the meaning of the origin anyway.
+	 * </p>
+	 *
+	 * @param originDetails execution context (e.g. job name for the scheduler)
 	 * @throws CommandException if execution failed
 	 * @throws NoSuchFileException if there is no such command
 	 */
-	void execute( Application app, String commandName, String origin )
+	void execute( Application app, String commandName, int origin, String originDetails )
 	throws CommandException, NoSuchFileException;
 
 
@@ -116,11 +122,22 @@ public interface ICommandsMngr {
 	 * @param app the associated application
 	 * @param commandName a command name (the file extension is optional)
 	 * @param executionContext an execution context to define some constraints on commands
-	 * @param origin who is executing the command
+	 * @param origin who is executing the command (see {@link CommandHistoryItem} constants)
+	 * <p>
+	 * It is possible to use a different number. It is up to the client to interpret
+	 * the meaning of the origin anyway.
+	 * </p>
+	 *
+	 * @param originDetails execution context (e.g. job name for the scheduler)
 	 * @throws CommandException if execution failed
 	 * @throws NoSuchFileException if there is no such command
 	 */
-	void execute( Application app, String commandName, CommandExecutionContext executionContext, String origin )
+	void execute(
+			Application app,
+			String commandName,
+			CommandExecutionContext executionContext,
+			int origin,
+			String originDetails )
 	throws CommandException, NoSuchFileException;
 
 

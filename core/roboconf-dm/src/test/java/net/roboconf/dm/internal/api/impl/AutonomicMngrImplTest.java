@@ -168,6 +168,7 @@ public class AutonomicMngrImplTest {
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
 				Mockito.any( CommandExecutionContext.class ),
+				Mockito.anyInt(),
 				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
@@ -190,6 +191,7 @@ public class AutonomicMngrImplTest {
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
 				execCtx.capture(),
+				Mockito.anyInt(),
 				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
@@ -216,6 +218,7 @@ public class AutonomicMngrImplTest {
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
 				execCtx.capture(),
+				Mockito.anyInt(),
 				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
@@ -240,6 +243,7 @@ public class AutonomicMngrImplTest {
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
 				execCtx.capture(),
+				Mockito.anyInt(),
 				Mockito.anyString());
 
 		for( CommandExecutionContext c : execCtx.getAllValues()) {
@@ -256,6 +260,7 @@ public class AutonomicMngrImplTest {
 				Mockito.any( Application.class ),
 				Mockito.anyString(),
 				Mockito.any( CommandExecutionContext.class ),
+				Mockito.anyInt(),
 				Mockito.anyString());
 
 		ManagedApplication ma = factorizeConfiguration();

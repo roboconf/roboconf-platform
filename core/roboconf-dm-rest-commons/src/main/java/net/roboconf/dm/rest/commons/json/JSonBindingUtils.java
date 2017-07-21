@@ -383,16 +383,16 @@ public final class JSonBindingUtils {
 			if( item.getCommandName() != null )
 				generator.writeStringField( "cmd", item.getCommandName());
 
-			if( item.getExecutionResult() != null )
-				generator.writeStringField( "result", item.getExecutionResult());
-
-			if( item.getOrigin() != null )
-				generator.writeStringField( "origin", item.getOrigin());
+			if( item.getOriginDetails() != null )
+				generator.writeStringField( "details", item.getOriginDetails());
 
 			long startInMilliSec = item.getStart();
 			long durationInMilliSec = TimeUnit.MILLISECONDS.convert( item.getDuration(), TimeUnit.NANOSECONDS );
 			generator.writeNumberField( "start", startInMilliSec );
 			generator.writeNumberField( "duration", durationInMilliSec );
+
+			generator.writeNumberField( "result", item.getExecutionResult());
+			generator.writeNumberField( "origin", item.getOrigin());
 			generator.writeEndObject();
 		}
 	}

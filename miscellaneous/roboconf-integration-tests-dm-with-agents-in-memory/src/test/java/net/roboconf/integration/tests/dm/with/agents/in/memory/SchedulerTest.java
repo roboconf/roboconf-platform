@@ -43,6 +43,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.client.WsClient;
@@ -190,6 +191,7 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 		Assert.assertNotEquals( "[]", historyContent );
 		Assert.assertTrue( historyContent.startsWith( "[{" ));
 		Assert.assertTrue( historyContent.endsWith( "}]" ));
-		Assert.assertTrue( historyContent.contains( "\"origin\":\"Scheduler - job1\"" ));
+		Assert.assertTrue( historyContent.contains( ",\"details\":\"job1\"," ));
+		Assert.assertTrue( historyContent.contains( "\"origin\":" + CommandHistoryItem.ORIGIN_SCHEDULER ));
 	}
 }

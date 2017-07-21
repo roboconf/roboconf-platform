@@ -63,6 +63,7 @@ import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
@@ -825,7 +826,7 @@ public class ApplicationResource implements IApplicationResource {
 			if( application == null )
 				response = handleError( Status.NOT_FOUND, new RestError( REST_INEXISTING, application( app )), lang ).build();
 			else
-				this.manager.commandsMngr().execute( application, commandName, "REST API" );
+				this.manager.commandsMngr().execute( application, commandName, CommandHistoryItem.ORIGIN_REST_API, null );
 
 		} catch( NoSuchFileException e ) {
 			response = RestServicesUtils.handleError(

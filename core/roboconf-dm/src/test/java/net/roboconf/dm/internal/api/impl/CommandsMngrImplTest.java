@@ -143,7 +143,7 @@ public class CommandsMngrImplTest {
 
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
-		this.cmdMngr.execute( this.app, cmdName, "some source" );
+		this.cmdMngr.execute( this.app, cmdName, CommandHistoryItem.ORIGIN_REST_API, "some source" );
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
 	}
@@ -152,7 +152,7 @@ public class CommandsMngrImplTest {
 	@Test( expected = NoSuchFileException.class )
 	public void testExecute_noSuchCommand() throws Exception {
 
-		this.cmdMngr.execute( this.app, "my-command", "some source" );
+		this.cmdMngr.execute( this.app, "my-command", CommandHistoryItem.ORIGIN_REST_API, "some source" );
 	}
 
 
@@ -176,7 +176,7 @@ public class CommandsMngrImplTest {
 
 		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
 		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null ).size());
-		this.cmdMngr.execute( this.app, cmdName, "some source" );
+		this.cmdMngr.execute( this.app, cmdName, CommandHistoryItem.ORIGIN_REST_API, "some source" );
 
 		// Verify things were updated
 		Assert.assertEquals( 1, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
@@ -186,7 +186,7 @@ public class CommandsMngrImplTest {
 		final int repeatCount = 15;
 		for( int i=0; i<repeatCount; i++ ) {
 			try {
-				this.cmdMngr.execute( this.app, cmdName, "some source 2" );
+				this.cmdMngr.execute( this.app, cmdName, CommandHistoryItem.ORIGIN_SCHEDULER, "some source 2" );
 				Assert.fail( "An error was expected, the instance to rename does not exist anymore." );
 
 			} catch( CommandException e ) {
@@ -205,8 +205,9 @@ public class CommandsMngrImplTest {
 
 		Assert.assertEquals( this.app.getName(), item.getApplicationName());
 		Assert.assertEquals( "my-command", item.getCommandName());
-		Assert.assertEquals( "some source", item.getOrigin());
-		Assert.assertEquals( "OK", item.getExecutionResult());
+		Assert.assertEquals( "some source", item.getOriginDetails());
+		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, item.getOrigin());
+		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, item.getExecutionResult());
 		Assert.assertTrue( item.getDuration() > 0L );
 		Assert.assertTrue( item.getStart() > 0L );
 
@@ -215,8 +216,9 @@ public class CommandsMngrImplTest {
 
 			Assert.assertEquals( this.app.getName(), item.getApplicationName());
 			Assert.assertEquals( "my-command", item.getCommandName());
-			Assert.assertEquals( "some source 2", item.getOrigin());
-			Assert.assertEquals( "Error", item.getExecutionResult());
+			Assert.assertEquals( "some source 2", item.getOriginDetails());
+			Assert.assertEquals( CommandHistoryItem.ORIGIN_SCHEDULER, item.getOrigin());
+			Assert.assertEquals( CommandHistoryItem.EXECUTION_ERROR, item.getExecutionResult());
 			Assert.assertTrue( item.getDuration() > 0L );
 			Assert.assertTrue( item.getStart() > 0L );
 		}
@@ -233,17 +235,24 @@ public class CommandsMngrImplTest {
 
 		// Verify sorting: the first in history was the only successful one
 		items = this.cmdMngr.getHistory( -1, -1, "start", this.app.getName());
-		Assert.assertEquals( "OK", items.get( 0 ).getExecutionResult());
-		Assert.assertEquals( "some source", items.get( 0 ).getOrigin());
+		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( 0 ).getExecutionResult());
+		Assert.assertEquals( "some source", items.get( 0 ).getOriginDetails());
+		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( 0 ).getOrigin());
 
 		items = this.cmdMngr.getHistory( -1, -1, null, this.app.getName());
-		Assert.assertEquals( "OK", items.get( 0 ).getExecutionResult());
-		Assert.assertEquals( "some source", items.get( 0 ).getOrigin());
+		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( 0 ).getExecutionResult());
+		Assert.assertEquals( "some source", items.get( 0 ).getOriginDetails());
+		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( 0 ).getOrigin());
 
+		/*
 		items = this.cmdMngr.getHistory( -1, -1, "result", this.app.getName());
-		Assert.assertEquals( "Error", items.get( 0 ).getExecutionResult());
-		Assert.assertEquals( "OK", items.get( items.size() - 1 ).getExecutionResult());
-		Assert.assertEquals( "some source", items.get( items.size() - 1 ).getOrigin());
+		Assert.assertEquals( CommandHistoryItem.EXECUTION_ERROR, items.get( 0 ).getExecutionResult());
+		Assert.assertEquals( CommandHistoryItem.ORIGIN_SCHEDULER, items.get( 0 ).getOrigin());
+
+		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( items.size() - 1 ).getExecutionResult());
+		Assert.assertEquals( "some source", items.get( items.size() - 1 ).getOriginDetails());
+		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( items.size() - 1 ).getOrigin());
+		*/
 	}
 
 
