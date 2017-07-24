@@ -46,10 +46,36 @@ public abstract class AbstractCommandInstruction {
 
 	private static final Pattern VAR_PATTERN = Pattern.compile( "(\\$\\([^)]*\\))" );
 
+	/**
+	 * The instruction's text.
+	 */
 	protected final String instruction;
+
+	/**
+	 * The context to evaluate the correctness of the instruction.
+	 */
 	protected final Context context;
+
+	/**
+	 * The corresponding line in the source file.
+	 */
 	protected final int line;
+
+	/**
+	 * Whether the instruction is syntaxically correct.
+	 */
 	protected boolean syntaxicallyCorrect = false;
+
+	/**
+	 * Whether the instruction can be executed or not.
+	 * <p>
+	 * An instruction is disabled if and only if it uses a variable
+	 * that was not resolved. Only query variables can fail to be
+	 * resolved.
+	 * </p>
+	 */
+	protected boolean disabled = false;
+
 
 
 	/**
@@ -148,6 +174,22 @@ public abstract class AbstractCommandInstruction {
 	 * @return a new parsing error
 	 */
 	protected ParsingError error( ErrorCode errorCode ) {
-		return error( errorCode, null );
+		return error( errorCode, (ErrorDetails[]) null );
+	}
+
+
+	/**
+	 * @return the disabled
+	 */
+	public boolean isDisabled() {
+		return this.disabled;
+	}
+
+
+	/**
+	 * @param disabled the disabled to set
+	 */
+	public void setDisabled( boolean disabled ) {
+		this.disabled = disabled;
 	}
 }

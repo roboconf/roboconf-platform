@@ -174,10 +174,32 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	public void removeInstance( ManagedApplication ma, Instance instance )
 	throws UnauthorizedActionException, IOException {
 
+		removeInstance( ma, instance, true );
+	}
+
+
+	@Override
+	public void removeInstance( ManagedApplication ma, Instance instance, boolean immediate )
+	throws UnauthorizedActionException, IOException {
+
 		this.messagingMngr.checkMessagingConfiguration();
 		for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
-			if( i.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed in " + ma.getName() + "." );
+
+			// Ife have an instance that is not undeployed...
+			if( i.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+
+				// We cannot remove it immediately => exception
+				if( immediate )
+					throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed in " + ma.getName() + "." );
+
+				// Otherwise, indicate we will delete it later
+				instance.data.put( Instance.DELETE_WHEN_NOT_DEPLOYED, "true" );
+
+				// No need to go further
+				return;
+			}
+
+			// If it is "not deployed", then we will try to delete it anyway.
 		}
 
 		// Whatever is the state of the agent, we try to send a message.
@@ -214,7 +236,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				// Not associated with a VM? => Everything must be not deployed.
 				String machineId = scopedInstance.data.get( Instance.MACHINE_ID );
 				if( machineId == null ) {
-					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
+					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr, this );
 					releaseLockedTargets( ma.getApplication(), scopedInstance );
 					continue;
 				}
@@ -240,7 +262,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				// Not a running VM? => Everything must be not deployed.
 				TargetHandlerParameters parameters = parameters( ma, scopedInstance, targetProperties );
 				if( ! targetHandler.isMachineRunning( parameters, machineId )) {
-					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
+					DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr, this );
 					releaseLockedTargets( ma.getApplication(), scopedInstance );
 				}
 
@@ -543,7 +565,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			}
 
 			this.logger.fine( "Agent '" + path + "' was successfully deleted in " + ma.getName() + "." );
-			DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr );
+			DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.notificationMngr, this );
 			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( TargetException | IOException e ) {

@@ -32,14 +32,20 @@
 
 	<!-- This class is not in an internal package, we need it in the test framework. -->
 	<component classname="net.roboconf.target.in_memory.InMemoryHandler" name="roboconf-target-in-memory">
-		<provides />
 
-		<requires filter="(factory.name=roboconf-agent-in-memory)" field="agentFactory" optional="false" />
+		<requires filter="(factory.name=roboconf-agent-in-memory)" field="standardAgentFactory" optional="false" />
+		<requires filter="(factory.name=roboconf-agent-in-memory-as-a-Nazgul)" field="nazgulAgentFactory" optional="false" />
 		<requires field="manager" optional="false" />
 		<requires>
 			<callback type="bind" method="setMessagingFactoryRegistry" />
 		</requires>
+		
+		<callback transition="invalidate" method="stop" />
+		<provides />
 	</component>
 	
 	<instance component="roboconf-target-in-memory" name="Roboconf Target - In memory" />
+	<instance component="roboconf-agent-in-memory-as-Sauron" name="Roboconf - Sauron Agent">
+		<property name="messaging-type" value="none" />
+	</instance>
 </ipojo>

@@ -174,4 +174,71 @@ public class CommandsParserTest {
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.CMD_NO_INSTRUCTION, errors.get( 0 ).getErrorCode());
 	}
+
+
+	@Test
+	public void testCommandsWithQueryIndexes() throws Exception {
+
+		this.app.setDirectory( this.folder.newFolder());
+		File cmdDir = new File( this.app.getDirectory(), Constants.PROJECT_DIR_COMMANDS );
+		Assert.assertTrue( cmdDir.mkdirs());
+
+		File f = TestUtils.findTestFile( "/commands/commands-with-query-indexes.txt" );
+		Utils.copyStream( f, new File( cmdDir, "commands-with-query-indexes" + Constants.FILE_EXT_COMMANDS ));
+
+		f = TestUtils.findTestFile( "/commands/commands-with-query-indexes.txt" );
+		CommandsParser parser = new CommandsParser( this.app, f );
+		List<ParsingError> errors = parser.getParsingErrors();
+		Assert.assertEquals( 0, errors.size());
+
+		List<AbstractCommandInstruction> instructions = parser.getInstructions();
+		Assert.assertEquals( 15, instructions.size());
+
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instructions.get( 0 ).getClass());
+		Assert.assertFalse( instructions.get( 0 ).isDisabled());
+
+		Assert.assertEquals( ReplicateCommandInstruction.class, instructions.get( 1 ).getClass());
+		Assert.assertFalse( instructions.get( 1 ).isDisabled());
+
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instructions.get( 2 ).getClass());
+		Assert.assertFalse( instructions.get( 2 ).isDisabled());
+
+		Assert.assertEquals( ReplicateCommandInstruction.class, instructions.get( 3 ).getClass());
+		Assert.assertFalse( instructions.get( 3 ).isDisabled());
+
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instructions.get( 4 ).getClass());
+		Assert.assertFalse( instructions.get( 4 ).isDisabled());
+
+		Assert.assertEquals( ReplicateCommandInstruction.class, instructions.get( 5 ).getClass());
+		Assert.assertFalse( instructions.get( 5 ).isDisabled());
+
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instructions.get( 6 ).getClass());
+		Assert.assertFalse( instructions.get( 6 ).isDisabled());
+
+		Assert.assertEquals( BulkCommandInstructions.class, instructions.get( 7 ).getClass());
+		Assert.assertFalse( instructions.get( 7 ).isDisabled());
+
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instructions.get( 8 ).getClass());
+		Assert.assertFalse( instructions.get( 8 ).isDisabled());
+
+		Assert.assertEquals( BulkCommandInstructions.class, instructions.get( 9 ).getClass());
+		Assert.assertFalse( instructions.get( 9 ).isDisabled());
+
+		// These are disabled!
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instructions.get( 10 ).getClass());
+		Assert.assertTrue( instructions.get( 10 ).isDisabled());
+
+		Assert.assertEquals( BulkCommandInstructions.class, instructions.get( 11 ).getClass());
+		Assert.assertTrue( instructions.get( 11 ).isDisabled());
+
+		Assert.assertEquals( BulkCommandInstructions.class, instructions.get( 12 ).getClass());
+		Assert.assertTrue( instructions.get( 12 ).isDisabled());
+
+		Assert.assertEquals( BulkCommandInstructions.class, instructions.get( 13 ).getClass());
+		Assert.assertTrue( instructions.get( 13 ).isDisabled());
+		// Back to normal
+
+		Assert.assertEquals( AppendCommandInstruction.class, instructions.get( 14 ).getClass());
+		Assert.assertFalse( instructions.get( 14 ).isDisabled());
+	}
 }

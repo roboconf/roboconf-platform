@@ -25,10 +25,8 @@
 
 package net.roboconf.integration.tests.dm;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
+import java.util.logging.Logger;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -68,17 +66,9 @@ public class WebAdminCustomizationTest extends DmTest {
 			ItUtils.waitForDmRestServices( getCurrentPort());
 
 			// Verify we get the default CSS, which is quite big
-			URL url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css" );
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			InputStream in = url.openStream();
-			try {
-				Utils.copyStreamUnsafelyUseWithCaution( in, os );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
-
-			String cssContent = os.toString( "UTF-8" );
+			Logger logger = Logger.getLogger( getClass().getName());
+			String cssUrl = "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css";
+			String cssContent = Utils.readUrlContentQuietly( cssUrl, logger );
 			Assert.assertTrue( cssContent.length() > 100 );
 
 			// Now, override it with our custom one and verify it is returned by our servlet
@@ -92,30 +82,13 @@ public class WebAdminCustomizationTest extends DmTest {
 			Utils.writeStringInto( "hi!", new File( etcDirectory, "roboconf.custom.css" ));
 
 			// Now, verify what we get
-			url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css" );
-			os = new ByteArrayOutputStream();
-			in = url.openStream();
-			try {
-				Utils.copyStreamUnsafelyUseWithCaution( in, os );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
-
-			Assert.assertEquals( "hi!", os.toString( "UTF-8" ));
+			cssUrl = "http://localhost:" + getCurrentPort() + "/roboconf-web-administration/roboconf.min.css";
+			cssContent = Utils.readUrlContentQuietly( cssUrl, logger );
+			Assert.assertEquals( "hi!", cssContent );
 
 			// Verify that by default, there is no web extension
-			url = new URL( "http://localhost:" + getCurrentPort() + "/roboconf-dm/preferences" );
-			os = new ByteArrayOutputStream();
-			in = url.openStream();
-			try {
-				Utils.copyStreamUnsafelyUseWithCaution( in, os );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
-
-			String received = os.toString( "UTF-8" );
+			String url = "http://localhost:" + getCurrentPort() + "/roboconf-dm/preferences";
+			String received = Utils.readUrlContentQuietly( url, logger );
 			String expected = "{\"name\":\"" + IPreferencesMngr.WEB_EXTENSIONS + "\",\"value\":\"\",";
 			Assert.assertTrue( received.contains( expected ));
 

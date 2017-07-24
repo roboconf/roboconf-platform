@@ -46,6 +46,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.ITargetConfigurator;
@@ -59,6 +60,7 @@ import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.api.ITargetsMngr.TargetProperties;
+import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -800,5 +802,59 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( "this-id", app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertNotNull( app.getMySqlVm().data.get( Instance.LAST_PROBLEM ));
 		Assert.assertNotNull( app.getMySqlVm().data.get( Instance.TARGET_ACQUIRED ));
+	}
+
+
+	@Test( expected = UnauthorizedActionException.class )
+	public void testRemoveInstanceImmediately() throws Exception {
+
+		// Prepare the manager
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
+
+		// Immediate deletion => exception
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma = new ManagedApplication( app );
+
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		mngr.removeInstance( ma, app.getMySqlVm(), true );
+	}
+
+
+	@Test
+	public void testRemoveInstanceNotImmediately() throws Exception {
+
+		// Prepare the manager
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		ITargetConfigurator targetConfigurator = Mockito.mock( ITargetConfigurator.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr, targetConfigurator );
+
+		// No immediate deletion => marker
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma = new ManagedApplication( app );
+
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		mngr.removeInstance( ma, app.getMySqlVm(), false );
+
+		// Verify it was not deleted but marked
+		Assert.assertEquals( app.getMySqlVm(), InstanceHelpers.findInstanceByPath( app, "/" + app.getMySqlVm().getName()));
+		Assert.assertEquals( "true", app.getMySqlVm().data.get( Instance.DELETE_WHEN_NOT_DEPLOYED ));
 	}
 }

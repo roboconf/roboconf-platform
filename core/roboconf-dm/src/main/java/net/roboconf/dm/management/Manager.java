@@ -32,6 +32,8 @@ import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.sql.DataSource;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.runtime.IReconfigurable;
@@ -108,6 +110,7 @@ public class Manager implements IReconfigurable, ManagerMBean {
 	protected String messagingType;
 	protected String domain = Constants.DEFAULT_DOMAIN;
 	protected IPreferencesMngr preferencesMngr;
+	protected DataSource dataSource;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
@@ -554,6 +557,14 @@ public class Manager implements IReconfigurable, ManagerMBean {
 
 		if( this.messagingClient.getRegistry() != null )
 			this.messagingClient.getRegistry().removeMessagingClientFactory( clientFactory );
+	}
+
+
+	/**
+	 * @return the data source (use at your own risks!)
+	 */
+	public DataSource getDataSource() {
+		return this.dataSource;
 	}
 
 

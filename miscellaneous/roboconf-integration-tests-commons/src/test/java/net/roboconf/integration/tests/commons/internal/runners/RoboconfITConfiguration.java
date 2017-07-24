@@ -48,7 +48,12 @@ public @interface RoboconfITConfiguration {
 	boolean withComplexRabbitMq() default false;
 
 	/**
-	 * @return true if the test required Docker to be installed on the local machine
+	 * @return true if the test requires Docker to be installed on the local machine
 	 */
 	boolean withDocker() default false;
+
+	/**
+	 * @return true if the test requires a Linux system
+	 */
+	boolean withLinux() default false;
 }

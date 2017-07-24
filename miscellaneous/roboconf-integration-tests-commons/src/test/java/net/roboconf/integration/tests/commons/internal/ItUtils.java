@@ -45,8 +45,8 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.integration.tests.commons.ItConfigurationBean;
 import net.roboconf.integration.tests.commons.internal.parameterized.IMessagingConfiguration;
 
@@ -151,7 +151,8 @@ public final class ItUtils {
 			Thread.sleep( 1000 );
 			String s = "";
 			try {
-				s = TestUtils.readUriContent( targetUri );
+				s = Utils.readUrlContent( targetUri.toString());
+
 			} catch( Exception e ) {
 				// nothing
 			}

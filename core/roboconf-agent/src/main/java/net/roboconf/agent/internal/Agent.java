@@ -103,9 +103,9 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		}
 
 		// Create a messaging client
-		this.messagingClient = new ReconfigurableClientAgent();
+		this.messagingClient = newReconfigurableClientAgent();
 		this.messagingClient.setDomain( this.domain );
-		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
+		AgentMessageProcessor messageProcessor = newMessageProcessor();
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
 		// Deal with dynamic parameters
@@ -342,6 +342,22 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 
 	/**
+	 * @return a new message processor
+	 */
+	protected AgentMessageProcessor newMessageProcessor() {
+		return new AgentMessageProcessor( this );
+	}
+
+
+	/**
+	 * @return a new reconfigurable (messaging) client for the agent
+	 */
+	protected ReconfigurableClientAgent newReconfigurableClientAgent() {
+		return new ReconfigurableClientAgent();
+	}
+
+
+	/**
 	 * Reloads user data.
 	 */
 	void reloadUserData() {
@@ -528,7 +544,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	/**
 	 * @return the agent's ID (a human-readable identifier)
 	 */
-	String getAgentId() {
+	public String getAgentId() {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ) ? "?" : this.scopedInstancePath );

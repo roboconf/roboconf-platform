@@ -114,7 +114,7 @@ public class ReplicateCommandExecutionTest {
 				new AtomicInteger( 4 ),
 				new AtomicInteger( 3 ),
 				2, false,
-				null, null
+				"marker", null
 		));
 
 		Mockito.verifyZeroInteractions( this.instancesMngr );

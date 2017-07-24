@@ -1,0 +1,27 @@
+
+# Create 3 new Tomcat VMs, with a Tomcat installed
+define VAR = vm $(SMART_INDEX)
+replicate /tomcat-vm as $(VAR)
+
+define VAR = vm $(SMART_INDEX)
+replicate /tomcat-vm as $(VAR)
+
+define VAR = vm $(SMART_INDEX)
+replicate /tomcat-vm as $(VAR)
+
+# Deploy and start everything on the last one
+define LAST = vm $(EXISTING_INDEX MAX)
+deploy and start all /$(LAST)
+
+# Undeploy the oldest one
+define OLDEST = vm $(EXISTING_INDEX MIN)
+undeploy all /$(OLDEST)
+
+# Verify something that will not be found
+define OLDEST = vm $(EXISTING_INDEX MIN > 50 )
+stop all /$(OLDEST)
+undeploy all /$(OLDEST)
+delete /$(OLDEST)
+
+# Verify the instruction after is NOT disabled
+append that into /this/file

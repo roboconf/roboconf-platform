@@ -29,6 +29,7 @@ import java.nio.file.NoSuchFileException;
 
 import net.roboconf.core.commands.ExecuteCommandInstruction;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 
@@ -56,7 +57,11 @@ class ExecuteCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		try {
-			this.manager.commandsMngr().execute((Application) this.instr.getApplication(), this.instr.getCommandName());
+			this.manager.commandsMngr().execute(
+					(Application) this.instr.getApplication(),
+					this.instr.getCommandName(),
+					CommandHistoryItem.ORIGIN_OTHER_COMMAND,
+					this.instr.getCommandName());
 
 		} catch( NoSuchFileException e ) {
 			throw new CommandException( e );

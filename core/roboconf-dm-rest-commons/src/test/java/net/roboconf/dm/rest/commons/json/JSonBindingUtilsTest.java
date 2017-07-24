@@ -25,6 +25,10 @@
 
 package net.roboconf.dm.rest.commons.json;
 
+import static net.roboconf.core.model.runtime.CommandHistoryItem.EXECUTION_OK;
+import static net.roboconf.core.model.runtime.CommandHistoryItem.EXECUTION_OK_WITH_SKIPPED;
+import static net.roboconf.core.model.runtime.CommandHistoryItem.ORIGIN_REST_API;
+import static net.roboconf.core.model.runtime.CommandHistoryItem.ORIGIN_SCHEDULER;
 import static net.roboconf.dm.rest.commons.json.JSonBindingUtils.AT_INSTANCE_PATH;
 
 import java.io.StringWriter;
@@ -35,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,6 +56,7 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.model.runtime.EventType;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
@@ -737,7 +743,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_5() throws Exception {
 
-		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"ip\":\"127.0.0.1\",\"any field\":\"some value\"}}";
+		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"any field\":\"some value\",\"ip\":\"127.0.0.1\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "instance" );
@@ -1324,5 +1330,34 @@ public class JSonBindingUtilsTest {
 
 		String s = writer.toString();
 		Assert.assertEquals( "{\"msg\":\"my message\"}", s );
+	}
+
+
+	@Test
+	public void testCommandHistoryItem() throws Exception {
+
+		// All fields set
+		String expected =
+				"{\"app\":\"test\",\"cmd\":\"scale\",\"details\":\"me\",\"start\":1542,\"duration\":21,\"result\":"
+				+ EXECUTION_OK + ",\"origin\":" + ORIGIN_REST_API + "}";
+
+		long duration = TimeUnit.NANOSECONDS.convert( 21, TimeUnit.MILLISECONDS );
+		Assert.assertEquals( 21000000, duration );
+		CommandHistoryItem item = new CommandHistoryItem( "test", "scale", ORIGIN_REST_API, "me", EXECUTION_OK, 1542, duration );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, item );
+		Assert.assertEquals( expected, writer.toString());
+
+		// Only mandatory fields are set
+		duration = TimeUnit.NANOSECONDS.convert( 1, TimeUnit.MILLISECONDS );
+		item = new CommandHistoryItem( null, null, ORIGIN_SCHEDULER, null, EXECUTION_OK_WITH_SKIPPED, 21, duration );
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, item );
+		Assert.assertEquals(
+				"{\"start\":21,\"duration\":1,\"result\":"
+				+ EXECUTION_OK_WITH_SKIPPED + ",\"origin\":" + ORIGIN_SCHEDULER + "}", writer.toString());
 	}
 }

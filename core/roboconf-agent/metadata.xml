@@ -32,13 +32,13 @@
 
 	<!-- Default component -->
 	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-default">
-		<callback transition="validate" method="start"/>
-		<callback transition="invalidate" method="stop"/>
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		
 		<requires aggregate="true" optional="true">
-			<callback type="bind" method="pluginAppears"/>
-			<callback type="unbind" method="pluginDisappears"/>
-			<callback type="modified" method="pluginWasModified"/>
+			<callback type="bind" method="pluginAppears" />
+			<callback type="unbind" method="pluginDisappears" />
+			<callback type="modified" method="pluginWasModified" />
 		</requires>
 		
 		<properties updated="reconfigure" pid="net.roboconf.agent.configuration">
@@ -56,15 +56,26 @@
 		<provides />
 	</component>
 	
+
+	<!-- MBean to monitor plugin activity -->
+	<component classname="net.roboconf.agent.jmx.PluginStats" name="roboconf-plugin-mbean" public="false">
+		<provides specifications="net.roboconf.agent.jmx.PluginStatsMBean" >
+			<property name="jmx.objectname" value="net.roboconf:type=agent" type="java.lang.String" />
+		</provides>
+	</component>
+
+	<instance component="roboconf-plugin-mbean" name="Roboconf - Agent MBean" />
+	
+		
 	<!-- In-memory component -->
 	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-in-memory">
-		<callback transition="validate" method="start"/>
-		<callback transition="invalidate" method="stop"/>
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		
 		<requires aggregate="true" optional="true">
-			<callback type="bind" method="pluginAppears"/>
-			<callback type="unbind" method="pluginDisappears"/>
-			<callback type="modified" method="pluginWasModified"/>
+			<callback type="bind" method="pluginAppears" />
+			<callback type="unbind" method="pluginDisappears" />
+			<callback type="modified" method="pluginWasModified" />
 		</requires>
 		
 		<properties updated="reconfigure" pid="net.roboconf.agent-in-memory.configuration">
@@ -84,14 +95,46 @@
 		
 		<!-- This agent does not expose ANY service -->
 	</component>
-
-	<!-- MBean to monitor plugin activity -->
-	<component classname="net.roboconf.agent.jmx.PluginStats" name="roboconf-plugin-mbean" public="false">
-		<provides specifications="net.roboconf.agent.jmx.PluginStatsMBean" >
-			<property name="jmx.objectname" value="net.roboconf:type=agent" type="java.lang.String" />
-		</provides>
+	
+	
+	<!-- Sauron: an In-memory component without plug-ins and a configuration -->
+	<!-- Set the property types as iPojo cannot check the super class -->
+	<component classname="net.roboconf.agent.internal.sync.SauronAgent" name="roboconf-agent-in-memory-as-Sauron">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
+		<provides specifications="net.roboconf.agent.AgentCoordinator" />
 	</component>
-
-	<instance component="roboconf-plugin-mbean" name="Roboconf - Agent MBean" />
+	
+	
+	<!-- Nazgul: copy of In-memory component with a different class and a NEW service dependency (Sauron) -->
+	<!-- Set the property types as iPojo cannot check the super class -->
+	<component classname="net.roboconf.agent.internal.sync.NazgulAgent" name="roboconf-agent-in-memory-as-a-Nazgul">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
+		
+		<requires field="sauron" optional="false" />
+		<requires aggregate="true" optional="true" specification="net.roboconf.plugin.api.PluginInterface">
+			<callback type="bind" method="pluginAppears" />
+			<callback type="unbind" method="pluginDisappears" />
+			<callback type="modified" method="pluginWasModified" />
+		</requires>
+		
+		<properties updated="reconfigure" pid="net.roboconf.agent-in-memory.configuration">
+		
+			<!-- Values that will be set by the IaaS in memory -->
+			<property name="messaging-type" method="setMessagingType" type="java.lang.String" />
+			<property name="application-name" method="setApplicationName" type="java.lang.String" />
+			<property name="scoped-instance-path" method="setScopedInstancePath" type="java.lang.String" />
+			<property name="ip-address-of-the-agent" method="setIpAddress" type="java.lang.String" />
+			<property name="domain" method="setDomain" type="java.lang.String" />
+			
+			<!-- Predefined Values -->
+			<property name="parameters" method="setParameters" value="@in-memory" type="java.lang.String" />
+			<property name="override-properties-with-user-data" method="setOverrideProperties" value="false" type="boolean" />
+			<property name="simulate-plugins" method="setSimulatePlugins" value="true" type="boolean" />
+		</properties>
+		
+		<!-- This agent does not expose ANY service -->
+	</component>
 
 </ipojo>

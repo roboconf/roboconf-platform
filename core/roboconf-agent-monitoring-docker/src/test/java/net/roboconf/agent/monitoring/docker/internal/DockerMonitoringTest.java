@@ -25,13 +25,14 @@
 
 package net.roboconf.agent.monitoring.docker.internal;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 
 /**
@@ -66,28 +67,28 @@ public class DockerMonitoringTest {
 		Assert.assertNull( handler.eventName );
 		Assert.assertNull( handler.containerName );
 
-		handler.reset( new Instance( "inst" ), "ev1", "" );
+		handler.reset( new Instance( "inst" ).component( new Component( "c" ) ), "ev1", "" );
 		Assert.assertEquals( "ev1", handler.eventName );
 		Assert.assertEquals( "inst", handler.containerName );
 
-		handler.reset( new Instance( "inst" ), "ev1", "oops" );
+		handler.reset( new Instance( "inst" ).component( new Component( "c" )), "ev1", "oops" );
 		Assert.assertEquals( "ev1", handler.eventName );
 		Assert.assertEquals( "oops", handler.containerName );
 
-		handler.reset( new Instance( "inst" ), "ev2", "ROBOCONF_INSTANCE_NAME" );
+		handler.reset( new Instance( "inst" ).component( new Component( "c" )), "ev2", "ROBOCONF_INSTANCE_NAME" );
 		Assert.assertEquals( "ev2", handler.eventName );
 		Assert.assertEquals( "inst", handler.containerName );
 
-		handler.reset( new Instance( "inst" ), "ev3", "ROBOCONF_INSTANCE_PATH" );
+		handler.reset( new Instance( "inst" ).component( new Component( "c" )), "ev3", "ROBOCONF_INSTANCE_PATH" );
 		Assert.assertEquals( "ev3", handler.eventName );
 		Assert.assertEquals( "/inst", handler.containerName );
 
-		handler.reset( new Instance( "inst" ), "ev4", "ROBOCONF_CLEAN_INSTANCE_PATH" );
+		handler.reset( new Instance( "inst" ).component( new Component( "c" )), "ev4", "ROBOCONF_CLEAN_INSTANCE_PATH" );
 		Assert.assertEquals( "ev4", handler.eventName );
 		Assert.assertEquals( "inst", handler.containerName );
 
 		Instance parentInstance = new Instance( "parent" );
-		Instance childInstance = new Instance( "child" );
+		Instance childInstance = new Instance( "child" ).component( new Component( "c" ));
 		InstanceHelpers.insertChild( parentInstance, childInstance );
 
 		handler.reset( childInstance, "ev5", "ROBOCONF_CLEAN_INSTANCE_PATH" );
@@ -119,7 +120,7 @@ public class DockerMonitoringTest {
 
 		DockerMonitoringHandler handler = new DockerMonitoringHandler();
 		handler.setAgentId( "my-app", "/root" );
-		handler.reset( new Instance( "inst" ), "ev1", null );
+		handler.reset( new Instance( "inst" ).component( new Component( "c" )), "ev1", null );
 
 		handler = Mockito.spy( handler );
 

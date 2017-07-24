@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,6 +48,7 @@ import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.DockerAndScriptUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -224,7 +226,21 @@ public final class InstanceHelpers {
 		if( ip != null )
 			VariableHelpers.updateNetworkVariables( result, ip );
 
-		return result;
+		// Replace Roboconf meta-variables
+		Map<String,String> updatedResult = new LinkedHashMap<>( result.size());
+		for( Map.Entry<String,String> entry : result.entrySet()) {
+
+			String value = entry.getValue();
+			if( value != null ) {
+				for( Map.Entry<String,String> rbcfMetaVar : DockerAndScriptUtils.buildReferenceMap( instance ).entrySet()) {
+					value = value.replace( "$(" + rbcfMetaVar.getKey() + ")", rbcfMetaVar.getValue());
+				}
+			}
+
+			updatedResult.put( entry.getKey(), value );
+		}
+
+		return updatedResult;
 	}
 
 

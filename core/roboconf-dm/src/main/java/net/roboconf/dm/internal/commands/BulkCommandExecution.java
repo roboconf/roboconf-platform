@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -94,18 +93,8 @@ class BulkCommandExecution extends AbstractCommandExecution {
 				break;
 
 			case DELETE:
-				try {
-					for( Instance inst : instances )
-						this.manager.instancesMngr().removeInstance( ma, inst );
-
-				} catch( Exception e ) {
-					// Ignore errors related to deletion.
-					// If an element cannot be deleted, ignore it (it remains in the model).
-					// "Delete was not designed to be invoked in "batch mode". So, let's make it
-					// fault-tolerant.
-					this.logger.warning( "A DELETE instruction failed to be executed in commands. Application = " + this.instr.getApplication());
-					Utils.logException( this.logger, e );
-				}
+				for( Instance inst : instances )
+					this.manager.instancesMngr().removeInstance( ma, inst, false );
 
 				break;
 			}

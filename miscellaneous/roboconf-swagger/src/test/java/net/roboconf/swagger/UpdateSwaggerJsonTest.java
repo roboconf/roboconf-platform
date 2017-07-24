@@ -33,6 +33,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.dm.rest.commons.beans.ApplicationBindings;
 import net.roboconf.dm.rest.commons.beans.WebSocketMessage;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
@@ -62,7 +63,8 @@ public class UpdateSwaggerJsonTest {
 				MapWrapper.class,
 				MappedCollectionWrapper.class,
 				ApplicationBindings.class,
-				WebSocketMessage.class
+				WebSocketMessage.class,
+				CommandHistoryItem.class
 		));
 
 		Assert.assertEquals( Collections.emptySet(), classes );

@@ -25,11 +25,18 @@
 
 package net.roboconf.dm.internal.utils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Logger;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.EventType;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 
 /**
@@ -50,14 +57,22 @@ public final class DmUtils {
 	 * @param scopedInstance a non-null scoped instance
 	 * @param ma the managed application
 	 * @param notificationMngr the notification manager (not null)
+	 * @param instanceMngr the instances manager (not null)
 	 */
-	public static void markScopedInstanceAsNotDeployed( Instance scopedInstance, ManagedApplication ma, INotificationMngr notificationMngr ) {
+	public static void markScopedInstanceAsNotDeployed(
+			Instance scopedInstance,
+			ManagedApplication ma,
+			INotificationMngr notificationMngr,
+			IInstancesMngr instanceMngr ) {
 
 		scopedInstance.data.remove( Instance.IP_ADDRESS );
 		scopedInstance.data.remove( Instance.MACHINE_ID );
 		scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
 		scopedInstance.data.remove( Instance.RUNNING_FROM );
 		scopedInstance.data.remove( Instance.READY_FOR_CFG_MARKER );
+
+		// Update states
+		List<Instance> instancesToDelete = new ArrayList<> ();
 		for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
 			InstanceStatus oldstatus = i.getStatus();
 			i.setStatus( InstanceStatus.NOT_DEPLOYED );
@@ -68,6 +83,28 @@ public final class DmUtils {
 
 			// DM won't send old imports upon restart...
 			i.getImports().clear();
+
+
+			// Do we need to delete the instance?
+			if( i.data.containsKey( Instance.DELETE_WHEN_NOT_DEPLOYED ))
+				instancesToDelete.add( i );
+		}
+
+		// Delete instances
+		Collections.reverse( instancesToDelete );
+		for( Instance i : instancesToDelete ) {
+			try {
+				instanceMngr.removeInstance( ma, i, true );
+
+			} catch( Exception e ) {
+				Logger logger = Logger.getLogger( DmUtils.class.getName());
+				logger.severe(
+						"An error occurred while deleting an instance marked with DELETE_WHEN_NOT_DEPLOYED. Instance = "
+						+ InstanceHelpers.computeInstancePath( i )
+						+ " App = " + ma.getName());
+
+				Utils.logException( logger, e );
+			}
 		}
 	}
 }

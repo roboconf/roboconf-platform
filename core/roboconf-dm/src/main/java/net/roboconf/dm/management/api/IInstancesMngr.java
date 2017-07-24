@@ -59,6 +59,10 @@ public interface IInstancesMngr {
 
 	/**
 	 * Removes an instance.
+	 * <p>
+	 * Equivalent to <code>removeInstance( ma, instance, true )</code>.
+	 * </p>
+	 *
 	 * @param ma the managed application
 	 * @param instance the instance to remove (not null)
 	 * @throws UnauthorizedActionException if we try to remove an instance that seems to be running
@@ -66,6 +70,22 @@ public interface IInstancesMngr {
 	 */
 	void removeInstance( ManagedApplication ma, Instance instance )
 	throws UnauthorizedActionException, IOException;
+
+	/**
+	 * Removes an instance or prepares Roboconf to delete it once it is possible.
+	 * <p>
+	 * If the instance can be deleted immediately, then no matter the value of the
+	 * <code>immediate</code> parameter, we delete it immediately.
+	 * </p>
+	 *
+	 * @param ma the managed application
+	 * @param instance the instance to remove (not null)
+	 * @param immediate true to delete it immediately, false to ask Roboconf to delete it when it is possible
+	 * @throws UnauthorizedActionException if we try to remove immediately an instance that seems to be running
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	void removeInstance( ManagedApplication ma, Instance instance, boolean immediate )
+	throws UnauthorizedActionException, IOException;;
 
 	/**
 	 * Restores instances states for a given application.

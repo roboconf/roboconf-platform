@@ -99,10 +99,10 @@ public class CommandsParser {
 
 
 	/**
-	 * Injects context variables in commands text.
+	 * Injects (valid) context variables in commands text.
 	 * @param line a non-null line
 	 * @param context a non-null map considered as the context
-	 * @return the line, after it was updated.
+	 * @return the line, after it was updated
 	 * <p>
 	 * All the <code>$(sth)</code> variables will have been replaced by the value
 	 * associated with the <i>sth</i> key in <code>context</code>.
@@ -165,12 +165,25 @@ public class CommandsParser {
 			line = line.replace( sep, "" );
 			int lineCountOffset = (lineLength - line.length()) / sep.length();
 
+			// Verify disabled variables.
+			boolean disabled = false;
+			for( String disabledVariableName : this.context.disabledVariables ) {
+				if( line.contains( "$(" + disabledVariableName + ")" )) {
+					disabled = true;
+					break;
+				}
+			}
+
 			// Update the line with variables
 			line = injectContextVariables( line, this.context.variables );
 
 			// Find the instruction
 			AbstractCommandInstruction instr = parse( line, lineNumber );
 			if( instr != null ) {
+				instr.setDisabled( disabled );
+
+				// Being disabled should not make the validation fail.
+				// Query variables that were not resolved were "mocked" for the validation.
 				List<ParsingError> errors = instr.validate();
 				if( errors.isEmpty())
 					instr.updateContext();

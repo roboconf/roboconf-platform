@@ -47,6 +47,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
@@ -68,10 +69,10 @@ public class InMemoryHandlerWithoutManagerTest {
 		this.msgCfg.put("psychosisProtection", "active");
 
 		this.target = new InMemoryHandler();
-		this.target.agentFactory = Mockito.mock( Factory.class );
+		this.target.standardAgentFactory = Mockito.mock( Factory.class );
 		this.ipojoInstance = Mockito.mock( ComponentInstance.class );
 		Mockito
-			.when( this.target.agentFactory.createComponentInstance( Mockito.any( Dictionary.class )))
+			.when( this.target.standardAgentFactory.createComponentInstance( Mockito.any( Dictionary.class )))
 			.thenReturn( this.ipojoInstance );
 	}
 
@@ -98,7 +99,7 @@ public class InMemoryHandlerWithoutManagerTest {
 		this.target.createMachine( parameters );
 
 		ArgumentCaptor<Dictionary> arg = ArgumentCaptor.forClass( Dictionary.class );
-		Mockito.verify( this.target.agentFactory, Mockito.only()).createComponentInstance( arg.capture());
+		Mockito.verify( this.target.standardAgentFactory, Mockito.only()).createComponentInstance( arg.capture());
 
 		Dictionary dico = arg.getValue();
 		Assert.assertEquals( 4 + this.msgCfg.size(), dico.size());
@@ -106,6 +107,21 @@ public class InMemoryHandlerWithoutManagerTest {
 		Assert.assertEquals( "my app", dico.get( "application-name" ));
 		Assert.assertEquals( "vm", dico.get( "scoped-instance-path" ));
 		Assert.assertEquals( "telepathy", dico.get( Constants.MESSAGING_TYPE ));
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testCreateVm_startFails() throws Exception {
+
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.messagingProperties( this.msgCfg )
+				.scopedInstancePath( "vm" )
+				.applicationName( "my app" )
+				.domain( "domain" );
+
+		Mockito.doThrow( new RuntimeException( "for test" )).when( this.ipojoInstance ).start();
+		this.target.setMessagingFactoryRegistry( new MessagingClientFactoryRegistry());
+		this.target.createMachine( parameters );
 	}
 
 
@@ -130,7 +146,7 @@ public class InMemoryHandlerWithoutManagerTest {
 		this.target.createMachine( parameters );
 
 		ArgumentCaptor<Dictionary> arg = ArgumentCaptor.forClass( Dictionary.class );
-		Mockito.verify( this.target.agentFactory, Mockito.only()).createComponentInstance( arg.capture());
+		Mockito.verify( this.target.standardAgentFactory, Mockito.only()).createComponentInstance( arg.capture());
 
 		Dictionary dico = arg.getValue();
 		Assert.assertEquals( 4 + this.msgCfg.size(), dico.size());
@@ -160,7 +176,7 @@ public class InMemoryHandlerWithoutManagerTest {
 		this.target.createMachine( parameters );
 
 		ArgumentCaptor<Dictionary> arg = ArgumentCaptor.forClass( Dictionary.class );
-		Mockito.verify( this.target.agentFactory, Mockito.only()).createComponentInstance( arg.capture());
+		Mockito.verify( this.target.standardAgentFactory, Mockito.only()).createComponentInstance( arg.capture());
 
 		Dictionary dico = arg.getValue();
 		Assert.assertEquals( 4 + this.msgCfg.size(), dico.size());
@@ -195,7 +211,7 @@ public class InMemoryHandlerWithoutManagerTest {
 		Assert.assertEquals( expectedMachineId, machineId );
 
 		ArgumentCaptor<Dictionary> arg = ArgumentCaptor.forClass( Dictionary.class );
-		Mockito.verify( this.target.agentFactory, Mockito.only()).createComponentInstance( arg.capture());
+		Mockito.verify( this.target.standardAgentFactory, Mockito.only()).createComponentInstance( arg.capture());
 
 		Dictionary dico = arg.getValue();
 		Assert.assertEquals( 6 + this.msgCfg.size(), dico.size());
@@ -221,7 +237,7 @@ public class InMemoryHandlerWithoutManagerTest {
 			Assert.assertEquals( entry.getKey(), entry.getValue(), userDataProps.get( entry.getKey()));
 
 		// Terminate (verify the user data file was deleted)
-		Mockito.when( this.target.agentFactory.getInstances()).thenReturn( Arrays.asList( this.ipojoInstance ));
+		Mockito.when( this.target.standardAgentFactory.getInstances()).thenReturn( Arrays.asList( this.ipojoInstance ));
 		Mockito.when( this.ipojoInstance.getInstanceName()).thenReturn( machineId );
 
 		this.target.terminateMachine( parameters, machineId );
@@ -296,11 +312,42 @@ public class InMemoryHandlerWithoutManagerTest {
 	@Test
 	public void testIsMachineRunning_noFactory() throws Exception {
 
-		this.target.agentFactory = null;
+		this.target.standardAgentFactory = null;
 		Map<String,String> targetProperties = new HashMap<>( 0 );
 		TargetHandlerParameters parameters = new TargetHandlerParameters()
 				.targetProperties( targetProperties );
 
 		Assert.assertFalse( this.target.isMachineRunning( parameters, null ));
+	}
+
+
+	@Test
+	public void testStop() throws Exception {
+
+		this.target.standardAgentFactory = Mockito.mock( Factory.class );
+		this.target.nazgulAgentFactory = Mockito.mock( Factory.class );
+
+		ComponentInstance agentMock = Mockito.mock( ComponentInstance.class );
+		Mockito.when( this.target.standardAgentFactory .getInstances()).thenReturn( Arrays.asList( agentMock ));
+
+		ComponentInstance nazgulMock = Mockito.mock( ComponentInstance.class );
+		Mockito.when( this.target.nazgulAgentFactory .getInstances()).thenReturn( Arrays.asList( nazgulMock ));
+
+		this.target.stop();
+		Mockito.verify( this.target.standardAgentFactory, Mockito.only()).getInstances();
+		Mockito.verify( this.target.nazgulAgentFactory, Mockito.only()).getInstances();
+
+		Mockito.verify( agentMock ).dispose();
+		Mockito.verify( nazgulMock ).dispose();
+	}
+
+
+	@Test
+	public void testStop_facotiriesAreNull() throws Exception {
+
+		this.target.standardAgentFactory = null;
+		this.target.nazgulAgentFactory = null;
+		this.target.stop();
+		// No error
 	}
 }

@@ -27,7 +27,9 @@ package net.roboconf.core.commands;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.AbstractApplication;
@@ -49,8 +51,25 @@ import net.roboconf.core.utils.Utils;
  */
 public class Context {
 
+	/**
+	 * Map associating (real and virtual) instances with their component name.
+	 */
 	public final Map<String,String> instancePathToComponentName = new HashMap<> ();
+
+	/**
+	 * Map associating variable names and values.
+	 */
 	public final Map<String,String> variables = new HashMap<> ();
+
+	/**
+	 * Variables that could not be resolved.
+	 * <p>
+	 * Examples: query variables (e.g. ${EXISTING_INDEX ...}) may fail as there may not
+	 * exist any index that satisfies the requirements. Such variables are meant to find
+	 * existing instances.
+	 * </p>
+	 */
+	public final Set<String> disabledVariables = new HashSet<> ();
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final AbstractApplication app;
@@ -125,7 +144,12 @@ public class Context {
 		if( componentName != null ) {
 
 			String instanceName = InstanceHelpers.findInstanceName( instancePath );
-			Component component = ComponentHelpers.findComponent( this.app, componentName );
+			Component component;
+			if( DefineVariableCommandInstruction.FAKE_COMPONENT_NAME.equals( componentName ))
+				component = new Component( DefineVariableCommandInstruction.FAKE_COMPONENT_NAME );
+			else
+				component = ComponentHelpers.findComponent( this.app, componentName );
+
 			if( ! Utils.isEmptyOrWhitespaces( instanceName ) && component != null )
 				instance = new Instance( instanceName ).component( component );
 			else

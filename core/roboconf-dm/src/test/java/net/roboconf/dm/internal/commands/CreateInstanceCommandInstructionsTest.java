@@ -28,6 +28,11 @@ package net.roboconf.dm.internal.commands;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.CreateInstanceCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -38,11 +43,6 @@ import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -95,7 +95,7 @@ public class CreateInstanceCommandInstructionsTest {
 				new AtomicInteger( 4 ),
 				new AtomicInteger( 3 ),
 				2, false,
-				null, null
+				"marker", null
 		));
 
 		executor.execute();
@@ -130,7 +130,7 @@ public class CreateInstanceCommandInstructionsTest {
 				new AtomicInteger( 4 ),
 				new AtomicInteger( 3 ),
 				2, true,
-				null, null
+				"marker", null
 		));
 
 		executor.execute();

@@ -63,7 +63,7 @@ public class InMemoryHandlerWithRealManagerTest {
 
 	private Map<String,String> msgCfg = new LinkedHashMap<> ();
 	private Manager manager;
-	private Factory agentFactory;
+	private Factory standardAgentFactory, nazgulAgentFactory;
 	private InMemoryHandler handler;
 	private TestApplication app;
 
@@ -78,13 +78,15 @@ public class InMemoryHandlerWithRealManagerTest {
 		this.msgCfg.put("psychosisProtection", "active");
 
 		// Prepare the handler
-		this.agentFactory = Mockito.mock( Factory.class );
+		this.standardAgentFactory = Mockito.mock( Factory.class );
+		this.nazgulAgentFactory = Mockito.mock( Factory.class );
 		this.manager = new Manager();
 
 		this.handler = new InMemoryHandler();
 		this.handler.setMessagingFactoryRegistry( new MessagingClientFactoryRegistry());
 
-		this.handler.agentFactory = this.agentFactory;
+		this.handler.standardAgentFactory = this.standardAgentFactory;
+		this.handler.nazgulAgentFactory = this.nazgulAgentFactory;
 		this.handler.manager = this.manager;
 
 		// Configure the manager
@@ -118,7 +120,8 @@ public class InMemoryHandlerWithRealManagerTest {
 	public void testMachineIsRunning_noSimulation_notRunning() throws Exception {
 
 		// Configure the mocks
-		Mockito.when( this.agentFactory.getInstancesNames()).thenReturn( new ArrayList<String>( 0 ));
+		Mockito.when( this.standardAgentFactory.getInstancesNames()).thenReturn( new ArrayList<String>( 0 ));
+		Mockito.when( this.nazgulAgentFactory.getInstancesNames()).thenReturn( new ArrayList<String>( 0 ));
 
 		// Prepare...
 		Map<String,String> targetProperties = new HashMap<> ();
@@ -131,7 +134,7 @@ public class InMemoryHandlerWithRealManagerTest {
 
 		// Run and verify
 		Assert.assertFalse( this.handler.isMachineRunning( parameters, machineId ));
-		Mockito.verify( this.agentFactory, Mockito.times( 0 )).createComponentInstance( Mockito.any( Dictionary.class ));
+		Mockito.verify( this.nazgulAgentFactory, Mockito.times( 0 )).createComponentInstance( Mockito.any( Dictionary.class ));
 	}
 
 
@@ -140,8 +143,8 @@ public class InMemoryHandlerWithRealManagerTest {
 
 		// Configure the mocks
 		ComponentInstance componentInstance = Mockito.mock( ComponentInstance.class );
-		Mockito.when( this.agentFactory.createComponentInstance( Mockito.any( Dictionary.class ))).thenReturn( componentInstance );
-		Mockito.when( this.agentFactory.getInstancesNames()).thenReturn( new ArrayList<String>( 0 ));
+		Mockito.when( this.nazgulAgentFactory.createComponentInstance( Mockito.any( Dictionary.class ))).thenReturn( componentInstance );
+		Mockito.when( this.nazgulAgentFactory.getInstancesNames()).thenReturn( new ArrayList<String>( 0 ));
 
 		// Prepare
 		Map<String,String> targetProperties = new HashMap<> ();
@@ -154,7 +157,7 @@ public class InMemoryHandlerWithRealManagerTest {
 
 		// Run and verify
 		Assert.assertTrue( this.handler.isMachineRunning( parameters, machineId ));
-		Mockito.verify( this.agentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
+		Mockito.verify( this.nazgulAgentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
 		Mockito.verify( componentInstance, Mockito.times( 1 )).start();
 	}
 }
