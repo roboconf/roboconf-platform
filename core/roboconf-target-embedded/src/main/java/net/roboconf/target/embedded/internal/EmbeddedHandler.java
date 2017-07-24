@@ -66,7 +66,7 @@ public class EmbeddedHandler implements TargetHandler {
 			String ips = parameters.getTargetProperties().get(IP_ADDRESSES);
 			if(ips != null) {
 				String iplist[] = ips.trim().split("\\s*,\\s*");
-		        for(String ip : iplist) {
+				for(String ip : iplist) {
 					if(ipTable == null) ipTable = new HashMap<>();
 					ipTable.put(ip, false);
 				}
@@ -166,36 +166,36 @@ public class EmbeddedHandler implements TargetHandler {
 			if(keyfile == null) ssh.authPublickey(user); // use ~/.ssh/id_rsa and ~/.ssh/id_dsa
 			else ssh.authPublickey(user, keyfile); // load key from specified file (eg .pem).
 
-            String userData = UserDataHelpers.writeUserDataAsString(
+			String userData = UserDataHelpers.writeUserDataAsString(
 					parameters.getMessagingProperties(),
 					parameters.getDomain(),
 					parameters.getApplicationName(),
 					parameters.getScopedInstancePath());
 
-            // Generate local user-data file, then upload it
-            File userdataFile = new File("/tmp", USER_DATA_FILE);
+			// Generate local user-data file, then upload it
+			File userdataFile = new File("/tmp", USER_DATA_FILE);
 			Utils.writeStringInto(userData, userdataFile);
 			ssh.newSCPFileTransfer().upload(new FileSystemFile(userdataFile), AGENT_CONFIG_DIR);
 
 			File localAgentConfig = new File("/tmp", "net.roboconf.agent.configuration.cfg");
 			File remoteAgentConfig = new File(AGENT_CONFIG_DIR, "net.roboconf.agent.configuration.cfg");
-            // Download remote agent config file...
+			// Download remote agent config file...
 			ssh.newSCPFileTransfer().download(remoteAgentConfig.getCanonicalPath(), new FileSystemFile("/tmp/"));
 
-            // ... Replace "parameters" property to point on user data file...
-            String config = Utils.readFileContent(localAgentConfig);
-            config = config.replaceFirst("(?m)^\\s*parameters\\s*[:=]\\s*(.*)$",
-            		"\nparameters = " + remoteAgentConfig.getCanonicalPath());
-            Utils.writeStringInto(config, localAgentConfig);
+			// ... Replace "parameters" property to point on user data file...
+			String config = Utils.readFileContent(localAgentConfig);
+			config = config.replaceFirst("(?m)^\\s*parameters\\s*[:=]\\s*(.*)$",
+					"\nparameters = " + remoteAgentConfig.getCanonicalPath());
+			Utils.writeStringInto(config, localAgentConfig);
 
-            // ... Then upload agent config file back
-            ssh.newSCPFileTransfer().upload(new FileSystemFile(localAgentConfig), AGENT_CONFIG_DIR);
+			// ... Then upload agent config file back
+			ssh.newSCPFileTransfer().upload(new FileSystemFile(localAgentConfig), AGENT_CONFIG_DIR);
 
-        } finally {
-            try {
-            	ssh.disconnect();
-            	ssh.close();
-            } catch(IOException ignore) { /* ignore */ }
-        }
+		} finally {
+			try {
+				ssh.disconnect();
+				ssh.close();
+			} catch(IOException ignore) { /* ignore */ }
+		}
 	}
 }
