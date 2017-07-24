@@ -251,6 +251,10 @@ public class CommandsMngrImplTest {
 		Assert.assertEquals( CommandHistoryItem.EXECUTION_OK, items.get( items.size() - 1 ).getExecutionResult());
 		Assert.assertEquals( "some source", items.get( items.size() - 1 ).getOriginDetails());
 		Assert.assertEquals( CommandHistoryItem.ORIGIN_REST_API, items.get( items.size() - 1 ).getOrigin());
+
+		// Verify extra-pagination (start from item n° 20 and get at most 20 items)
+		items = this.cmdMngr.getHistory( 20, 20, null, null, this.app.getName());
+		Assert.assertEquals( 0, items.size());
 	}
 
 

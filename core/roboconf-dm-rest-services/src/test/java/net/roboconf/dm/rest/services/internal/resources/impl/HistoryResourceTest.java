@@ -37,12 +37,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ICommandsMngr;
 import net.roboconf.dm.rest.services.internal.resources.IHistoryResource;
 import net.roboconf.messaging.api.MessagingConstants;
 
@@ -106,5 +108,35 @@ public class HistoryResourceTest {
 
 		items = this.resource.getCommandHistory( -2, null, 10, "start", "asc" );
 		Assert.assertEquals( 0, items.size());
+	}
+
+
+	@Test
+	public void testGetCommandHistory_pagination() {
+
+		Manager manager = Mockito.mock( Manager.class );
+		ICommandsMngr commandsMngr = Mockito.mock( ICommandsMngr.class );
+		Mockito.when( manager.commandsMngr()).thenReturn( commandsMngr );
+		this.resource = new HistoryResource( manager );
+
+		// There is no data source
+		List<CommandHistoryItem> items = this.resource.getCommandHistory( 10, null, 10, "start", null );
+		Assert.assertEquals( 0, items.size());
+		Mockito.verify( commandsMngr ).getHistory( 90, 10, "start", null, null );
+
+		Mockito.reset( commandsMngr );
+		items = this.resource.getCommandHistory( -2, null, 10, null, "asc" );
+		Assert.assertEquals( 0, items.size());
+		Mockito.verify( commandsMngr ).getHistory( 0, 10, null, "asc", null );
+
+		Mockito.reset( commandsMngr );
+		items = this.resource.getCommandHistory( 1, null, 10, null, "asc" );
+		Assert.assertEquals( 0, items.size());
+		Mockito.verify( commandsMngr ).getHistory( 0, 10, null, "asc", null );
+
+		Mockito.reset( commandsMngr );
+		items = this.resource.getCommandHistory( 2, "app", 10, null, "asc" );
+		Assert.assertEquals( 0, items.size());
+		Mockito.verify( commandsMngr ).getHistory( 10, 10, null, "asc", "app" );
 	}
 }

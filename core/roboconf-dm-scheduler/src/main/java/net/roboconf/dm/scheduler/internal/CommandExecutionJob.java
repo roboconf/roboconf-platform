@@ -50,13 +50,14 @@ public class CommandExecutionJob implements Job {
 
 		String appName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.APP_NAME );
 		String jobName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.JOB_NAME );
-		String jobId = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.JOB_ID );
 		String commandsFileName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.CMD_NAME );
 
 		try {
 			Manager manager = (Manager) context.getScheduler().getContext().get( RoboconfScheduler.MANAGER );
 			Application app = manager.applicationMngr().findApplicationByName( appName );
-			manager.commandsMngr().execute( app, commandsFileName, CommandHistoryItem.ORIGIN_SCHEDULER, jobId );
+
+			// The web console finds jobs by names, not IDs, which remain internal to Quartz
+			manager.commandsMngr().execute( app, commandsFileName, CommandHistoryItem.ORIGIN_SCHEDULER, jobName );
 
 		} catch( Exception e ) {
 			this.logger.warning( "An error occurred while executing job " + jobName + " (command file =" + commandsFileName + ")." );
