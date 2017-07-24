@@ -26,13 +26,10 @@
 package net.roboconf.core.internal.tests;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
@@ -142,28 +139,6 @@ public class TestUtils {
 			throw new IOException( "Could not find the resource file." );
 
 		return file;
-	}
-
-
-	/**
-	 * Gets the content of an URI.
-	 * @param uri an URI
-	 * @return the content available at this address
-	 * @throws IOException if something went wrong
-	 */
-	public static String readUriContent( URI uri ) throws IOException {
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		InputStream in = null;
-		try {
-			in = uri.toURL().openStream();
-			Utils.copyStreamSafely( in, out );
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
-		return out.toString( "UTF-8" );
 	}
 
 

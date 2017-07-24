@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
@@ -102,10 +103,18 @@ public interface ICommandsMngr {
 	 *
 	 * @param app the associated application
 	 * @param commandName a command name (the file extension is optional)
+	 * @param origin who is executing the command (see {@link CommandHistoryItem} constants)
+	 * <p>
+	 * It is possible to use a different number. It is up to the client to interpret
+	 * the meaning of the origin anyway.
+	 * </p>
+	 *
+	 * @param originDetails execution context (e.g. job name for the scheduler)
 	 * @throws CommandException if execution failed
 	 * @throws NoSuchFileException if there is no such command
 	 */
-	void execute( Application app, String commandName ) throws CommandException, NoSuchFileException;
+	void execute( Application app, String commandName, int origin, String originDetails )
+	throws CommandException, NoSuchFileException;
 
 
 	/**
@@ -113,17 +122,49 @@ public interface ICommandsMngr {
 	 * @param app the associated application
 	 * @param commandName a command name (the file extension is optional)
 	 * @param executionContext an execution context to define some constraints on commands
+	 * @param origin who is executing the command (see {@link CommandHistoryItem} constants)
+	 * <p>
+	 * It is possible to use a different number. It is up to the client to interpret
+	 * the meaning of the origin anyway.
+	 * </p>
+	 *
+	 * @param originDetails execution context (e.g. job name for the scheduler)
 	 * @throws CommandException if execution failed
 	 * @throws NoSuchFileException if there is no such command
 	 */
-	void execute( Application app, String commandName, CommandExecutionContext executionContext )
+	void execute(
+			Application app,
+			String commandName,
+			CommandExecutionContext executionContext,
+			int origin,
+			String originDetails )
 	throws CommandException, NoSuchFileException;
+
+
+	/**
+	 * Gets the history of the executed commands.
+	 * @param start where to start (for pagination, set to 0 if &lt; 0)
+	 * @param maxEntry how many entries (for pagination, set to 20 if value &lt; 1)
+	 * @param sortCriteria sort criteria (names: start / application / command / origin / result)
+	 * @param sortingOrder the sorting order (asc / desc)
+	 * @param applicationName the application name to filter the result (can be null for all applications)
+	 * @return a non-null list
+	 */
+	List<CommandHistoryItem> getHistory( int start, int maxEntry, String sortCriteria, String sortingOrder, String applicationName );
+
+
+	/**
+	 * @param itemsPerPage the number of items per page (set to 20 if value &lt; 1)
+	 * @param applicationName the application name to filter the result (can be null for all applications)
+	 * @return the number of pages
+	 */
+	int getHistoryNumberOfPages( int itemsPerPage, String applicationName );
 
 
 	/**
 	 * A context to set constraints on commands.
 	 * <p>
-	 * The primary purpose is related to the autonomic, but it could be resued
+	 * The primary purpose is related to the autonomic, but it could be reused
 	 * if necessary.
 	 * </p>
 	 *
@@ -136,13 +177,15 @@ public interface ICommandsMngr {
 		private final boolean strictMaxVm;
 		private final String newVmMarkerKey, newVmMarkerValue;
 
+
 		/**
 		 * Constructor.
-		 * @param currentVmNumber
-		 * @param maxVm
+		 * @param globalVmNumber
+		 * @param appVmNumber
 		 * @param strictMaxVm
 		 * @param newVmMarkerKey
 		 * @param newVmMarkerValue
+		 * @param maxVm
 		 */
 		public CommandExecutionContext(
 				AtomicInteger globalVmNumber,

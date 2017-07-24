@@ -169,6 +169,7 @@
 	"CMD_NASTY_LOOPING_COMMAND": "An 'execute' instruction cannot invoke a *.commands file that contains this same instruction.",
 	"CMD_INVALID_DATE_PATTERN": "Invalid date pattern for a formatted time variable. Please, refer to the Javadoc of the JDK's SimpleDateFormat class.",
 	"CMD_NO_MIX_FOR_PATTERNS": "Formatted date variables must be alone on their line (no other text, no other variable).",
+	"CMD_INVALID_INDEX_PATTERN": "Invalid index query. Please, refer to the documentation for examples.",
 
 
 	"RULE_IO_ERROR": "I/O error while reading a rule file.",

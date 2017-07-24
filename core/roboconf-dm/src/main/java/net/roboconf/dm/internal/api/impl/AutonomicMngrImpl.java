@@ -38,6 +38,7 @@ import net.roboconf.core.autonomic.RuleParser;
 import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.impl.beans.AutonomicApplicationContext;
 import net.roboconf.dm.management.ManagedApplication;
@@ -172,7 +173,7 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 						this.logger.fine( "Applying rule '" + rule.getRuleName() + "' for event '" + event.getEventName() + "'." );
 						ctx.recordPreExecution( rule.getRuleName());
 						for( String commandName : rule.getCommandsToInvoke())
-							this.commandsMngr.execute( ma.getApplication(), commandName, execCtx );
+							this.commandsMngr.execute( ma.getApplication(), commandName, execCtx, CommandHistoryItem.ORIGIN_AUTONOMIC, rule.getRuleName());
 					}
 				}
 			}

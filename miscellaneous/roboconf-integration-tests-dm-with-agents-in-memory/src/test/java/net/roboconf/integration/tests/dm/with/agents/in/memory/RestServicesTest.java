@@ -126,9 +126,9 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 		// Check the JSon serialization
 		URI targetUri = URI.create( rootUrl + "/app/app1/instances?instance-path=/Apache%20VM" );
-		String s = TestUtils.readUriContent( targetUri );
+		String s = Utils.readUrlContent( targetUri.toString());;
 		Assert.assertEquals(
-				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
+				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"script\"}}]",
 				s );
 
 		// Copy an image in the application's directory

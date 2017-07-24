@@ -1093,4 +1093,36 @@ public class RuntimeModelIoTest {
 		Assert.assertNull( exportedVariables.get( "domainName" ));
 		Assert.assertNull( exportedVariables.get( "subdomainName" ));
 	}
+
+
+	@Test
+	public void testLoadApplication_withCustomRoboconfVariables() throws Exception {
+
+		File dir = TestUtils.findApplicationDirectory( "root-exporting-variables" );
+		Assert.assertTrue( dir.isDirectory());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( alr.getLoadErrors()));
+
+		Component appComponent = ComponentHelpers.findComponent( alr.getApplicationTemplate(), "App" );
+		Assert.assertNotNull( appComponent );
+
+		Assert.assertEquals( 5, appComponent.exportedVariables.size());
+		Assert.assertEquals( "$(ROBOCONF_INSTANCE_NAME)", appComponent.exportedVariables.get( "inst" ).getValue());
+		Assert.assertEquals( "$(ROBOCONF_INSTANCE_PATH)", appComponent.exportedVariables.get( "path" ).getValue());
+		Assert.assertEquals( "$(ROBOCONF_CLEAN_INSTANCE_PATH)", appComponent.exportedVariables.get( "clean_path" ).getValue());
+		Assert.assertEquals( "kikou $(ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH)", appComponent.exportedVariables.get( "rev" ).getValue());
+		Assert.assertEquals( "$(ROBOCONF_COMPONENT_NAME)", appComponent.exportedVariables.get( "comp" ).getValue());
+
+		Instance appInstance = InstanceHelpers.findInstanceByPath( alr.getApplicationTemplate(), "/vm1/app" );
+		Assert.assertNotNull( appInstance );
+
+		Map<String,String> resolvedExportedVariables = InstanceHelpers.findAllExportedVariables( appInstance );
+		Assert.assertEquals( 5, appComponent.exportedVariables.size());
+		Assert.assertEquals( "app", resolvedExportedVariables.get( "App.inst" ));
+		Assert.assertEquals( "/vm1/app", resolvedExportedVariables.get( "App.path" ));
+		Assert.assertEquals( "vm1_app", resolvedExportedVariables.get( "App.clean_path" ));
+		Assert.assertEquals( "kikou app_vm1", resolvedExportedVariables.get( "App.rev" ));
+		Assert.assertEquals( "App", resolvedExportedVariables.get( "App.comp" ));
+	}
 }

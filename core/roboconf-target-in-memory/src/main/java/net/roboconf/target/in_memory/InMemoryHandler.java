@@ -68,7 +68,7 @@ public class InMemoryHandler implements TargetHandler {
 	static final String WRITE_USER_DATA = "in-memory.write-user-data";
 
 	// Injected by iPojo
-	Factory agentFactory;
+	Factory standardAgentFactory, nazgulAgentFactory;
 	Manager manager;
 
 	// Internal fields
@@ -78,10 +78,26 @@ public class InMemoryHandler implements TargetHandler {
 	private MessagingClientFactoryRegistry registry;
 
 
-
 	@Override
 	public String getTargetId() {
 		return TARGET_ID;
+	}
+
+
+	/**
+	 * Invoked by iPojo (deletes all the in-memory agent).
+	 */
+	public void stop() throws Exception {
+
+		if( this.nazgulAgentFactory != null ) {
+			for( ComponentInstance nazgul : this.nazgulAgentFactory.getInstances())
+				deleteIPojoInstance( nazgul );
+		}
+
+		if( this.standardAgentFactory != null ) {
+			for( ComponentInstance agent : this.standardAgentFactory.getInstances())
+				deleteIPojoInstance( agent );
+		}
 	}
 
 
@@ -109,13 +125,15 @@ public class InMemoryHandler implements TargetHandler {
 		}
 
 		String machineId = parameters.getScopedInstancePath() + " @ " + parameters.getApplicationName();
+		Factory factory = findIPojoFactory( parameters );
 		createIPojo(
 				targetProperties,
 				parameters.getMessagingProperties(),
 				machineId,
 				parameters.getScopedInstancePath(),
 				parameters.getApplicationName(),
-				parameters.getDomain());
+				parameters.getDomain(),
+				factory );
 
 		return machineId;
 	}
@@ -150,8 +168,8 @@ public class InMemoryHandler implements TargetHandler {
 
 		// No agent factory => no iPojo instance => not running
 		boolean result = false;
-		if( this.agentFactory != null )
-			result = this.agentFactory.getInstancesNames().contains( machineId );
+		if( this.standardAgentFactory != null )
+			result = this.standardAgentFactory.getInstancesNames().contains( machineId );
 
 		// On restoration, in-memory agents will ALL have disappeared.
 		// So, it makes sense to recreate them if they do not exist anymore.
@@ -166,7 +184,8 @@ public class InMemoryHandler implements TargetHandler {
 			if( scopedInstance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
 				this.logger.fine( "In-memory agent for " + machineId + " is supposed to be running but is not. It will be restored." );
 				Map<String,String> messagingConfiguration = this.manager.messagingMngr().getMessagingClient().getConfiguration();
-				createIPojo( targetProperties, messagingConfiguration, machineId, ctx.getKey(), ctx.getValue(), this.manager.getDomain());
+				Factory factory = findIPojoFactory( parameters );
+				createIPojo( targetProperties, messagingConfiguration, machineId, ctx.getKey(), ctx.getValue(), this.manager.getDomain(), factory );
 				result = true;
 				// The agent will restore its model by asking it to the DM.
 			}
@@ -207,18 +226,8 @@ public class InMemoryHandler implements TargetHandler {
 		}
 
 		// Destroy the IPojo
-		if( this.agentFactory != null ) {
-			for( ComponentInstance instance : this.agentFactory.getInstances()) {
-				if( machineId.equals( instance.getInstanceName())) {
-					String userDataFilePath = this.ipojoNameToUserDataFile.get( machineId );
-					if( userDataFilePath != null )
-						Utils.deleteFilesRecursivelyAndQuietly( new File( userDataFilePath ));
-
-					instance.dispose();
-					break;
-				}
-			}
-		}
+		Factory factory = findIPojoFactory( parameters );
+		deleteIPojo( factory, machineId );
 	}
 
 
@@ -248,7 +257,7 @@ public class InMemoryHandler implements TargetHandler {
 	// Helpers
 
 	static boolean simulatePlugins( Map<String,String> targetProperties ) {
-		String executeRealRecipesAS = targetProperties.get( EXECUTE_REAL_RECIPES );
+		String executeRealRecipesAS = targetProperties == null ? "" : targetProperties.get( EXECUTE_REAL_RECIPES );
 		return ! Boolean.parseBoolean( executeRealRecipesAS );
 	}
 
@@ -270,18 +279,55 @@ public class InMemoryHandler implements TargetHandler {
 
 	// Private methods
 
+	private Factory findIPojoFactory( TargetHandlerParameters parameters ) {
+
+		/*
+		 * Nazguls and "classical" in-memory agents can coexist.
+		 * The difference is that Nazguls execute real recipes,
+		 * with a Sauron as a coordinator, while in-memory agents
+		 * simulate recipes.
+		 */
+
+		return ! simulatePlugins( parameters.getTargetProperties()) ? this.nazgulAgentFactory : this.standardAgentFactory;
+	}
+
+
+	private void deleteIPojo( Factory factory, String machineId ) {
+
+		if( factory != null ) {
+			for( ComponentInstance instance : factory.getInstances()) {
+				if( machineId.equals( instance.getInstanceName())) {
+					deleteIPojoInstance( instance );
+					break;
+				}
+			}
+		}
+	}
+
+
+	private void deleteIPojoInstance( ComponentInstance instance ) {
+
+		String userDataFilePath = this.ipojoNameToUserDataFile.get( instance.getInstanceName());
+		if( userDataFilePath != null )
+			Utils.deleteFilesRecursivelyAndQuietly( new File( userDataFilePath ));
+
+		instance.dispose();
+	}
+
+
 	private void createIPojo(
 			Map<String,String> targetProperties,
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
 			String applicationName,
-			String domain )
+			String domain,
+			Factory factory )
 	throws TargetException {
 
 		// Reconfigure the messaging factory.
 		final String messagingType = messagingConfiguration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
-		IMessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory(messagingType);
+		IMessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory( messagingType );
 		if( messagingFactory != null )
 			messagingFactory.setConfiguration(messagingConfiguration);
 
@@ -289,8 +335,8 @@ public class InMemoryHandler implements TargetHandler {
 		Dictionary<String,Object> configuration = new Hashtable<> ();
 		configuration.put( "application-name", applicationName );
 		configuration.put( "scoped-instance-path", scopedInstancePath );
-		configuration.put( Constants.MESSAGING_TYPE, messagingType );
 		configuration.put( "domain", domain );
+		configuration.put( Constants.MESSAGING_TYPE, messagingType );
 
 		// Write user data?
 		File userDataFile = null;
@@ -331,7 +377,7 @@ public class InMemoryHandler implements TargetHandler {
 
 		// Create it
 		try {
-			ComponentInstance instance = this.agentFactory.createComponentInstance( configuration );
+			ComponentInstance instance = factory.createComponentInstance( configuration );
 			instance.start();
 			if( userDataFile != null )
 				this.ipojoNameToUserDataFile.put( instance.getInstanceName(), userDataFile.getAbsolutePath());

@@ -169,6 +169,7 @@
 	"CMD_NASTY_LOOPING_COMMAND": "Une instruction 'execute' ne peut pas invoquer une commande qui contient la même instruction (récursivité indirecte).",
 	"CMD_INVALID_DATE_PATTERN": "Format de date invalide pour une variable. Veuillez vous référer à la Javadoc de la classe Java SimpleDateFormat dans le JDK.",
 	"CMD_NO_MIX_FOR_PATTERNS": "Les variables utilisant des dates doivent être définies seules sur la ligne (ni variable, ni autre texte).",
+	"CMD_INVALID_INDEX_PATTERN": "Requête d'index invalide. Veuillez vous référer à la documentation pour des exemples.",
 	
 	
 	"RULE_IO_ERROR": "Erreur d'entrée / sortie en lisant un fichier de règles.",

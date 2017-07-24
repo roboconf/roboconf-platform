@@ -9,4 +9,9 @@ VM {
 App {
 	imports: VM.config;
 	installer: logger;
+
+	exports: inst = $(ROBOCONF_INSTANCE_NAME), path = $(ROBOCONF_INSTANCE_PATH);
+	exports: clean_path = "$(ROBOCONF_CLEAN_INSTANCE_PATH)";
+	exports: rev = kikou $(ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH);
+	exports: comp = $(ROBOCONF_COMPONENT_NAME);
 }

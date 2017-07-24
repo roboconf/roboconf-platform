@@ -55,7 +55,7 @@ public class InMemoryHandlerMockedManagerTest {
 	private Map<String, String> msgCfg = new LinkedHashMap<> ();
 
 	private Manager manager;
-	private Factory agentFactory;
+	private Factory standardAgentFactory, nazgulAgentFactory;
 	private InMemoryHandler handler;
 
 
@@ -68,12 +68,14 @@ public class InMemoryHandlerMockedManagerTest {
 		this.msgCfg.put("psychosisProtection", "active");
 
 		this.manager = Mockito.mock( Manager.class );
-		this.agentFactory = Mockito.mock( Factory.class );
+		this.standardAgentFactory = Mockito.mock( Factory.class );
+		this.nazgulAgentFactory = Mockito.mock( Factory.class );
 
 		this.handler = new InMemoryHandler();
 		this.handler.setMessagingFactoryRegistry( new MessagingClientFactoryRegistry());
 
-		this.handler.agentFactory = this.agentFactory;
+		this.handler.standardAgentFactory = this.standardAgentFactory;
+		this.handler.nazgulAgentFactory = this.nazgulAgentFactory;
 		this.handler.manager = this.manager;
 	}
 
@@ -83,10 +85,10 @@ public class InMemoryHandlerMockedManagerTest {
 
 		// Configure the mocks
 		ComponentInstance componentInstance = Mockito.mock( ComponentInstance.class );
-		Mockito.when( this.agentFactory.createComponentInstance( Mockito.any( Dictionary.class ))).thenReturn( componentInstance );
+		Mockito.when( this.standardAgentFactory.createComponentInstance( Mockito.any( Dictionary.class ))).thenReturn( componentInstance );
 
 		// Create a machine and verify assertions
-		Mockito.verifyZeroInteractions( this.agentFactory );
+		Mockito.verifyZeroInteractions( this.standardAgentFactory );
 		Mockito.verifyZeroInteractions( componentInstance );
 
 		Map<String,String> targetProperties = new HashMap<> ();
@@ -101,7 +103,7 @@ public class InMemoryHandlerMockedManagerTest {
 
 		String machineId = this.handler.createMachine( parameters );
 		Assert.assertEquals( "/VM @ my-app", machineId );
-		Mockito.verify( this.agentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
+		Mockito.verify( this.standardAgentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
 		Mockito.verify( componentInstance, Mockito.times( 1 )).start();
 	}
 
@@ -110,7 +112,7 @@ public class InMemoryHandlerMockedManagerTest {
 	public void testMachineIsRunning() throws Exception {
 
 		List<String> result = new ArrayList<> ();
-		Mockito.when( this.agentFactory.getInstancesNames()).thenReturn( result );
+		Mockito.when( this.standardAgentFactory.getInstancesNames()).thenReturn( result );
 		Assert.assertFalse( this.handler.isMachineRunning( new TargetHandlerParameters(), "test" ));
 
 		result.add( "test" );
@@ -122,9 +124,10 @@ public class InMemoryHandlerMockedManagerTest {
 	public void testTerminateMachine_simulatePlugins_noPojoFound() throws Exception {
 
 		List<ComponentInstance> instances = new ArrayList<> ();
-		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
+		Mockito.when( this.standardAgentFactory.getInstances()).thenReturn( instances );
 
-		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters().targetProperties( new HashMap<String,String>( 0 ));
+		this.handler.terminateMachine( parameters, "test @ test" );
 		// No error, even if no iPojo instance was found (e.g. if it was killed from the Ipojo console)
 
 		Mockito.verifyZeroInteractions( this.manager );
@@ -134,8 +137,9 @@ public class InMemoryHandlerMockedManagerTest {
 	@Test
 	public void testTerminateMachine_simulatePlugins_noFactory() throws Exception {
 
-		this.handler.agentFactory = null;
-		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
+		this.handler.standardAgentFactory = null;
+		TargetHandlerParameters parameters = new TargetHandlerParameters().targetProperties( new HashMap<String,String>( 0 ));
+		this.handler.terminateMachine( parameters, "test @ test" );
 		// No error, even if no iPojo instance was found (e.g. if it was killed from the Ipojo console)
 
 		Mockito.verifyZeroInteractions( this.manager );
@@ -151,8 +155,9 @@ public class InMemoryHandlerMockedManagerTest {
 		List<ComponentInstance> instances = new ArrayList<> ();
 		instances.add( componentInstance );
 
-		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
-		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
+		Mockito.when( this.standardAgentFactory.getInstances()).thenReturn( instances );
+		TargetHandlerParameters parameters = new TargetHandlerParameters().targetProperties( new HashMap<String,String>( 0 ));
+		this.handler.terminateMachine( parameters, "test @ test" );
 
 		Mockito.verify( componentInstance, Mockito.only()).getInstanceName();
 		Mockito.verifyZeroInteractions( this.manager );
@@ -170,12 +175,13 @@ public class InMemoryHandlerMockedManagerTest {
 		List<ComponentInstance> instances = new ArrayList<> ();
 		instances.add( componentInstance );
 
-		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
+		Mockito.when( this.standardAgentFactory.getInstances()).thenReturn( instances );
 
 		// Execute and check
-		this.handler.terminateMachine( new TargetHandlerParameters(), "test @ test" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters().targetProperties( new HashMap<String,String>( 0 ));
+		this.handler.terminateMachine( parameters, "test @ test" );
 
-		Mockito.verify( componentInstance, Mockito.times( 1 )).getInstanceName();
+		Mockito.verify( componentInstance, Mockito.times( 2 )).getInstanceName();
 		Mockito.verify( componentInstance, Mockito.times( 1 )).dispose();
 		Mockito.verifyZeroInteractions( this.manager );
 	}
@@ -192,7 +198,7 @@ public class InMemoryHandlerMockedManagerTest {
 		List<ComponentInstance> instances = new ArrayList<> ();
 		instances.add( componentInstance );
 
-		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
+		Mockito.when( this.nazgulAgentFactory.getInstances()).thenReturn( instances );
 		Mockito.when( this.manager.instancesMngr()).thenReturn( Mockito.mock( IInstancesMngr.class ));
 
 		IApplicationMngr applicationMngr = Mockito.mock( IApplicationMngr.class );
@@ -210,5 +216,6 @@ public class InMemoryHandlerMockedManagerTest {
 		Mockito.verify( componentInstance, Mockito.times( 1 )).dispose();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();
 		Mockito.verify( this.manager, Mockito.times( 1 )).instancesMngr();
+		Mockito.verifyZeroInteractions( this.standardAgentFactory );
 	}
 }

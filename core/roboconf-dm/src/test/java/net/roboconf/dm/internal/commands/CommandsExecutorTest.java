@@ -50,6 +50,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -73,6 +74,9 @@ public class CommandsExecutorTest {
 
 		this.app = new TestApplication();
 		this.app.setDirectory( this.folder.newFolder());
+
+		// Add an instance that we can use with query indexes
+		this.app.getRootInstances().add( new Instance( "vm 1" ).component( this.app.getTomcatVm().getComponent()));
 
 		// Prepare the DM
 		this.manager = new Manager();
@@ -167,6 +171,46 @@ public class CommandsExecutorTest {
 		// All the exceptions are caught, even NPE!
 		CommandsExecutor executor = new CommandsExecutor( this.manager, null, this.folder.newFile());
 		executor.execute();
+	}
+
+
+	@Test
+	public void testExecution_append_ok() throws Exception {
+
+		// Before
+		File commandFile = this.folder.newFile();
+		File targetFile = this.folder.newFile();
+		Utils.deleteFilesRecursively( targetFile );
+
+		Utils.writeStringInto( "define FIRST_VM = vm $(EXISTING_INDEX MIN)\n", commandFile );
+		Utils.appendStringInto( "append $(FIRST_VM) into " + targetFile.getAbsolutePath(), commandFile );
+		CommandsExecutor executor = new CommandsExecutor( this.manager, this.app, commandFile );
+
+		// Execute
+		Assert.assertFalse( targetFile.exists());
+		executor.execute();
+		Assert.assertTrue( targetFile.exists());
+		Assert.assertEquals( "vm 1", Utils.readFileContent( targetFile ));
+	}
+
+
+	@Test
+	public void testExecution_append_instructionWasDisabled() throws Exception {
+
+		// Before
+		File commandFile = this.folder.newFile();
+		File targetFile = this.folder.newFile();
+		Utils.deleteFilesRecursively( targetFile );
+
+		// We here set a query criteria that cannot be met
+		Utils.writeStringInto( "define FIRST_VM = vm $(EXISTING_INDEX MIN > 4)\n", commandFile );
+		Utils.appendStringInto( "append $(FIRST_VM) into " + targetFile.getAbsolutePath(), commandFile );
+		CommandsExecutor executor = new CommandsExecutor( this.manager, this.app, commandFile );
+
+		// Execute
+		Assert.assertFalse( targetFile.exists());
+		executor.execute();
+		Assert.assertFalse( targetFile.exists());
 	}
 
 
@@ -272,5 +316,22 @@ public class CommandsExecutorTest {
 
 		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
 		Assert.assertEquals( ExecuteCommandExecution.class, executor.findExecutor( instr ).getClass());
+	}
+
+
+	@Test
+	public void testFindExecutor_executeCommand_disabled() {
+
+		CommandsParser parser = new CommandsParser( this.app, "append this into /that" );
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( AppendCommandInstruction.class, instr.getClass());
+		Assert.assertFalse( instr.isDisabled());
+		instr.setDisabled( true );
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertEquals( AppendCommandExecution.class, executor.findExecutor( instr ).getClass());
 	}
 }

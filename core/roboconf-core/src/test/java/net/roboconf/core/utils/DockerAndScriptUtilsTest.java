@@ -27,10 +27,10 @@ package net.roboconf.core.utils;
 
 import java.util.Map;
 
-import net.roboconf.core.internal.tests.TestApplication;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.core.internal.tests.TestApplication;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -60,16 +60,18 @@ public class DockerAndScriptUtilsTest {
 
 		TestApplication app = new TestApplication();
 		Map<String,String> map = DockerAndScriptUtils.buildReferenceMap( app.getMySqlVm());
-		Assert.assertEquals( 4, map.size());
+		Assert.assertEquals( 5, map.size());
 		Assert.assertEquals( app.getMySqlVm().getName(), map.get( DockerAndScriptUtils.ROBOCONF_INSTANCE_NAME ));
 		Assert.assertEquals( "/" + app.getMySqlVm().getName(), map.get( DockerAndScriptUtils.ROBOCONF_INSTANCE_PATH ));
+		Assert.assertEquals( app.getMySqlVm().getComponent().getName(), map.get( DockerAndScriptUtils.ROBOCONF_COMPONENT_NAME ));
 		Assert.assertEquals( "mysql_vm", map.get( DockerAndScriptUtils.ROBOCONF_CLEAN_INSTANCE_PATH ));
 		Assert.assertEquals( "mysql_vm", map.get( DockerAndScriptUtils.ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH ));
 
 		map = DockerAndScriptUtils.buildReferenceMap( app.getWar());
-		Assert.assertEquals( 4, map.size());
+		Assert.assertEquals( 5, map.size());
 		Assert.assertEquals( app.getWar().getName(), map.get( DockerAndScriptUtils.ROBOCONF_INSTANCE_NAME ));
 		Assert.assertEquals( "/tomcat-vm/tomcat-server/hello-world", map.get( DockerAndScriptUtils.ROBOCONF_INSTANCE_PATH ));
+		Assert.assertEquals( app.getWar().getComponent().getName(), map.get( DockerAndScriptUtils.ROBOCONF_COMPONENT_NAME ));
 		Assert.assertEquals( "tomcat_vm_tomcat_server_hello_world", map.get( DockerAndScriptUtils.ROBOCONF_CLEAN_INSTANCE_PATH ));
 		Assert.assertEquals( "hello_world_tomcat_server_tomcat_vm", map.get( DockerAndScriptUtils.ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH ));
 	}

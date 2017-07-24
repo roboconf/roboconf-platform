@@ -108,6 +108,13 @@
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
+		
+		<dependency>
+		    <groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.196</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -135,7 +142,8 @@
 						</Import-Package>
 						<Export-Package>
 							!net.roboconf.dm.internal.*,
-							net.roboconf.dm.*
+							net.roboconf.dm.*,
+							javax.sql.*
 						</Export-Package>
 						
 						<!-- The DM should not embed any dependencies. -->

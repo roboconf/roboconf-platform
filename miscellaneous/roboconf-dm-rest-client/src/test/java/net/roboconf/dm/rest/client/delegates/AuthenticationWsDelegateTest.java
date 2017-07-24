@@ -39,6 +39,8 @@ import org.mockito.Mockito;
 
 import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.DebugWsException;
 import net.roboconf.dm.rest.commons.security.AuthenticationManager;
@@ -71,14 +73,22 @@ public class AuthenticationWsDelegateTest {
 	@Before
 	public void before() throws Exception {
 
-		URI uri = UriBuilder.fromUri( REST_URI ).build();
-		RestApplication restApp = new RestApplication( null );
+		// Prevent NPE during tests
+		Manager manager = Mockito.mock( Manager.class );
+		IPreferencesMngr preferencesMngr = Mockito.mock( IPreferencesMngr.class );
+		Mockito.when( manager.preferencesMngr()).thenReturn( preferencesMngr );
 
+		// Create the application
+		URI uri = UriBuilder.fromUri( REST_URI ).build();
+		RestApplication restApp = new RestApplication( manager );
+
+		// Configure the authentication part
 		AuthenticationManager authenticationMngr = new AuthenticationManager( "whatever" );
 		this.authService = Mockito.mock( IAuthService.class );
 		authenticationMngr.setAuthService( this.authService );
 		restApp.setAuthenticationManager( authenticationMngr );
 
+		// Launch the application in a real web server
 		this.httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
 		this.client = new WsClient( REST_URI );
 	}

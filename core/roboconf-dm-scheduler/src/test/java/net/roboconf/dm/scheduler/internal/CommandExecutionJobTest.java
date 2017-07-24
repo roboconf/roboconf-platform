@@ -39,6 +39,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerContext;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.runtime.CommandHistoryItem;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.ICommandsMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -96,7 +97,7 @@ public class CommandExecutionJobTest {
 		Mockito.verify( this.context, Mockito.times( 1 )).getScheduler();
 		Mockito.verify( this.context, Mockito.times( 3 )).getJobDetail();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();
-		Mockito.verify( this.commandMngr, Mockito.times( 1 )).execute( null, "cmd" );
+		Mockito.verify( this.commandMngr, Mockito.times( 1 )).execute( null, "cmd", CommandHistoryItem.ORIGIN_SCHEDULER, "job" );
 	}
 
 
@@ -105,7 +106,7 @@ public class CommandExecutionJobTest {
 
 		Mockito
 			.doThrow( new CommandException( "For test" ))
-			.when( this.commandMngr ).execute( Mockito.any( Application.class ), Mockito.anyString());
+			.when( this.commandMngr ).execute( Mockito.any( Application.class ), Mockito.anyString(), Mockito.anyInt(), Mockito.anyString());
 
 		CommandExecutionJob job = new CommandExecutionJob();
 		job.execute( this.context );
@@ -113,6 +114,6 @@ public class CommandExecutionJobTest {
 		Mockito.verify( this.context, Mockito.times( 1 )).getScheduler();
 		Mockito.verify( this.context, Mockito.times( 3 )).getJobDetail();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();
-		Mockito.verify( this.commandMngr, Mockito.times( 1 )).execute( null, "cmd" );
+		Mockito.verify( this.commandMngr, Mockito.times( 1 )).execute( null, "cmd", CommandHistoryItem.ORIGIN_SCHEDULER, "job" );
 	}
 }

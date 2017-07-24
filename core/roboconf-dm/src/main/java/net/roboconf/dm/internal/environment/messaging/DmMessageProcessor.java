@@ -167,7 +167,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.warning( sb.toString());
 
 		} else {
-			DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.manager.notificationMngr());
+			DmUtils.markScopedInstanceAsNotDeployed( scopedInstance, ma, this.manager.notificationMngr(), this.manager.instancesMngr());
 			this.logger.info( scopedInstance + " is now terminated. Back to NOT_DEPLOYED state." );
 		}
 	}

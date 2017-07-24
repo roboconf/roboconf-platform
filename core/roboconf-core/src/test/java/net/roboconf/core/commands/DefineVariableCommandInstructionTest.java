@@ -25,6 +25,13 @@
 
 package net.roboconf.core.commands;
 
+import static net.roboconf.core.commands.DefineVariableCommandInstruction.EXISTING_INDEX_PREFIX;
+import static net.roboconf.core.commands.DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX;
+import static net.roboconf.core.commands.DefineVariableCommandInstruction.MILLI_TIME;
+import static net.roboconf.core.commands.DefineVariableCommandInstruction.NANO_TIME;
+import static net.roboconf.core.commands.DefineVariableCommandInstruction.RANDOM_UUID;
+import static net.roboconf.core.commands.DefineVariableCommandInstruction.SMART_INDEX;
+
 import java.io.File;
 import java.util.List;
 
@@ -147,7 +154,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_9() {
 
-		String line = "define vm id = " + DefineVariableCommandInstruction.SMART_INDEX;
+		String line = "define vm id = " + SMART_INDEX;
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
@@ -158,7 +165,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_10() {
 
-		String line = "define vm id = " + DefineVariableCommandInstruction.SMART_INDEX + " under /tomcat-vm";
+		String line = "define vm id = " + SMART_INDEX + " under /tomcat-vm";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
@@ -169,7 +176,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_11() {
 
-		String line = "define ftime = at " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )";
+		String line = "define ftime = at " + FORMATTED_TIME_PREFIX + "HH:mm:ss )";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
@@ -181,7 +188,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_12() {
 
-		String line = "define m = " + DefineVariableCommandInstruction.MILLI_TIME + " " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )";
+		String line = "define m = " + MILLI_TIME + " " + FORMATTED_TIME_PREFIX + "HH:mm:ss )";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
@@ -193,7 +200,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_13() {
 
-		String line = "define m = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )" + " " + DefineVariableCommandInstruction.MILLI_TIME;
+		String line = "define m = " + FORMATTED_TIME_PREFIX + "HH:mm:ss )" + " " + MILLI_TIME;
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
@@ -205,7 +212,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_14() {
 
-		String line = "define m = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )" + " oops ";
+		String line = "define m = " + FORMATTED_TIME_PREFIX + "HH:mm:ss )" + " oops ";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
@@ -217,12 +224,75 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testValidate_15() {
 
-		String line = "define m = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "invalid pattern )";
+		String line = "define m = " + FORMATTED_TIME_PREFIX + "invalid pattern )";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.CMD_INVALID_DATE_PATTERN, errors.get( 0 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testValidate_16() {
+
+		String line = "define m = " + EXISTING_INDEX_PREFIX + " MIN)";
+		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		List<ParsingError> errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MIN )";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MAX )";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MIN>2 )";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MIN> 4 )";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MIN > 4 )";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MIN <415 )";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MAX   > 4)";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MAX<18)";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
+
+		line = "define m = " + EXISTING_INDEX_PREFIX + " MAXIMUM)";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_INVALID_INDEX_PATTERN, errors.get( 0 ).getErrorCode());
+
+		line = "define m = instance " + EXISTING_INDEX_PREFIX + " MAX<18) t under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
+		errors = instr.validate();
+		Assert.assertEquals( 0, errors.size());
 	}
 
 
@@ -233,64 +303,73 @@ public class DefineVariableCommandInstructionTest {
 		String instr1 = "define key = toto";
 		String instr2 = "define key2 = $(key)2";
 		String instr3 = "define key2 = $(key) 2";
-		String instr4 = "define nano = " + DefineVariableCommandInstruction.NANO_TIME;
-		String instr5 = "define milli = " + DefineVariableCommandInstruction.MILLI_TIME;
-		String instr6 = "define uuid = " + DefineVariableCommandInstruction.RANDOM_UUID;
-		String instr7 = "define indexWithoutInstance = oops " + DefineVariableCommandInstruction.SMART_INDEX;
-		String instr8 = "define index = oops " + DefineVariableCommandInstruction.SMART_INDEX + " under /tomcat-vm";
-		String instr9 = "define tt = t " + DefineVariableCommandInstruction.SMART_INDEX + " t under /tomcat-vm";
-		String instr10 = "define ftime1 = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "HH:mm:ss )";
-		String instr11 = "define ftime2 = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "MMMM)";
+		String instr4 = "define nano = " + NANO_TIME;
+		String instr5 = "define milli = " + MILLI_TIME;
+		String instr6 = "define uuid = " + RANDOM_UUID;
+		String instr7 = "define indexWithoutInstance = oops " + SMART_INDEX;
+		String instr8 = "define index = oops " + SMART_INDEX + " under /tomcat-vm";
+		String instr9 = "define tt = t " + SMART_INDEX + " t under /tomcat-vm";
+		String instr10 = "define ftime1 = " + FORMATTED_TIME_PREFIX + "HH:mm:ss )";
+		String instr11 = "define ftime2 = " + FORMATTED_TIME_PREFIX + "MMMM)";
 		String instr12 = "define ftime3 = something happenned at $(ftime1)";
-		String instr13 = "define ftime4 = " + DefineVariableCommandInstruction.FORMATTED_TIME_PREFIX + "'today at' HH:mm:ss )";
+		String instr13 = "define ftime4 = " + FORMATTED_TIME_PREFIX + "'today at' HH:mm:ss )";
 
 		// Assertions
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, instr1, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertEquals( "toto", this.context.variables.get( "key" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr2, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertEquals( "toto2", this.context.variables.get( "key2" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr3, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertEquals( "toto 2", this.context.variables.get( "key2" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr4, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "nano" ));
-		Assert.assertFalse( DefineVariableCommandInstruction.NANO_TIME.equals( this.context.variables.get( "nano" )));
+		Assert.assertFalse( NANO_TIME.equals( this.context.variables.get( "nano" )));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr5, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "milli" ));
-		Assert.assertFalse( DefineVariableCommandInstruction.MILLI_TIME.equals( this.context.variables.get( "milli" )));
+		Assert.assertFalse( MILLI_TIME.equals( this.context.variables.get( "milli" )));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr6, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "uuid" ));
-		Assert.assertFalse( DefineVariableCommandInstruction.RANDOM_UUID.equals( this.context.variables.get( "uuid" )));
+		Assert.assertFalse( RANDOM_UUID.equals( this.context.variables.get( "uuid" )));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr7, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "indexWithoutInstance" ));
 		Assert.assertEquals( "oops 1", this.context.variables.get( "indexWithoutInstance" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr9, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "tt" ));
 		Assert.assertEquals( "t 1 t", this.context.variables.get( "tt" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr10, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "ftime1" ));
@@ -298,6 +377,7 @@ public class DefineVariableCommandInstructionTest {
 		Assert.assertTrue( this.context.variables.get( "ftime1" ).matches( "\\d\\d:\\d\\d:\\d\\d" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr11, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "ftime2" ));
@@ -305,6 +385,7 @@ public class DefineVariableCommandInstructionTest {
 		Assert.assertTrue( this.context.variables.get( "ftime2" ).matches( "[a-zA-Z]+.*" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr12, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertEquals(
@@ -312,6 +393,7 @@ public class DefineVariableCommandInstructionTest {
 				this.context.variables.get( "ftime3" ));
 
 		instr = new DefineVariableCommandInstruction( this.context, instr13, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "ftime4" ));
@@ -319,6 +401,7 @@ public class DefineVariableCommandInstructionTest {
 
 		// Verify the smart index works as expected
 		instr = new DefineVariableCommandInstruction( this.context, instr8, 1 );
+		Assert.assertFalse( instr.isDisabled());
 		Assert.assertEquals( 0, instr.validate().size());
 		instr.updateContext();
 		Assert.assertNotNull( this.context.variables.get( "index" ));
@@ -346,10 +429,95 @@ public class DefineVariableCommandInstructionTest {
 	}
 
 
+
+	@Test
+	public void testUpdateContext_queryIndexes() {
+
+		this.context.instancePathToComponentName.put( "/tomcat-vm/oops 1", this.app.getTomcatVm().getComponent().getName());
+		this.context.instancePathToComponentName.put( "/tomcat-vm/oops 2", this.app.getTomcatVm().getComponent().getName());
+		this.context.instancePathToComponentName.put( "/tomcat-vm/oops 3", this.app.getTomcatVm().getComponent().getName());
+
+		String instr14 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MIN ) under /tomcat-vm";
+		AbstractCommandInstruction instr = new DefineVariableCommandInstruction( this.context, instr14, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 1", this.context.variables.get( "exi" ));
+
+		String instr15 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MIN > 1 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr15, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 2", this.context.variables.get( "exi" ));
+
+		String instr16 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MIN > 2 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr16, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 3", this.context.variables.get( "exi" ));
+
+		String instr17 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MIN > 3 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr17, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertTrue( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "fake", this.context.variables.get( "exi" ));
+
+		String instr18 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MAX ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr18, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 3", this.context.variables.get( "exi" ));
+
+		String instr19 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MAX > 1 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr19, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 3", this.context.variables.get( "exi" ));
+
+		String instr20 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MAX < 3 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr20, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 2", this.context.variables.get( "exi" ));
+
+		String instr21 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MAX < 2 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr21, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertFalse( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "oops 1", this.context.variables.get( "exi" ));
+
+		String instr22 = "define exi = oops " + EXISTING_INDEX_PREFIX + " MAX > 3 ) under /tomcat-vm";
+		instr = new DefineVariableCommandInstruction( this.context, instr22, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+		instr.updateContext();
+		Assert.assertTrue( instr.isDisabled());
+		Assert.assertNotNull( this.context.variables.get( "exi" ));
+		Assert.assertEquals( "fake", this.context.variables.get( "exi" ));
+
+		Assert.assertEquals( 1, this.context.disabledVariables.size());
+		Assert.assertEquals( "exi", this.context.disabledVariables.iterator().next());
+	}
+
+
 	@Test
 	public void testUpdateContext_forSmartIndex_1() {
 
-		String line = "define vm id = " + DefineVariableCommandInstruction.SMART_INDEX;
+		String line = "define vm id = " + SMART_INDEX;
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		Assert.assertEquals( 0, instr.validate().size());
 
@@ -361,7 +529,7 @@ public class DefineVariableCommandInstructionTest {
 	@Test
 	public void testUpdateContext_forSmartIndex_2() {
 
-		String line = "define vm id = " + DefineVariableCommandInstruction.SMART_INDEX + " under /tomcat-vm";
+		String line = "define vm id = " + SMART_INDEX + " under /tomcat-vm";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		Assert.assertEquals( 0, instr.validate().size());
 
@@ -374,7 +542,7 @@ public class DefineVariableCommandInstructionTest {
 	public void testUpdateContext_forSmartIndex_3() {
 
 		// Define a variable once
-		String line = "define war id = t" + DefineVariableCommandInstruction.SMART_INDEX + " under /tomcat-vm";
+		String line = "define war id = t" + SMART_INDEX + " under /tomcat-vm";
 		DefineVariableCommandInstruction instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		Assert.assertEquals( 0, instr.validate().size());
 
@@ -388,7 +556,7 @@ public class DefineVariableCommandInstructionTest {
 		ci.updateContext();
 
 		// Define a new smart variable
-		line = "define war id = t" + DefineVariableCommandInstruction.SMART_INDEX + " under /tomcat-vm";
+		line = "define war id = t" + SMART_INDEX + " under /tomcat-vm";
 		instr = new DefineVariableCommandInstruction( this.context, line, 1 );
 		Assert.assertEquals( 0, instr.validate().size());
 

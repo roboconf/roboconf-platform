@@ -107,8 +107,8 @@ public class BulkCommandInstructionsTest {
 		Mockito.reset( this.instancesMngr );
 		executor4.execute();
 
-		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm());
-		Mockito.verify( this.instancesMngr, Mockito.only()).removeInstance( this.ma, this.app.getTomcatVm());
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm(), false );
+		Mockito.verify( this.instancesMngr, Mockito.only()).removeInstance( this.ma, this.app.getTomcatVm(), false );
 	}
 
 
@@ -150,8 +150,8 @@ public class BulkCommandInstructionsTest {
 		Mockito.reset( this.instancesMngr );
 		executor4.execute();
 
-		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm());
-		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getMySqlVm());
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm(), false );
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getMySqlVm(), false );
 		Mockito.verifyNoMoreInteractions( this.instancesMngr );
 	}
 

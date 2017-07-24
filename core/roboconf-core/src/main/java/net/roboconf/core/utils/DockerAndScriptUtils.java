@@ -40,6 +40,7 @@ public final class DockerAndScriptUtils {
 	public static final String ROBOCONF_INSTANCE_PATH = "ROBOCONF_INSTANCE_PATH";
 	public static final String ROBOCONF_CLEAN_INSTANCE_PATH = "ROBOCONF_CLEAN_INSTANCE_PATH";
 	public static final String ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH = "ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH";
+	public static final String ROBOCONF_COMPONENT_NAME = "ROBOCONF_COMPONENT_NAME";
 
 
 	/**
@@ -62,6 +63,7 @@ public final class DockerAndScriptUtils {
 
 		result.put( ROBOCONF_INSTANCE_NAME, instance.getName());
 		result.put( ROBOCONF_INSTANCE_PATH, instancePath );
+		result.put( ROBOCONF_COMPONENT_NAME, instance.getComponent().getName());
 		result.put( ROBOCONF_CLEAN_INSTANCE_PATH, cleanInstancePath( instancePath ));
 		result.put( ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH, cleanReversedInstancePath( instancePath ));
 

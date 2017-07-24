@@ -38,11 +38,13 @@ import net.roboconf.dm.rest.commons.security.AuthenticationManager;
 import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
+import net.roboconf.dm.rest.services.internal.resources.IHistoryResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.AuthenticationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
+import net.roboconf.dm.rest.services.internal.resources.impl.HistoryResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.PreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.SchedulerResource;
@@ -58,6 +60,8 @@ public class RestApplication extends DefaultResourceConfig {
 	private final IDebugResource debugResource;
 	private final ITargetResource targetResource;
 	private final IPreferencesResource preferencesResource;
+	private final IHistoryResource historyResource;
+
 	private final ManagementResource managementResource;
 	private final SchedulerResource schedulerResource;
 	private final AuthenticationResource authenticationResource;
@@ -77,6 +81,7 @@ public class RestApplication extends DefaultResourceConfig {
 		this.preferencesResource = new PreferencesResource( manager );
 		this.schedulerResource = new SchedulerResource( manager );
 		this.authenticationResource = new AuthenticationResource( manager );
+		this.historyResource = new HistoryResource( manager );
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -107,6 +112,7 @@ public class RestApplication extends DefaultResourceConfig {
 		result.add( PreferencesResource.class );
 		result.add( SchedulerResource.class );
 		result.add( AuthenticationResource.class );
+		result.add( HistoryResource.class );
 
 		return result;
 	}
@@ -123,6 +129,7 @@ public class RestApplication extends DefaultResourceConfig {
 		set.add( this.preferencesResource );
 		set.add( this.schedulerResource );
 		set.add( this.authenticationResource );
+		set.add( this.historyResource );
 
 		return set;
 	}
