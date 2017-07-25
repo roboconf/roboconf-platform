@@ -63,7 +63,7 @@ public class EmbeddedHandlerTest {
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
 				.targetProperties( new HashMap<String,String>( 0 ))
 				.messagingProperties( new HashMap<String,String>( 0 ))));
-		Assert.assertNull(target.ipTable);
+		Assert.assertEquals(target.ipTable.size(), 0);
 		Instance scopedInstance = new Instance();
 		Assert.assertEquals( 0, scopedInstance.data.size());
 		target.configureMachine(
@@ -82,7 +82,7 @@ public class EmbeddedHandlerTest {
 	@Test
 	public void testIpList() throws Exception {
 		EmbeddedHandler target = new EmbeddedHandler();
-		Assert.assertNull(target.ipTable);
+		Assert.assertEquals(target.ipTable.size(), 0);
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
 			.applicationName( "app" )
 			.domain( "domain" )
