@@ -26,12 +26,13 @@
 package net.roboconf.target.embedded.internal;
 
 import java.util.HashMap;
-
-import org.junit.Assert;
-import org.junit.Test;
+import java.util.Map;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetHandlerParameters;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -50,16 +51,19 @@ public class EmbeddedHandlerTest {
 		target.terminateMachine( parameters, "anything" );
 
 		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
 				.applicationName( "app" )
 				.domain( "domain" )
 				.scopedInstancePath( "nothing" )));
 
 		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+
+
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
 				.targetProperties( new HashMap<String,String>( 0 ))
 				.messagingProperties( new HashMap<String,String>( 0 ))));
-
+		Assert.assertEquals(target.ipTable.size(), 0);
 		Instance scopedInstance = new Instance();
 		Assert.assertEquals( 0, scopedInstance.data.size());
 		target.configureMachine(
@@ -72,5 +76,48 @@ public class EmbeddedHandlerTest {
 		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
 		target.terminateMachine( parameters, null );
 		target.terminateMachine( null, "anything" );
+	}
+
+	@SuppressWarnings("serial")
+	@Test
+	public void testIpList() throws Exception {
+		EmbeddedHandler target = new EmbeddedHandler();
+		Assert.assertEquals(target.ipTable.size(), 0);
+		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
+			.applicationName( "app" )
+			.domain( "domain" )
+			.scopedInstancePath( "nothing" )
+			.targetProperties(new HashMap<String, String>() {{ put(EmbeddedHandler.IP_ADDRESSES, "192.168.1.1, 192.168.1.2"); }})));
+
+		Assert.assertEquals(target.ipTable.size(), 2);
+		String ip = target.acquireIpAddress();
+		Assert.assertTrue(target.ipTable.get(ip));
+		target.releaseIpAddress(ip);
+		Assert.assertFalse(target.ipTable.get(ip));
+	}
+
+	/**
+	 * Test to run by hand, after setting IP and key file.
+	 * @throws Exception
+	 */
+	public void toRunByHand() throws Exception {
+		// Set before testing (IP should point on a VM with roboconf agent).
+		String ip = "54.171.159.33";
+		String keyfile = "/home/gibello/Linagora/EC2Linagora/aws-linagora.pem";
+
+		EmbeddedHandler handler = new EmbeddedHandler();
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		Map<String, String> messagingProperties = new HashMap<>();
+		messagingProperties.put("messaging.type",  "http");
+		parameters.setMessagingProperties(messagingProperties);
+		parameters.setDomain("test-domain");
+		parameters.setApplicationName("test-application");
+		parameters.setScopedInstancePath("/test/instance");
+
+		Map<String, String> targetProperties = new HashMap<>();
+		targetProperties.put(EmbeddedHandler.SCP_KEYFILE, keyfile);
+		parameters.setTargetProperties(targetProperties);
+
+		handler.sendConfiguration(ip, parameters);
 	}
 }
