@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.userdata.UserDataHelpers;
@@ -49,10 +50,11 @@ public class EmbeddedHandler implements TargetHandler {
 	public static final String IP_ADDRESSES = "embedded.ip";
 	public static final String SCP_USER = "scp.user";
 	public static final String SCP_KEYFILE = "scp.keyfile";
-	static final String AGENT_CONFIG_DIR = "/etc/roboconf-agent";
+	public static final String SCP_AGENT_CONFIG_DIR = "scp.agent.configdir";
+	static final String AGENT_CONFIG_DEFAULT_DIR = "/etc/roboconf-agent";
 	static final String USER_DATA_FILE = "parameters.properties";
-	private final Map<String,String> machineIdToRunning = new HashMap<> ();
-	protected Map<String,Boolean> ipTable = null;
+	private final Map<String,String> machineIdToIp = new HashMap<> ();
+	protected Map<String,Boolean> ipTable = new HashMap<> ();
 
 	@Override
 	public String getTargetId() {
@@ -62,18 +64,15 @@ public class EmbeddedHandler implements TargetHandler {
 
 	@Override
 	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
-		if(ipTable == null && parameters != null && parameters.getTargetProperties() != null) {
+		if(parameters != null && parameters.getTargetProperties() != null) {
 			String ips = parameters.getTargetProperties().get(IP_ADDRESSES);
 			if(ips != null) {
 				String iplist[] = ips.trim().split("\\s*,\\s*");
-				for(String ip : iplist) {
-					if(ipTable == null) ipTable = new HashMap<>();
-					ipTable.put(ip, false);
-				}
+				for(String ip : iplist) ipTable.put(ip, false);
 			}
 		}
 		String machineId = parameters.getScopedInstancePath() + " (" + TARGET_ID + ")";
-		this.machineIdToRunning.put( machineId, "" );
+		this.machineIdToIp.put( machineId, "" );
 		return machineId;
 	}
 
@@ -81,7 +80,7 @@ public class EmbeddedHandler implements TargetHandler {
 	@Override
 	public void terminateMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
-		String ip = this.machineIdToRunning.remove( machineId );
+		String ip = this.machineIdToIp.remove( machineId );
 		if(! Utils.isEmptyOrWhitespaces(ip)) releaseIpAddress(ip);
 	}
 
@@ -89,6 +88,8 @@ public class EmbeddedHandler implements TargetHandler {
 	@Override
 	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
+		// It may require to be post-configured from the DM => add the right marker
+		scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
 
 		String ip = acquireIpAddress();
 		if(! Utils.isEmptyOrWhitespaces(ip)) {
@@ -97,10 +98,7 @@ public class EmbeddedHandler implements TargetHandler {
 			} catch (IOException e) {
 				throw new TargetException(e);
 			}
-			this.machineIdToRunning.put(machineId, ip);
-		} else {
-			// It may require to be configured from the DM => add the right marker
-			scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
+			this.machineIdToIp.put(machineId, ip);
 		}
 	}
 
@@ -108,14 +106,14 @@ public class EmbeddedHandler implements TargetHandler {
 	@Override
 	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
-		return this.machineIdToRunning.containsKey( machineId );
+		return this.machineIdToIp.containsKey( machineId );
 	}
 
 
 	@Override
 	public String retrievePublicIpAddress( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
-		String ip = this.machineIdToRunning.get(machineId);
+		String ip = this.machineIdToIp.get(machineId);
 		return Utils.isEmptyOrWhitespaces(ip) ? null : ip;
 	}
 
@@ -124,12 +122,10 @@ public class EmbeddedHandler implements TargetHandler {
 	 * @return The acquired IP address
 	 */
 	protected String acquireIpAddress() {
-		if(ipTable != null) {
-			for(Map.Entry<String, Boolean> entry : ipTable.entrySet()) {
-				if(! entry.getValue()) {
-					entry.setValue(true);
-					return entry.getKey();
-				}
+		for(Map.Entry<String, Boolean> entry : ipTable.entrySet()) {
+			if(! entry.getValue()) {
+				entry.setValue(true);
+				return entry.getKey();
 			}
 		}
 		return null;
@@ -140,9 +136,7 @@ public class EmbeddedHandler implements TargetHandler {
 	 * @param ip The IP address to release
 	 */
 	protected void releaseIpAddress(String ip) {
-		if(ipTable != null && ipTable.get(ip) != null) {
-			ipTable.put(ip, false);
-		}
+		if(ipTable.get(ip) != null) ipTable.put(ip, false);
 	}
 
 	/**
@@ -155,6 +149,9 @@ public class EmbeddedHandler implements TargetHandler {
 	 */
 	protected void sendConfiguration(String ip, TargetHandlerParameters parameters) throws IOException {
 		SSHClient ssh = new SSHClient();
+		File tmpDir = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
+		tmpDir.mkdir();
+		tmpDir.deleteOnExit(); // In case deletion fails
 		try {
 			ssh.loadKnownHosts();
 			ssh.connect(ip);
@@ -173,14 +170,16 @@ public class EmbeddedHandler implements TargetHandler {
 					parameters.getScopedInstancePath());
 
 			// Generate local user-data file, then upload it
-			File userdataFile = new File("/tmp", USER_DATA_FILE);
+			String agentConfigDir = parameters.getTargetProperties().get(SCP_AGENT_CONFIG_DIR);
+			if(agentConfigDir == null) agentConfigDir = AGENT_CONFIG_DEFAULT_DIR;
+			File userdataFile = new File(tmpDir, USER_DATA_FILE);
 			Utils.writeStringInto(userData, userdataFile);
-			ssh.newSCPFileTransfer().upload(new FileSystemFile(userdataFile), AGENT_CONFIG_DIR);
+			ssh.newSCPFileTransfer().upload(new FileSystemFile(userdataFile), agentConfigDir);
 
-			File localAgentConfig = new File("/tmp", "net.roboconf.agent.configuration.cfg");
-			File remoteAgentConfig = new File(AGENT_CONFIG_DIR, "net.roboconf.agent.configuration.cfg");
+			File localAgentConfig = new File(tmpDir, "net.roboconf.agent.configuration.cfg");
+			File remoteAgentConfig = new File(agentConfigDir, "net.roboconf.agent.configuration.cfg");
 			// Download remote agent config file...
-			ssh.newSCPFileTransfer().download(remoteAgentConfig.getCanonicalPath(), new FileSystemFile("/tmp/"));
+			ssh.newSCPFileTransfer().download(remoteAgentConfig.getCanonicalPath(), new FileSystemFile(tmpDir));
 
 			// ... Replace "parameters" property to point on user data file...
 			String config = Utils.readFileContent(localAgentConfig);
@@ -189,12 +188,13 @@ public class EmbeddedHandler implements TargetHandler {
 			Utils.writeStringInto(config, localAgentConfig);
 
 			// ... Then upload agent config file back
-			ssh.newSCPFileTransfer().upload(new FileSystemFile(localAgentConfig), AGENT_CONFIG_DIR);
+			ssh.newSCPFileTransfer().upload(new FileSystemFile(localAgentConfig), agentConfigDir);
 
 		} finally {
 			try {
 				ssh.disconnect();
 				ssh.close();
+				tmpDir.delete();
 			} catch(IOException ignore) { /* ignore */ }
 		}
 	}
