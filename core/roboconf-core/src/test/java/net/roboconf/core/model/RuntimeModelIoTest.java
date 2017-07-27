@@ -1125,4 +1125,44 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( "kikou app_vm1", resolvedExportedVariables.get( "App.rev" ));
 		Assert.assertEquals( "App", resolvedExportedVariables.get( "App.comp" ));
 	}
+
+
+	@Test
+	public void testLoadApplication_descriptorErrorsAreResolved() throws Exception {
+
+		// Copy an application and overwrite the descriptor with an invalid one
+		File sourceDirectory = TestUtils.findTestFile( "/applications/mongo" );
+		File targetDirectory = this.folder.newFolder();
+		Utils.copyDirectory( sourceDirectory, targetDirectory );
+
+		File f = new File( targetDirectory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( f.exists());
+
+		String fContent = Utils.readFileContent( f );
+		fContent = fContent.replaceAll( "(?i)application-version\\s*=.*", "application-version = @inval!d" );
+		Utils.writeStringInto( fContent, f );
+
+		// Parse it
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( targetDirectory );
+		Assert.assertNotNull( result );
+		Assert.assertNotNull( result.applicationTemplate );
+		Assert.assertEquals( 3, result.loadErrors.size());
+
+		Iterator<RoboconfError> it = result.loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+
+		// Resolve errors locations
+		List<RoboconfError> errors = RoboconfErrorHelpers.resolveErrorsWithLocation( result );
+		Assert.assertEquals( 3, errors.size());
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ParsingError.class, errors.get( 0 ).getClass());
+		Assert.assertEquals( f, ((ParsingError) errors.get( 0 )).getFile());
+		Assert.assertEquals( 3, ((ParsingError) errors.get( 0 )).getLine());
+
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 1 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 2 ).getErrorCode());
+	}
 }

@@ -122,7 +122,8 @@ public class ParsingModelIoTest {
 		List<File> validFiles = TestUtils.findTestFiles( PATH );
 		for( File f : validFiles ) {
 			if( ! "instance-with-space-after.instances".equals( f.getName())
-					&& ! "component-with-complex-variables-values.graph".equals( f.getName()))
+					&& ! "component-with-complex-variables-values.graph".equals( f.getName())
+					&& ! "app-template-descriptor.properties".equals( f.getName()))
 				testLoadingAndWritingOfValidFile( f );
 		}
 	}

@@ -46,8 +46,8 @@ import net.roboconf.messaging.rabbitmq.internal.RabbitMqClient;
  */
 public abstract class RabbitMqTestUtils {
 
-	private static final String MESSAGE_SERVER_IP = "127.0.0.1";
-	private static final String GUEST = "guest";
+	public static final String GUEST = "guest";
+	private static final String MESSAGE_SERVER_IP = "localhost";
 
 
 	/**

@@ -44,8 +44,8 @@ import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.converters.FromInstanceDefinition;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.errors.ErrorCode;
-import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.errors.ErrorDetails.ErrorDetailsKind;
+import net.roboconf.core.errors.RoboconfErrorHelpers;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -516,6 +516,14 @@ public class RuntimeModelValidatorTest {
 
 		desc.setName( "My Application #!" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_NAME, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		desc.setName( "My Application" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
@@ -540,6 +548,7 @@ public class RuntimeModelValidatorTest {
 		desc.invalidExternalExports.add( "oops" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.PROJ_INVALID_EXTERNAL_EXPORTS, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		desc.invalidExternalExports.clear();
@@ -547,9 +556,15 @@ public class RuntimeModelValidatorTest {
 		desc.externalExports.put( "comp.!nvalid", "ko" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		desc.externalExports.remove( "comp.!nvalid" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		desc.setExternalExportsPrefix( "prefix" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( desc ).size());
 
 		desc.externalExports.put( "comp.valid", "!nvalid" );

@@ -163,7 +163,7 @@ public final class ProjectUtils {
 		Utils.copyStreamSafely( in, out );
 		tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
-				.replace( TPL_VERSION, "${project.version}--${timestamp}" )
+				.replace( TPL_VERSION, "${project.version}" )
 				.replace( TPL_DESCRIPTION, "${project.description}" );
 
 		// Create the rest of the project
