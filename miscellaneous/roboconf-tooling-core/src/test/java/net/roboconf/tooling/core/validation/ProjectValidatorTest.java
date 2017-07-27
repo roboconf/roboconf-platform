@@ -27,6 +27,7 @@ package net.roboconf.tooling.core.validation;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Assert;
@@ -100,5 +101,78 @@ public class ProjectValidatorTest {
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 1 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.PROJ_UNREACHABLE_FILE, errors.get( 2 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.PROJ_UNREACHABLE_FILE, errors.get( 3 ).getErrorCode());
+	}
+
+
+	@Test
+	public void validateProject_withMavenVersion() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.groupId( "net.roboconf" ).projectVersion( "${project.version}" ).mavenProject( false );
+
+		ProjectUtils.createProjectSkeleton( dir, bean );
+
+		List<RoboconfError> errors = ProjectValidator.validateProject( dir );
+		Assert.assertEquals( 2, errors.size());
+		for( RoboconfError roboconfError : errors )
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
+	}
+
+
+	@Test
+	public void validateProject_withMavenProperty_noPrefixIsAccepted() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.groupId( "net.roboconf" ).projectVersion( "kikou ${my-property}" ).mavenProject( false );
+
+		ProjectUtils.createProjectSkeleton( dir, bean );
+
+		List<RoboconfError> errors = ProjectValidator.validateProject( dir );
+		Iterator<RoboconfError> it = errors.iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+	}
+
+
+	@Test
+	public void validateProject_withMavenProperty_suffixCannotContainSpaces() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.groupId( "net.roboconf" ).projectVersion( "${my-property} kikou" ).mavenProject( false );
+
+		ProjectUtils.createProjectSkeleton( dir, bean );
+
+		List<RoboconfError> errors = ProjectValidator.validateProject( dir );
+		Iterator<RoboconfError> it = errors.iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+	}
+
+
+	@Test
+	public void validateProject_withMavenProperty_validSuffix() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.groupId( "net.roboconf" ).projectVersion( "${my-property}-now" ).mavenProject( false );
+
+		ProjectUtils.createProjectSkeleton( dir, bean );
+
+		List<RoboconfError> errors = ProjectValidator.validateProject( dir );
+		Iterator<RoboconfError> it = errors.iterator();
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
 	}
 }

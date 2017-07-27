@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.errors.RoboconfError;
 import net.roboconf.core.errors.RoboconfErrorComparator;
 import net.roboconf.core.errors.RoboconfErrorHelpers;
@@ -93,6 +94,21 @@ public final class ProjectValidator {
 		// Now, remove duplicate errors and resolve locations
 		Collection<RoboconfError> errors = new HashSet<> ();
 		errors.addAll( RoboconfErrorHelpers.resolveErrorsWithLocation( alr ));
+
+		// Do not show errors in tooling when the project version is "${project.version}"
+		List<RoboconfError> errorstoRemove = new ArrayList<> ();
+		for( RoboconfError error : errors ) {
+
+			// We ignore this error if it looks like a Maven property.
+			if( error.getErrorCode() == ErrorCode.RM_INVALID_APPLICATION_VERSION
+					&& error.getDetails().length > 0
+					&& error.getDetails()[ 0 ].getElementName().matches( "^\\$\\{.*\\}\\S*" )) {
+
+				errorstoRemove.add( error );
+			}
+		}
+
+		errors.removeAll( errorstoRemove );
 
 		// Eventually, sort everything
 		List<RoboconfError> errorsList = new ArrayList<>( errors );
