@@ -28,79 +28,149 @@ package net.roboconf.target.embedded.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.target.api.TargetHandlerParameters;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class EmbeddedHandlerTest {
 
+	private static final String NOTHING = "app_nothing";
+
+
 	@Test
-	public void testTargetEmbedded() throws Exception {
+	public void testTargetEmbedded_noIpPool() throws Exception {
 
-		TargetHandlerParameters parameters = new TargetHandlerParameters();
-		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
-
+		// Basics
 		EmbeddedHandler target = new EmbeddedHandler();
 		Assert.assertEquals( EmbeddedHandler.TARGET_ID, target.getTargetId());
-		target.terminateMachine( null, null );
+
+		// Terminate machine should not throw any error at this stage
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
+		parameters = parameters
+				.applicationName( "app" )
+				.domain( "domain" )
+				.scopedInstancePath( "nothing" );
+
+		target.terminateMachine( parameters, null );
 		target.terminateMachine( parameters, "anything" );
 
-		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+		// Same thing for isMachineRunning
+		Assert.assertFalse( target.isMachineRunning( null, NOTHING ));
+
+		// Let's try to create a machine
+		String machineId = target.createMachine( parameters );
+		Assert.assertEquals( NOTHING, machineId );
+		Assert.assertTrue( target.isMachineRunning( null, machineId ));
+		Assert.assertEquals( 0, target.usedIps.size());
+		Assert.assertEquals( 1, target.machineIdToIp.size());
+		Assert.assertEquals( "", target.machineIdToIp.get( machineId ));
+
+		// And let's configure it
+		Instance scopedInstance = new Instance();
+		Assert.assertEquals( 0, scopedInstance.data.size());
+		target.configureMachine(
+				parameters,
+				machineId,
+				scopedInstance );
+
+		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
+
+		// Terminate it
+		target.terminateMachine( parameters, machineId );
+		Assert.assertFalse( target.isMachineRunning( null, machineId ));
+		Assert.assertEquals( 0, target.usedIps.size());
+		Assert.assertEquals( 0, target.machineIdToIp.size());
+	}
+
+
+	@Test
+	public void testTargetEmbedded_withIpPool() throws Exception {
+
+		// Basics
+		EmbeddedHandler target = new EmbeddedHandler();
+		Assert.assertEquals( EmbeddedHandler.TARGET_ID, target.getTargetId());
+
+		// Terminate machine should not throw any error at this stage
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		parameters.getTargetProperties().put( EmbeddedHandler.IP_ADDRESSES, "192.168.1.1, 192.168.1.2" );
+		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
+		parameters = parameters
+				.applicationName( "app" )
+				.domain( "domain" )
+				.scopedInstancePath( "nothing" );
+
+		target.terminateMachine( parameters, null );
+		target.terminateMachine( parameters, "anything" );
+
+		// Same thing for isMachineRunning
+		Assert.assertFalse( target.isMachineRunning( null, NOTHING ));
+
+		// Let's try to create a machine
+		String machineId = target.createMachine( parameters );
+		Assert.assertEquals( NOTHING, machineId );
+		Assert.assertTrue( target.isMachineRunning( null, machineId ));
+		Assert.assertEquals( 1, target.usedIps.size());
+		Assert.assertTrue( target.usedIps.containsKey( "192.168.1.1" ));
+		Assert.assertEquals( 1, target.machineIdToIp.size());
+		Assert.assertEquals( "192.168.1.1", target.machineIdToIp.get( machineId ));
+
+		// No configuration here...
+
+		// Terminate it
+		target.terminateMachine( parameters, machineId );
+		Assert.assertFalse( target.isMachineRunning( null, machineId ));
+		Assert.assertEquals( 0, target.usedIps.size());
+		Assert.assertEquals( 0, target.machineIdToIp.size());
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testIpList_noMoreIpAvailable() throws Exception {
+
+		Map<String,String> targetProperties = new HashMap<> ();
+		targetProperties.put( EmbeddedHandler.IP_ADDRESSES, "192.168.1.1, 192.168.1.2" );
+
+		EmbeddedHandler target = new EmbeddedHandler();
+		try {
+			Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
+				.applicationName( "app" )
+				.domain( "domain" )
+				.scopedInstancePath( "nothing1" )
+				.targetProperties( targetProperties )));
+
+			Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
+					.applicationName( "app" )
+					.domain( "domain" )
+					.scopedInstancePath( "nothing2" )
+					.targetProperties( targetProperties )));
+
+		} catch( Exception e ) {
+			Assert.fail( "No exception should have been thrown here." );
+		}
 
 		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
 				.applicationName( "app" )
 				.domain( "domain" )
-				.scopedInstancePath( "nothing" )));
-
-		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
-
-
-		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
-				.targetProperties( new HashMap<String,String>( 0 ))
-				.messagingProperties( new HashMap<String,String>( 0 ))));
-		Assert.assertEquals(target.ipTable.size(), 0);
-		Instance scopedInstance = new Instance();
-		Assert.assertEquals( 0, scopedInstance.data.size());
-		target.configureMachine(
-				new TargetHandlerParameters()
-					.targetProperties( new HashMap<String,String>( 0 ))
-					.messagingProperties( new HashMap<String,String>( 0 )),
-				null,
-				scopedInstance );
-
-		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
-		target.terminateMachine( parameters, null );
-		target.terminateMachine( null, "anything" );
+				.scopedInstancePath( "nothing3" )
+				.targetProperties( targetProperties )));
 	}
 
-	@SuppressWarnings("serial")
-	@Test
-	public void testIpList() throws Exception {
-		EmbeddedHandler target = new EmbeddedHandler();
-		Assert.assertEquals(target.ipTable.size(), 0);
-		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
-			.applicationName( "app" )
-			.domain( "domain" )
-			.scopedInstancePath( "nothing" )
-			.targetProperties(new HashMap<String, String>() {{ put(EmbeddedHandler.IP_ADDRESSES, "192.168.1.1, 192.168.1.2"); }})));
-
-		Assert.assertEquals(target.ipTable.size(), 2);
-		String ip = target.acquireIpAddress();
-		Assert.assertTrue(target.ipTable.get(ip));
-		target.releaseIpAddress(ip);
-		Assert.assertFalse(target.ipTable.get(ip));
-	}
 
 	/**
 	 * Test to run by hand, after setting IP and key file.
 	 * @throws Exception
 	 */
 	public void toRunByHand() throws Exception {
+
 		// Set before testing (IP should point on a VM with roboconf agent).
 		String ip = "54.171.159.33";
 		String keyfile = "/home/gibello/Linagora/EC2Linagora/aws-linagora.pem";
