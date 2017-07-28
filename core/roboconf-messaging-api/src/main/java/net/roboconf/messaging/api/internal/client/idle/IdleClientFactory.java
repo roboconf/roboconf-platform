@@ -23,38 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.in_memory;
+package net.roboconf.messaging.api.internal.client.idle;
 
 import java.util.Map;
 
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
-import net.roboconf.messaging.api.internal.client.in_memory.InMemoryClient.InMemoryRoutingContext;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
- * Messaging client factory for in-memory.
+ * Messaging client factory for idle clients.
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class InMemoryClientFactory implements IMessagingClientFactory {
-
-	private final InMemoryRoutingContext routingContext = new InMemoryRoutingContext();
-
+public class IdleClientFactory implements IMessagingClientFactory {
 
 	@Override
 	public String getType() {
-		return MessagingConstants.FACTORY_IN_MEMORY;
+		return MessagingConstants.FACTORY_IDLE;
 	}
 
 	@Override
 	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
-		return new InMemoryClient( this.routingContext, parent.getOwnerKind());
+		return new IdleClient();
 	}
 
 	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
+	public boolean setConfiguration( final Map<String,String> configuration ) {
 		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
-		return MessagingConstants.FACTORY_IN_MEMORY.equals( messagingType );
+		return MessagingConstants.FACTORY_IDLE.equals( messagingType );
 	}
 }

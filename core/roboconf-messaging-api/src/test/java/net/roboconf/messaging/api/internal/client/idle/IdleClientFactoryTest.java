@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,38 +23,36 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.in_memory;
+package net.roboconf.messaging.api.internal.client.idle;
 
-import java.util.Map;
+import java.util.HashMap;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.factory.IMessagingClientFactory;
-import net.roboconf.messaging.api.internal.client.in_memory.InMemoryClient.InMemoryRoutingContext;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
- * Messaging client factory for in-memory.
- * @author Pierre Bourret - Université Joseph Fourier
+ * @author Vincent Zurczak - Linagora
  */
-public class InMemoryClientFactory implements IMessagingClientFactory {
+public class IdleClientFactoryTest {
 
-	private final InMemoryRoutingContext routingContext = new InMemoryRoutingContext();
+	@Test
+	public void testBasics() {
 
+		IdleClientFactory factory = new IdleClientFactory();
+		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, factory.getType());
+		Assert.assertFalse( factory.setConfiguration( new HashMap<String,String>( 0 )));
 
-	@Override
-	public String getType() {
-		return MessagingConstants.FACTORY_IN_MEMORY;
-	}
+		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
+		IMessagingClient client = factory.createClient( parentDm );
+		Assert.assertEquals( IdleClient.class, client.getClass());
 
-	@Override
-	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
-		return new InMemoryClient( this.routingContext, parent.getOwnerKind());
-	}
-
-	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
-		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
-		return MessagingConstants.FACTORY_IN_MEMORY.equals( messagingType );
+		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
+		client = factory.createClient( parentAgent );
+		Assert.assertEquals( IdleClient.class, client.getClass());
 	}
 }
