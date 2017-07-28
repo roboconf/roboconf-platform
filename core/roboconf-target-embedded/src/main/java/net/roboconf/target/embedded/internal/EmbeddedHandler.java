@@ -314,8 +314,8 @@ public class EmbeddedHandler implements TargetHandler {
 		Map<String,String> keyToNewValue = new HashMap<> ();
 		keyToNewValue.put( AGENT_APPLICATION_NAME, "" );
 		keyToNewValue.put( AGENT_SCOPED_INSTANCE_PATH, "" );
-		keyToNewValue.put( AGENT_PARAMETERS, "" );
 		keyToNewValue.put( AGENT_DOMAIN, "" );
+		keyToNewValue.put( AGENT_PARAMETERS, Constants.AGENT_RESET );
 
 		updateAgentConfigurationFile( parameters, ssh, tmpDir, keyToNewValue );
 	}
@@ -346,12 +346,7 @@ public class EmbeddedHandler implements TargetHandler {
 
 		// Replace "parameters" property to point on the user data file...
 		String config = Utils.readFileContent(localAgentConfig);
-		for( Map.Entry<String,String> entry : keyToNewValue.entrySet()) {
-			config = config.replaceFirst(
-					"(?m)^\\s*" + entry.getKey() + "\\s*[:=]\\s*(.*)$",
-					entry.getKey() + " = " + entry.getValue());
-		}
-
+		config = Utils.updateProperties( config, keyToNewValue );
 		Utils.writeStringInto(config, localAgentConfig);
 
 		// Then upload agent config file back

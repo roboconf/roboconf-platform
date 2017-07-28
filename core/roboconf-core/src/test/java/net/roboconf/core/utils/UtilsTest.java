@@ -1149,4 +1149,34 @@ public class UtilsTest {
 		Assert.assertEquals( "a bc d", Utils.cleanNameWithAccents( "a bc d" ));
 		Assert.assertEquals( "Ebe a Vuc", Utils.cleanNameWithAccents( "Ébé à Vuç" ));
 	}
+
+
+	@Test
+	public void testUpdateProperties() throws Exception {
+
+		File before = TestUtils.findTestFile( "/properties/before.properties" );
+		String beforeTxt = Utils.readFileContent( before );
+		File after = TestUtils.findTestFile( "/properties/after.properties" );
+		String afterTxt = Utils.readFileContent( after );
+
+		// One way
+		Map<String,String> keyToNewValue = new HashMap<> ();
+		keyToNewValue.put( "application-name", "app" );
+		keyToNewValue.put( "scoped-instance-path", "/vm" );
+		keyToNewValue.put( "parameters", "file:/something" );
+		keyToNewValue.put( "messaging-type", "http" );
+
+		String out = Utils.updateProperties( beforeTxt, keyToNewValue );
+		Assert.assertEquals( afterTxt, out );
+
+		// Other way
+		keyToNewValue.clear();
+		keyToNewValue.put( "application-name", "" );
+		keyToNewValue.put( "scoped-instance-path", "" );
+		keyToNewValue.put( "paraMeters", "" );
+		keyToNewValue.put( "messaging-type", "idle" );
+
+		out = Utils.updateProperties( afterTxt, keyToNewValue );
+		Assert.assertEquals( beforeTxt, out );
+	}
 }

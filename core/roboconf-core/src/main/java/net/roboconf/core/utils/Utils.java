@@ -643,6 +643,24 @@ public final class Utils {
 
 
 	/**
+	 * Updates string properties.
+	 * @param propertiesContent the properties file as a string
+	 * @param keyToNewValue the keys to update with their new values
+	 * @return a non-null string
+	 */
+	public static String updateProperties( String propertiesContent, Map<String,String> keyToNewValue ) {
+
+		for( Map.Entry<String,String> entry : keyToNewValue.entrySet()) {
+			propertiesContent = propertiesContent.replaceFirst(
+					"(?mi)^\\s*" + entry.getKey() + "\\s*[:=][^\n]*$",
+					entry.getKey() + " = " + entry.getValue());
+		}
+
+		return propertiesContent;
+	}
+
+
+	/**
 	 * Finds all the files (directly and indirectly) contained in a directory and with a given extension.
 	 * <p>
 	 * Search is case-insensitive.

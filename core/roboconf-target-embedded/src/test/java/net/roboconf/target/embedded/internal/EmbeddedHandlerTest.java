@@ -282,7 +282,7 @@ public class EmbeddedHandlerTest {
 
 		// Verify the properties were correctly updated in the file
 		Properties readProps = Utils.readPropertiesFile( agentConfigurationFile );
-		Assert.assertEquals( "", readProps.get( AGENT_PARAMETERS ));
+		Assert.assertEquals( Constants.AGENT_RESET, readProps.get( AGENT_PARAMETERS ));
 		Assert.assertEquals( "", readProps.get( AGENT_APPLICATION_NAME ));
 		Assert.assertEquals( "c2", readProps.get( "a2" ));
 		Assert.assertEquals( "", readProps.get( AGENT_SCOPED_INSTANCE_PATH ));

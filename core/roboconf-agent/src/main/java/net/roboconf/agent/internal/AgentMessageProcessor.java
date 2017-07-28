@@ -314,12 +314,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		File agentConfigFile = new File( this.agent.karafEtc, Constants.KARAF_CFG_FILE_AGENT );
 		try {
 			String content = Utils.readFileContent( agentConfigFile );
-			for( Map.Entry<String,String> entry : keyToNewValue.entrySet()) {
-				content = content.replaceFirst(
-						"(?mi)^\\s*" + entry.getKey() + "\\s*[:=]\\s*(.*)$",
-						entry.getKey() + " = " + entry.getValue());
-			}
-
+			content = Utils.updateProperties( content, keyToNewValue );
 			Utils.writeStringInto( content, agentConfigFile );
 
 		} catch( Exception e ) {
