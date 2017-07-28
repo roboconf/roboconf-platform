@@ -67,12 +67,14 @@ public class PluginProxy implements PluginInterface {
 		startCount.set(0);
 		stopCount.set(0);
 		updateCount.set(0);
+		errorCount.set( 0 );
 	}
 
 	@Override
 	public void initialize(Instance instance) throws PluginException {
 		try {
 			this.plugin.initialize(instance);
+
 		} catch(PluginException e) {
 			PluginProxy.incrementErrorCount();
 			throw e;
@@ -84,6 +86,7 @@ public class PluginProxy implements PluginInterface {
 	public void deploy(Instance instance) throws PluginException {
 		try {
 			this.plugin.deploy(instance);
+
 		} catch(PluginException e) {
 			PluginProxy.incrementErrorCount();
 			throw e;
@@ -95,6 +98,7 @@ public class PluginProxy implements PluginInterface {
 	public void start(Instance instance) throws PluginException {
 		try {
 			this.plugin.start(instance);
+
 		} catch(PluginException e) {
 			PluginProxy.incrementErrorCount();
 			throw e;
@@ -103,10 +107,12 @@ public class PluginProxy implements PluginInterface {
 	}
 
 	@Override
-	public void update(Instance instance, Import importChanged,
-			InstanceStatus statusChanged) throws PluginException {
+	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged)
+	throws PluginException {
+
 		try {
 			this.plugin.update(instance, importChanged, statusChanged);
+
 		} catch(PluginException e) {
 			PluginProxy.incrementErrorCount();
 			throw e;
@@ -129,6 +135,7 @@ public class PluginProxy implements PluginInterface {
 	public void undeploy(Instance instance) throws PluginException {
 		try {
 			this.plugin.undeploy(instance);
+
 		} catch(PluginException e) {
 			PluginProxy.incrementErrorCount();
 			throw e;
@@ -202,8 +209,14 @@ public class PluginProxy implements PluginInterface {
 		return errorCount.intValue();
 	}
 
+	/**
+	 * @return the proxyfied plugin
+	 */
+	public PluginInterface getPlugin() {
+		return this.plugin;
+	}
+
 	private static void incrementErrorCount() {
 		errorCount.incrementAndGet();
 	}
-
 }
