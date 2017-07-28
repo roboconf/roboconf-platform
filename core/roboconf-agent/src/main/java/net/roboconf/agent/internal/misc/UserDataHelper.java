@@ -250,7 +250,8 @@ public class UserDataHelper {
 
 		String messagingType = msgData.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
 		Logger.getLogger( getClass().getName()).fine( "Messaging type for reconfiguration: " + messagingType );
-		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
+		if( ! Utils.isEmptyOrWhitespaces( etcDir )
+				&& ! Utils.isEmptyOrWhitespaces( messagingType )) {
 
 			// Write the messaging configuration
 			File f = new File( etcDir, "net.roboconf.messaging." + messagingType + ".cfg" );

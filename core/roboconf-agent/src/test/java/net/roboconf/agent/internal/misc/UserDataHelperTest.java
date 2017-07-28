@@ -165,12 +165,66 @@ public class UserDataHelperTest {
 	}
 
 
+	@Test
+	public void testReconfigureMessaging_withAgentConfigurationFile_nullMessagingType() throws IOException {
+
+		// Prepare
+		File karafEtc =  this.folder.newFolder();
+		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
+		final File agentConf = new File( karafEtc, UserDataHelper.CONF_FILE_AGENT );
+
+		Properties props = new Properties();
+		props.setProperty( "key", "value" );
+		props.setProperty( "something", "else" );
+		props.setProperty( Constants.MESSAGING_TYPE, "http" );
+		Utils.writePropertiesFile( props, agentConf );
+
+		// Execute
+		Map<String,String> msgData = new HashMap<> ();
+		msgData.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, null );
+		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
+		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
+		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
+		msgData.put("test", "issue #779");
+
+		Assert.assertFalse( msgConf.exists());
+		Assert.assertTrue( agentConf.exists());
+
+		this.userDataHelper.reconfigureMessaging( karafEtc.getAbsolutePath(), msgData);
+
+		// Check
+		Assert.assertFalse( msgConf.exists());
+		Assert.assertTrue( agentConf.exists());
+
+		Properties p = Utils.readPropertiesFile( agentConf );
+		Assert.assertEquals( 3, p.size());
+		Assert.assertEquals( "http", p.get( Constants.MESSAGING_TYPE ));
+		Assert.assertEquals( "else", p.get( "something" ));
+		Assert.assertEquals( "value", p.get( "key" ));
+	}
+
+
+	@Test
+	public void testReconfigureMessaging_noKarafEtc_noMessagingTypeSpecified() throws IOException {
+
+		this.userDataHelper.reconfigureMessaging(
+				"this_is_a_wrong_path",
+				new HashMap<String,String>( 0 ));
+	}
+
+
 	@Test( expected = IOException.class )
 	public void testReconfigureMessaging_noKarafEtc() throws IOException {
 
+		Map<String,String> msgData = new HashMap<> ();
+		msgData.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "rabbitmq" );
+		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
+		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
+		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
+
 		this.userDataHelper.reconfigureMessaging(
-				File.separator + "this_is_a_wrong_path",
-				new HashMap<String,String>( 0 ));
+				"this_is_a_wrong_path",
+				msgData );
 	}
 
 
