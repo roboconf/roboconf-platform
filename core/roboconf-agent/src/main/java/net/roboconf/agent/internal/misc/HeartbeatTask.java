@@ -54,6 +54,12 @@ public class HeartbeatTask extends TimerTask {
 	@Override
 	public void run() {
 
+		// "John Doe" agent? Do not send anything.
+		if( Utils.isEmptyOrWhitespaces( this.agent.getApplicationName())
+				|| Utils.isEmptyOrWhitespaces( this.agent.getScopedInstancePath()))
+			return;
+
+		// Prepare the message to send
 		try {
 			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat(
 					this.agent.getApplicationName(),
