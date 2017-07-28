@@ -1140,4 +1140,13 @@ public class UtilsTest {
 		readContent = Utils.readUrlContentQuietly( f.toURI().toURL().toString(), logger );
 		Assert.assertEquals( "", readContent );
 	}
+
+
+	@Test
+	public void testCleanNameWithAccents() {
+
+		Assert.assertEquals( "", Utils.cleanNameWithAccents( "" ));
+		Assert.assertEquals( "a bc d", Utils.cleanNameWithAccents( "a bc d" ));
+		Assert.assertEquals( "Ebe a Vuc", Utils.cleanNameWithAccents( "Ébé à Vuç" ));
+	}
 }

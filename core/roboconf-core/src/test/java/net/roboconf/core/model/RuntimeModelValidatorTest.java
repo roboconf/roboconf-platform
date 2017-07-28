@@ -522,6 +522,13 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
+		desc.setName( "My Àppliçation" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
 		desc.setName( "My Application" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_VERSION, iterator.next().getErrorCode());

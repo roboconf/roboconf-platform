@@ -43,6 +43,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -602,6 +603,19 @@ public final class Utils {
 		} finally {
 			closeQuietly( out );
 		}
+	}
+
+
+	/**
+	 * Replaces all the accents in a string.
+	 * @param name a non-null string
+	 * @return a non-null string, with their accents replaced by their neutral equivalent
+	 */
+	public static String cleanNameWithAccents( String name ) {
+
+		String temp = Normalizer.normalize( name, Normalizer.Form.NFD );
+		Pattern pattern = Pattern.compile( "\\p{InCombiningDiacriticalMarks}+" );
+		return pattern.matcher( temp ).replaceAll( "" ).trim();
 	}
 
 

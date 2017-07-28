@@ -64,7 +64,7 @@ public class UserDataHelperTest {
 		// Prepare
 		File karafEtc =  this.folder.newFolder();
 		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
-		final File agentConf = new File( karafEtc, UserDataHelper.CONF_FILE_AGENT );
+		final File agentConf = new File( karafEtc, Constants.KARAF_CFG_FILE_AGENT );
 
 		// Execute
 		Map<String,String> msgData = new HashMap<> ();
@@ -102,7 +102,7 @@ public class UserDataHelperTest {
 		// Prepare
 		File karafEtc =  this.folder.newFolder();
 		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
-		final File agentConf = new File( karafEtc, UserDataHelper.CONF_FILE_AGENT );
+		final File agentConf = new File( karafEtc, Constants.KARAF_CFG_FILE_AGENT );
 
 		Properties props = new Properties();
 		props.setProperty( "key", "value" );
@@ -171,7 +171,7 @@ public class UserDataHelperTest {
 		// Prepare
 		File karafEtc =  this.folder.newFolder();
 		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
-		final File agentConf = new File( karafEtc, UserDataHelper.CONF_FILE_AGENT );
+		final File agentConf = new File( karafEtc, Constants.KARAF_CFG_FILE_AGENT );
 
 		Properties props = new Properties();
 		props.setProperty( "key", "value" );

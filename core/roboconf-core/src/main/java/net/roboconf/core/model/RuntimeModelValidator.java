@@ -588,7 +588,7 @@ public final class RuntimeModelValidator {
 		Collection<ModelError> errors = new ArrayList<> ();
 		if( Utils.isEmptyOrWhitespaces( descriptor.getName()))
 			errors.add( new ModelError( RM_MISSING_APPLICATION_NAME, APPLICATION_NAME ));
-		else if( ! descriptor.getName().matches( ParsingConstants.PATTERN_APP_NAME ))
+		else if( ! Utils.cleanNameWithAccents( descriptor.getName()).matches( ParsingConstants.PATTERN_APP_NAME ))
 			errors.add( new ModelError( RM_INVALID_APPLICATION_NAME, APPLICATION_NAME, expected( ParsingConstants.PATTERN_APP_NAME )));
 
 		if( Utils.isEmptyOrWhitespaces( descriptor.getVersion()))

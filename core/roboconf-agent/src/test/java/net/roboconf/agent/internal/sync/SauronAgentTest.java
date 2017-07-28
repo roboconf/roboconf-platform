@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.sync.SauronAgent.SauronAgentClient;
+import net.roboconf.messaging.api.client.idle.IdleClient;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
@@ -78,24 +79,6 @@ public class SauronAgentTest {
 		SauronAgentClient client = new SauronAgentClient();
 		IMessagingClient realClient = client.createMessagingClient( "xyz" );
 		Assert.assertNotNull( realClient );
-		Assert.assertEquals( realClient.getClass().getPackage().getName(), getClass().getPackage().getName());
-
-		// Basic checks
-		Assert.assertFalse( realClient.isConnected());
-		realClient.openConnection();
-		Assert.assertTrue( realClient.isConnected());
-		realClient.closeConnection();
-		Assert.assertFalse( realClient.isConnected());
-
-		Assert.assertNotNull( realClient.getMessagingType());
-		Assert.assertNotNull( realClient.getConfiguration());
-
-		// Not checkable
-		realClient.deleteMessagingServerArtifacts( null );
-		realClient.publish( null, null );
-		realClient.subscribe( null );
-		realClient.unsubscribe( null );
-		realClient.setMessageQueue( null );
-		realClient.setOwnerProperties( null, null, null, null );
+		Assert.assertEquals( IdleClient.class, realClient.getClass());
 	}
 }

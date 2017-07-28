@@ -47,7 +47,7 @@ public class InMemoryConfiguration implements IMessagingConfiguration {
 		// There is no configuration to specify.
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				Constants.MESSAGING_TYPE,
 				MessagingConstants.FACTORY_IN_MEMORY ));
 

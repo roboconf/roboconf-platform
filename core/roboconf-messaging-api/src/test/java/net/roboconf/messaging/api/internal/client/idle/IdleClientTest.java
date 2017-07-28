@@ -28,7 +28,7 @@ package net.roboconf.messaging.api.internal.client.idle;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.messaging.api.internal.client.idle.IdleClient;
+import net.roboconf.messaging.api.client.idle.IdleClient;
 
 /**
  * @author Vincent Zurczak - Linagora

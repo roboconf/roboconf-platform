@@ -51,7 +51,7 @@
 	</component>
 	
 	<!-- A component for the Idle factory (messaging implementation) -->
-	<component classname="net.roboconf.messaging.api.internal.client.idle.IdleClientFactory" name="roboconf-messaging-client-factory-idle" public="false">
+	<component classname="net.roboconf.messaging.api.client.idle.IdleClientFactory" name="roboconf-messaging-client-factory-idle" public="false">
 		<provides />
 	</component>
 	

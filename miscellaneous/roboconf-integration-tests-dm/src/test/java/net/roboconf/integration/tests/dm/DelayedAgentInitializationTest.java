@@ -137,17 +137,17 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// Add the configuration for the agent
 		TestApplication app = new TestApplication();
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				"application-name",
 				app.getName()));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				"scoped-instance-path",
 				InstanceHelpers.computeInstancePath( app.getMySqlVm())));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ));
 

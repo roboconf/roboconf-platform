@@ -25,63 +25,23 @@
 
 package net.roboconf.target.embedded.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import org.junit.Ignore;
 import org.junit.Test;
 
 import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
- * Create/get a server by hand, install a Roboconf agent and let's run!
  * @author Pierre-Yves Gibello - Linagora
  */
-public class ToRunByHand_SetConfiguration {
+@Ignore
+public class ToRunByHandToEraseConfiguration extends ToRunByHandtoSetConfiguration {
 
+	@Override
 	@Test
 	public void toRunByHand() throws Exception {
 
 		EmbeddedHandler handler = new EmbeddedHandler();
 		TargetHandlerParameters parameters = parameters( getkeyFile());
-		handler.configureRemoteAgent( getIp(), parameters, false );
-	}
-
-
-	/**
-	 * @return the IP address
-	 */
-	protected String getIp() {
-		return "54.171.159.33";
-	}
-
-
-	/**
-	 * @return the location of the key file
-	 */
-	protected String getkeyFile() {
-		return "/home/gibello/Linagora/EC2Linagora/aws-linagora.pem";
-	}
-
-
-	/**
-	 * Prepares the parameters for the target handler.
-	 * @param keyFile the key file
-	 * @return a non-null parameters object
-	 */
-	protected TargetHandlerParameters parameters( String keyFile ) {
-
-		TargetHandlerParameters parameters = new TargetHandlerParameters();
-		Map<String, String> messagingProperties = new HashMap<>();
-		messagingProperties.put("messaging.type",  "http");
-		parameters.setMessagingProperties(messagingProperties);
-		parameters.setDomain("test-domain");
-		parameters.setApplicationName("test-application");
-		parameters.setScopedInstancePath("/test/instance");
-
-		Map<String, String> targetProperties = new HashMap<>();
-		targetProperties.put(EmbeddedHandler.SCP_KEYFILE, keyFile);
-		parameters.setTargetProperties(targetProperties);
-
-		return parameters;
+		handler.configureRemoteAgent( getIp(), parameters, true );
 	}
 }

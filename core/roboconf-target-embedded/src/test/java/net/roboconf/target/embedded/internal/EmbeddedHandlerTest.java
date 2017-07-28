@@ -26,7 +26,6 @@
 package net.roboconf.target.embedded.internal;
 
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_APPLICATION_NAME;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_CFG_FILE;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_DOMAIN;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_PARAMETERS;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_SCOPED_INSTANCE_PATH;
@@ -47,6 +46,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
@@ -191,7 +191,7 @@ public class EmbeddedHandlerTest {
 
 		// Prepare the mocks
 		File tmpDir = this.folder.newFolder();
-		File agentConfigurationFile = new File( tmpDir, AGENT_CFG_FILE );
+		File agentConfigurationFile = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
 
 		Properties props = new Properties();
 		props.setProperty( "a0", "c0" );
@@ -225,7 +225,7 @@ public class EmbeddedHandlerTest {
 
 		Assert.assertEquals( tmpDir, fileCaptor.getValue().getFile());
 		Assert.assertEquals(
-				new File( DEFAULT_SCP_AGENT_CONFIG_DIR, AGENT_CFG_FILE ).getAbsolutePath(),
+				new File( DEFAULT_SCP_AGENT_CONFIG_DIR, Constants.KARAF_CFG_FILE_AGENT ).getAbsolutePath(),
 				remotePathCaptor.getValue());
 
 		// We reupload the same file than the one we downloaded
@@ -258,7 +258,7 @@ public class EmbeddedHandlerTest {
 
 		// Prepare the mocks
 		File tmpDir = this.folder.newFolder();
-		File agentConfigurationFile = new File( tmpDir, AGENT_CFG_FILE );
+		File agentConfigurationFile = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
 
 		Properties props = new Properties();
 		props.setProperty( AGENT_PARAMETERS, "/tmp/somewhere" );
@@ -302,7 +302,7 @@ public class EmbeddedHandlerTest {
 
 		// Prepare the mocks
 		File tmpDir = this.folder.newFolder();
-		File agentConfigurationFile = new File( tmpDir, AGENT_CFG_FILE );
+		File agentConfigurationFile = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
 
 		Properties props = new Properties();
 		props.setProperty( AGENT_PARAMETERS, "/tmp/somewhere" );

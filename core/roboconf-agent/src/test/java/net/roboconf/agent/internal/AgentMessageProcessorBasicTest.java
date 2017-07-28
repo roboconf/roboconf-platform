@@ -31,18 +31,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.internal.test.AgentTestUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -71,6 +75,9 @@ import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
  */
 public class AgentMessageProcessorBasicTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 	private Agent agent;
 	private TestClient client;
 
@@ -79,14 +86,15 @@ public class AgentMessageProcessorBasicTest {
 	public void initializeAgent() throws Exception {
 
 		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
-		registry.addMessagingClientFactory(new TestClientFactory());
+		registry.addMessagingClientFactory( new TestClientFactory());
 		this.agent = new Agent();
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
 		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 
-		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
+		// We then set the factory registry of the created client and reconfigure the agent.
+		// => the messaging client backend is created
 		this.agent.getMessagingClient().setRegistry(registry);
 		this.agent.reconfigure();
 
@@ -521,7 +529,7 @@ public class AgentMessageProcessorBasicTest {
 		Assert.assertNull( agent.findPlugin( inst ));
 
 		inst.getComponent().setInstallerName( plugin.getPluginName());
-		//Assert.assertEquals( plugin, agent.findPlugin( inst ));
+		Assert.assertEquals( plugin, ((PluginProxy) agent.findPlugin( inst )).getPlugin());
 	}
 
 
@@ -727,5 +735,58 @@ public class AgentMessageProcessorBasicTest {
 		// No more imports because the last referenced imports matches an application "demo1"
 		// for which there is no more bound.
 		Assert.assertEquals( 0, app.getTomcatVm().getImports().size());
+	}
+
+
+	@Test
+	public void testReset_withScopedInstance() throws Exception {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		this.agent.karafEtc = this.folder.newFolder().getAbsolutePath();
+
+		Properties props = new Properties();
+		props.put( "application-name", "my app" );
+		props.put( "domain", "d" );
+		props.put( "scoped-instance-path", "/vm" );
+		props.put( "parameters", "@iaas-xxx@" );
+		props.put( Constants.MESSAGING_TYPE, "test" );
+
+		File agentConfigFile = new File( this.agent.karafEtc, Constants.KARAF_CFG_FILE_AGENT );
+		Utils.writePropertiesFile( props, agentConfigFile );
+
+		// Set the root
+		Assert.assertNull( processor.scopedInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( app.getTomcatVm(), this.agent.getScopedInstance());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
+
+		// Add some stuff in the maps
+		processor.applicationBindings.put( "key1", new HashSet<>( Arrays.asList( "v1", "v2" )));
+		processor.applicationBindings.put( "key2", new HashSet<>( Arrays.asList( "c" )));
+		processor.applicationNameToExternalExports.put( "k", Arrays.asList( new Import( "/vm", "comp" )));
+
+		// Reset
+		processor.resetRequest();
+
+		// Verify everything was cleaned
+		Assert.assertNull( processor.scopedInstance );
+		Assert.assertNull( this.agent.getScopedInstance());
+		Assert.assertEquals( 0, processor.applicationBindings.size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 0, processor.getMessageQueue().size());
+
+		// We cannot verify assertions on the agent, we can only check configuration files
+		props = Utils.readPropertiesFile( agentConfigFile );
+		Assert.assertEquals( "", props.get( "application-name" ));
+		Assert.assertEquals( "", props.get( "scoped-instance-path" ));
+		Assert.assertEquals( "", props.get( "domain" ));
+		Assert.assertEquals( "", props.get( "parameters" ));
+		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, props.get( Constants.MESSAGING_TYPE ));
+
+		// The reset request was reinitialized
+		Assert.assertFalse( processor.resetWasRquested());
 	}
 }

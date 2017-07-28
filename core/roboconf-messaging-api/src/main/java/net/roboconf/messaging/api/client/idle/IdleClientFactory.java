@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,23 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.embedded.internal;
+package net.roboconf.messaging.api.client.idle;
 
-import org.junit.Test;
+import java.util.Map;
 
-import net.roboconf.target.api.TargetHandlerParameters;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
- * @author Pierre-Yves Gibello - Linagora
+ * Messaging client factory for idle clients.
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class ToRunByHand_EraseConfiguration extends ToRunByHand_SetConfiguration {
+public class IdleClientFactory implements IMessagingClientFactory {
 
 	@Override
-	@Test
-	public void toRunByHand() throws Exception {
+	public String getType() {
+		return MessagingConstants.FACTORY_IDLE;
+	}
 
-		EmbeddedHandler handler = new EmbeddedHandler();
-		TargetHandlerParameters parameters = parameters( getkeyFile());
-		handler.configureRemoteAgent( getIp(), parameters, true );
+	@Override
+	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
+		return new IdleClient();
+	}
+
+	@Override
+	public boolean setConfiguration( final Map<String,String> configuration ) {
+		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+		return MessagingConstants.FACTORY_IDLE.equals( messagingType );
 	}
 }

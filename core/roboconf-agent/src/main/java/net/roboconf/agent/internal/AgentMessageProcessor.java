@@ -25,9 +25,11 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -36,10 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
 import net.roboconf.agent.internal.misc.AgentUtils;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
@@ -51,6 +55,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.business.IAgentClient;
 import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
@@ -94,7 +99,10 @@ import net.roboconf.plugin.api.PluginInterface;
 public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient> {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private boolean reset = false;
+
 	protected final Agent agent;
+	final AtomicBoolean messageUnderProcessing = new AtomicBoolean( false );
 	Instance scopedInstance;
 
 	/**
@@ -139,7 +147,27 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	@Override
 	protected void processMessage( Message message ) {
 
+		/*
+		 * As a reminder, this message processor was implemented so that only one message
+		 * is processed at once. If all of this is sequential, reconfiguration may occur
+		 * at any moment. So, there is no simple way to guarantee a resetRequest will be
+		 * processed. This is why the checkReset method appears in several places, to handle
+		 * the following cases:
+		 *
+		 * - Reset request occurs while we are about to process a new message.
+		 * - Reset request occurs while we have just processed a message.
+		 * - Reset request occurs while we not processing any message.
+		 */
+
+		// A reset request was received before we start processing a message
+		if( checkReset()) {
+			this.logger.fine( "A reset was performed. Message " + message.getClass() + " will not be processed." );
+			return;
+		}
+
+		// Process the message
 		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
+		this.messageUnderProcessing.set( true );
 		try {
 			if( message instanceof MsgCmdSetScopedInstance )
 				processMsgSetScopedInstance((MsgCmdSetScopedInstance) message );
@@ -193,7 +221,119 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		} catch( PluginException e ) {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			Utils.logException( this.logger, e );
+
+		} finally {
+			this.messageUnderProcessing.set( false );
 		}
+
+		// A reset request was received while we were processing a message
+		checkReset();
+	}
+
+
+	/**
+	 * Requests a full reset of the agent.
+	 */
+	public void resetRequest() {
+		this.reset = true;
+		checkReset();
+	}
+
+
+	/**
+	 * @return true if a reset was requested and not yet processed, false otherwise
+	 */
+	public boolean resetWasRquested() {
+		return this.reset;
+	}
+
+
+	/**
+	 * Starts a reset if necessary.
+	 * @return true if a reset was done, false otherwise
+	 */
+	private boolean checkReset() {
+
+		boolean resetDone = false;
+		if( this.reset && ! this.messageUnderProcessing.get()) {
+			resetDone = true;
+			reset();
+		}
+
+		return resetDone;
+	}
+
+
+	/**
+	 * Resets the agent while no message is being processed.
+	 */
+	private void reset() {
+
+		// Clear all the messages that were waiting to be processed
+		getMessageQueue().clear();
+
+		// Uninstall all the programs this agent was managing
+		if( this.scopedInstance != null ) {
+
+			// Sort instances: bottom instances first
+			List<Instance> sortedInstances = InstanceHelpers.buildHierarchicalList( this.scopedInstance );
+			Collections.reverse( sortedInstances );
+
+			// Remove the scoped instance, no action is permitted on it
+			sortedInstances.remove( this.scopedInstance );
+
+			// And undeploy them all
+			for( Instance inst : sortedInstances ) {
+				MsgCmdChangeInstanceState localMsg = new MsgCmdChangeInstanceState( inst, InstanceStatus.NOT_DEPLOYED );
+				try {
+					processMsgChangeInstanceState( localMsg );
+
+				} catch( Exception e ) {
+					// Best effort mode: keep on going silently...
+					Utils.logException( this.logger, e );
+				}
+			}
+		}
+
+		// Reset the model
+		this.scopedInstance = null;
+		this.agent.setScopedInstance( null );
+		this.applicationBindings.clear();
+		this.applicationNameToExternalExports.clear();
+		this.reset = false;
+
+		// Update the agent's configuration files
+		Map<String,String> keyToNewValue = new HashMap<> ();
+		keyToNewValue.put( "application-name", "" );
+		keyToNewValue.put( "scoped-instance-path", "" );
+		keyToNewValue.put( "domain", "" );
+		keyToNewValue.put( "parameters", "" );
+		keyToNewValue.put( Constants.MESSAGING_TYPE, MessagingConstants.FACTORY_IDLE );
+
+		// Reset the configuration
+		File agentConfigFile = new File( this.agent.karafEtc, Constants.KARAF_CFG_FILE_AGENT );
+		try {
+			String content = Utils.readFileContent( agentConfigFile );
+			for( Map.Entry<String,String> entry : keyToNewValue.entrySet()) {
+				content = content.replaceFirst(
+						"(?mi)^\\s*" + entry.getKey() + "\\s*[:=]\\s*(.*)$",
+						entry.getKey() + " = " + entry.getValue());
+			}
+
+			Utils.writeStringInto( content, agentConfigFile );
+
+		} catch( Exception e ) {
+			Utils.logException( this.logger, e );
+		}
+
+		/*
+		 * By writing in the agent's configuration file,
+		 * we update all the values and indirectly invoke the
+		 * agent's reconfigure method (that will reset the messaging client).
+		 *
+		 * User data will not be reloaded since we set the parameters to "".
+		 * That prevents infinite loops (!).
+		 */
 	}
 
 

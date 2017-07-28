@@ -119,7 +119,7 @@ public class AgentInMemoryWithRabbitMqAndSslAsUserDataTest extends AbstractAgent
 		File karafEtc = new File( System.getProperty( Constants.KARAF_ETC ));
 		Assert.assertTrue( karafEtc.isDirectory());
 
-		File agentConfigurationFile = new File( karafEtc, "net.roboconf.agent.configuration.cfg" );
+		File agentConfigurationFile = new File( karafEtc, Constants.KARAF_CFG_FILE_AGENT );
 		Assert.assertTrue( agentConfigurationFile.isFile());
 		Properties props = Utils.readPropertiesFile( agentConfigurationFile );
 		Assert.assertEquals( "rabbitmq", props.getProperty( Constants.MESSAGING_TYPE ));

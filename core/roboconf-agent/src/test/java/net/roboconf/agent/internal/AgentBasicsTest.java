@@ -109,6 +109,9 @@ public class AgentBasicsTest {
 	@Test
 	public void testForceHeartbeatSending() throws Exception {
 
+		this.agent.setApplicationName( "app" );
+		this.agent.setScopedInstancePath( "/vm" );
+
 		TestClient client = AgentTestUtils.getInternalClient( this.agent.getMessagingClient());
 		Assert.assertEquals( 0, client.messagesForTheDm.size());
 
@@ -457,6 +460,47 @@ public class AgentBasicsTest {
 
 		Assert.assertEquals( AgentConstants.PLATFORM_VMWARE, this.agent.parameters );
 		Mockito.verify( this.agent.userDataHelper, Mockito.only()).findParametersForVmware( Mockito.any( Logger.class ));
+	}
+
+
+	@Test
+	public void testReloadUserData_reset_messageUnderProcessing() throws Exception {
+
+		// Prepare
+		this.agent.parameters = Constants.AGENT_RESET;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+
+		// Preconditions
+		Assert.assertFalse(((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).resetWasRquested());
+		((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).messageUnderProcessing.set( true );
+
+		// Execute
+		this.agent.reloadUserData();
+
+		// Postconditions
+		Assert.assertEquals( Constants.AGENT_RESET, this.agent.parameters );
+		Assert.assertTrue(((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).resetWasRquested());
+	}
+
+
+	@Test
+	public void testReloadUserData_reset_noMessageUnderProceesing() throws Exception {
+
+		// Prepare
+		this.agent.parameters = Constants.AGENT_RESET;
+		this.agent.overrideProperties = true;
+		this.agent.userDataHelper = Mockito.mock( UserDataHelper.class );
+
+		// Preconditions
+		Assert.assertFalse(((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).resetWasRquested());
+
+		// Execute
+		this.agent.reloadUserData();
+
+		// Postconditions + no NPE
+		Assert.assertEquals( Constants.AGENT_RESET, this.agent.parameters );
+		Assert.assertFalse(((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).resetWasRquested());
 	}
 
 

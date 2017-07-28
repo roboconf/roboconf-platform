@@ -26,10 +26,8 @@
 package net.roboconf.core.model.beans;
 
 import java.io.File;
-import java.text.Normalizer;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.regex.Pattern;
 
 import net.roboconf.core.utils.Utils;
 
@@ -74,10 +72,7 @@ public abstract class AbstractApplication {
 
 		} else {
 			this.displayName = name.trim();
-
-			String temp = Normalizer.normalize( name, Normalizer.Form.NFD );
-			Pattern pattern = Pattern.compile( "\\p{InCombiningDiacriticalMarks}+" );
-			this.name = pattern.matcher( temp ).replaceAll( "" ).trim();
+			this.name = Utils.cleanNameWithAccents( name );
 		}
 	}
 

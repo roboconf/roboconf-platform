@@ -31,6 +31,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.client.idle.IdleClient;
+import net.roboconf.messaging.api.client.idle.IdleClientFactory;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;

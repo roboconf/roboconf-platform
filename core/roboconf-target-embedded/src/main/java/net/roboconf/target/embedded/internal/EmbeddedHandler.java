@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
@@ -56,7 +57,6 @@ public class EmbeddedHandler implements TargetHandler {
 
 	static final String DEFAULT_SCP_AGENT_CONFIG_DIR = "/etc/roboconf-agent";
 	static final String USER_DATA_FILE = "roboconf-agent-parameters.properties";
-	static final String AGENT_CFG_FILE = "net.roboconf.agent.configuration.cfg";
 
 	static final String AGENT_SCOPED_INSTANCE_PATH = "scoped-instance-path";
 	static final String AGENT_APPLICATION_NAME = "application-name";
@@ -338,8 +338,8 @@ public class EmbeddedHandler implements TargetHandler {
 
 		// Update the agent's configuration file
 		String agentConfigDir = Utils.getValue( parameters.getTargetProperties(), SCP_AGENT_CONFIG_DIR, DEFAULT_SCP_AGENT_CONFIG_DIR );
-		File localAgentConfig = new File(tmpDir, AGENT_CFG_FILE);
-		File remoteAgentConfig = new File(agentConfigDir, AGENT_CFG_FILE);
+		File localAgentConfig = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
+		File remoteAgentConfig = new File( agentConfigDir, Constants.KARAF_CFG_FILE_AGENT );
 
 		// Download remote agent config file...
 		ssh.newSCPFileTransfer().download(remoteAgentConfig.getCanonicalPath(), new FileSystemFile(tmpDir));
@@ -349,7 +349,7 @@ public class EmbeddedHandler implements TargetHandler {
 		for( Map.Entry<String,String> entry : keyToNewValue.entrySet()) {
 			config = config.replaceFirst(
 					"(?m)^\\s*" + entry.getKey() + "\\s*[:=]\\s*(.*)$",
-					"\n" + entry.getKey() + " = " + entry.getValue());
+					entry.getKey() + " = " + entry.getValue());
 		}
 
 		Utils.writeStringInto(config, localAgentConfig);

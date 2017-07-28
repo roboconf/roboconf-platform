@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.idle;
+package net.roboconf.messaging.api.client.idle;
 
 import java.io.IOException;
 import java.util.HashMap;

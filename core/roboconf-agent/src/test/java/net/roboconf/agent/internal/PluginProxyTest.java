@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,34 +23,31 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.idle;
+package net.roboconf.agent.internal;
 
-import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
 
-import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.factory.IMessagingClientFactory;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
+import net.roboconf.plugin.api.PluginInterface;
 
 /**
- * Messaging client factory for idle clients.
- * @author Pierre Bourret - Université Joseph Fourier
+ * @author Vincent Zurczak - Linagora
  */
-public class IdleClientFactory implements IMessagingClientFactory {
+public class PluginProxyTest {
 
-	@Override
-	public String getType() {
-		return MessagingConstants.FACTORY_IDLE;
-	}
+	@Test
+	public void testBasics() {
 
-	@Override
-	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
-		return new IdleClient();
-	}
+		final String pln = "toto";
+		PluginInterface pi = Mockito.mock( PluginInterface.class );
+		Mockito.when( pi.getPluginName()).thenReturn( pln );
 
-	@Override
-	public boolean setConfiguration( final Map<String,String> configuration ) {
-		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
-		return MessagingConstants.FACTORY_IDLE.equals( messagingType );
+		PluginProxy pp = new PluginProxy( pi );
+		Assert.assertEquals( pln, pp.getPluginName());
+		Assert.assertEquals( pi, pp.getPlugin());
+
+		pp.setNames( "app", "/vm" );
+		Mockito.verify( pi ).setNames( "app", "/vm" );
 	}
 }
