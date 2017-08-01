@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,39 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.parameterized;
+package net.roboconf.messaging.api.client.idle;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import java.util.Map;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.Constants;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import org.ops4j.pax.exam.Option;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * Messaging client factory for idle clients.
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class RabbitMqConfiguration implements IMessagingConfiguration {
+public class IdleClientFactory implements IMessagingClientFactory {
 
 	@Override
-	public List<Option> options() {
+	public String getType() {
+		return MessagingConstants.FACTORY_IDLE;
+	}
 
-		// For RabbitMQ, we only need to specify we use this messaging type.
-		// We use the default credentials to interact with RMQ.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+	@Override
+	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
+		return new IdleClient();
+	}
 
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
-
-		return options;
+	@Override
+	public boolean setConfiguration( final Map<String,String> configuration ) {
+		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+		return MessagingConstants.FACTORY_IDLE.equals( messagingType );
 	}
 }

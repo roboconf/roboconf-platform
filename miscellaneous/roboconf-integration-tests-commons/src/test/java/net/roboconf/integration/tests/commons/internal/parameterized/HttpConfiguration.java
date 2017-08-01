@@ -45,7 +45,7 @@ public class HttpConfiguration implements IMessagingConfiguration {
 		// For HTTP, we only need to specify we use this messaging type.
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				Constants.MESSAGING_TYPE,
 				"http" ));
 

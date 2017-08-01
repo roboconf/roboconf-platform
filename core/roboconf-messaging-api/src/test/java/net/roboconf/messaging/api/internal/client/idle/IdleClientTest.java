@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,39 +23,39 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.parameterized;
+package net.roboconf.messaging.api.internal.client.idle;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.Constants;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import org.ops4j.pax.exam.Option;
+import net.roboconf.messaging.api.client.idle.IdleClient;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqConfiguration implements IMessagingConfiguration {
+public class IdleClientTest {
 
-	@Override
-	public List<Option> options() {
+	@Test
+	public void testClientMethods() throws Exception {
 
-		// For RabbitMQ, we only need to specify we use this messaging type.
-		// We use the default credentials to interact with RMQ.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+		IdleClient client = new IdleClient();
 
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+		// Basic checks
+		Assert.assertFalse( client.isConnected());
+		client.openConnection();
+		Assert.assertTrue( client.isConnected());
+		client.closeConnection();
+		Assert.assertFalse( client.isConnected());
 
-		return options;
+		Assert.assertNotNull( client.getMessagingType());
+		Assert.assertNotNull( client.getConfiguration());
+
+		// Not checkable
+		client.deleteMessagingServerArtifacts( null );
+		client.publish( null, null );
+		client.subscribe( null );
+		client.unsubscribe( null );
+		client.setMessageQueue( null );
+		client.setOwnerProperties( null, null, null, null );
 	}
 }

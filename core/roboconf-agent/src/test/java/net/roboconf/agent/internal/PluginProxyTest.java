@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,39 +23,31 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.parameterized;
+package net.roboconf.agent.internal;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.Constants;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import org.ops4j.pax.exam.Option;
+import net.roboconf.plugin.api.PluginInterface;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqConfiguration implements IMessagingConfiguration {
+public class PluginProxyTest {
 
-	@Override
-	public List<Option> options() {
+	@Test
+	public void testBasics() {
 
-		// For RabbitMQ, we only need to specify we use this messaging type.
-		// We use the default credentials to interact with RMQ.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+		final String pln = "toto";
+		PluginInterface pi = Mockito.mock( PluginInterface.class );
+		Mockito.when( pi.getPluginName()).thenReturn( pln );
 
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
+		PluginProxy pp = new PluginProxy( pi );
+		Assert.assertEquals( pln, pp.getPluginName());
+		Assert.assertEquals( pi, pp.getPlugin());
 
-		return options;
+		pp.setNames( "app", "/vm" );
+		Mockito.verify( pi ).setNames( "app", "/vm" );
 	}
 }

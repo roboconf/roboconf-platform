@@ -107,6 +107,7 @@ public final class RuntimeModelIo {
 			}
 
 			try {
+				// Prepare the application
 				appDescriptor = ApplicationTemplateDescriptor.load( descriptorFile );
 				app.setName( appDescriptor.getName());
 				app.setDescription( appDescriptor.getDescription());
@@ -118,6 +119,13 @@ public final class RuntimeModelIo {
 				for( Map.Entry<String,String> entry : appDescriptor.externalExports.entrySet())
 					app.externalExports.put( entry.getKey(), app.getExternalExportsPrefix() + "." + entry.getValue());
 
+				// Update the parsing context so that we can resolve errors locations
+				result.objectToSource.put( appDescriptor, new SourceReference( appDescriptor, descriptorFile, 1 ));
+				for( Map.Entry<String,Integer> entry : appDescriptor.propertyToLine.entrySet()) {
+					result.objectToSource.put( entry.getKey(), new SourceReference( entry.getKey(), descriptorFile, entry.getValue()));
+				}
+
+				// Resolve errors locations
 				Collection<ModelError> errors = RuntimeModelValidator.validate( appDescriptor );
 				result.loadErrors.addAll( errors );
 

@@ -60,9 +60,6 @@ import net.roboconf.messaging.api.MessagingConstants;
  */
 public class UserDataHelper {
 
-	public static final String CONF_FILE_AGENT = "net.roboconf.agent.configuration.cfg";
-
-
 	/**
 	 * Configures the agent from a IaaS registry.
 	 * @param logger a logger
@@ -250,7 +247,8 @@ public class UserDataHelper {
 
 		String messagingType = msgData.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
 		Logger.getLogger( getClass().getName()).fine( "Messaging type for reconfiguration: " + messagingType );
-		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
+		if( ! Utils.isEmptyOrWhitespaces( etcDir )
+				&& ! Utils.isEmptyOrWhitespaces( messagingType )) {
 
 			// Write the messaging configuration
 			File f = new File( etcDir, "net.roboconf.messaging." + messagingType + ".cfg" );
@@ -263,7 +261,7 @@ public class UserDataHelper {
 			Utils.writePropertiesFile( props, f );
 
 			// Set the messaging type
-			f = new File( etcDir, CONF_FILE_AGENT );
+			f = new File( etcDir, Constants.KARAF_CFG_FILE_AGENT );
 
 			props = Utils.readPropertiesFileQuietly( f, Logger.getLogger( getClass().getName()));
 			if( messagingType != null ) {

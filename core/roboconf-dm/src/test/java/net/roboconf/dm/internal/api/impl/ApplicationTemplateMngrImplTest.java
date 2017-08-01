@@ -370,12 +370,7 @@ public class ApplicationTemplateMngrImplTest {
 
 		ApplicationTemplateDescriptor.save( descriptorFile, desc );
 		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
-		try {
-			this.mngr.loadApplicationTemplate( directoryCopy );
-
-		} catch( Exception e ) {
-			Assert.fail( "Loading the application the first time should not fail." );
-		}
+		this.mngr.loadApplicationTemplate( directoryCopy );
 
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
 

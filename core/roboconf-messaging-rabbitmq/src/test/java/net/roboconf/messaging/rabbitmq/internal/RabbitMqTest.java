@@ -88,7 +88,7 @@ public class RabbitMqTest extends AbstractMessagingTest {
 
 		final RabbitMqClientFactory factory = new RabbitMqClientFactory();
 		factory.configuration = getMessagingConfiguration();
-		this.registry.addMessagingClientFactory(factory);
+		this.registry.addMessagingClientFactory( factory );
 	}
 
 
@@ -96,8 +96,6 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	public void cleanRabbitMq() throws Exception {
 
 		if( rabbitMqIsRunning ) {
-
-
 			RabbitMqClient client = new RabbitMqClient(
 					null,
 					getMessagingConfiguration(),
@@ -378,12 +376,12 @@ public class RabbitMqTest extends AbstractMessagingTest {
 
 
 	private String getMessagingUsername() {
-		return "guest";
+		return RabbitMqTestUtils.GUEST;
 	}
 
 
 	private String getMessagingPassword() {
-		return "guest";
+		return RabbitMqTestUtils.GUEST;
 	}
 
 

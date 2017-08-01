@@ -283,7 +283,7 @@ public final class AgentUtils {
 					File target = new File( karafEtc, source.getName().replaceFirst( "\\.tpl$", "" ));
 
 					// Do not overwrite the agent's configuration file (infinite configuration loop)
-					if( UserDataHelper.CONF_FILE_AGENT.equalsIgnoreCase( target.getName()))
+					if( Constants.KARAF_CFG_FILE_AGENT.equalsIgnoreCase( target.getName()))
 						continue;
 
 					String content = Utils.readFileContent( source );

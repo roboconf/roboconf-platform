@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,39 +23,25 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.commons.internal.parameterized;
+package net.roboconf.target.embedded.internal;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import org.junit.Ignore;
+import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.Constants;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import org.ops4j.pax.exam.Option;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * @author Pierre-Yves Gibello - Linagora
  */
-public class RabbitMqConfiguration implements IMessagingConfiguration {
+@Ignore
+public class ToRunByHandToEraseConfiguration extends ToRunByHandtoSetConfiguration {
 
 	@Override
-	public List<Option> options() {
+	@Test
+	public void toRunByHand() throws Exception {
 
-		// For RabbitMQ, we only need to specify we use this messaging type.
-		// We use the default credentials to interact with RMQ.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
-
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				RabbitMqConstants.FACTORY_RABBITMQ ));
-
-		return options;
+		EmbeddedHandler handler = new EmbeddedHandler();
+		TargetHandlerParameters parameters = parameters( getkeyFile());
+		handler.configureRemoteAgent( getIp(), parameters, true );
 	}
 }

@@ -70,6 +70,11 @@ public interface Constants {
 	String WILDCARD = "*";
 
 	/**
+	 * A constant for agent parameters to indicate it should be reset.
+	 */
+	String AGENT_RESET = "@reset@";
+
+	/**
 	 * The suffix for the name of a script to be executed by an agent (machine configuration).
 	 * */
 	String SCOPED_SCRIPT_AT_AGENT_SUFFIX = "agent.script.";
@@ -223,4 +228,9 @@ public interface Constants {
 	 * The system property that points to Karaf's data directory.
 	 */
 	String KARAF_DATA = "karaf.data";
+
+	/**
+	 * The name of the main configuration file for an agent.
+	 */
+	String KARAF_CFG_FILE_AGENT = "net.roboconf.agent.configuration.cfg";
 }

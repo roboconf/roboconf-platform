@@ -67,4 +67,9 @@ public interface MessagingConstants {
 	 * The factory's name for in-memory clients.
 	 */
 	String FACTORY_IN_MEMORY = "in-memory";
+
+	/**
+	 * The factory's name for idle clients.
+	 */
+	String FACTORY_IDLE = "idle";
 }

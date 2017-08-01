@@ -27,6 +27,7 @@ package net.roboconf.tooling.core;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Assert;
@@ -34,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.errors.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -88,7 +90,7 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( 2, dir.listFiles().length );
 		Assert.assertTrue( new File( dir, "pom.xml" ).exists());
 
-		File modelDir = new File( dir, "src/main/model" );
+		File modelDir = new File( dir, Constants.MAVEN_SRC_MAIN_MODEL );
 		Assert.assertTrue( modelDir.exists());
 		Assert.assertEquals( 6, modelDir.listFiles().length );
 
@@ -102,7 +104,7 @@ public class ProjectUtilsTest {
 
 		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
-		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getVersion());
+		Assert.assertEquals( "${project.version}", alr.getApplicationTemplate().getVersion());
 	}
 
 
@@ -132,7 +134,7 @@ public class ProjectUtilsTest {
 		String expected = Utils.readFileContent( expectedPom );
 		Assert.assertEquals( expected, actual );
 
-		File modelDir = new File( dir, "src/main/model" );
+		File modelDir = new File( dir, Constants.MAVEN_SRC_MAIN_MODEL );
 		Assert.assertTrue( modelDir.exists());
 		Assert.assertEquals( 6, modelDir.listFiles().length );
 
@@ -146,7 +148,7 @@ public class ProjectUtilsTest {
 
 		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
-		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getVersion());
+		Assert.assertEquals( "${project.version}", alr.getApplicationTemplate().getVersion());
 	}
 
 
@@ -163,5 +165,70 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( "", CreationBean.getNonNullString( "" ));
 		Assert.assertEquals( "", CreationBean.getNonNullString( "  " ));
 		Assert.assertEquals( "toto", CreationBean.getNonNullString( " toto " ));
+	}
+
+
+	@Test
+	public void testCreateRecipeDirectories_simpleProject() throws Exception {
+
+		// Create a simple project
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+				.projectDescription( "some desc" ).projectName( "my-project" )
+				.groupId( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" ).mavenProject( false );
+
+		ProjectUtils.createProjectSkeleton( dir, bean );
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+
+		// Recipe directories are missing
+		Assert.assertEquals( 2, alr.getLoadErrors().size());
+		for( RoboconfError error : alr.getLoadErrors())
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
+
+		// Create them and verify
+		ProjectUtils.createRecipeDirectories( dir );
+		alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertEquals( 0, alr.getLoadErrors().size());
+
+		// The method should be idem-potent
+		ProjectUtils.createRecipeDirectories( dir );
+		alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertEquals( 0, alr.getLoadErrors().size());
+	}
+
+
+	@Test
+	public void testCreateRecipeDirectories_mavenProject() throws Exception {
+
+		// Create a Maven project
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+				.projectDescription( "some desc" ).projectName( "my project" )
+				.projectVersion( "1.0-SNAPSHOT" ).pluginVersion( "1.0.0" )
+				.groupId( "net.roboconf" ).artifactId( "roboconf-sample" );
+
+		// Recipe directories are missing
+		ProjectUtils.createProjectSkeleton( dir, bean );
+		dir = new File( dir, Constants.MAVEN_SRC_MAIN_MODEL );
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+
+		// Create them and verify
+		Assert.assertEquals( 3, alr.getLoadErrors().size());
+		Iterator<RoboconfError> it = alr.getLoadErrors().iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+
+		ProjectUtils.createRecipeDirectories( dir );
+		alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertEquals( 1, alr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, alr.getLoadErrors().iterator().next().getErrorCode());
+
+		// The method should be idem-potent
+		ProjectUtils.createRecipeDirectories( dir );
+		alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertEquals( 1, alr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, alr.getLoadErrors().iterator().next().getErrorCode());
 	}
 }

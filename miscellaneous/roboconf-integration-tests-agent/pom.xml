@@ -59,6 +59,20 @@
 		</dependency>
 		
 		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-agent</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-messaging-api</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
   			<version>${project.version}</version>
@@ -79,6 +93,13 @@
 		<dependency>
 			<groupId>org.ops4j.pax.exam</groupId>
 			<artifactId>pax-exam-container-karaf</artifactId>
+			<version>${pax.exam.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-junit4</artifactId>
 			<version>${pax.exam.version}</version>
 			<scope>test</scope>
 		</dependency>
@@ -123,6 +144,13 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-nop</artifactId>
 			<version>${slf4j.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<version>1</version>
 			<scope>test</scope>
 		</dependency>
 

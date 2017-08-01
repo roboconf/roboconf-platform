@@ -26,25 +26,25 @@
 package net.roboconf.agent.jmx;
 
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
 
-import javax.management.AttributeNotFoundException;
 import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
-
-import net.roboconf.agent.internal.Agent;
-import net.roboconf.plugin.api.PluginException;
-import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import net.roboconf.agent.internal.Agent;
+import net.roboconf.agent.internal.PluginProxy;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.plugin.api.PluginException;
+import net.roboconf.plugin.api.PluginInterface;
 
 /**
  * Test plugin MBean implementation.
@@ -52,77 +52,151 @@ import org.junit.Test;
  */
 public class PluginMBeanTest {
 
-	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-	ObjectName objectName;
-	PluginInterface plugin;
+	private static final String PL_NAME = "mockito";
+	private static MBeanServer mbs;
+	private static ObjectName objectName;
 
-	@Before
-	public void initialize() throws MalformedObjectNameException, MBeanRegistrationException, NotCompliantMBeanException {
-		Agent agent = new Agent();
-		agent.setSimulatePlugins(true);
-		this.plugin = agent.findPlugin(null);
-		this.objectName = new ObjectName("net.roboconf:type=agent-plugins");
+	final Instance inst = new Instance( "i" ).component( new Component( "c" ).installerName( PL_NAME ));
+
+
+	@BeforeClass
+	public static void initialize() throws Exception {
+
+		mbs = ManagementFactory.getPlatformMBeanServer();
+		objectName = new ObjectName("net.roboconf:type=agent-plugins");
 		try {
-			this.mbs.registerMBean(new PluginStats(), this.objectName);
+			mbs.registerMBean( new PluginStats(), objectName );
+
 		} catch (InstanceAlreadyExistsException e) {
 			e.printStackTrace();
 		}
 	}
 
+
 	@Test
-	public void testPluginMBean() throws AttributeNotFoundException, InstanceNotFoundException, MBeanException, ReflectionException, PluginException {
+	public void testPluginMBean() throws Exception {
 
-		int count;
+		// Prepare
+		Agent agent = new Agent();
+		agent.setSimulatePlugins( false );
 
-		this.mbs.invoke(this.objectName, "reset", null, null);
+		PluginInterface mockPlugin = Mockito.mock( PluginInterface.class );
+		Mockito.when( mockPlugin.getPluginName()).thenReturn( PL_NAME );
 
-		count = (int)this.mbs.getAttribute(this.objectName, "InitializeCount");
-		Assert.assertEquals(0, count);
+		agent.pluginAppears( mockPlugin );
+		PluginInterface proxyfiedPlugin = agent.findPlugin( this.inst );
+		Assert.assertSame( mockPlugin, ((PluginProxy) proxyfiedPlugin).getPlugin());
 
-		count = (int)this.mbs.getAttribute(this.objectName, "DeployCount");
-		Assert.assertEquals(0, count);
+		// Execute and verify
+		mbs.invoke(objectName, "reset", null, null);
 
-		count = (int)this.mbs.getAttribute(this.objectName, "UndeployCount");
-		Assert.assertEquals(0, count);
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "InitializeCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "DeployCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "UndeployCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "StartCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "StopCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "UpdateCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "ErrorCount"));
 
-		count = (int)this.mbs.getAttribute(this.objectName, "StartCount");
-		Assert.assertEquals(0, count);
+		proxyfiedPlugin.initialize( this.inst );
+		proxyfiedPlugin.deploy( this.inst );
+		proxyfiedPlugin.start( this.inst );
+		proxyfiedPlugin.update( this.inst, null, null );
+		proxyfiedPlugin.stop( this.inst );
+		proxyfiedPlugin.undeploy( this.inst );
 
-		count = (int)this.mbs.getAttribute(this.objectName, "StopCount");
-		Assert.assertEquals(0, count);
+		Assert.assertEquals( 1, (int) mbs.getAttribute(objectName, "InitializeCount"));
+		Assert.assertEquals( 1, (int) mbs.getAttribute(objectName, "DeployCount"));
+		Assert.assertEquals( 1, (int) mbs.getAttribute(objectName, "UndeployCount"));
+		Assert.assertEquals( 1, (int) mbs.getAttribute(objectName, "StartCount"));
+		Assert.assertEquals( 1, (int) mbs.getAttribute(objectName, "StopCount"));
+		Assert.assertEquals( 1, (int) mbs.getAttribute(objectName, "UpdateCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "ErrorCount"));
+	}
 
-		count = (int)this.mbs.getAttribute(this.objectName, "UpdateCount");
-		Assert.assertEquals(0, count);
 
-		count = (int)this.mbs.getAttribute(this.objectName, "ErrorCount");
-		Assert.assertEquals(0, count);
+	@Test
+	public void testPluginMBean_withErrors() throws Exception {
 
-		plugin.initialize(null);
-		plugin.deploy(null);
-		plugin.start(null);
-		plugin.update(null, null, null);
-		plugin.stop(null);
-		plugin.undeploy(null);
+		// Prepare - all the non-mocked methods will throw an exception
+		Agent agent = new Agent();
+		agent.setSimulatePlugins( false );
 
-		count = (int)this.mbs.getAttribute(this.objectName, "InitializeCount");
-		Assert.assertEquals(1, count);
+		PluginInterface mockPlugin = Mockito.mock( PluginInterface.class, new Answer<Void> () {
+			@Override
+			public Void answer( InvocationOnMock invocation ) throws Throwable {
 
-		count = (int)this.mbs.getAttribute(this.objectName, "DeployCount");
-		Assert.assertEquals(1, count);
+				if( ! Arrays.asList( "getPluginName", "setNames" ).contains( invocation.getMethod().getName()))
+					throw new PluginException( "for test" );
 
-		count = (int)this.mbs.getAttribute(this.objectName, "UndeployCount");
-		Assert.assertEquals(1, count);
+				return null;
+			}
+		});
 
-		count = (int)this.mbs.getAttribute(this.objectName, "StartCount");
-		Assert.assertEquals(1, count);
+		Mockito.when( mockPlugin.getPluginName()).thenReturn( PL_NAME );
+		agent.pluginAppears( mockPlugin );
+		PluginInterface proxyfiedPlugin = agent.findPlugin( this.inst );
+		Assert.assertSame( mockPlugin, ((PluginProxy) proxyfiedPlugin).getPlugin());
 
-		count = (int)this.mbs.getAttribute(this.objectName, "StopCount");
-		Assert.assertEquals(1, count);
+		// Execute and verify
+		mbs.invoke(objectName, "reset", null, null);
 
-		count = (int)this.mbs.getAttribute(this.objectName, "UpdateCount");
-		Assert.assertEquals(1, count);
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "InitializeCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "DeployCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "UndeployCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "StartCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "StopCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "UpdateCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "ErrorCount"));
 
-		count = (int)this.mbs.getAttribute(this.objectName, "ErrorCount");
-		Assert.assertEquals(0, count);
+		try {
+			proxyfiedPlugin.initialize( this.inst );
+			Assert.fail( "An exception was expected." );
+		} catch( PluginException e ) {
+			// nothing
+		}
+
+		try {
+			proxyfiedPlugin.deploy( this.inst );
+			Assert.fail( "An exception was expected." );
+		} catch( PluginException e ) {
+			// nothing
+		}
+
+		try {
+			proxyfiedPlugin.start( this.inst );
+			Assert.fail( "An exception was expected." );
+		} catch( PluginException e ) {
+			// nothing
+		}
+
+		try {
+			proxyfiedPlugin.update( this.inst, null, null );
+			Assert.fail( "An exception was expected." );
+		} catch( PluginException e ) {
+			// nothing
+		}
+
+		try {
+			proxyfiedPlugin.stop( this.inst );
+			Assert.fail( "An exception was expected." );
+		} catch( PluginException e ) {
+			// nothing
+		}
+
+		try {
+			proxyfiedPlugin.undeploy( this.inst );
+			Assert.fail( "An exception was expected." );
+		} catch( PluginException e ) {
+			// nothing
+		}
+
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "InitializeCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "DeployCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "UndeployCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "StartCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "StopCount"));
+		Assert.assertEquals( 0, (int) mbs.getAttribute(objectName, "UpdateCount"));
+		Assert.assertEquals( 6, (int) mbs.getAttribute(objectName, "ErrorCount"));
 	}
 }

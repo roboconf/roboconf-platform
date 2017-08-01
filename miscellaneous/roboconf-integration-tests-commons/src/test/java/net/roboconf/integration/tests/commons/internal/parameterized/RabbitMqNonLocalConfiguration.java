@@ -47,7 +47,7 @@ public class RabbitMqNonLocalConfiguration implements IMessagingConfiguration {
 		// The DM and agents use RabbitMQ
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ ));
 

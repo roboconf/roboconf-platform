@@ -27,12 +27,15 @@ package net.roboconf.core.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,8 +60,20 @@ public class ApplicationTemplateDescriptor {
 	public static final String APPLICATION_EXTERNAL_EXPORTS_AS = "as";
 
 	private static final String LEGACY_PREFIX = "application-";
+	private static final List<String> ALL_PROPERTIES = Arrays.asList(
+			APPLICATION_NAME,
+			APPLICATION_VERSION,
+			APPLICATION_TAGS,
+			APPLICATION_DESCRIPTION,
+			APPLICATION_DSL_ID,
+			APPLICATION_GRAPH_EP,
+			APPLICATION_INSTANCES_EP,
+			APPLICATION_EXTERNAL_EXPORTS_PREFIX,
+			APPLICATION_EXTERNAL_EXPORTS
+	);
 
 	private String name, description, version, graphEntryPoint, instanceEntryPoint, dslId, externalExportsPrefix;
+	public final Map<String,Integer> propertyToLine = new HashMap<> ();
 	public final Map<String,String> externalExports = new HashMap<> ();
 	public final Set<String> invalidExternalExports = new HashSet<> ();
 	public final Set<String> tags = new HashSet<> ();
@@ -213,11 +228,30 @@ public class ApplicationTemplateDescriptor {
 	 */
 	public static ApplicationTemplateDescriptor load( File f ) throws IOException {
 
-		Properties properties = Utils.readPropertiesFile( f );
+		// Read the file's content
+		String fileContent = Utils.readFileContent( f );
+		Logger logger = Logger.getLogger( ApplicationTemplateDescriptor.class.getName());
+		Properties properties = Utils.readPropertiesQuietly( fileContent, logger );
 		if( properties.get( "fail.read" ) != null )
 			throw new IOException( "This is for test purpose..." );
 
-		return load( properties );
+		ApplicationTemplateDescriptor result = load( properties );
+
+		// Resolve line numbers then
+		int lineNumber = 1;
+		for( String line : fileContent.split( "\n" )) {
+
+			for( String property : ALL_PROPERTIES ) {
+				if( line.trim().matches( "(" + LEGACY_PREFIX + ")?" + property + "\\s*[:=].*" )) {
+					result.propertyToLine.put( property, lineNumber );
+					break;
+				}
+			}
+
+			lineNumber ++;
+		}
+
+		return result;
 	}
 
 

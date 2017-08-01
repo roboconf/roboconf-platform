@@ -192,16 +192,16 @@ public class AutonomicTest extends DmTest {
 
 		// Agent configuration (embedded)
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ ));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				"application-name", "test" ));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
+				"etc/" + Constants.KARAF_CFG_FILE_AGENT,
 				"scoped-instance-path", "/MySQL VM" ));
 
 		return options.toArray( new Option[ options.size()]);

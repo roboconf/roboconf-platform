@@ -33,6 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -121,6 +122,27 @@ public class ApplicationTemplateDescriptorTest {
 
 		Assert.assertEquals( "lb-ip", desc.externalExports.get( "HAProxy.ip" ));
 		Assert.assertEquals( "lb-port", desc.externalExports.get( "HAProxy.httpPort" ));
+	}
+
+
+	@Test
+	public void testLineNumberResolution() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/app-template-descriptor.properties" );
+		Assert.assertTrue( f.exists());
+
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
+		Assert.assertNotNull( desc );
+
+		Assert.assertEquals((Integer) 5, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_DESCRIPTION ));
+		Assert.assertEquals((Integer) 12, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_DSL_ID ));
+		Assert.assertEquals((Integer) 25, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_EXTERNAL_EXPORTS ));
+		Assert.assertEquals((Integer) 19, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_EXTERNAL_EXPORTS_PREFIX ));
+		Assert.assertEquals((Integer) 14, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_GRAPH_EP ));
+		Assert.assertEquals((Integer) 15, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_INSTANCES_EP ));
+		Assert.assertEquals((Integer) 2, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_NAME ));
+		Assert.assertEquals((Integer) 29, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_TAGS ));
+		Assert.assertEquals((Integer) 3, desc.propertyToLine.get( ApplicationTemplateDescriptor.APPLICATION_VERSION ));
 	}
 
 

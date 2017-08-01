@@ -43,6 +43,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -606,6 +607,19 @@ public final class Utils {
 
 
 	/**
+	 * Replaces all the accents in a string.
+	 * @param name a non-null string
+	 * @return a non-null string, with their accents replaced by their neutral equivalent
+	 */
+	public static String cleanNameWithAccents( String name ) {
+
+		String temp = Normalizer.normalize( name, Normalizer.Form.NFD );
+		Pattern pattern = Pattern.compile( "\\p{InCombiningDiacriticalMarks}+" );
+		return pattern.matcher( temp ).replaceAll( "" ).trim();
+	}
+
+
+	/**
 	 * Creates a directory if it does not exist.
 	 * @param directory the directory to create
 	 * @throws IOException if it did not exist and that it could not be created
@@ -625,6 +639,24 @@ public final class Utils {
 	 */
 	public static List<File> listAllFiles( File directory ) {
 		return listAllFiles( directory, false );
+	}
+
+
+	/**
+	 * Updates string properties.
+	 * @param propertiesContent the properties file as a string
+	 * @param keyToNewValue the keys to update with their new values
+	 * @return a non-null string
+	 */
+	public static String updateProperties( String propertiesContent, Map<String,String> keyToNewValue ) {
+
+		for( Map.Entry<String,String> entry : keyToNewValue.entrySet()) {
+			propertiesContent = propertiesContent.replaceFirst(
+					"(?mi)^\\s*" + entry.getKey() + "\\s*[:=][^\n]*$",
+					entry.getKey() + " = " + entry.getValue());
+		}
+
+		return propertiesContent;
 	}
 
 

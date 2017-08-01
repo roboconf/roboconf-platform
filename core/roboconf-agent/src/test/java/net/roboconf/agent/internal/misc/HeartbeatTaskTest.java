@@ -56,6 +56,7 @@ public class HeartbeatTaskTest {
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
 		this.agent.setScopedInstancePath( "/root" );
+		this.agent.setApplicationName( "that app" );
 		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 
@@ -96,6 +97,36 @@ public class HeartbeatTaskTest {
 
 		this.internalClient.closeConnection();
 		Assert.assertFalse( this.agent.getMessagingClient().isConnected());
+
+		HeartbeatTask task = new HeartbeatTask( this.agent );
+		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());
+
+		task.run();
+		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());
+	}
+
+
+	@Test
+	public void testHeartbeat_agentWithoutIdentity_noApp() throws Exception {
+		this.agent.setApplicationName( "" );
+
+		this.internalClient.openConnection();
+		Assert.assertTrue( this.agent.getMessagingClient().isConnected());
+
+		HeartbeatTask task = new HeartbeatTask( this.agent );
+		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());
+
+		task.run();
+		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());
+	}
+
+
+	@Test
+	public void testHeartbeat_agentWithoutIdentity_noScopedInstancePath() throws Exception {
+		this.agent.setScopedInstancePath( null );
+
+		this.internalClient.openConnection();
+		Assert.assertTrue( this.agent.getMessagingClient().isConnected());
 
 		HeartbeatTask task = new HeartbeatTask( this.agent );
 		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());

@@ -368,8 +368,14 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		} else if( ! this.overrideProperties ) {
 			this.logger.fine( "User data are NOT supposed to be used." );
 
+		} else if( Constants.AGENT_RESET.equalsIgnoreCase( this.parameters )) {
+			if( getMessagingClient() != null
+					&& getMessagingClient().getMessageProcessor() != null )
+				((AgentMessageProcessor) getMessagingClient().getMessageProcessor()).resetRequest();
+
 		} else {
 
+			// Retrieve the agent's configuration
 			AgentProperties props = null;
 			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
 			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.parameters )
@@ -385,6 +391,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 			else
 				props = this.userDataHelper.findParametersFromUrl( this.parameters, this.logger );
 
+			// If there was a configuration...
 			if( props != null ) {
 				String errorMessage = props.validate();
 				if( errorMessage != null )

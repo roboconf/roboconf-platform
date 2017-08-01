@@ -36,6 +36,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -90,7 +95,24 @@ public final class ProjectUtils {
 	 * @return a non-null list of versions for the Roboconf Maven plug-in
 	 */
 	public static List<String> listMavenPluginVersions() {
-		return Arrays.asList( "0.2-SNAPSHOT" );
+		return Arrays.asList( "0.8", "0.9" );
+	}
+
+
+	/**
+	 * Creates the recipes directories for a Roboconf components.
+	 * @param applicationDirectory the application directory
+	 * @throws IOException if something went wrong
+	 */
+	public static void createRecipeDirectories( File applicationDirectory ) throws IOException {
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( applicationDirectory );
+		if( alr.getApplicationTemplate() != null ) {
+			for( Component c : ComponentHelpers.findAllComponents( alr.getApplicationTemplate())) {
+				File directory = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, c );
+				Utils.createDirectory( directory );
+			}
+		}
 	}
 
 
@@ -131,7 +153,7 @@ public final class ProjectUtils {
 	private static void createMavenProject( File targetDirectory, CreationBean creationBean ) throws IOException {
 
 		// Create the directory structure
-		File rootDir = new File( targetDirectory, "src/main/model" );
+		File rootDir = new File( targetDirectory, Constants.MAVEN_SRC_MAIN_MODEL );
 		for( String s : DIRECTORIES ) {
 			File dir = new File( rootDir, s );
 			Utils.createDirectory( dir );
@@ -163,7 +185,7 @@ public final class ProjectUtils {
 		Utils.copyStreamSafely( in, out );
 		tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
-				.replace( TPL_VERSION, "${project.version}--${timestamp}" )
+				.replace( TPL_VERSION, "${project.version}" )
 				.replace( TPL_DESCRIPTION, "${project.description}" );
 
 		// Create the rest of the project
