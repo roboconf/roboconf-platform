@@ -27,7 +27,6 @@ package net.roboconf.target.api.internal;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
@@ -75,8 +74,8 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 
 
 	@Override
-	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
-		return new TestMachineConfigurator( this.cpt, this.failConfiguration, scopedInstance );
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId ) {
+		return new TestMachineConfigurator( this.cpt, this.failConfiguration, parameters.getScopedInstance());
 	}
 
 

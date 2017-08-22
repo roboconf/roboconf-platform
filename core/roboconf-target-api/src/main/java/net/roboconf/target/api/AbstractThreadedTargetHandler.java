@@ -26,6 +26,7 @@
 package net.roboconf.target.api;
 
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -98,11 +99,10 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 
 
 	@Override
-	public final void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
+	public final void configureMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
-		this.logger.fine( "Configuring machine '" + machineId + "'." );
-		this.machineIdToConfigurators.put( machineId, machineConfigurator( parameters, machineId, scopedInstance ));
+		submitMachineConfiguratorUseWithCaution( machineId, machineConfigurator( parameters, machineId ));
 	}
 
 
@@ -110,11 +110,10 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 * Gets or builds a machine configurator to (guess what!) configure a machine.
 	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
-	 * @param scopedInstance the scoped instance
-	 * @return a machine configurator
+	 * @return a machine configurator (can be null, in which case nothing will be done)
 	 * @throws TargetException if something went wrong
 	 */
-	public abstract MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
+	public abstract MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId )
 	throws TargetException;
 
 
@@ -133,7 +132,49 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 * @param machineId the machine ID
 	 */
 	protected void cancelMachineConfigurator( String machineId ) {
+		this.logger.fine( "Cancelling machine '" + machineId + "'." );
 		this.cancelledMachineIds.addMachineId( machineId );
+	}
+
+
+	/**
+	 * Submits a machine configurator.
+	 * <p>
+	 * Most of the subclasses will never use this method. It is already invoked from
+	 * the {@link #configureMachine(TargetHandlerParameters, String, Instance)} method.
+	 * </p>
+	 * <p>
+	 * Most of target handlers only have long-running configurations but short
+	 * terminations. In some cases though, terminating a machine might take time and using
+	 * a configurator might be better. In such situations, a sub-class may invoke this method
+	 * to run such a configurator. As a reminder, the target handler is in charge of generating a machine ID.
+	 * And any submitted job can be cancelled with {@link #cancelMachineConfigurator(String)}.
+	 * </p>
+	 *
+	 * @param machineId a machine ID (not null)
+	 * @param configurator a configurator (will not be added if null)
+	 */
+	protected void submitMachineConfiguratorUseWithCaution( String machineId, MachineConfigurator configurator ) {
+		if( configurator != null ) {
+			this.logger.fine( "Configuring machine '" + machineId + "' (" + configurator.getClass().getSimpleName() + ")." );
+			this.machineIdToConfigurators.put( machineId, configurator );
+		}
+	}
+
+
+	/**
+	 * @return a snapshot view of the machineIdToConfigurators map
+	 */
+	public Map<String,MachineConfigurator> getMachineIdToConfigurators() {
+		return Collections.unmodifiableMap( this.machineIdToConfigurators );
+	}
+
+
+	/**
+	 * @return a view of the cancelled machine IDs
+	 */
+	public Set<String> getCancelledMachineIds() {
+		return this.cancelledMachineIds.getCancelledIds();
 	}
 
 
@@ -288,6 +329,13 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 			this.cancelledIds.clear();
 
 			return result;
+		}
+
+		/**
+		 * @return a copy of the cancelledIds
+		 */
+		public synchronized Set<String> getCancelledIds() {
+			return Collections.unmodifiableSet( this.cancelledIds );
 		}
 	}
 }

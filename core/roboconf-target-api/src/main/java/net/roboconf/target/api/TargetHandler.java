@@ -69,10 +69,9 @@ public interface TargetHandler {
 	 *
 	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
-	 * @param scopedInstance the scoped instance
 	 * @throws TargetException
 	 */
-	void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
+	void configureMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException;
 
 

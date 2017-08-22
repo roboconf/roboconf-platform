@@ -29,9 +29,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.junit.Assert;
-import net.roboconf.target.api.AbstractThreadedTargetHandler.CancelledMachines;
-
 import org.junit.Test;
+
+import net.roboconf.target.api.AbstractThreadedTargetHandler.CancelledMachines;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -45,12 +45,17 @@ public class CancelledMachinesTest {
 		Assert.assertEquals( 0, cm.removeSnapshot().size());
 
 		cm.addMachineId( "test1" );
+		Assert.assertEquals( 1, cm.getCancelledIds().size());
+
 		Set<String> snapshot = cm.removeSnapshot();
 		Assert.assertEquals( 1, snapshot.size());
 		Assert.assertEquals( "test1", snapshot.iterator().next());
 
 		cm.addMachineId( "test2" );
 		cm.addMachineId( "test3" );
+		Assert.assertEquals( 2, cm.getCancelledIds().size());
+		Assert.assertEquals( 2, cm.getCancelledIds().size());
+
 		snapshot = cm.removeSnapshot();
 		Assert.assertEquals( 2, snapshot.size());
 

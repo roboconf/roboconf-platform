@@ -25,36 +25,19 @@
 
 package net.roboconf.target.embedded.internal;
 
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_APPLICATION_NAME;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_DOMAIN;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_PARAMETERS;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_SCOPED_INSTANCE_PATH;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.DEFAULT_SCP_AGENT_CONFIG_DIR;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.IP_ADDRESSES;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.TARGET_ID;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.USER_DATA_FILE;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
-import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.xfer.FileSystemFile;
-import net.schmizz.sshj.xfer.LocalSourceFile;
-import net.schmizz.sshj.xfer.scp.SCPFileTransfer;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -63,8 +46,31 @@ public class EmbeddedHandlerTest {
 
 	private static final String NOTHING = "app_nothing";
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+
+	@Test
+	public void testTargetEmbedded_noIpPool_basics() throws Exception {
+
+		// Basics
+		EmbeddedHandler target = new EmbeddedHandler();
+		Assert.assertEquals( TARGET_ID, target.getTargetId());
+
+		// Terminate machine should not throw any error at this stage
+		Instance scopedInstance = new Instance();
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
+		parameters = parameters
+				.applicationName( "app" )
+				.domain( "domain" )
+				.scopedInstancePath( "nothing" )
+				.scopedInstance( scopedInstance );
+
+		target.terminateMachine( parameters, null );
+		target.terminateMachine( parameters, "anything" );
+
+		// Same thing for isMachineRunning
+		Assert.assertFalse( target.isMachineRunning( null, NOTHING ));
+	}
 
 
 	@Test
@@ -75,19 +81,15 @@ public class EmbeddedHandlerTest {
 		Assert.assertEquals( TARGET_ID, target.getTargetId());
 
 		// Terminate machine should not throw any error at this stage
+		Instance scopedInstance = new Instance();
 		TargetHandlerParameters parameters = new TargetHandlerParameters();
 		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
 		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
 		parameters = parameters
 				.applicationName( "app" )
 				.domain( "domain" )
-				.scopedInstancePath( "nothing" );
-
-		target.terminateMachine( parameters, null );
-		target.terminateMachine( parameters, "anything" );
-
-		// Same thing for isMachineRunning
-		Assert.assertFalse( target.isMachineRunning( null, NOTHING ));
+				.scopedInstancePath( "nothing" )
+				.scopedInstance( scopedInstance );
 
 		// Let's try to create a machine
 		String machineId = target.createMachine( parameters );
@@ -97,26 +99,26 @@ public class EmbeddedHandlerTest {
 		Assert.assertEquals( 1, target.machineIdToIp.size());
 		Assert.assertEquals( "", target.machineIdToIp.get( machineId ));
 
-		// And let's configure it
-		Instance scopedInstance = new Instance();
-		Assert.assertEquals( 0, scopedInstance.data.size());
-		target.configureMachine(
-				parameters,
-				machineId,
-				scopedInstance );
-
-		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
+		// Configuration
+		Assert.assertEquals( 0, target.getMachineIdToConfigurators().size());
+		target.configureMachine( parameters, machineId );
+		Assert.assertEquals( 0, target.getMachineIdToConfigurators().size());
+		Assert.assertEquals( 0, target.getCancelledMachineIds().size());
 
 		// Terminate it
 		target.terminateMachine( parameters, machineId );
 		Assert.assertFalse( target.isMachineRunning( null, machineId ));
 		Assert.assertEquals( 0, target.usedIps.size());
 		Assert.assertEquals( 0, target.machineIdToIp.size());
+		Assert.assertEquals( 0, target.getMachineIdToConfigurators().size());
+
+		Assert.assertEquals( 1, target.getCancelledMachineIds().size());
+		Assert.assertEquals( machineId, target.getCancelledMachineIds().iterator().next());
 	}
 
 
 	@Test
-	public void testTargetEmbedded_withIpPool() throws Exception {
+	public void testTargetEmbedded_withIpPool_basics() throws Exception {
 		EmbeddedHandler target = new EmbeddedHandler();
 
 		// Terminate machine should not throw any error at this stage
@@ -134,6 +136,22 @@ public class EmbeddedHandlerTest {
 
 		// Same thing for isMachineRunning
 		Assert.assertFalse( target.isMachineRunning( null, NOTHING ));
+	}
+
+
+	@Test
+	public void testTargetEmbedded_withIpPool() throws Exception {
+		EmbeddedHandler target = new EmbeddedHandler();
+
+		// Terminate machine should not throw any error at this stage
+		TargetHandlerParameters parameters = new TargetHandlerParameters();
+		parameters.setTargetProperties( new HashMap<String,String>( 0 ));
+		parameters.getTargetProperties().put( IP_ADDRESSES, "192.168.1.1, 192.168.1.2" );
+		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
+		parameters = parameters
+				.applicationName( "app" )
+				.domain( "domain" )
+				.scopedInstancePath( "nothing" );
 
 		// Let's try to create a machine
 		String machineId = target.createMachine( parameters );
@@ -144,13 +162,28 @@ public class EmbeddedHandlerTest {
 		Assert.assertEquals( 1, target.machineIdToIp.size());
 		Assert.assertEquals( "192.168.1.1", target.machineIdToIp.get( machineId ));
 
-		// No configuration here...
+		// Configuration
+		Assert.assertEquals( 0, target.getMachineIdToConfigurators().size());
+		target.configureMachine( parameters, machineId );
+		Assert.assertEquals( 1, target.getMachineIdToConfigurators().size());
+		Assert.assertEquals( machineId, target.getMachineIdToConfigurators().keySet().iterator().next());
+		Assert.assertEquals( 0, target.getCancelledMachineIds().size());
 
 		// Terminate it
 		target.terminateMachine( parameters, machineId );
 		Assert.assertFalse( target.isMachineRunning( null, machineId ));
-		Assert.assertEquals( 0, target.usedIps.size());
+
+		// A new job must have been scheduled to unconfigure the agent
+		Assert.assertEquals( 1, target.usedIps.size());
 		Assert.assertEquals( 0, target.machineIdToIp.size());
+
+		Map<String,MachineConfigurator> jobs = target.getMachineIdToConfigurators();
+		Assert.assertEquals( 2, jobs.size());
+		Assert.assertEquals( ConfiguratorOnCreation.class, jobs.get( machineId ).getClass());
+		Assert.assertEquals( ConfiguratorOnTermination.class, jobs.get( "#STOP# " + machineId ).getClass());
+
+		Assert.assertEquals( 1, target.getCancelledMachineIds().size());
+		Assert.assertEquals( machineId, target.getCancelledMachineIds().iterator().next());
 	}
 
 
@@ -183,160 +216,5 @@ public class EmbeddedHandlerTest {
 				.domain( "domain" )
 				.scopedInstancePath( "nothing3" )
 				.targetProperties( targetProperties )));
-	}
-
-
-	@Test
-	public void testUpdateAgentConfigurationFile() throws Exception {
-
-		// Prepare the mocks
-		File tmpDir = this.folder.newFolder();
-		File agentConfigurationFile = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
-
-		Properties props = new Properties();
-		props.setProperty( "a0", "c0" );
-		props.setProperty( "a1", "c213" );
-		props.setProperty( "a2", "c2" );
-		props.setProperty( "a3", "c3" );
-		props.setProperty( "a4", "c4" );
-		props.setProperty( "a5", "c5" );
-		Utils.writePropertiesFile( props, agentConfigurationFile );
-
-		TargetHandlerParameters parameters = new TargetHandlerParameters()
-				.targetProperties( new HashMap<String,String>( 0 ));
-
-		Map<String,String> keyToNewValue = new HashMap<> ();
-		keyToNewValue.put( "a1", "b1" );
-		keyToNewValue.put( "a2", "b2" );
-		keyToNewValue.put( "a3", "b3" );
-
-		SSHClient ssh = Mockito.mock( SSHClient.class );
-		SCPFileTransfer scp = Mockito.mock( SCPFileTransfer.class );
-		Mockito.when( ssh.newSCPFileTransfer()).thenReturn( scp );
-
-		// Invoke the method
-		EmbeddedHandler target = new EmbeddedHandler();
-		target.updateAgentConfigurationFile( parameters, ssh, tmpDir, keyToNewValue );
-
-		// Verify
-		ArgumentCaptor<String> remotePathCaptor = ArgumentCaptor.forClass( String.class );
-		ArgumentCaptor<FileSystemFile> fileCaptor = ArgumentCaptor.forClass( FileSystemFile.class );
-		Mockito.verify( scp ).download( remotePathCaptor.capture(), fileCaptor.capture());
-
-		Assert.assertEquals( tmpDir, fileCaptor.getValue().getFile());
-		Assert.assertEquals(
-				new File( DEFAULT_SCP_AGENT_CONFIG_DIR, Constants.KARAF_CFG_FILE_AGENT ).getAbsolutePath(),
-				remotePathCaptor.getValue());
-
-		// We reupload the same file than the one we downloaded
-		ArgumentCaptor<String> remotePathCaptor2 = ArgumentCaptor.forClass( String.class );
-		ArgumentCaptor<FileSystemFile> fileCaptor2 = ArgumentCaptor.forClass( FileSystemFile.class );
-		Mockito.verify( scp ).upload( fileCaptor2.capture(), remotePathCaptor2.capture());
-
-		Assert.assertEquals( agentConfigurationFile.getAbsolutePath(), fileCaptor2.getValue().getFile().getAbsolutePath());
-		Assert.assertEquals( DEFAULT_SCP_AGENT_CONFIG_DIR, remotePathCaptor2.getValue());
-
-		// And no additional call
-		Mockito.verifyNoMoreInteractions( scp );
-		Mockito.verify( ssh, Mockito.times( 2 )).newSCPFileTransfer();
-		Mockito.verifyNoMoreInteractions( ssh );
-
-		// Verify the properties were correctly updated in the file
-		Properties readProps = Utils.readPropertiesFile( agentConfigurationFile );
-		Assert.assertEquals( "c0", readProps.get( "a0" ));
-		Assert.assertEquals( "b1", readProps.get( "a1" ));
-		Assert.assertEquals( "b2", readProps.get( "a2" ));
-		Assert.assertEquals( "b3", readProps.get( "a3" ));
-		Assert.assertEquals( "c4", readProps.get( "a4" ));
-		Assert.assertEquals( "c5", readProps.get( "a5" ));
-		Assert.assertEquals( props.size(), readProps.size());
-	}
-
-
-	@Test
-	public void testEraseConfiguration() throws Exception {
-
-		// Prepare the mocks
-		File tmpDir = this.folder.newFolder();
-		File agentConfigurationFile = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
-
-		Properties props = new Properties();
-		props.setProperty( AGENT_PARAMETERS, "/tmp/somewhere" );
-		props.setProperty( AGENT_APPLICATION_NAME, "my app" );
-		props.setProperty( "a2", "c2" );
-		props.setProperty( AGENT_SCOPED_INSTANCE_PATH, "/vm 1" );
-		props.setProperty( "a4", "c4" );
-		props.setProperty( AGENT_DOMAIN, "d" );
-		Utils.writePropertiesFile( props, agentConfigurationFile );
-
-		TargetHandlerParameters parameters = new TargetHandlerParameters()
-				.targetProperties( new HashMap<String,String>( 0 ));
-
-		SSHClient ssh = Mockito.mock( SSHClient.class );
-		SCPFileTransfer scp = Mockito.mock( SCPFileTransfer.class );
-		Mockito.when( ssh.newSCPFileTransfer()).thenReturn( scp );
-
-		// Invoke the method
-		EmbeddedHandler target = new EmbeddedHandler();
-		target.eraseConfiguration( parameters, ssh, tmpDir );
-
-		// Verify the properties were correctly updated in the file
-		Properties readProps = Utils.readPropertiesFile( agentConfigurationFile );
-		Assert.assertEquals( Constants.AGENT_RESET, readProps.get( AGENT_PARAMETERS ));
-		Assert.assertEquals( "", readProps.get( AGENT_APPLICATION_NAME ));
-		Assert.assertEquals( "c2", readProps.get( "a2" ));
-		Assert.assertEquals( "", readProps.get( AGENT_SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "c4", readProps.get( "a4" ));
-		Assert.assertEquals( "", readProps.get( AGENT_DOMAIN ));
-		Assert.assertEquals( props.size(), readProps.size());
-
-		// We upload only one file
-		Mockito.verify( scp, Mockito.times( 1 )).upload(
-				Mockito.any( LocalSourceFile.class ),
-				Mockito.anyString());
-	}
-
-
-	@Test
-	public void testSetConfiguration() throws Exception {
-
-		// Prepare the mocks
-		File tmpDir = this.folder.newFolder();
-		File agentConfigurationFile = new File( tmpDir, Constants.KARAF_CFG_FILE_AGENT );
-
-		Properties props = new Properties();
-		props.setProperty( AGENT_PARAMETERS, "/tmp/somewhere" );
-		props.setProperty( AGENT_APPLICATION_NAME, "my app" );
-		props.setProperty( "a2", "c2" );
-		props.setProperty( AGENT_SCOPED_INSTANCE_PATH, "/vm 1" );
-		props.setProperty( "a4", "c4" );
-		props.setProperty( AGENT_DOMAIN, "d" );
-		Utils.writePropertiesFile( props, agentConfigurationFile );
-
-		TargetHandlerParameters parameters = new TargetHandlerParameters()
-				.targetProperties( new HashMap<String,String>( 0 ));
-
-		SSHClient ssh = Mockito.mock( SSHClient.class );
-		SCPFileTransfer scp = Mockito.mock( SCPFileTransfer.class );
-		Mockito.when( ssh.newSCPFileTransfer()).thenReturn( scp );
-
-		// Invoke the method
-		EmbeddedHandler target = new EmbeddedHandler();
-		target.setConfiguration( parameters, ssh, tmpDir );
-
-		// Verify the properties were correctly updated in the file
-		Properties readProps = Utils.readPropertiesFile( agentConfigurationFile );
-		Assert.assertEquals( "file:" + DEFAULT_SCP_AGENT_CONFIG_DIR + "/" + USER_DATA_FILE, readProps.get( AGENT_PARAMETERS ));
-		Assert.assertEquals( "", readProps.get( AGENT_APPLICATION_NAME ));
-		Assert.assertEquals( "c2", readProps.get( "a2" ));
-		Assert.assertEquals( "", readProps.get( AGENT_SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "c4", readProps.get( "a4" ));
-		Assert.assertEquals( "", readProps.get( AGENT_DOMAIN ));
-		Assert.assertEquals( props.size(), readProps.size());
-
-		// We made two uploads for this method!
-		Mockito.verify( scp, Mockito.times( 2 )).upload(
-				Mockito.any( LocalSourceFile.class ),
-				Mockito.anyString());
 	}
 }

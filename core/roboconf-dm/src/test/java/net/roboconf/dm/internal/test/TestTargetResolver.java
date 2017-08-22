@@ -70,10 +70,7 @@ public class TestTargetResolver extends TargetHandlerResolverImpl {
 
 
 			@Override
-			public void configureMachine(
-					TargetHandlerParameters parameters,
-					String machineId,
-					Instance scopedInstance )
+			public void configureMachine( TargetHandlerParameters parameters, String machineId )
 			throws TargetException {
 				// nothing
 			}

@@ -28,9 +28,11 @@ package net.roboconf.target.embedded.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
@@ -45,7 +47,9 @@ public class ToRunByHandtoSetConfiguration {
 
 		EmbeddedHandler handler = new EmbeddedHandler();
 		TargetHandlerParameters parameters = parameters( getkeyFile());
-		handler.configureRemoteAgent( getIp(), parameters, false );
+		ConfiguratorOnCreation configurator = new ConfiguratorOnCreation( parameters, getIp(), "whatever", handler );
+		Assert.assertTrue( configurator.configure());
+		configurator.close();
 	}
 
 
@@ -79,10 +83,11 @@ public class ToRunByHandtoSetConfiguration {
 		parameters.setDomain("test-domain");
 		parameters.setApplicationName("test-application");
 		parameters.setScopedInstancePath("/test/instance");
+		parameters.setScopedInstance( new Instance());
 
 		Map<String, String> targetProperties = new HashMap<>();
-		targetProperties.put(EmbeddedHandler.SCP_KEYFILE, keyFile);
-		parameters.setTargetProperties(targetProperties);
+		targetProperties.put( EmbeddedHandler.SCP_KEYFILE, keyFile );
+		parameters.setTargetProperties( targetProperties );
 
 		return parameters;
 	}

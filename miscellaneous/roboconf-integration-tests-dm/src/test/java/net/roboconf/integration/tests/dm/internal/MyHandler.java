@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.agent.internal.Agent;
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.target.api.TargetException;
@@ -75,7 +74,7 @@ public class MyHandler implements TargetHandler {
 
 
 	@Override
-	public void configureMachine( TargetHandlerParameters parameters, String machineId,	Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		// nothing
 	}

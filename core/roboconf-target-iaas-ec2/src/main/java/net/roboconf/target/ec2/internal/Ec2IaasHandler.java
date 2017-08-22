@@ -49,7 +49,6 @@ import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
@@ -134,10 +133,10 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId ) {
 
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
 		return new Ec2MachineConfigurator(
@@ -145,7 +144,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 				machineId,
 				parameters.getApplicationName(),
 				rootInstanceName,
-				scopedInstance );
+				parameters.getScopedInstance());
 	}
 
 

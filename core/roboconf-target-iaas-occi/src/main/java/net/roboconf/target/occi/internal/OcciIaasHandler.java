@@ -31,7 +31,6 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
@@ -121,13 +120,10 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator(
-			TargetHandlerParameters parameters,
-			String machineId,
-			Instance scopedInstance )
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		try {
@@ -138,7 +134,12 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 						parameters.getScopedInstancePath());
 
 			String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
-			return new OcciMachineConfigurator( machineId, parameters.getTargetProperties(), userData, rootInstanceName, scopedInstance );
+			return new OcciMachineConfigurator(
+					machineId,
+					parameters.getTargetProperties(),
+					userData,
+					rootInstanceName,
+					parameters.getScopedInstance());
 
 		} catch( IOException e ) {
 			throw new TargetException( e );

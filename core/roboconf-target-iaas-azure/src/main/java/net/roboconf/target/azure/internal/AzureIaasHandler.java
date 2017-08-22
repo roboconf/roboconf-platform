@@ -60,7 +60,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
@@ -182,10 +181,10 @@ public class AzureIaasHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
 	}

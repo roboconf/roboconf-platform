@@ -28,6 +28,8 @@ package net.roboconf.target.api;
 import java.io.File;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Instance;
+
 /**
  * A bean to wrap the many parameters necessary to create or configure a machine.
  * @author Vincent Zurczak - Linagora
@@ -37,6 +39,7 @@ public class TargetHandlerParameters {
 	private Map<String,String> targetProperties;
 	private Map<String,String> messagingProperties;
 	private String scopedInstancePath, applicationName, domain;
+	private Instance scopedInstance;
 	private File targetConfigurationScript, targetPropertiesDirectory;
 
 
@@ -79,6 +82,20 @@ public class TargetHandlerParameters {
 
 	public TargetHandlerParameters scopedInstancePath( String scopedInstancePath ) {
 		this.scopedInstancePath = scopedInstancePath;
+		return this;
+	}
+
+
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
+	}
+
+	public void setScopedInstance( Instance scopedInstance ) {
+		this.scopedInstance = scopedInstance;
+	}
+
+	public TargetHandlerParameters scopedInstance( Instance scopedInstance ) {
+		this.scopedInstance = scopedInstance;
 		return this;
 	}
 
