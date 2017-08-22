@@ -86,6 +86,7 @@ public class ToRunByHandDockerImageGenerationTest {
 		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
 		parameters.setApplicationName( "applicationName" );
 		parameters.setScopedInstancePath( "/vm" );
+		parameters.setScopedInstance( new Instance());
 		parameters.setTargetPropertiesDirectory( baseDir );
 
 		File tmpFolder = this.folder.newFolder();
@@ -93,7 +94,6 @@ public class ToRunByHandDockerImageGenerationTest {
 		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
 				parameters,
 				"machineId",
-				new Instance(),
 				tmpFolder,
 				containerIdToVolume );
 

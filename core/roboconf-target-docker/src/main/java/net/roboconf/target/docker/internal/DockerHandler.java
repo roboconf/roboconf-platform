@@ -37,7 +37,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Container;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -122,17 +121,16 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId ) {
 
 		// machineId does not match a real container ID.
 		// It is the name of the container we will create.
 		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
 				parameters,
 				machineId,
-				scopedInstance,
 				this.userDataVolume,
 				this.containerIdToVolume );
 

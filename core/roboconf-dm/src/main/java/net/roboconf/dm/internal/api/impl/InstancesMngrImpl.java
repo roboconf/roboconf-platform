@@ -491,7 +491,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			// If the configuration fails, we do not want to mark it as not deployed.
 			// And we want to keep the machine ID.
 			try {
-				targetHandler.configureMachine( parameters, machineId, scopedInstance );
+				targetHandler.configureMachine( parameters, machineId );
 
 			} catch( Exception e ) {
 				this.logger.severe( "Configuration for scoped instance '" + path + "' failed in " + ma.getName() + ". " + e.getMessage());
@@ -619,6 +619,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				.targetProperties( targetProperties.asMap())
 				.messagingProperties( messagingConfiguration )
 				.scopedInstancePath( scopedInstancePath )
+				.scopedInstance( scopedInstance )
 				.applicationName( ma.getName())
 				.domain( this.dmDomain )
 				.targetConfigurationScript( localExecutionScript );

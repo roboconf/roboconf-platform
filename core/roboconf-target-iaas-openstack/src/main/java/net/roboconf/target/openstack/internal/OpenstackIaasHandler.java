@@ -53,7 +53,6 @@ import org.jclouds.openstack.v2_0.domain.Resource;
 
 import com.google.common.base.Predicate;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.userdata.UserDataHelpers;
 import net.roboconf.core.utils.Utils;
@@ -232,11 +231,15 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance  ) {
-		return new OpenstackMachineConfigurator( parameters.getTargetProperties(), machineId, parameters.getApplicationName(), scopedInstance );
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId ) {
+		return new OpenstackMachineConfigurator(
+				parameters.getTargetProperties(),
+				machineId,
+				parameters.getApplicationName(),
+				parameters.getScopedInstance());
 	}
 
 

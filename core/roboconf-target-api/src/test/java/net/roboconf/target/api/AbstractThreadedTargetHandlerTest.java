@@ -25,15 +25,15 @@
 
 package net.roboconf.target.api;
 
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.target.api.internal.TestAbstractThreadedTargetHandler;
+import net.roboconf.target.api.internal.TestMachineConfigurator;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,7 +44,6 @@ public class AbstractThreadedTargetHandlerTest {
 	public void testNormalExecution() throws Exception {
 
 		final TestAbstractThreadedTargetHandler th = new TestAbstractThreadedTargetHandler( false );
-		Map<?,?> configurators = TestUtils.getInternalField( th, "machineIdToConfigurators", Map.class );
 
 		// Schedule period is 1000 by default in AbstractThreadedTargetHandler.
 		// And it starts immediately. Here is a summary...
@@ -55,29 +54,29 @@ public class AbstractThreadedTargetHandlerTest {
 
 		Instance scopedInstance = new Instance( "test" );
 		try {
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 0, th.getCpt());
 			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
+			th.configureMachine( new TargetHandlerParameters().scopedInstance( scopedInstance ), "machine-id" );
 			Assert.assertEquals( 0, scopedInstance.data.size());
 			th.start();
 
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 0, th.getCpt());
 			Thread.sleep( 500 );
 
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 1, th.getCpt());
 			Thread.sleep( 1000 );
 
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 2, th.getCpt());
 			Thread.sleep( 1000 );
 
 			Assert.assertEquals( 3, th.getCpt());
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 
 		} finally {
 			th.stop();
@@ -91,7 +90,6 @@ public class AbstractThreadedTargetHandlerTest {
 	public void test_withExceptionInConfigure() throws Exception {
 
 		final TestAbstractThreadedTargetHandler th = new TestAbstractThreadedTargetHandler( true );
-		Map<?,?> configurators = TestUtils.getInternalField( th, "machineIdToConfigurators", Map.class );
 
 		// Schedule period is 1000 by default in AbstractThreadedTargetHandler.
 		// And it starts immediately. Here is a summary...
@@ -102,24 +100,24 @@ public class AbstractThreadedTargetHandlerTest {
 
 		Instance scopedInstance = new Instance( "test" );
 		try {
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 0, th.getCpt());
 			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
+			th.configureMachine( new TargetHandlerParameters().scopedInstance( scopedInstance ), "machine-id" );
 			th.start();
 
 			Assert.assertEquals( 0, th.getCpt());
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Thread.sleep( 500 );
 
 			Assert.assertEquals( 1, th.getCpt());
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Thread.sleep( 1000 );
 
 			Assert.assertEquals( 1, th.getCpt());
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 
 		} finally {
 			th.stop();
@@ -136,28 +134,26 @@ public class AbstractThreadedTargetHandlerTest {
 		// When the exception is thrown, the instance's state should be changed to PROBLEM.
 
 		final TestAbstractThreadedTargetHandler th = new TestAbstractThreadedTargetHandler( true );
-		Map<?,?> configurators = TestUtils.getInternalField( th, "machineIdToConfigurators", Map.class );
-
 		Instance scopedInstance = new Instance( "test" ).status( InstanceStatus.DEPLOYING );
 		try {
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 0, th.getCpt());
 			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
+			th.configureMachine( new TargetHandlerParameters().scopedInstance( scopedInstance ), "machine-id" );
 			th.start();
 
 			Assert.assertEquals( 0, th.getCpt());
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Thread.sleep( 500 );
 
 			Assert.assertEquals( 1, th.getCpt());
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Thread.sleep( 1000 );
 
 			Assert.assertEquals( 1, th.getCpt());
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 
 		} finally {
 			th.stop();
@@ -179,7 +175,6 @@ public class AbstractThreadedTargetHandlerTest {
 	public void testNormalExecution_withCancellation() throws Exception {
 
 		final TestAbstractThreadedTargetHandler th = new TestAbstractThreadedTargetHandler( false );
-		Map<?,?> configurators = TestUtils.getInternalField( th, "machineIdToConfigurators", Map.class );
 
 		// Schedule period is 1000 by default in AbstractThreadedTargetHandler.
 		// And it starts immediately. Here is a summary...
@@ -190,15 +185,15 @@ public class AbstractThreadedTargetHandlerTest {
 
 		Instance scopedInstance = new Instance( "test" );
 		try {
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 0, th.getCpt());
 			Assert.assertEquals( 0, scopedInstance.data.size());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( new TargetHandlerParameters(), "machine-id", scopedInstance );
+			th.configureMachine( new TargetHandlerParameters(), "machine-id" );
 			th.start();
 
-			Assert.assertEquals( 1, configurators.size());
+			Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 			Assert.assertEquals( 0, th.getCpt());
 			Thread.sleep( 500 );
 
@@ -207,11 +202,31 @@ public class AbstractThreadedTargetHandlerTest {
 			th.cancelMachineConfigurator( "unknown-id" );
 
 			Thread.sleep( 2000 );
-			Assert.assertEquals( 0, configurators.size());
+			Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
 
 		} finally {
 			th.stop();
 			Assert.assertEquals( 0, scopedInstance.data.size());
 		}
+	}
+
+
+	@Test
+	public void testSubmitMachineConfigurator_null() {
+
+		final TestAbstractThreadedTargetHandler th = new TestAbstractThreadedTargetHandler( false );
+		Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
+		th.submitMachineConfiguratorUseWithCaution( "id", null );
+		Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
+	}
+
+
+	@Test
+	public void testSubmitMachineConfigurator_nonNull() {
+
+		final TestAbstractThreadedTargetHandler th = new TestAbstractThreadedTargetHandler( false );
+		Assert.assertEquals( 0, th.getMachineIdToConfigurators().size());
+		th.submitMachineConfiguratorUseWithCaution( "id", new TestMachineConfigurator( new AtomicInteger(), false, new Instance()));
+		Assert.assertEquals( 1, th.getMachineIdToConfigurators().size());
 	}
 }

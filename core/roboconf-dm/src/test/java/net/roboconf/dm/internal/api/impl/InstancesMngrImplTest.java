@@ -778,8 +778,7 @@ public class InstancesMngrImplTest {
 		Mockito.when( targetHandler.createMachine( Mockito.any( TargetHandlerParameters.class ))).thenReturn( "this-id" );
 		Mockito.doThrow( new TargetException( "for test" )).when( targetHandler ).configureMachine(
 				Mockito.any( TargetHandlerParameters.class ),
-				Mockito.anyString(),
-				Mockito.any( Instance.class ));
+				Mockito.anyString());
 
 		ITargetHandlerResolver targetHandlerResolver = Mockito.mock( ITargetHandlerResolver.class );
 		Mockito.when( targetHandlerResolver.findTargetHandler( Mockito.anyMapOf( String.class, String.class ))).thenReturn( targetHandler );

@@ -248,16 +248,16 @@ public class InMemoryHandlerWithoutManagerTest {
 	@Test
 	public void testConfigureAndIsRunning() throws Exception {
 
+		Instance scopedInstance = new Instance();
 		TargetHandlerParameters parameters = new TargetHandlerParameters()
 				.messagingProperties( this.msgCfg )
 				.scopedInstancePath( "vm" )
+				.scopedInstance( scopedInstance )
 				.applicationName( "my app" )
 				.domain( "domain" );
 
-		Instance scopedInstance = new Instance();
 		Assert.assertEquals( 0, scopedInstance.data.size());
-
-		this.target.configureMachine( parameters, null, scopedInstance );
+		this.target.configureMachine( parameters, null );
 		Assert.assertTrue( scopedInstance.data.containsKey( Instance.READY_FOR_CFG_MARKER ));
 		Assert.assertFalse( this.target.isMachineRunning( new TargetHandlerParameters(), "whatever, there is no iPojo factory" ));
 	}

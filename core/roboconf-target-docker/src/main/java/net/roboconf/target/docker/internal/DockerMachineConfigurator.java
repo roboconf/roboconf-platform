@@ -72,7 +72,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	static final String USER_DATA_FILE = "parameters.properties";
 
 	private final TargetHandlerParameters parameters;
-	private final Instance scopedInstance;
 	private final String machineId;
 
 	private final File userDataVolume;
@@ -83,20 +82,17 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * Constructor.
 	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
-	 * @param scopedInstance the scoped instance
 	 * @param userDataVolume the directory into which user data volume should be created
 	 * @param containerIdToVolume a map to associate container IDs with user data directories
 	 */
 	public DockerMachineConfigurator(
 			TargetHandlerParameters parameters,
 			String machineId,
-			Instance scopedInstance,
 			File userDataVolume,
 			Map<String,File> containerIdToVolume ) {
 
 		this.parameters = parameters;
 		this.machineId = machineId;
-		this.scopedInstance = scopedInstance;
 
 		this.userDataVolume = userDataVolume;
 		this.containerIdToVolume = containerIdToVolume;
@@ -113,7 +109,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 	@Override
 	public Instance getScopedInstance() {
-		return this.scopedInstance;
+		return this.parameters.getScopedInstance();
 	}
 
 
@@ -248,7 +244,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 			// We replace the machine ID in the instance.
 			// The configurator will be stopped anyway.
-			this.scopedInstance.data.put( Instance.MACHINE_ID, container.getId());
+			this.parameters.getScopedInstance().data.put( Instance.MACHINE_ID, container.getId());
 
 		} catch( Exception e ) {
 			throw new TargetException( e );

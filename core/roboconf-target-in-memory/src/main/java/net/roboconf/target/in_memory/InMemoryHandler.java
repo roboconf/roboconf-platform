@@ -142,14 +142,14 @@ public class InMemoryHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler#configureMachine(
-	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String)
 	 */
 	@Override
-	public void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 
 		// It may require to be configured from the DM => add the right marker
-		scopedInstance.data.put( Instance.READY_FOR_CFG_MARKER, "true" );
+		parameters.getScopedInstance().data.put( Instance.READY_FOR_CFG_MARKER, "true" );
 		this.logger.fine( "Configuring machine '" + machineId + "'..." );
 	}
 

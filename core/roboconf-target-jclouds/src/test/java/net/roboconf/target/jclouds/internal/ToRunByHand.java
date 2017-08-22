@@ -75,6 +75,7 @@ public class ToRunByHand {
 				.targetProperties( conf )
 				.messagingProperties( msgCfg )
 				.scopedInstancePath( "root" )
+				.scopedInstance( new Instance( "root" ))
 				.applicationName( "app" )
 				.domain( "domain" );
 
@@ -82,7 +83,7 @@ public class ToRunByHand {
 		String serverId = null;
 		try {
 			serverId = target.createMachine( parameters );
-			target.configureMachine( parameters, serverId, new Instance( "root" ));
+			target.configureMachine( parameters, serverId );
 
 			// 1 minute
 			Thread.sleep( 60000 );

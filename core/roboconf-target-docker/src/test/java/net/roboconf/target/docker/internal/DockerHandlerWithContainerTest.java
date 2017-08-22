@@ -232,7 +232,8 @@ public class DockerHandlerWithContainerTest {
 				.messagingProperties( msgCfg )
 				.applicationName( "roboconf" )
 				.domain( "my-domain" )
-				.scopedInstancePath( path );
+				.scopedInstancePath( path )
+				.scopedInstance( scopedInstance );
 
 		String containerId = null;
 		try {
@@ -244,7 +245,7 @@ public class DockerHandlerWithContainerTest {
 			// DockerMachineConfigurator is implemented in such a way that it runs only
 			// once when the image already exists. However, we must wait for the thread pool
 			// executor to pick up the configurator.
-			target.configureMachine( parameters, containerId, scopedInstance );
+			target.configureMachine( parameters, containerId );
 
 			// Be careful, the Docker target changes the machine ID
 			containerId = DockerTestUtils.waitForMachineId(

@@ -25,6 +25,7 @@
 
 package net.roboconf.target.embedded.internal;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -42,6 +43,8 @@ public class ToRunByHandToEraseConfiguration extends ToRunByHandtoSetConfigurati
 
 		EmbeddedHandler handler = new EmbeddedHandler();
 		TargetHandlerParameters parameters = parameters( getkeyFile());
-		handler.configureRemoteAgent( getIp(), parameters, true );
+		ConfiguratorOnTermination configurator = new ConfiguratorOnTermination( parameters, getIp(), "whatever", handler );
+		Assert.assertTrue( configurator.configure());
+		configurator.close();
 	}
 }

@@ -27,7 +27,6 @@ package net.roboconf.dm.internal.test;
 
 import java.util.Objects;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 import net.roboconf.target.api.TargetHandlerParameters;
@@ -64,10 +63,7 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public void configureMachine(
-			TargetHandlerParameters parameters,
-			String machineId,
-			Instance scopedInstance )
+	public void configureMachine( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
 		// nothing
 	}

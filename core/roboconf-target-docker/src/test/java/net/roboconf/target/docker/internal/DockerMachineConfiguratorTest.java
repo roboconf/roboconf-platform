@@ -84,12 +84,12 @@ public class DockerMachineConfiguratorTest {
 		parameters.setMessagingProperties( new HashMap<String,String>( 0 ));
 		parameters.setApplicationName( "applicationName" );
 		parameters.setScopedInstancePath( "/vm" );
+		parameters.setScopedInstance( new Instance());
 
 		this.containerIdToVolume = new HashMap<> ();
 		this.configurator = new DockerMachineConfigurator(
 				parameters,
 				"machineId",
-				new Instance(),
 				this.folder.newFolder(),
 				this.containerIdToVolume );
 
