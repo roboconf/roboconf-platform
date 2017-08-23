@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -102,17 +103,24 @@ public final class ProjectUtils {
 	/**
 	 * Creates the recipes directories for a Roboconf components.
 	 * @param applicationDirectory the application directory
+	 * @return a non-null list of the created directories
 	 * @throws IOException if something went wrong
 	 */
-	public static void createRecipeDirectories( File applicationDirectory ) throws IOException {
+	public static List<File> createRecipeDirectories( File applicationDirectory ) throws IOException {
 
+		List<File> result = new ArrayList<> ();
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( applicationDirectory );
 		if( alr.getApplicationTemplate() != null ) {
 			for( Component c : ComponentHelpers.findAllComponents( alr.getApplicationTemplate())) {
 				File directory = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, c );
+				if( ! directory.exists())
+					result.add( directory );
+
 				Utils.createDirectory( directory );
 			}
 		}
+
+		return result;
 	}
 
 
