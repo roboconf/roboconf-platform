@@ -220,15 +220,17 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, it.next().getErrorCode());
 		Assert.assertFalse( it.hasNext());
 
-		ProjectUtils.createRecipeDirectories( dir );
+		List<File> createdDirectories = ProjectUtils.createRecipeDirectories( dir );
 		alr = RuntimeModelIo.loadApplication( dir );
 		Assert.assertEquals( 1, alr.getLoadErrors().size());
 		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, alr.getLoadErrors().iterator().next().getErrorCode());
+		Assert.assertEquals( 2, createdDirectories.size());
 
 		// The method should be idem-potent
-		ProjectUtils.createRecipeDirectories( dir );
+		createdDirectories = ProjectUtils.createRecipeDirectories( dir );
 		alr = RuntimeModelIo.loadApplication( dir );
 		Assert.assertEquals( 1, alr.getLoadErrors().size());
 		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_VERSION, alr.getLoadErrors().iterator().next().getErrorCode());
+		Assert.assertEquals( 0, createdDirectories.size());
 	}
 }
