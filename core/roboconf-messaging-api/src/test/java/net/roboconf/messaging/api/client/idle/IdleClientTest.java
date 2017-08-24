@@ -23,38 +23,44 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.idle;
-
-import java.util.HashMap;
+package net.roboconf.messaging.api.client.idle;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.idle.IdleClient;
-import net.roboconf.messaging.api.client.idle.IdleClientFactory;
-import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class IdleClientFactoryTest {
+public class IdleClientTest {
 
 	@Test
-	public void testBasics() {
+	public void testClientMethods() throws Exception {
 
-		IdleClientFactory factory = new IdleClientFactory();
-		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, factory.getType());
-		Assert.assertFalse( factory.setConfiguration( new HashMap<String,String>( 0 )));
+		IdleClient client = new IdleClient();
 
-		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
-		IMessagingClient client = factory.createClient( parentDm );
-		Assert.assertEquals( IdleClient.class, client.getClass());
+		// Basic checks
+		Assert.assertFalse( client.isConnected());
+		client.openConnection();
+		Assert.assertTrue( client.isConnected());
+		client.closeConnection();
+		Assert.assertFalse( client.isConnected());
 
-		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
-		client = factory.createClient( parentAgent );
-		Assert.assertEquals( IdleClient.class, client.getClass());
+		Assert.assertNotNull( client.getMessagingType());
+		Assert.assertNotNull( client.getConfiguration());
+
+		Assert.assertEquals( 1, client.getConfiguration().size());
+		Assert.assertEquals(
+				MessagingConstants.FACTORY_IDLE,
+				client.getConfiguration().get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
+
+		// Not checkable
+		client.deleteMessagingServerArtifacts( null );
+		client.publish( null, null );
+		client.subscribe( null );
+		client.unsubscribe( null );
+		client.setMessageQueue( null );
+		client.setOwnerProperties( null, null, null, null );
 	}
 }

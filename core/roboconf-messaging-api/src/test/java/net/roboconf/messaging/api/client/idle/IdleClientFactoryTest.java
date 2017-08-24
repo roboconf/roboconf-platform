@@ -23,39 +23,36 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.idle;
+package net.roboconf.messaging.api.client.idle;
+
+import java.util.HashMap;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.messaging.api.client.idle.IdleClient;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class IdleClientTest {
+public class IdleClientFactoryTest {
 
 	@Test
-	public void testClientMethods() throws Exception {
+	public void testBasics() {
 
-		IdleClient client = new IdleClient();
+		IdleClientFactory factory = new IdleClientFactory();
+		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, factory.getType());
+		Assert.assertFalse( factory.setConfiguration( new HashMap<String,String>( 0 )));
 
-		// Basic checks
-		Assert.assertFalse( client.isConnected());
-		client.openConnection();
-		Assert.assertTrue( client.isConnected());
-		client.closeConnection();
-		Assert.assertFalse( client.isConnected());
+		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
+		IMessagingClient client = factory.createClient( parentDm );
+		Assert.assertEquals( IdleClient.class, client.getClass());
 
-		Assert.assertNotNull( client.getMessagingType());
-		Assert.assertNotNull( client.getConfiguration());
-
-		// Not checkable
-		client.deleteMessagingServerArtifacts( null );
-		client.publish( null, null );
-		client.subscribe( null );
-		client.unsubscribe( null );
-		client.setMessageQueue( null );
-		client.setOwnerProperties( null, null, null, null );
+		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
+		client = factory.createClient( parentAgent );
+		Assert.assertEquals( IdleClient.class, client.getClass());
 	}
 }

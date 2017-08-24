@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.jmx.RoboconfMessageQueue;
 import net.roboconf.messaging.api.messages.Message;
@@ -85,7 +86,10 @@ public interface IMessagingClient {
 	 * Gets the provider-specific messaging configuration of this client.
 	 * <p>
 	 * Messaging configuration is needed in order to configure a Roboconf VM, for instance when it is replicated.
+	 * This map <strong>must contain</strong> the {@link MessagingConstants#MESSAGING_TYPE_PROPERTY} key
+	 * that tells which kind of messaging client is used.
 	 * </p>
+	 *
 	 * @return the provider-specific messaging configuration of this client. The returned map is unmodifiable.
 	 */
 	// TODO: /!\ they may be differences between DM & agents messaging configurations (i.e HTTP server/client certificate, passwords, ...).
