@@ -26,11 +26,13 @@
 package net.roboconf.messaging.api.client.idle;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
@@ -77,7 +79,9 @@ public class IdleClient implements IMessagingClient {
 
 	@Override
 	public Map<String,String> getConfiguration() {
-		return new HashMap<>( 0 );
+		Map<String,String> configuration = new HashMap<>( 1 );
+		configuration.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_IDLE );
+		return Collections.unmodifiableMap( configuration );
 	}
 
 	@Override
