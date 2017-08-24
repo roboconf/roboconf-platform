@@ -36,7 +36,7 @@
 
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-platform-parent</artifactId>
-	<version>0.9-SNAPSHOT</version>
+	<version>0.9</version>
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
@@ -245,9 +245,7 @@
 											<available file="${basedir}/src/main/resources/OSGI-INF/bundle.info" />
 										</or>
 									</condition>
-									<fail 
-										message="Bundle ${project.name} is missing a « bundle.info » file under « src/main/resources/OSGI-INF »."
-										unless="isDocumentedBundle" />
+									<fail message="Bundle ${project.name} is missing a « bundle.info » file under « src/main/resources/OSGI-INF »." unless="isDocumentedBundle" />
 								</target>	
 							</configuration>
 							<goals>
@@ -473,7 +471,7 @@
 		<connection>scm:git:git@github.com:roboconf/roboconf-platform.git</connection>
 		<developerConnection>scm:git:git@github.com:roboconf/roboconf-platform.git</developerConnection>
 		<url>http://github.com/roboconf/roboconf-platform</url>
-		<tag>HEAD</tag>
+		<tag>roboconf-platform-parent-0.9</tag>
 	</scm>
 
 </project>
