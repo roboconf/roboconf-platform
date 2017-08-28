@@ -388,14 +388,21 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 			else if( AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase( this.parameters ))
 				props = this.userDataHelper.findParametersForVmware( this.logger );
 
+			else if( Constants.AGENT_RESET.equalsIgnoreCase( this.parameters ))
+				props = new AgentProperties();
+
 			else
 				props = this.userDataHelper.findParametersFromUrl( this.parameters, this.logger );
 
 			// If there was a configuration...
 			if( props != null ) {
-				String errorMessage = props.validate();
-				if( errorMessage != null )
+
+				// Error messages do not matter when we reset an agent
+				String errorMessage = null;
+				if( ! Constants.AGENT_RESET.equalsIgnoreCase( this.parameters )
+						&& (errorMessage = props.validate()) != null ) {
 					this.logger.severe( "An error was found in user data. " + errorMessage );
+				}
 
 				this.applicationName = props.getApplicationName();
 				this.domain = props.getDomain();

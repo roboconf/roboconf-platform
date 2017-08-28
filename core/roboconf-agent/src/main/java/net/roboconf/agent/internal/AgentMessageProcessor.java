@@ -269,6 +269,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 */
 	private void reset() {
 
+		// Log something
+		this.logger.info( "Resetting the agent..." );
+
 		// Clear all the messages that were waiting to be processed
 		getMessageQueue().clear();
 
@@ -306,7 +309,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		Map<String,String> keyToNewValue = new HashMap<> ();
 		keyToNewValue.put( "application-name", "" );
 		keyToNewValue.put( "scoped-instance-path", "" );
-		keyToNewValue.put( "domain", "" );
+		keyToNewValue.put( "domain", Constants.DEFAULT_DOMAIN );
 		keyToNewValue.put( "parameters", "" );
 		keyToNewValue.put( Constants.MESSAGING_TYPE, MessagingConstants.FACTORY_IDLE );
 
@@ -329,6 +332,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		 * User data will not be reloaded since we set the parameters to "".
 		 * That prevents infinite loops (!).
 		 */
+
+		this.logger.info( "Resetting the agent has just completed." );
 	}
 
 

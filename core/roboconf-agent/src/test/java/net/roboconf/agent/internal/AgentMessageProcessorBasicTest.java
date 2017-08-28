@@ -782,7 +782,7 @@ public class AgentMessageProcessorBasicTest {
 		props = Utils.readPropertiesFile( agentConfigFile );
 		Assert.assertEquals( "", props.get( "application-name" ));
 		Assert.assertEquals( "", props.get( "scoped-instance-path" ));
-		Assert.assertEquals( "", props.get( "domain" ));
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, props.get( "domain" ));
 		Assert.assertEquals( "", props.get( "parameters" ));
 		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, props.get( Constants.MESSAGING_TYPE ));
 
