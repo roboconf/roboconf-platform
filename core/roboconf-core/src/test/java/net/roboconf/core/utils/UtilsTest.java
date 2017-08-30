@@ -296,6 +296,14 @@ public class UtilsTest {
 
 
 	@Test
+	public void testReadFileContentQuietly_nullFile() throws Exception {
+
+		String readS = Utils.readFileContentQuietly( null, Logger.getLogger( getClass().getName()));
+		Assert.assertEquals( "", readS );
+	}
+
+
+	@Test
 	public void testIsEmptyOrWhitespaces() {
 
 		Assert.assertTrue( Utils.isEmptyOrWhitespaces( null ));
@@ -1012,6 +1020,10 @@ public class UtilsTest {
 
 		// Inexisting file
 		props = Utils.readPropertiesFileQuietly( new File( "inexisting" ), logger );
+		Assert.assertEquals( 0, props.size());
+
+		// Null file
+		props = Utils.readPropertiesFileQuietly( null, logger );
 		Assert.assertEquals( 0, props.size());
 	}
 
