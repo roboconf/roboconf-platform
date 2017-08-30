@@ -43,8 +43,11 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	public static final String TARGET_ID = "embedded";
 	public static final String IP_ADDRESSES = "embedded.ip";
 	public static final String SCP_USER = "scp.user";
-	public static final String SCP_KEYFILE = "scp.keyfile";
+	public static final String SCP_KEY_FILE = "scp.keyfile";
+	public static final String SCP_KNOWN_HOSTS_FILE = "scp.known.hosts.file";
 	public static final String SCP_AGENT_CONFIG_DIR = "scp.agent.configdir";
+	public static final String SCP_HOST_KEY_PREFIX = "hostkey.";
+	public static final String SCP_DISABLE_HOST_VALIDATION = "scp.disable.host.validation";
 
 	static final String DEFAULT_SCP_AGENT_CONFIG_DIR = "/etc/roboconf-agent";
 	static final String USER_DATA_FILE = "roboconf-agent-parameters.properties";

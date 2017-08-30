@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import net.roboconf.core.model.beans.Instance;
@@ -39,7 +38,7 @@ import net.roboconf.target.api.TargetHandlerParameters;
  * Create/get a server by hand, install a Roboconf agent and let's run!
  * @author Pierre-Yves Gibello - Linagora
  */
-@Ignore
+//@Ignore
 public class ToRunByHandtoSetConfiguration {
 
 	@Test
@@ -86,7 +85,7 @@ public class ToRunByHandtoSetConfiguration {
 		parameters.setScopedInstance( new Instance());
 
 		Map<String, String> targetProperties = new HashMap<>();
-		targetProperties.put( EmbeddedHandler.SCP_KEYFILE, keyFile );
+		targetProperties.put( EmbeddedHandler.SCP_KEY_FILE, keyFile );
 		parameters.setTargetProperties( targetProperties );
 
 		return parameters;

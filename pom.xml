@@ -54,6 +54,7 @@
 		<pax.exam.version>4.9.1</pax.exam.version>
 		<pax.url.aether.version>2.4.5</pax.url.aether.version>
 		<pax.jdbc.version>1.1.0</pax.jdbc.version>
+		<bouncy.castle.version>1.56</bouncy.castle.version>
 		
 		<!-- To update on every release -->
 		<version.range>[${project.version},0.10)</version.range>
@@ -111,6 +112,18 @@
 				<groupId>org.ops4j.pax.url</groupId>
 				<artifactId>pax-url-aether</artifactId>
 				<version>2.4.7</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcpkix-jdk15on</artifactId>
+				<version>${bouncy.castle.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk15on</artifactId>
+				<version>${bouncy.castle.version}</version>
 			</dependency>
 
 			<dependency>
