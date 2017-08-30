@@ -54,9 +54,10 @@ public class HeartbeatTask extends TimerTask {
 	@Override
 	public void run() {
 
-		// "John Doe" agent? Do not send anything.
+		// "John Doe" agent? Or soon? Do not send anything.
 		if( Utils.isEmptyOrWhitespaces( this.agent.getApplicationName())
-				|| Utils.isEmptyOrWhitespaces( this.agent.getScopedInstancePath()))
+				|| Utils.isEmptyOrWhitespaces( this.agent.getScopedInstancePath())
+				|| this.agent.resetInProgress.get())
 			return;
 
 		// Prepare the message to send

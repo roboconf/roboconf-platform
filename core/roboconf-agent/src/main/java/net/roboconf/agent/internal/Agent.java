@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
@@ -76,6 +77,9 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	String karafEtc = System.getProperty( Constants.KARAF_ETC );
 	String karafData = System.getProperty( Constants.KARAF_DATA );
 	UserDataHelper userDataHelper = new UserDataHelper();
+
+	// Global status
+	public final AtomicBoolean resetInProgress = new AtomicBoolean( false );
 
 
 
@@ -563,7 +567,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		StringBuilder sb = new StringBuilder();
 		sb.append( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ) ? "?" : this.scopedInstancePath );
 		if( ! Utils.isEmptyOrWhitespaces( this.applicationName ))
-			sb.append(" @ ").append(this.applicationName);
+			sb.append(" @ ").append( this.applicationName );
 
 		return sb.toString();
 	}

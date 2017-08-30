@@ -65,6 +65,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImpo
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
@@ -271,8 +272,10 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 		// Log something
 		this.logger.info( "Resetting the agent..." );
+		this.agent.resetInProgress.set( true );
 
 		// Clear all the messages that were waiting to be processed
+		// (best-effort mode: do what is easy first)
 		getMessageQueue().clear();
 
 		// Uninstall all the programs this agent was managing
@@ -298,12 +301,31 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			}
 		}
 
+		// Prepare a message indicating the machine is down
+		// (additional security in the case where a heart beat arrived)
+		MsgNotifMachineDown downMsg = new MsgNotifMachineDown(
+				this.agent.getApplicationName(),
+				this.agent.getScopedInstancePath());
+
 		// Reset the model
-		this.scopedInstance = null;
 		this.agent.setScopedInstance( null );
+		this.agent.setApplicationName( null );
+		this.agent.setScopedInstance( null );
+		this.agent.setScopedInstancePath( null );
+		this.agent.setDomain( Constants.DEFAULT_DOMAIN );
+
+		this.scopedInstance = null;
 		this.applicationBindings.clear();
 		this.applicationNameToExternalExports.clear();
 		this.reset = false;
+
+		// Send the message while we still have a message client
+		try {
+			this.messagingClient.sendMessageToTheDm( downMsg );
+
+		} catch( Exception e ) {
+			Utils.logException( this.logger, e );
+		}
 
 		// Update the agent's configuration files
 		Map<String,String> keyToNewValue = new HashMap<> ();
@@ -324,6 +346,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			Utils.logException( this.logger, e );
 		}
 
+		// Clear all the messages that were received while this method was executed
+		getMessageQueue().clear();
+
 		/*
 		 * By writing in the agent's configuration file,
 		 * we update all the values and indirectly invoke the
@@ -333,6 +358,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		 * That prevents infinite loops (!).
 		 */
 
+		this.agent.resetInProgress.set( false );
 		this.logger.info( "Resetting the agent has just completed." );
 	}
 
