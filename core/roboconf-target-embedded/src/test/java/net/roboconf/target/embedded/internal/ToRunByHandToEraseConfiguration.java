@@ -42,6 +42,8 @@ public class ToRunByHandToEraseConfiguration extends ToRunByHandtoSetConfigurati
 	public void toRunByHand() throws Exception {
 
 		EmbeddedHandler handler = new EmbeddedHandler();
+		handler.karafData = this.folder.newFolder().getAbsolutePath();
+
 		TargetHandlerParameters parameters = parameters( getkeyFile());
 		ConfiguratorOnTermination configurator = new ConfiguratorOnTermination( parameters, getIp(), "whatever", handler );
 		Assert.assertTrue( configurator.configure());
