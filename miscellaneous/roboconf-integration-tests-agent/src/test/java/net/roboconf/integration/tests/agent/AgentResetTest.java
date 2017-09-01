@@ -150,8 +150,8 @@ public class AgentResetTest extends AgentTest {
 
 		// Everything should have been reset
 		Assert.assertEquals( "", this.agent.getApplicationName());
-		Assert.assertEquals( "", this.agent.getDomain());
 		Assert.assertEquals( "", this.agent.getScopedInstancePath());
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, this.agent.getDomain());
 		Assert.assertEquals( 0, ((ReconfigurableClientAgent) this.agent.getMessagingClient()).getMessageProcessor().getMessageQueue().size());
 		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, this.agent.getMessagingClient().getMessagingType());
 		Assert.assertNull( this.agent.getScopedInstance());
@@ -160,7 +160,7 @@ public class AgentResetTest extends AgentTest {
 		Properties props = Utils.readPropertiesFile( agentConfigFile );
 		Assert.assertEquals( "", props.get( "parameters" ));
 		Assert.assertEquals( "", props.get( "application-name" ));
-		Assert.assertEquals( "", props.get( "domain" ));
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, props.get( "domain" ));
 		Assert.assertEquals( "", props.get( "scoped-instance-path" ));
 	}
 }
