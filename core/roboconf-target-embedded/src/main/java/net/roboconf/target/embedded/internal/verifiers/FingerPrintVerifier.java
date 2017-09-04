@@ -23,30 +23,37 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.embedded.internal;
+package net.roboconf.target.embedded.internal.verifiers;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import java.security.PublicKey;
+import java.util.Map;
+import java.util.Objects;
 
-import net.roboconf.target.api.TargetHandlerParameters;
+import net.roboconf.target.embedded.internal.EmbeddedHandler;
+import net.schmizz.sshj.common.SecurityUtils;
+import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 
 /**
- * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
-@Ignore
-public class ToRunByHandToEraseConfiguration extends ToRunByHandtoSetConfiguration {
+public class FingerPrintVerifier implements HostKeyVerifier {
+
+	private final Map<String,String> targetProperties;
+
+
+	/**
+	 * Constructor.
+	 * @param targetProperties
+	 */
+	public FingerPrintVerifier( Map<String,String> targetProperties ) {
+		this.targetProperties = targetProperties;
+	}
+
 
 	@Override
-	@Test
-	public void toRunByHand() throws Exception {
-
-		EmbeddedHandler handler = new EmbeddedHandler();
-		handler.karafData = this.folder.newFolder().getAbsolutePath();
-
-		TargetHandlerParameters parameters = parameters( getkeyFile());
-		ConfiguratorOnTermination configurator = new ConfiguratorOnTermination( parameters, getIp(), "whatever", handler );
-		Assert.assertTrue( configurator.configure());
-		configurator.close();
+	public boolean verify( String hostname, int port, PublicKey key ) {
+		String expectedFingerPrint = this.targetProperties.get( EmbeddedHandler.SCP_HOST_KEY_PREFIX + hostname );
+		String fingerPrint = SecurityUtils.getFingerprint( key );
+		return Objects.equals( expectedFingerPrint, fingerPrint );
 	}
 }

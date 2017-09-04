@@ -79,28 +79,46 @@
 		</dependency>
 		
 		<!-- 
-			Provided dependencies => Neither installed, nor referenced by Karaf.
+			Test dependencies => Neither installed, nor referenced by Karaf.
 		 	To generate the configuration file for the preferences.
 		-->
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-karaf-prepare</artifactId>
 			<version>${project.version}</version>
-			<scope>provided</scope>
+			<scope>test</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
 			<version>${project.version}</version>
-			<scope>provided</scope>
+			<scope>test</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-dm</artifactId>
 			<version>${project.version}</version>
-			<scope>provided</scope>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- 
+			Deal with Bouncy Castle as a security provider.
+			See Karaf's documentation about security providers (they must be put apart).
+			Required to authenticate SSH clients in Karaf.
+		 -->
+		
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<scope>test</scope>
 		</dependency>
 		
 	</dependencies>
@@ -147,6 +165,7 @@
 						<feature>wrap</feature>
 						<feature>ipojo-all</feature>
 						<feature>jersey-1.x</feature>
+						<feature>ssh4j-for-roboconf</feature>
 						<feature>roboconf-dm</feature>
 						<feature>webconsole</feature>
 						<feature>ipojo-webconsole</feature>
@@ -174,12 +193,15 @@
 				</configuration>
 			</plugin>
 
-			<!-- Generate the content of the "net.roboconf.dm.preferences" file -->
+			<!-- ANT stuff -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
+				
+					<!-- Generate the content of the "net.roboconf.dm.preferences" file -->
 					<execution>
+						<id>generate-roboconf-preferences</id>
 						<phase>compile</phase>
 						<configuration>
 							<failOnError>true</failOnError>
@@ -196,15 +218,68 @@
 								<pathconvert property="classpath_prop" refid="maven_classpath" />
 
 								<!-- Prepare and start the execution -->								
-								<property name="project_location" value="${project.basedir}" />
+								<property name="project_location" value="${project.build.directory}" />
 								<java classname="net.roboconf.karaf.prepare.GeneratePreferencesFile" classpath="${classpath_prop}" failonerror="true">
-									<arg value="${project_location}/target/assembly/etc/net.roboconf.dm.preferences.cfg" />
+									<arg value="${project_location}/assembly/etc/net.roboconf.dm.preferences.cfg" />
 								</java>
 							</target>	
 						</configuration>
 						<goals>
 							<goal>run</goal>
 						</goals>
+					</execution>
+
+					<!-- Register Bouncy Castle as a security provider (for the embedded target and other SSH use cases) -->
+					<execution>
+						<id>register-security-providers</id>
+						<phase>compile</phase>
+						<configuration>
+							<failOnError>true</failOnError>
+							<target>			
+								<property name="project_location" value="${project.build.directory}" />
+								
+								<!-- Keep this formatting (!!!) -->
+								<echo append="true" file="${project_location}/assembly/etc/config.properties">
+${line.separator}#
+# Register a security provider
+#
+org.apache.karaf.security.providers = org.bouncycastle.jce.provider.BouncyCastleProvider${line.separator}
+</echo>
+								
+								<!-- Keep this formatting (!!!) -->
+								<replace file="${project_location}/assembly/etc/config.properties">
+									<replacetoken><![CDATA[    org.apache.karaf.jaas.boot, \
+    org.apache.karaf.jaas.boot.principal]]></replacetoken>
+									<replacevalue><![CDATA[    org.apache.karaf.jaas.boot, \
+    org.apache.karaf.jaas.boot.principal, \
+    org.bouncycastle.*]]></replacevalue>
+								</replace>
+
+							</target>	
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					
+				</executions>
+			</plugin>
+			
+			<!-- Copy Bouncy Castle in the distribution -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<phase>compile</phase>
+						<configuration>
+							<includeGroupIds>org.bouncycastle</includeGroupIds>
+							<outputDirectory>${project.build.directory}/assembly/lib/ext</outputDirectory>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>

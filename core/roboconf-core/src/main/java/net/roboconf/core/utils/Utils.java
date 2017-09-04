@@ -452,7 +452,7 @@ public final class Utils {
 	 * If it fails, the default system encoding is used.
 	 * </p>
 	 *
-	 * @param file the file whose content must be loaded
+	 * @param file the file whose content must be loaded (can be null)
 	 * @param logger a logger (not null)
 	 * @return the file content or the empty string if an error occurred
 	 */
@@ -460,7 +460,7 @@ public final class Utils {
 
 		String result = "";
 		try {
-			if( file.exists())
+			if( file != null && file.exists())
 				result = readFileContent( file );
 
 		} catch( Exception e ) {
@@ -543,7 +543,7 @@ public final class Utils {
 
 	/**
 	 * Reads properties from a file but does not throw any error in case of problem.
-	 * @param file a properties file
+	 * @param file a properties file (can be null)
 	 * @param logger a logger (not null)
 	 * @return a {@link Properties} instance (never null)
 	 */
@@ -551,7 +551,7 @@ public final class Utils {
 
 		Properties result = new Properties();
 		try {
-			if( file.exists() )
+			if( file != null && file.exists())
 				result = readPropertiesFile( file );
 
 		} catch( Exception e ) {

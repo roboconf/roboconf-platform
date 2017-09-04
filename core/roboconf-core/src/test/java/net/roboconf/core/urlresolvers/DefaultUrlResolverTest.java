@@ -95,17 +95,27 @@ public class DefaultUrlResolverTest {
 		// Wait the thread to be started
 		latch.await();
 
-		// Wait the server to be accepting requests
-		Thread.sleep( 200 );
-
-		// Prepare our test
+		// Wait the server to be accepting requests.
+		// Make several attempts as Travis builds are sometimes slow.
 		DefaultUrlResolver resolver = new DefaultUrlResolver();
-		ResolvedFile resolvedFile = resolver.resolve( "http://localhost:" + portNumber );
+		ResolvedFile resolvedFile = null;
+		for( int i=0; i<5; i++ ) {
+
+			Thread.sleep( 200 );
+			try {
+				resolvedFile = resolver.resolve( "http://localhost:" + portNumber );
+				break;
+
+			} catch( Exception e ) {
+				// nothing
+			}
+		}
 
 		// Wait for the server to complete
 		t.join();
 
 		// Verify
+		Assert.assertNotNull( resolvedFile );
 		Assert.assertTrue( resolvedFile.getFile().exists());
 		Assert.assertEquals( content, Utils.readFileContent( resolvedFile.getFile()));
 		Assert.assertFalse( resolvedFile.existedBefore());

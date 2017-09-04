@@ -31,7 +31,9 @@ import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_PARAME
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.AGENT_SCOPED_INSTANCE_PATH;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.DEFAULT_SCP_AGENT_CONFIG_DIR;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.SCP_AGENT_CONFIG_DIR;
-import static net.roboconf.target.embedded.internal.EmbeddedHandler.SCP_KEYFILE;
+import static net.roboconf.target.embedded.internal.EmbeddedHandler.SCP_DISABLE_HOST_VALIDATION;
+import static net.roboconf.target.embedded.internal.EmbeddedHandler.SCP_KEY_FILE;
+import static net.roboconf.target.embedded.internal.EmbeddedHandler.SCP_KNOWN_HOSTS_FILE;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.SCP_USER;
 import static net.roboconf.target.embedded.internal.EmbeddedHandler.USER_DATA_FILE;
 
@@ -49,7 +51,10 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandlerParameters;
+import net.roboconf.target.embedded.internal.verifiers.FingerPrintVerifier;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.transport.verification.HostKeyVerifier;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.xfer.FileSystemFile;
 
 /**
@@ -129,7 +134,7 @@ public class ConfiguratorOnCreation implements MachineConfigurator {
 	 * @param parameters Target handler parameters (with user-data inside)
 	 * @throws IOException
 	 */
-	protected void configureRemoteAgent( String ip, TargetHandlerParameters parameters )
+	protected void configureRemoteAgent( String ip, final TargetHandlerParameters parameters )
 	throws IOException {
 
 		this.logger.fine( "Configuring remote agent @ " + ip );
@@ -137,22 +142,42 @@ public class ConfiguratorOnCreation implements MachineConfigurator {
 		File tmpDir = new File( System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
 		Utils.createDirectory( tmpDir );
 		try {
-			// Connect
-			ssh.loadKnownHosts();
-			ssh.connect(ip);
+			// Prepare the connection
+			String skipHostVerification = parameters.getTargetProperties().get( SCP_DISABLE_HOST_VALIDATION );
+			HostKeyVerifier hostKeyVerifier;
+			if( "true".equalsIgnoreCase( skipHostVerification )) {
+				this.logger.fine( "Skipping host validation..." );
+				hostKeyVerifier = new PromiscuousVerifier();
+			} else {
+				hostKeyVerifier = new FingerPrintVerifier( parameters.getTargetProperties());
+			}
+
+			ssh.addHostKeyVerifier( hostKeyVerifier );
+
+			// Known hosts - when no file is specified, it is loaded from "~/.ssh"
+			String knownHostsFile = this.parameters.getTargetProperties().get( SCP_KNOWN_HOSTS_FILE );
+			if( knownHostsFile == null )
+				ssh.loadKnownHosts();
+			else
+				ssh.loadKnownHosts( new File( knownHostsFile ));
+
+			// Open the connection
+			this.logger.fine( "Connecting to " + ip + "..." );
+			ssh.connect( ip );
 
 			// "ubuntu" is the default user name on several (ubuntu) systems, including IaaS VMs
-			String user = Utils.getValue( parameters.getTargetProperties(), SCP_USER, "ubuntu" );
-			String keyfile = parameters.getTargetProperties().get( SCP_KEYFILE );
+			String user = Utils.getValue( this.parameters.getTargetProperties(), SCP_USER, "ubuntu" );
 
+			// Key file - when no file is specified, it is loaded from "~/.ssh"
+			String keyfile = this.parameters.getTargetProperties().get( SCP_KEY_FILE );
 			if( keyfile == null )
-				ssh.authPublickey(user); // use ~/.ssh/id_rsa and ~/.ssh/id_dsa
+				ssh.authPublickey( user );
 			else
-				ssh.authPublickey(user, keyfile); // load key from specified file (e.g .pem).
+				ssh.authPublickey( user, keyfile );
 
 			// Do what we need to do
-			Map<String,String> keyToNewValue = prepareConfiguration( parameters, ssh, tmpDir );
-			updateAgentConfigurationFile( parameters, ssh, tmpDir, keyToNewValue );
+			Map<String,String> keyToNewValue = prepareConfiguration( this.parameters, ssh, tmpDir );
+			updateAgentConfigurationFile( this.parameters, ssh, tmpDir, keyToNewValue );
 
 		} finally {
 			try {
@@ -161,6 +186,9 @@ public class ConfiguratorOnCreation implements MachineConfigurator {
 
 			} catch( Exception e ) {
 				Utils.logException( this.logger, e );
+
+			} finally {
+				this.logger.fine( "Disconnected from " + ip );
 			}
 
 			Utils.deleteFilesRecursivelyAndQuietly( tmpDir );
@@ -182,6 +210,7 @@ public class ConfiguratorOnCreation implements MachineConfigurator {
 		Utils.writeStringInto(userData, userdataFile);
 
 		// Then upload it
+		this.logger.fine( "Uploading user data as a file..." );
 		String agentConfigDir = Utils.getValue( parameters.getTargetProperties(), SCP_AGENT_CONFIG_DIR, DEFAULT_SCP_AGENT_CONFIG_DIR );
 		ssh.newSCPFileTransfer().upload( new FileSystemFile(userdataFile), agentConfigDir);
 
@@ -215,6 +244,8 @@ public class ConfiguratorOnCreation implements MachineConfigurator {
 			File tmpDir,
 			Map<String,String> keyToNewValue )
 	throws IOException {
+
+		this.logger.fine( "Updating agent parameters on remote host..." );
 
 		// Update the agent's configuration file
 		String agentConfigDir = Utils.getValue( parameters.getTargetProperties(), SCP_AGENT_CONFIG_DIR, DEFAULT_SCP_AGENT_CONFIG_DIR );

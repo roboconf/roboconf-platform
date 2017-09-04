@@ -29,8 +29,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetHandlerParameters;
@@ -39,13 +40,19 @@ import net.roboconf.target.api.TargetHandlerParameters;
  * Create/get a server by hand, install a Roboconf agent and let's run!
  * @author Pierre-Yves Gibello - Linagora
  */
-@Ignore
+//@Ignore
 public class ToRunByHandtoSetConfiguration {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
 	public void toRunByHand() throws Exception {
 
 		EmbeddedHandler handler = new EmbeddedHandler();
+		handler.karafData = this.folder.newFolder().getAbsolutePath();
+
 		TargetHandlerParameters parameters = parameters( getkeyFile());
 		ConfiguratorOnCreation configurator = new ConfiguratorOnCreation( parameters, getIp(), "whatever", handler );
 		Assert.assertTrue( configurator.configure());
@@ -86,7 +93,7 @@ public class ToRunByHandtoSetConfiguration {
 		parameters.setScopedInstance( new Instance());
 
 		Map<String, String> targetProperties = new HashMap<>();
-		targetProperties.put( EmbeddedHandler.SCP_KEYFILE, keyFile );
+		targetProperties.put( EmbeddedHandler.SCP_KEY_FILE, keyFile );
 		parameters.setTargetProperties( targetProperties );
 
 		return parameters;

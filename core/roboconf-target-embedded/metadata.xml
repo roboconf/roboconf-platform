@@ -31,6 +31,8 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.target.embedded.internal.EmbeddedHandler" name="roboconf-target-embedded">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		<provides />
 	</component>
 	

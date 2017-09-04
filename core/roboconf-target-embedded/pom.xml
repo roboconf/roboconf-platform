@@ -58,7 +58,8 @@
 		<dependency>
 			<groupId>com.hierynomus</groupId>
 			<artifactId>sshj</artifactId>
-			<version>0.21.1</version>
+			<version>0.22.0</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -68,8 +69,23 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-core</artifactId>
+  			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -82,41 +98,12 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${version.range}"
+							net.roboconf.*;version="${version.range}",
+							*
 						</Import-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>
-
-<!--
-                                We have to repackage the JAR because the Docker library uses BouncyCasttle...
-                                This project comes with signature files that make the build fail.
-                                The repackaging operation aims at removing these files.
-                         -->
-                        <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-antrun-plugin</artifactId>
-                                <executions>
-                                        <execution>
-                                                <phase>package</phase>
-                                                <configuration>
-                                                        <target>
-                                                                <unzip src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.directory}/repack" />
-                                                                <delete file="${project.build.directory}/${project.build.finalName}.jar" />
-                                                                <delete file="${project.build.directory}/repack/META-INF/BCKEY.SF" />
-                                                                <delete file="${project.build.directory}/repack/META-INF/BCKEY.DSA" />
-                                                                <zip basedir="${project.build.directory}/repack" destfile="${project.build.directory}/${project.build.finalName}.jar" />
-                                                                <delete dir="${project.build.directory}/repack" />
-                                                        </target>
-                                                </configuration>
-                                                <goals>
-                                                        <goal>run</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
 			
 			<plugin>
 				<groupId>org.apache.felix</groupId>
@@ -131,5 +118,19 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<!-- To solve issues with dependency convergence -->	
+	<dependencyManagement>
+		<dependencies>
+			
+			<!-- Use the one in Karaf -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+				<scope>provided</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 </project>
