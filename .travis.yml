@@ -11,6 +11,7 @@ install: true
 env:
   global:
     - ROBOCONF_IT_TIMEOUT=60000
+    - MAVEN_OPTS=" -Xms256m -Xmx512m "
 
 
 # Our build matrix implies several JDK.
