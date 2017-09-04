@@ -36,7 +36,7 @@
 
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-platform-parent</artifactId>
-	<version>0.9.1</version>
+	<version>0.10-SNAPSHOT</version>
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
@@ -484,7 +484,7 @@
 		<connection>scm:git:git@github.com:roboconf/roboconf-platform.git</connection>
 		<developerConnection>scm:git:git@github.com:roboconf/roboconf-platform.git</developerConnection>
 		<url>http://github.com/roboconf/roboconf-platform</url>
-		<tag>roboconf-platform-parent-0.9.1</tag>
+		<tag>roboconf-platform-parent-0.9</tag>
 	</scm>
 
 </project>
