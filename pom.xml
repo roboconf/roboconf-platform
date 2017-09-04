@@ -57,7 +57,7 @@
 		<bouncy.castle.version>1.56</bouncy.castle.version>
 		
 		<!-- To update on every release -->
-		<version.range>[${project.version},0.10)</version.range>
+		<version.range>[${project.version},0.11)</version.range>
 		
 		<!-- 
 			We should not embed any SLF4J library in bundles.
