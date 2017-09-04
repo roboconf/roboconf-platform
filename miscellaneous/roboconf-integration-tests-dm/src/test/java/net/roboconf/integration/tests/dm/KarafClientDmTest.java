@@ -69,6 +69,9 @@ public class KarafClientDmTest extends DmTest {
 			container.start();
 			ItUtils.waitForDmRestServices( getCurrentPort());
 
+			// The console may take time to be ready
+			Thread.sleep( 4000 );
+
 			// Since this test runs outside Karaf, we cannot rely on System.getProperty( "karaf.base" );
 			// So, we need to extract the Karaf directory by Java reflection.
 			File karafDirectory = TestUtils.getInternalField( container, "targetFolder", File.class );

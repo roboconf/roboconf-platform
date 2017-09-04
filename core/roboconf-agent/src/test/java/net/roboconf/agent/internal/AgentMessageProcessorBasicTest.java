@@ -61,6 +61,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
@@ -745,11 +746,13 @@ public class AgentMessageProcessorBasicTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplicationTemplate app = new TestApplicationTemplate();
 		this.agent.karafEtc = this.folder.newFolder().getAbsolutePath();
+		this.agent.setApplicationName( "my app" );
+		this.agent.setScopedInstancePath( "/vm" );
 
 		Properties props = new Properties();
-		props.put( "application-name", "my app" );
+		props.put( "application-name", this.agent.getApplicationName());
 		props.put( "domain", "d" );
-		props.put( "scoped-instance-path", "/vm" );
+		props.put( "scoped-instance-path", this.agent.getScopedInstancePath());
 		props.put( "parameters", "@iaas-xxx@" );
 		props.put( Constants.MESSAGING_TYPE, "test" );
 
@@ -768,25 +771,42 @@ public class AgentMessageProcessorBasicTest {
 		processor.applicationBindings.put( "key2", new HashSet<>( Arrays.asList( "c" )));
 		processor.applicationNameToExternalExports.put( "k", Arrays.asList( new Import( "/vm", "comp" )));
 
+		// Verify the agent is in the correct state
+		Assert.assertFalse( this.agent.resetInProgress.get());
+		this.client.messagesForAgents.clear();
+		this.client.messagesForTheDm.clear();
+
 		// Reset
 		processor.resetRequest();
 
 		// Verify everything was cleaned
 		Assert.assertNull( processor.scopedInstance );
-		Assert.assertNull( this.agent.getScopedInstance());
 		Assert.assertEquals( 0, processor.applicationBindings.size());
 		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
 		Assert.assertEquals( 0, processor.getMessageQueue().size());
+
+		Assert.assertNull( this.agent.getScopedInstance());
+		Assert.assertNull( this.agent.getApplicationName());
+		Assert.assertNull( this.agent.getScopedInstancePath());
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, this.agent.getDomain());
 
 		// We cannot verify assertions on the agent, we can only check configuration files
 		props = Utils.readPropertiesFile( agentConfigFile );
 		Assert.assertEquals( "", props.get( "application-name" ));
 		Assert.assertEquals( "", props.get( "scoped-instance-path" ));
-		Assert.assertEquals( "", props.get( "domain" ));
+		Assert.assertEquals( Constants.DEFAULT_DOMAIN, props.get( "domain" ));
 		Assert.assertEquals( "", props.get( "parameters" ));
 		Assert.assertEquals( MessagingConstants.FACTORY_IDLE, props.get( Constants.MESSAGING_TYPE ));
 
+		// Verify we sent a MessgeMachineDown
+		Assert.assertEquals( 0, this.client.messagesForAgents.size());
+		Assert.assertEquals( 1, this.client.messagesForTheDm.size());
+		Assert.assertEquals( MsgNotifMachineDown.class, this.client.messagesForTheDm.get( 0 ).getClass());
+		Assert.assertEquals( "my app", ((MsgNotifMachineDown) this.client.messagesForTheDm.get( 0 )).getApplicationName());
+		Assert.assertEquals( "/vm", ((MsgNotifMachineDown) this.client.messagesForTheDm.get( 0 )).getScopedInstancePath());
+
 		// The reset request was reinitialized
 		Assert.assertFalse( processor.resetWasRquested());
+		Assert.assertFalse( this.agent.resetInProgress.get());
 	}
 }

@@ -55,6 +55,9 @@ import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
  */
 public class TargetsDeploymentTest extends DmTest {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
+
+
 	@Test
 	public void run() throws Exception {
 
@@ -71,6 +74,9 @@ public class TargetsDeploymentTest extends DmTest {
 			container.start();
 			ItUtils.waitForDmRestServices( getCurrentPort());
 
+			// The console may take time to be ready
+			Thread.sleep( 4000 );
+
 			// Get Karaf directory by Java reflection.
 			File karafDirectory = TestUtils.getInternalField( container, "targetFolder", File.class );
 			Assert.assertNotNull( karafDirectory );
@@ -78,12 +84,12 @@ public class TargetsDeploymentTest extends DmTest {
 			File binDirectory = new File( karafDirectory, "bin" );
 			Assert.assertTrue( binDirectory.exists());
 
-			Logger logger = Logger.getLogger( getClass().getName());
-			LogManager.getLogManager().addLogger( logger );
-			logger.setLevel( Level.ALL );
+			Logger execLogger = Logger.getLogger( getClass().getName());
+			LogManager.getLogManager().addLogger( execLogger );
+			execLogger.setLevel( Level.ALL );
 
 			final StringHandler logHandler = new StringHandler();
-			logger.addHandler( logHandler );
+			execLogger.addHandler( logHandler );
 
 			// Targets list
 			Map<String,String> targets = new HashMap<> ();
@@ -91,21 +97,28 @@ public class TargetsDeploymentTest extends DmTest {
 			targets.put( "roboconf:target openstack", "Roboconf :: Target :: Openstack IaaS" );
 			targets.put( "roboconf:target aws", "Roboconf :: Target :: EC2 IaaS" );
 			targets.put( "roboconf:target docker", "Roboconf :: Target :: Docker" );
+			targets.put( "roboconf:target embedded", "Roboconf :: Target :: Embedded" );
 			targets.put( "roboconf:target azure", "Roboconf :: Target :: Azure IaaS" );
 			targets.put( "roboconf:target occi", "Roboconf :: Target :: OCCI" );
 
 			// Verify if all targets are deployed
 			for( String target : targets.keySet() ) {
 
+				this.logger.info( "Installing " + target + "..." );
 				List<String> command = new ArrayList<> ();
 				command.add( "/bin/sh" );
 				command.add( "client" );
 				command.add( target );
 
-				int code = ProgramUtils.executeCommand( logger, command, binDirectory, null, null, null );
-				Assert.assertEquals( 0, code );
-				Assert.assertFalse( target + "failed.",logHandler.getLogs().contains("Error executing command"));
+				int code = ProgramUtils.executeCommand( execLogger, command, binDirectory, null, null, null );
+				if( code != 0 ) {
+					System.out.println( "\n\n\n" + logHandler.getLogs() + "\n\n\n" );
+				}
 
+				Assert.assertEquals( "Handler for " + target + " failed to be deployed.", 0, code );
+				Assert.assertFalse(
+						"Handler for " + target + " failed to be deployed (exec).",
+						logHandler.getLogs().contains( "Error" ));
 			}
 
 			// Verify if all targets are in bundle list
@@ -114,14 +127,11 @@ public class TargetsDeploymentTest extends DmTest {
 			cmd.add( "client" );
 			cmd.add( "bundle:list" );
 
-			int c = ProgramUtils.executeCommand( logger, cmd, binDirectory, null, null, null );
+			int c = ProgramUtils.executeCommand( execLogger, cmd, binDirectory, null, null, null );
 			Assert.assertEquals( 0, c );
-
 			for( String value : targets.values() ) {
-
 				Assert.assertTrue( logHandler.getLogs().contains( value ) );
 			}
-
 
 		} finally {
 			container.stop();

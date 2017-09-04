@@ -68,6 +68,7 @@ public class ConfiguratorOnTerminationTest {
 
 		// Invoke the method
 		EmbeddedHandler embedded = new EmbeddedHandler();
+		embedded.karafData = this.folder.newFolder().getAbsolutePath();
 		ConfiguratorOnTermination configurator = new ConfiguratorOnTermination( parameters, "ip", "machineId", embedded );
 		Map<String,String> keyToNewValue = configurator.prepareConfiguration( parameters, ssh, tmpDir );
 

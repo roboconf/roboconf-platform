@@ -25,10 +25,16 @@
 
 package net.roboconf.target.embedded.internal;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -43,8 +49,11 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	public static final String TARGET_ID = "embedded";
 	public static final String IP_ADDRESSES = "embedded.ip";
 	public static final String SCP_USER = "scp.user";
-	public static final String SCP_KEYFILE = "scp.keyfile";
+	public static final String SCP_KEY_FILE = "scp.keyfile";
+	public static final String SCP_KNOWN_HOSTS_FILE = "scp.known.hosts.file";
 	public static final String SCP_AGENT_CONFIG_DIR = "scp.agent.configdir";
+	public static final String SCP_HOST_KEY_PREFIX = "hostkey.";
+	public static final String SCP_DISABLE_HOST_VALIDATION = "scp.disable.host.validation";
 
 	static final String DEFAULT_SCP_AGENT_CONFIG_DIR = "/etc/roboconf-agent";
 	static final String USER_DATA_FILE = "roboconf-agent-parameters.properties";
@@ -53,6 +62,10 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	static final String AGENT_APPLICATION_NAME = "application-name";
 	static final String AGENT_PARAMETERS = "parameters";
 	static final String AGENT_DOMAIN = "domain";
+
+	static final String PRIVATE_BACKUP_FILE = "target-handler-embedded.backup";
+	static final String PRIVATE_BACKUP_USED_IPS = "used-ips";
+	static final String PRIVATE_BACKUP_IDS_TO_IPS = "ids-to-ips";
 
 
 
@@ -72,6 +85,8 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	 * </p>
 	 */
 	final ConcurrentHashMap<String,Integer> usedIps = new ConcurrentHashMap<> ();
+
+	String karafData = System.getProperty( Constants.KARAF_DATA );
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
@@ -79,6 +94,17 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public String getTargetId() {
 		return TARGET_ID;
+	}
+
+
+	@Override
+	public void start() {
+
+		// Invoke the super method
+		super.start();
+
+		// Restore the previous values
+		load( this );
 	}
 
 
@@ -157,6 +183,10 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
+
+		// The pool of machines is managed by hand and is not supposed to be modified
+		// while it can be used by Roboconf. So, we assume our cache is always up-to-date.
+		// Even after a restart and cache restoration.
 		return this.machineIdToIp.containsKey( machineId );
 	}
 
@@ -190,6 +220,7 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 			if( this.usedIps.putIfAbsent( ip, 1 ) == null ) {
 				this.machineIdToIp.put( machineId, ip );
 				result = ip;
+				save( this );
 				break;
 			}
 		}
@@ -205,5 +236,44 @@ public class EmbeddedHandler extends AbstractThreadedTargetHandler {
 	protected void releaseIpAddress( String ip ) {
 		this.logger.fine( "Releasing IP address: " + ip );
 		this.usedIps.remove( ip );
+		save( this );
+	}
+
+
+	static void save( EmbeddedHandler embedded ) {
+
+		Properties props = new Properties();
+		props.setProperty( PRIVATE_BACKUP_USED_IPS, Utils.format( embedded.usedIps.keySet(), ", " ));
+		props.setProperty( PRIVATE_BACKUP_IDS_TO_IPS, embedded.machineIdToIp.toString().replaceAll( "^\\{(.*)\\}$", "$1" ));
+
+		try {
+			embedded.logger.fine( "Saving the handler's state..." );
+			File backup = new File( embedded.karafData, PRIVATE_BACKUP_FILE );
+			Utils.writePropertiesFile( props, backup );
+
+		} catch( IOException e ) {
+			embedded.logger.severe( "The embedded handler's state could not be saved. " + e.getMessage());
+			Utils.logException( embedded.logger, e );
+		}
+	}
+
+
+	private static void load( EmbeddedHandler embedded ) {
+
+		embedded.logger.fine( "Restoring the handler's state..." );
+		File backup = new File( embedded.karafData, PRIVATE_BACKUP_FILE );
+		Properties props = Utils.readPropertiesFileQuietly( backup, embedded.logger );
+
+		for( String s : Utils.splitNicely( props.getProperty( PRIVATE_BACKUP_USED_IPS, "" ), "," )) {
+			if( ! Utils.isEmptyOrWhitespaces( s ))
+				embedded.usedIps.put( s, 1 );
+		}
+
+		Pattern p = Pattern.compile( "\\s*([^=]+)=(.*)" );
+		for( String s : Utils.splitNicely( props.getProperty( PRIVATE_BACKUP_IDS_TO_IPS, "" ), "," )) {
+			Matcher m = p.matcher( s );
+			if( m.find())
+				embedded.machineIdToIp.put( m.group( 1 ).trim(), m.group( 2 ));
+		}
 	}
 }

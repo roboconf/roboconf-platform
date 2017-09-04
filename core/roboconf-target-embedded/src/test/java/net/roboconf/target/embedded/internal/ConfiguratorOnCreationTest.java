@@ -91,6 +91,7 @@ public class ConfiguratorOnCreationTest {
 
 		// Invoke the method
 		EmbeddedHandler embedded = new EmbeddedHandler();
+		embedded.karafData = this.folder.newFolder().getAbsolutePath();
 		ConfiguratorOnCreation configurator = new ConfiguratorOnCreation( parameters, "ip", "machineId", embedded );
 		configurator.updateAgentConfigurationFile( parameters, ssh, tmpDir, keyToNewValue );
 
@@ -147,6 +148,7 @@ public class ConfiguratorOnCreationTest {
 
 		// Invoke the method
 		EmbeddedHandler embedded = new EmbeddedHandler();
+		embedded.karafData = this.folder.newFolder().getAbsolutePath();
 		ConfiguratorOnCreation configurator = new ConfiguratorOnCreation( parameters, "ip", "machineId", embedded );
 		Map<String,String> keyToNewValue = configurator.prepareConfiguration( parameters, ssh, tmpDir );
 

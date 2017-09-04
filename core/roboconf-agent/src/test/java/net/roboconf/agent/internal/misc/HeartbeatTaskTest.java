@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.test.AgentTestUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
@@ -124,6 +125,23 @@ public class HeartbeatTaskTest {
 	@Test
 	public void testHeartbeat_agentWithoutIdentity_noScopedInstancePath() throws Exception {
 		this.agent.setScopedInstancePath( null );
+
+		this.internalClient.openConnection();
+		Assert.assertTrue( this.agent.getMessagingClient().isConnected());
+
+		HeartbeatTask task = new HeartbeatTask( this.agent );
+		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());
+
+		task.run();
+		Assert.assertEquals( 0, this.internalClient.messagesForTheDm.size());
+	}
+
+
+	@Test
+	public void testHeartbeat_resetInProgress() throws Exception {
+		this.agent.resetInProgress.set( true );
+		Assert.assertFalse( Utils.isEmptyOrWhitespaces( this.agent.getApplicationName()));
+		Assert.assertFalse( Utils.isEmptyOrWhitespaces( this.agent.getScopedInstancePath()));
 
 		this.internalClient.openConnection();
 		Assert.assertTrue( this.agent.getMessagingClient().isConnected());

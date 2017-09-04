@@ -38,6 +38,7 @@
 	<feature name="roboconf-dm" version="${project.version}" description="The Karaf feature for Roboconf's DM">
 		<feature version="${ipojo.version}">ipojo-all</feature>
 		<feature version="${jersey.stack.version}">jersey-1.x</feature>
+		<feature version="${project.version}">ssh4j-for-roboconf</feature>
 	
 		<!-- Core Bundles -->
 		<bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
@@ -79,6 +80,14 @@
 		<bundle>mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.stack.version}</bundle>
 		<bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-base/${jackson.stack.version}</bundle>
 		<bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider/${jackson.stack.version}</bundle>
+	</feature>
+
+	<!-- The feature for SSH4j -->
+	<feature name="ssh4j-for-roboconf" version="${project.version}">
+		<!-- Bouncy Castle is expected to have been registered as a security provider in Karaf (lib/ext) -->
+		<bundle>mvn:net.i2p.crypto/eddsa/0.1.0</bundle>
+		<bundle>wrap:mvn:com.jcraft/jzlib/1.1.3$Bundle-SymbolicName=jzlib-wrapped&amp;Bundle-Version=1.1.3</bundle>
+		<bundle>mvn:com.hierynomus/sshj/0.22.0</bundle>
 	</feature>
 	
 	<!-- 
