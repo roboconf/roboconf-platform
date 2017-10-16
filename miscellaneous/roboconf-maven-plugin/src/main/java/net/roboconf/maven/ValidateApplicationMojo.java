@@ -29,7 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -43,10 +43,10 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.errors.ErrorCode;
 import net.roboconf.core.errors.RoboconfError;
 import net.roboconf.core.errors.RoboconfErrorHelpers;
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.tooling.core.validation.ProjectValidator;
+import net.roboconf.tooling.core.validation.ProjectValidator.ProjectValidationResult;
 
 /**
  * The mojo in charge of checking the application.
@@ -83,27 +83,25 @@ public class ValidateApplicationMojo extends AbstractMojo {
 			throw new MojoExecutionException( "The target model directory could not be found. " + completeAppDirectory );
 
 		// Load and validate the application
-		ApplicationLoadResult alr;
-		Collection<RoboconfError> recipeErrors = null;
+		Collection<RoboconfError> reusableRecipeErrors = Collections.emptyList();
+		ProjectValidationResult pvr = ProjectValidator.validateProject( completeAppDirectory, this.recipe );
 		if( this.recipe ) {
-			alr = RuntimeModelIo.loadApplicationFlexibly( completeAppDirectory );
-			RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+			reusableRecipeErrors = validateRecipesSpecifics(
+					this.project,
+					pvr.getRawParsingResult().getApplicationTemplate(),
+					this.official );
 
-			recipeErrors = validateRecipesSpecifics( this.project, alr.getApplicationTemplate(), this.official );
-			alr.getLoadErrors().addAll( recipeErrors );
-
-		} else {
-			alr = RuntimeModelIo.loadApplication( completeAppDirectory );
+			pvr.getErrors().addAll( reusableRecipeErrors );
 		}
 
 		// Analyze the result
 		try {
-			if( alr.getLoadErrors().size() > 0 ) {
-				reportErrors( alr );
-				if( RoboconfErrorHelpers.containsCriticalErrors( alr.getLoadErrors()))
+			if( pvr.getErrors().size() > 0 ) {
+				reportErrors( pvr.getErrors());
+				if( RoboconfErrorHelpers.containsCriticalErrors( pvr.getErrors()))
 					throw new MojoFailureException( "Errors were found in the application." );
 
-				if( this.official && ! recipeErrors.isEmpty())
+				if( this.official && ! reusableRecipeErrors.isEmpty())
 					throw new MojoFailureException( "Warnings were found in official recipes. Please, fix them." );
 			}
 
@@ -115,17 +113,16 @@ public class ValidateApplicationMojo extends AbstractMojo {
 
 	/**
 	 * Reports errors (in the logger and in a file).
-	 * @param alr
+	 * @param errors
 	 * @throws IOException
 	 */
-	private void reportErrors( ApplicationLoadResult alr ) throws IOException {
+	private void reportErrors( Collection<RoboconfError> errors ) throws IOException {
 
 		// Add a log entry
 		getLog().info( "Generating a report for validation errors under " + MavenPluginConstants.VALIDATION_RESULT_PATH );
 
 		// Generate the report (file and console too)
-		List<RoboconfError> resolvedErrors = RoboconfErrorHelpers.resolveErrorsWithLocation( alr );
-		StringBuilder sb = MavenPluginUtils.formatErrors( resolvedErrors, getLog());
+		StringBuilder sb = MavenPluginUtils.formatErrors( errors, getLog());
 
 		// Write the report.
 		// Reporting only makes sense when there is an error or a warning.

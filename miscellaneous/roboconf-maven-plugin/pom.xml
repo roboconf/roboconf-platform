@@ -95,6 +95,12 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-tooling-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-archiver</artifactId>
 			<version>2.1</version>

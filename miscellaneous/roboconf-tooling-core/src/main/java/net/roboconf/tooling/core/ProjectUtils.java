@@ -59,12 +59,17 @@ public final class ProjectUtils {
 	private static final String TPL_POM_ARTIFACT = "${ARTIFACT_ID}";
 	private static final String TPL_POM_PLUGIN_VERSION = "${PLUGIN_VERSION}";
 
-	private static final String[] DIRECTORIES = {
+	private static final String[] ALL_DIRECTORIES = {
 		Constants.PROJECT_DIR_DESC,
 		Constants.PROJECT_DIR_GRAPH,
 		Constants.PROJECT_DIR_INSTANCES,
 		Constants.PROJECT_DIR_COMMANDS,
 		Constants.PROJECT_DIR_RULES_AUTONOMIC,
+		Constants.PROJECT_DIR_PROBES
+	};
+
+	private static final String[] RR_DIRECTORIES = {
+		Constants.PROJECT_DIR_GRAPH,
 		Constants.PROJECT_DIR_PROBES
 	};
 
@@ -130,10 +135,12 @@ public final class ProjectUtils {
 	 * @param creationBean the creation properties
 	 * @throws IOException if something went wrong
 	 */
-	private static void createSimpleProject( File targetDirectory, CreationBean creationBean ) throws IOException {
+	private static void createSimpleProject( File targetDirectory, CreationBean creationBean )
+	throws IOException {
 
 		// Create the directory structure
-		for( String s : DIRECTORIES ) {
+		String[] directoriesToCreate = creationBean.isReusableRecipe() ? RR_DIRECTORIES : ALL_DIRECTORIES;
+		for( String s : directoriesToCreate ) {
 			File dir = new File( targetDirectory, s );
 			Utils.createDirectory( dir );
 		}
@@ -148,7 +155,7 @@ public final class ProjectUtils {
 				.replace( TPL_DESCRIPTION, creationBean.getProjectDescription());
 
 		// Create the rest of the project
-		completeProjectCreation( targetDirectory, tpl );
+		completeProjectCreation( targetDirectory, tpl, creationBean );
 	}
 
 
@@ -162,7 +169,8 @@ public final class ProjectUtils {
 
 		// Create the directory structure
 		File rootDir = new File( targetDirectory, Constants.MAVEN_SRC_MAIN_MODEL );
-		for( String s : DIRECTORIES ) {
+		String[] directoriesToCreate = creationBean.isReusableRecipe() ? RR_DIRECTORIES : ALL_DIRECTORIES;
+		for( String s : directoriesToCreate ) {
 			File dir = new File( rootDir, s );
 			Utils.createDirectory( dir );
 		}
@@ -193,11 +201,18 @@ public final class ProjectUtils {
 		Utils.copyStreamSafely( in, out );
 		tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
-				.replace( TPL_VERSION, "${project.version}" )
 				.replace( TPL_DESCRIPTION, "${project.description}" );
 
+		// If for some reason, the project version is already a Maven expression,
+		// keep it untouched. Such a thing may cause troubles with a real POM,
+		// as versions should not reference properties. But it may be used for tests anyway.
+		if( ! creationBean.getProjectVersion().contains( "$" ))
+			tpl = tpl.replace( TPL_VERSION, "${project.version}" );
+		else
+			tpl = tpl.replace( TPL_VERSION, creationBean.getProjectVersion());
+
 		// Create the rest of the project
-		completeProjectCreation( rootDir, tpl );
+		completeProjectCreation( rootDir, tpl, creationBean );
 	}
 
 
@@ -205,23 +220,32 @@ public final class ProjectUtils {
 	 * Completes the creation of a Roboconf project.
 	 * @param targetDirectory the directory into which the Roboconf files must be copied
 	 * @param descriptorContent the descriptor's content
+	 * @param creationBean the creation options
 	 * @throws IOException if something went wrong
 	 */
-	private static void completeProjectCreation( File targetDirectory, String descriptorContent ) throws IOException {
-
-		// Write the descriptor
-		File f = new File( targetDirectory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
-		Utils.writeStringInto( descriptorContent, f );
+	private static void completeProjectCreation(
+			File targetDirectory,
+			String descriptorContent,
+			CreationBean creationBean )
+	throws IOException {
 
 		// Create a sample graph file
-		f = new File( targetDirectory, Constants.PROJECT_DIR_GRAPH + "/" + GRAPH_EP );
+		File f = new File( targetDirectory, Constants.PROJECT_DIR_GRAPH + "/" + GRAPH_EP );
 		InputStream in = ProjectUtils.class.getResourceAsStream( "/graph-skeleton.graph" );
 		Utils.copyStream( in, f );
 
-		// Create a sample instances file
-		f = new File( targetDirectory, Constants.PROJECT_DIR_INSTANCES + "/" + INSTANCES_EP );
-		in = ProjectUtils.class.getResourceAsStream( "/instances-skeleton.instances" );
-		Utils.copyStream( in, f );
+		// Create other elements only if it is not a reusable recipe
+		if( ! creationBean.isReusableRecipe()) {
+
+			// Write the descriptor
+			f = new File( targetDirectory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+			Utils.writeStringInto( descriptorContent, f );
+
+			// Create a sample instances file
+			f = new File( targetDirectory, Constants.PROJECT_DIR_INSTANCES + "/" + INSTANCES_EP );
+			in = ProjectUtils.class.getResourceAsStream( "/instances-skeleton.instances" );
+			Utils.copyStream( in, f );
+		}
 	}
 
 
@@ -233,6 +257,7 @@ public final class ProjectUtils {
 		private String artifactId, pluginVersion, groupId;
 		private String customPomLocation;
 		private boolean mavenProject = true;
+		private boolean reusableRecipe = false;
 
 
 		public String getProjectName() {
@@ -259,6 +284,15 @@ public final class ProjectUtils {
 
 		public CreationBean mavenProject( boolean mavenProject ) {
 			this.mavenProject = mavenProject;
+			return this;
+		}
+
+		public boolean isReusableRecipe() {
+			return this.reusableRecipe;
+		}
+
+		public CreationBean reusableRecipe( boolean reusableRecipe ) {
+			this.reusableRecipe = reusableRecipe;
 			return this;
 		}
 
