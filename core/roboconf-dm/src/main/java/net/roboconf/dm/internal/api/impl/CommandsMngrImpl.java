@@ -134,7 +134,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 	 *
 	 * https://github.com/cschneider/Karaf-Tutorial/tree/master/db/examplejpa
 	 *
-	 * The main difference for use would be use iPojo instead of Blueprint
+	 * The main difference for us would be to use iPojo instead of Blueprint
 	 * to create services. And we would not need Karaf commands. We do not
 	 * use JPA as we have very limited interactions with a database and also
 	 * because we would like to reduce the number of dependencies for the DM.
@@ -184,9 +184,9 @@ public class CommandsMngrImpl implements ICommandsMngr {
 				Utils.logException( this.logger, e );
 
 			} finally {
-				closeResultSet( sqlRes );
-				closeStatement( ps );
-				closeConnection( conn );
+				Utils.closeResultSet( sqlRes, this.logger );
+				Utils.closeStatement( ps, this.logger );
+				Utils.closeConnection( conn, this.logger );
 			}
 		}
 
@@ -266,9 +266,9 @@ public class CommandsMngrImpl implements ICommandsMngr {
 				Utils.logException( this.logger, e );
 
 			} finally {
-				closeResultSet( sqlRes );
-				closeStatement( ps );
-				closeConnection( conn );
+				Utils.closeResultSet( sqlRes, this.logger );
+				Utils.closeStatement( ps, this.logger );
+				Utils.closeConnection( conn, this.logger );
 			}
 		}
 
@@ -311,74 +311,6 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 		} finally {
 			recordInHistory( startInMilliSeconds, startInNanoSeconds, result, app.getName(), commandName, origin, originDetails );
-		}
-	}
-
-
-	/**
-	 * Closes a connection to a database.
-	 * @param conn
-	 */
-	void closeConnection( Connection conn ) {
-
-		try {
-			if( conn != null )
-				conn.close();
-
-		} catch( SQLException e ) {
-			// Not important.
-			Utils.logException( this.logger, e );
-		}
-	}
-
-
-	/**
-	 * Closes a prepared statement.
-	 * @param ps
-	 */
-	void closeStatement( PreparedStatement ps ) {
-
-		try {
-			if( ps != null )
-				ps.close();
-
-		} catch( SQLException e ) {
-			// Not important.
-			Utils.logException( this.logger, e );
-		}
-	}
-
-
-	/**
-	 * Closes a statement.
-	 * @param st
-	 */
-	void closeStatement( Statement st ) {
-
-		try {
-			if( st != null )
-				st.close();
-
-		} catch( SQLException e ) {
-			// Not important.
-			Utils.logException( this.logger, e );
-		}
-	}
-
-
-	/**
-	 * Closes a result set.
-	 * @param st
-	 */
-	void closeResultSet( ResultSet resultSet ) {
-
-		try {
-			if( resultSet != null )
-				resultSet.close();
-
-		} catch( SQLException e ) {
-			// Not important.
-			Utils.logException( this.logger, e );
 		}
 	}
 
@@ -434,7 +366,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 				Utils.logException( this.logger, e );
 
 			} finally {
-				closeConnection( conn );
+				Utils.closeConnection( conn, this.logger );
 			}
 		}
 	}
@@ -464,7 +396,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			ps.execute();
 
 		} finally {
-			closeStatement( ps );
+			Utils.closeStatement( ps, this.logger );
 		}
 	}
 
@@ -488,7 +420,7 @@ public class CommandsMngrImpl implements ICommandsMngr {
 			st.execute( sb.toString());
 
 		} finally {
-			closeStatement( st );
+			Utils.closeStatement( st, this.logger );
 		}
 	}
 

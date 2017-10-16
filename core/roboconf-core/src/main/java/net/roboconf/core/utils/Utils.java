@@ -43,6 +43,11 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.Normalizer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -1130,6 +1135,78 @@ public final class Utils {
 	 */
 	public static void logException( Logger logger, Throwable t ) {
 		logException( logger, Level.FINEST, t );
+	}
+
+
+	/**
+	 * Closes a prepared statement.
+	 * @param ps
+	 * @param logger
+	 */
+	public static void closeStatement( PreparedStatement ps, Logger logger ) {
+
+		try {
+			if( ps != null )
+				ps.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( logger, e );
+		}
+	}
+
+
+	/**
+	 * Closes a statement.
+	 * @param st
+	 * @param logger
+	 */
+	public static void closeStatement( Statement st, Logger logger ) {
+
+		try {
+			if( st != null )
+				st.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( logger, e );
+		}
+	}
+
+
+	/**
+	 * Closes a result set.
+	 * @param st
+	 * @param logger
+	 */
+	public static void closeResultSet( ResultSet resultSet, Logger logger ) {
+
+		try {
+			if( resultSet != null )
+				resultSet.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( logger, e );
+		}
+	}
+
+
+	/**
+	 * Closes a connection to a database.
+	 * @param conn
+	 * @param logger
+	 */
+	public static void closeConnection( Connection conn, Logger logger ) {
+
+		try {
+			if( conn != null )
+				conn.close();
+
+		} catch( SQLException e ) {
+			// Not important.
+			Utils.logException( logger, e );
+		}
 	}
 
 
