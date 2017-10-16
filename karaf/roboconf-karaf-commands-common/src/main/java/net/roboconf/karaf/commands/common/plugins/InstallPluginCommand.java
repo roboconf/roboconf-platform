@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,55 +23,64 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.agent.misc;
+package net.roboconf.karaf.commands.common.plugins;
 
-import java.util.List;
+import java.io.PrintStream;
 import java.util.logging.Logger;
 
-import net.roboconf.core.runtime.IReconfigurable;
-import net.roboconf.core.utils.Utils;
-
 import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.console.Session;
+
+import net.roboconf.core.utils.ManifestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Command( scope = "roboconf", name = "reload-config", description="Force the DM and/or agents to reload their configuration." )
+@Command( scope = "roboconf", name = "plugin", description="Installs an agent when necessary" )
 @Service
-public class ReloadConfigurationCommand implements Action {
+public class InstallPluginCommand implements Action {
 
-	/*
-	 * Possible configurations:
-	 * (*) The DM is alone in its distribution.
-	 * (*) An agent is alone in its distribution.
-	 * (*) The DM and in-memory agents coexist in the same distribution.
-	 *
-	 * So, we need to inject all the available reconfigurables.
-	 * No need to add complexity with parameters. Reconfigure everything.
-	 */
+	@Argument( index = 0, name = "target", description = "The plug-in's name.", required = true, multiValued = false )
+	@Completion( PluginCompleter.class )
+	String targetName = null;
+
 	@Reference
-	List<IReconfigurable> reconfigurables;
+	private Session session;
 
+	// Other fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	String roboconfVersion;
+	PrintStream out = System.out;
+
+
+	/**
+	 * Constructor.
+	 */
+	public InstallPluginCommand() {
+		String bundleVersion = ManifestUtils.findBundleVersion();
+		this.roboconfVersion = ManifestUtils.findMavenVersion( bundleVersion );
+	}
 
 
 	@Override
 	public Object execute() throws Exception {
 
-		if( this.reconfigurables != null ) {
-			for( IReconfigurable reconfigurable : this.reconfigurables ) {
-				try {
-					this.logger.fine( "Forcing reconfiguration from a Karaf command." );
-					reconfigurable.reconfigure();
+		SupportedPlugin st = SupportedPlugin.which( this.targetName );
+		if( st == null ) {
+			this.out.println( "Unknown plug-in: " + this.targetName + ". Make sure it is correct or install it manually." );
 
-				} catch( Exception e ) {
-					this.logger.warning( "An error occurred while reloading the configuration. " + e.getMessage());
-					Utils.logException( this.logger, e );
-				}
-			}
+		} else if( this.roboconfVersion == null ) {
+			this.out.println( "Error: the Roboconf version could not be determined." );
+
+		} else for( String cmd : st.findCommands( this.roboconfVersion )) {
+			this.logger.fine( "Executing " + cmd + "..." );
+			this.out.println( "Executing " + cmd + "..." );
+			this.session.execute( cmd );
 		}
 
 		return null;
