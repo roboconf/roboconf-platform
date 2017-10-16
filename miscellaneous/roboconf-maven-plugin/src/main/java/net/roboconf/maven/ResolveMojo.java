@@ -95,9 +95,10 @@ public class ResolveMojo extends AbstractMojo {
 			// To achieve this, we must use Aether
 			// (the dependency mechanism behind Maven).
 			String artifactId = unresolvedArtifact.getArtifactId();
+			String groupId = unresolvedArtifact.getGroupId();
 			org.eclipse.aether.artifact.Artifact aetherArtifact = new DefaultArtifact(
-					unresolvedArtifact.getGroupId(),
-					unresolvedArtifact.getArtifactId(),
+					groupId,
+					artifactId,
 					unresolvedArtifact.getClassifier(),
 					unresolvedArtifact.getType(),
 					unresolvedArtifact.getVersion());
@@ -119,7 +120,7 @@ public class ResolveMojo extends AbstractMojo {
 			}
 
 			// Prepare the extraction
-			File targetDirectory = new File( completeAppDirectory, Constants.PROJECT_DIR_GRAPH + "/" + artifactId );
+			File targetDirectory = new File( completeAppDirectory, Constants.PROJECT_DIR_GRAPH + "/" + groupId + "/" + artifactId );
 			getLog().debug( "Copying the content of artifact " + artifactId + " under " + targetDirectory );
 			try {
 

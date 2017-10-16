@@ -26,9 +26,10 @@
 package net.roboconf.maven;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -36,20 +37,23 @@ import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.codehaus.plexus.archiver.zip.ZipArchiver;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.impl.DefaultServiceLocator;
-import org.eclipse.aether.repository.LocalRepository;
-import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import net.roboconf.core.Constants;
+import net.roboconf.tooling.core.ProjectUtils;
+import net.roboconf.tooling.core.ProjectUtils.CreationBean;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -58,6 +62,14 @@ public class ResolveMojoTest extends AbstractTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+
+	private final Map<String,Artifact> artifactIdToArtifact = new HashMap<> ();
+
+
+	@Before
+	public void resetArtifactCache() {
+		this.artifactIdToArtifact.clear();
+	}
 
 
 	@Test
@@ -88,7 +100,7 @@ public class ResolveMojoTest extends AbstractTest {
 		Assert.assertTrue( baseDir.isDirectory());
 
 		AbstractMojo mojo = findMojo( projectName, "resolve" );
-		this.rule.setVariableValueToObject( mojo, "repoSession", newRepositorySession());
+		this.rule.setVariableValueToObject( mojo, "repoSystem", newRepositorySystem());
 		this.rule.setVariableValueToObject( mojo, "repositories", new ArrayList<RemoteRepository>( 0 ));
 
 		// Add dependencies
@@ -116,17 +128,83 @@ public class ResolveMojoTest extends AbstractTest {
 	}
 
 
-	private RepositorySystemSession newRepositorySession() throws IOException {
+	@Test
+	public void testWithValidRoboconfDependencies() throws Exception {
 
-		DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
-		RepositorySystem repositorySystem = locator.getService( RepositorySystem.class );
+		// Prepare the project
+		final String projectName = "project--valid";
 
-		LocalRepository localRepo = new LocalRepository( this.folder.newFolder());
+		File baseDir = this.resources.getBasedir( projectName );
+		Assert.assertNotNull( baseDir );
+		Assert.assertTrue( baseDir.isDirectory());
 
-		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-		LocalRepositoryManager lrm = repositorySystem.newLocalRepositoryManager( session, localRepo );
-		session.setLocalRepositoryManager( lrm );
+		AbstractMojo mojo = findMojo( projectName, "resolve" );
+		this.rule.setVariableValueToObject( mojo, "repoSystem", newRepositorySystem());
+		this.rule.setVariableValueToObject( mojo, "repositories", new ArrayList<RemoteRepository>( 0 ));
 
-		return session;
+		// Create a Roboconf application
+		File dir = this.folder.newFolder();
+		File targetZipFile = this.folder.newFile();
+		Assert.assertTrue( targetZipFile.delete());
+
+		CreationBean bean = new CreationBean()
+				.projectDescription( "some desc" ).projectName( "my-project" )
+				.groupId( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" ).mavenProject( false );
+
+		ProjectUtils.createProjectSkeleton( dir, bean );
+		ZipArchiver zipArchiver = new ZipArchiver();
+		zipArchiver.addDirectory( dir );
+		zipArchiver.setCompress( true );
+		zipArchiver.setDestFile( targetZipFile );
+		zipArchiver.createArchive();
+
+		Assert.assertTrue( targetZipFile.isFile());
+
+		// Add dependencies
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		project.setDependencyArtifacts( new HashSet<Artifact> ());
+
+		Artifact rbcfArtifact3 = new DefaultArtifact( "net.roboconf", "roboconf-core", "0.2", "runtime", "jar", null, new DefaultArtifactHandler());
+		rbcfArtifact3.setFile( targetZipFile );
+		project.getDependencyArtifacts().add( rbcfArtifact3 );
+
+		// Add it to our "local" repository
+		this.artifactIdToArtifact.put( rbcfArtifact3.getArtifactId(), rbcfArtifact3 );
+
+		// Execute it
+		File targetDir = new File( baseDir, MavenPluginConstants.TARGET_MODEL_DIRECTORY + "/" + Constants.PROJECT_DIR_GRAPH );
+		Assert.assertFalse( targetDir.isDirectory());
+		mojo.execute();
+
+		// Verify the import was copied in the right location
+		File importDir = new File( targetDir, "net.roboconf/roboconf-core" );
+		Assert.assertTrue( importDir.isDirectory());
+		Assert.assertTrue( new File( importDir, "main.graph" ).isFile());
+	}
+
+
+	private RepositorySystem newRepositorySystem() {
+
+		RepositorySystem repoSystem = new DefaultRepositorySystem() {
+			@Override
+			public ArtifactResult resolveArtifact( RepositorySystemSession session, ArtifactRequest request )
+			throws ArtifactResolutionException {
+
+				ArtifactResult res = new ArtifactResult( request );
+				Artifact mavenArtifact = ResolveMojoTest.this.artifactIdToArtifact.get( request.getArtifact().getArtifactId());
+				if( mavenArtifact == null )
+					throw new ArtifactResolutionException( new ArrayList<ArtifactResult>( 0 ), "Error in test wrapper and settings." );
+
+				org.eclipse.aether.artifact.DefaultArtifact art =
+						new org.eclipse.aether.artifact.DefaultArtifact(
+								"groupId", "artifactId", "classifier", "extension", "version",
+								null, mavenArtifact.getFile());
+
+				res.setArtifact( art );
+				return res;
+			}
+		};
+
+		return repoSystem;
 	}
 }
