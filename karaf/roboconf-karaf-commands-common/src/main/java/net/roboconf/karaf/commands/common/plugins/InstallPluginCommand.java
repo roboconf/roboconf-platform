@@ -41,7 +41,7 @@ import net.roboconf.core.utils.ManifestUtils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Command( scope = "roboconf", name = "plugin", description="Installs an agent when necessary" )
+@Command( scope = "roboconf", name = "plugin", description="Installs an agent plug-in when necessary" )
 @Service
 public class InstallPluginCommand implements Action {
 
