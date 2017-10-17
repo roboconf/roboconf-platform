@@ -77,6 +77,29 @@ public class ProjectUtilsTest {
 
 
 	@Test
+	public void testSimpleProjectForReusableRecipe() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.groupId( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" )
+							.mavenProject( false ).reusableRecipe( true );
+
+		Assert.assertEquals( 0, dir.listFiles().length );
+		ProjectUtils.createProjectSkeleton( dir, bean );
+		Assert.assertEquals( 2, dir.listFiles().length );
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+		List<RoboconfError> errors = new ArrayList<>( alr.getLoadErrors());
+
+		// These are the raw errors (not filtered for recipes)
+		Assert.assertEquals( 2, errors.size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_UNREACHABLE_FILE, errors.get( 1 ).getErrorCode());
+	}
+
+
+	@Test
 	public void testMavenProject() throws Exception {
 
 		File dir = this.folder.newFolder();
@@ -105,6 +128,34 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
 		Assert.assertEquals( "${project.version}", alr.getApplicationTemplate().getVersion());
+	}
+
+
+	@Test
+	public void testMavenProjectForReusableRecipe() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.groupId( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" )
+							.pluginVersion( "1.0.0" ).reusableRecipe( true );
+
+		Assert.assertEquals( 0, dir.listFiles().length );
+		ProjectUtils.createProjectSkeleton( dir, bean );
+		Assert.assertEquals( 2, dir.listFiles().length );
+		Assert.assertTrue( new File( dir, "pom.xml" ).exists());
+
+		File modelDir = new File( dir, Constants.MAVEN_SRC_MAIN_MODEL );
+		Assert.assertTrue( modelDir.exists());
+		Assert.assertEquals( 2, modelDir.listFiles().length );
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( modelDir );
+		List<RoboconfError> errors = new ArrayList<>( alr.getLoadErrors());
+
+		// These are the raw errors (not filtered for recipes)
+		Assert.assertEquals( 2, errors.size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_UNREACHABLE_FILE, errors.get( 1 ).getErrorCode());
 	}
 
 

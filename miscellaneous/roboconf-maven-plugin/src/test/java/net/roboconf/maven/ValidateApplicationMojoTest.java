@@ -27,14 +27,14 @@ package net.roboconf.maven;
 
 import java.io.File;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.utils.Utils;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -105,7 +105,7 @@ public class ValidateApplicationMojoTest extends AbstractTest {
 
 
 	@Test
-	public void testRecipe_official() throws Exception {
+	public void testRecipe_official_exactGroupId() throws Exception {
 
 		// Find and execute the mojo
 		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe" );
@@ -114,6 +114,27 @@ public class ValidateApplicationMojoTest extends AbstractTest {
 		this.rule.setVariableValueToObject( mojo, "official", true );
 
 		project.setGroupId( Constants.OFFICIAL_RECIPES_GROUP_ID );
+		project.setArtifactId( project.getName());
+		Assert.assertTrue( new File( project.getBasedir(), "readme" ).createNewFile());
+
+		mojo.execute();
+
+		// We should not have a result file
+		File resultsFile = new File( project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
+		Assert.assertFalse( resultsFile.exists());
+	}
+
+
+	@Test
+	public void testRecipe_official_anotherGroupId() throws Exception {
+
+		// Find and execute the mojo
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		this.rule.setVariableValueToObject( mojo, "recipe", true );
+		this.rule.setVariableValueToObject( mojo, "official", true );
+
+		project.setGroupId( Constants.OFFICIAL_RECIPES_GROUP_ID + ".database" );
 		project.setArtifactId( project.getName());
 		Assert.assertTrue( new File( project.getBasedir(), "readme" ).createNewFile());
 

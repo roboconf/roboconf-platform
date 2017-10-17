@@ -108,6 +108,13 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
+		
+		<dependency>
+		    <groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.196</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -122,6 +129,7 @@
 							org.apache.felix.service.command,
 							org.apache.karaf.shell.commands,
 							org.apache.karaf.shell.console,
+							javax.*,
 							*
 						</Import-Package>
 						<Karaf-Commands>*</Karaf-Commands>

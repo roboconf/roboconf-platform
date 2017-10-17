@@ -28,11 +28,6 @@ package net.roboconf.dm.internal.api.impl;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 
 import org.h2.jdbcx.JdbcDataSource;
@@ -263,57 +258,5 @@ public class CommandsMngrImplTest {
 
 		Assert.assertEquals( 0, this.cmdMngr.getHistoryNumberOfPages( 10, null ));
 		Assert.assertEquals( 0, this.cmdMngr.getHistory( 0, 10, null, null, null ).size());
-	}
-
-
-	@Test
-	public void testCloseConnection() throws Exception {
-
-		this.cmdMngr.closeConnection( null );
-		// No exception
-
-		Connection conn = Mockito.mock( Connection.class );
-		Mockito.doThrow( new SQLException( "for test" )).when( conn ).close();
-		this.cmdMngr.closeConnection( conn );
-		// No exception
-	}
-
-
-	@Test
-	public void testClosePreparedStatement() throws Exception {
-
-		this.cmdMngr.closeStatement((PreparedStatement) null );
-		// No exception
-
-		PreparedStatement ps = Mockito.mock( PreparedStatement.class );
-		Mockito.doThrow( new SQLException( "for test" )).when( ps ).close();
-		this.cmdMngr.closeStatement( ps );
-		// No exception
-	}
-
-
-	@Test
-	public void testCloseStatement() throws Exception {
-
-		this.cmdMngr.closeStatement((Statement) null );
-		// No exception
-
-		Statement st = Mockito.mock( Statement.class );
-		Mockito.doThrow( new SQLException( "for test" )).when( st ).close();
-		this.cmdMngr.closeStatement( st );
-		// No exception
-	}
-
-
-	@Test
-	public void testResultSet() throws Exception {
-
-		this.cmdMngr.closeResultSet( null );
-		// No exception
-
-		ResultSet resultSet = Mockito.mock( ResultSet.class );
-		Mockito.doThrow( new SQLException( "for test" )).when( resultSet ).close();
-		this.cmdMngr.closeResultSet( resultSet );
-		// No exception
 	}
 }

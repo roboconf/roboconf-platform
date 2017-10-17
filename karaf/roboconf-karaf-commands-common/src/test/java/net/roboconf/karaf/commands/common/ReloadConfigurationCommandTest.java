@@ -23,16 +23,16 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.agent.misc;
+package net.roboconf.karaf.commands.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import net.roboconf.core.runtime.IReconfigurable;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import net.roboconf.core.runtime.IReconfigurable;
 
 /**
  * @author Vincent Zurczak - Linagora

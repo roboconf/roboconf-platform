@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.agent.misc;
+package net.roboconf.karaf.commands.common;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

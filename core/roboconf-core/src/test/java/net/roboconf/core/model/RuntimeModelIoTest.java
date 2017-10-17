@@ -863,9 +863,9 @@ public class RuntimeModelIoTest {
 
 
 	@Test
-	public void testParsingWithInvalidRecipeProject() throws Exception {
+	public void testParsingWithInvalidRecipeProject_1() throws Exception {
 
-		File dir = TestUtils.findTestFile( "/reusable.recipe.with.errors" );
+		File dir = TestUtils.findTestFile( "/reusable.recipe.with.errors.1" );
 		Assert.assertTrue( dir.exists());
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( dir );
@@ -877,6 +877,21 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( 1, error.getDetails().length );
 		Assert.assertEquals( ErrorDetailsKind.VARIABLE, error.getDetails()[ 0 ].getErrorDetailsKind());
 		Assert.assertTrue( error.getDetails()[ 0 ].getElementName().contains( "f.*" ));
+	}
+
+
+	@Test
+	public void testParsingWithInvalidRecipeProject_2() throws Exception {
+
+		File dir = TestUtils.findTestFile( "/reusable.recipe.with.errors.2" );
+		Assert.assertTrue( dir.exists());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+		List<RoboconfError> errors = new ArrayList<>( alr.getLoadErrors());
+		Assert.assertEquals( 2, errors.size());
+		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.get( 1 ).getErrorCode());
 	}
 
 

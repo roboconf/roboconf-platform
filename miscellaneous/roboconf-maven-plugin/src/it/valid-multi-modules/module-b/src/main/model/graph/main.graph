@@ -1,4 +1,4 @@
-import module-a/main.graph;
+import net.roboconf.test/module-a/main.graph;
 
 VM2 {
 	installer: target;

@@ -130,7 +130,7 @@
 	"REC_SCRIPT_NO_SCRIPTS_DIR": "Les scripts doivent être placés dans un répertoire 'scripts'.",
 	"REC_ARTIFACT_ID_IN_LOWER_CASE": "L'artéfact ID d'une recette réutilisable doit être en minuscules.",
 	"REC_MISSING_README": "Les projets de recettes réutilisables doivent contenir un fichier « readme ».",
-	"REC_OFFICIAL_GROUP_ID": "Les recettes réutilisables officielles devraient utiliser {0} comme groupe ID.",
+	"REC_OFFICIAL_GROUP_ID": "Le nom du groupe Maven pour une recette réutilisable officielle devrait commencer par {0}.",
 	"REC_NON_MATCHING_ARTIFACT_ID": "Les projets de recette réutilisables doivent utiliser leur artéfact ID comme nom de répertoire.",
 	"REC_AVOID_INSTANCES": "Les projets de recette réutilisables n'ont pas à définir d'instances.",
 	"REC_TARGET_NO_ID": "L'identifiant de la cible est absent ou invalide.",

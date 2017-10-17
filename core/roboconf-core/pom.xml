@@ -67,7 +67,8 @@
 						</Export-Package>
 						<Import-Package>
 							net.roboconf.*;version="${version.range}",
-							javax.xml.bind.*
+							javax.xml.bind.*,
+							javax.sql.*
 						</Import-Package>
 					</instructions>
 				</configuration>

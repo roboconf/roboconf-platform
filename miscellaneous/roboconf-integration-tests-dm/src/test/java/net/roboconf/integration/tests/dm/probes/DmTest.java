@@ -66,10 +66,14 @@ public abstract class DmTest extends AbstractIntegrationTest {
 
 	@Override
 	protected ItConfigurationBean getConfigurationBean() {
-		return new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm" );
+		return new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm" ).hideLogs( hideLogs());
 	}
 
 	protected int getCurrentPort() {
 		return RP.get();
+	}
+
+	protected boolean hideLogs() {
+		return true;
 	}
 }

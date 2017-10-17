@@ -36,6 +36,11 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,6 +57,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.internal.tests.TestUtils.StringHandler;
@@ -1190,5 +1196,61 @@ public class UtilsTest {
 
 		out = Utils.updateProperties( afterTxt, keyToNewValue );
 		Assert.assertEquals( beforeTxt, out );
+	}
+
+
+	@Test
+	public void testCloseConnection() throws Exception {
+
+		Logger logger = Logger.getLogger( UtilsTest.class.getName());
+		Utils.closeConnection( null, logger );
+		// No exception
+
+		Connection conn = Mockito.mock( Connection.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( conn ).close();
+		Utils.closeConnection( conn, logger );
+		// No exception
+	}
+
+
+	@Test
+	public void testClosePreparedStatement() throws Exception {
+
+		Logger logger = Logger.getLogger( UtilsTest.class.getName());
+		Utils.closeStatement((PreparedStatement) null, logger );
+		// No exception
+
+		PreparedStatement ps = Mockito.mock( PreparedStatement.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( ps ).close();
+		Utils.closeStatement( ps, logger );
+		// No exception
+	}
+
+
+	@Test
+	public void testCloseStatement() throws Exception {
+
+		Logger logger = Logger.getLogger( UtilsTest.class.getName());
+		Utils.closeStatement((Statement) null, logger );
+		// No exception
+
+		Statement st = Mockito.mock( Statement.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( st ).close();
+		Utils.closeStatement( st, logger );
+		// No exception
+	}
+
+
+	@Test
+	public void testResultSet() throws Exception {
+
+		Logger logger = Logger.getLogger( UtilsTest.class.getName());
+		Utils.closeResultSet( null, logger );
+		// No exception
+
+		ResultSet resultSet = Mockito.mock( ResultSet.class );
+		Mockito.doThrow( new SQLException( "for test" )).when( resultSet ).close();
+		Utils.closeResultSet( resultSet, logger );
+		// No exception
 	}
 }

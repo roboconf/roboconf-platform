@@ -58,18 +58,57 @@ public final class ProjectValidator {
 	/**
 	 * Validates a project.
 	 * <p>
+	 * Whereas {@link #validateProject(File, boolean)}, this method tries to
+	 * guess whether the project is a recipe one or not. It assumes that
+	 * if the project has neither a descriptor file, nor instances,
+	 * then it can be considered as a recipe project
+	 * </p>
+	 *
+	 * @param appDirectory the application's directory (must exist)
+	 * @return a non-null list of errors, with the resolved location (sorted by error code)
+	 */
+	public static ProjectValidationResult validateProject( File appDirectory ) {
+
+		// Determine whether the project is a recipe one.
+
+		// Since a Roboconf project is not mandatory a Maven project,
+		// we cannot rely on the POM. But we make the hypothesis that
+		// if the project has neither a descriptor file, nor instances,
+		// then it can be considered as a recipe project.
+
+		// If there is a POM that indicates it is (or not) a recipe
+		// project, then errors will appear during the Maven build.
+		File instancesDir = new File( appDirectory, Constants.PROJECT_DIR_INSTANCES );
+		boolean isRecipe =
+				! new File( appDirectory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ).exists()
+				&& (! instancesDir.isDirectory() || Utils.listAllFiles( instancesDir ).isEmpty());
+
+		// Validate the project then
+		return validateProject( appDirectory, isRecipe );
+	}
+
+
+	/**
+	 * Validates a project.
+	 * <p>
 	 * It first tries to load it as a Roboconf project.
 	 * Then, it validates all the files within the project, even those
 	 * that are not reachable from the project descriptor.
 	 * </p>
 	 *
 	 * @param appDirectory the application's directory (must exist)
+	 * @param isRecipe true if the project is a reusable recipe
 	 * @return a non-null list of errors, with the resolved location (sorted by error code)
 	 */
-	public static List<RoboconfError> validateProject( File appDirectory ) {
+	public static ProjectValidationResult validateProject( File appDirectory, boolean isRecipe ) {
 
-		// Load the application
-		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( appDirectory );
+		// Load and validate the application
+		ApplicationLoadResult alr;
+		if( isRecipe ) {
+			alr = RuntimeModelIo.loadApplicationFlexibly( appDirectory );
+		} else {
+			alr = RuntimeModelIo.loadApplication( appDirectory );
+		}
 
 		// Then, search for all the graph files and validate them
 		File dir = new File( appDirectory, Constants.PROJECT_DIR_GRAPH );
@@ -91,29 +130,89 @@ public final class ProjectValidator {
 			}
 		}
 
+		// Recipe? Filter some errors.
+		if( isRecipe ) {
+			RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+		}
+
 		// Now, remove duplicate errors and resolve locations
 		Collection<RoboconfError> errors = new HashSet<> ();
 		errors.addAll( RoboconfErrorHelpers.resolveErrorsWithLocation( alr ));
 
-		// Do not show errors in tooling when the project version is "${project.version}"
-		List<RoboconfError> errorstoRemove = new ArrayList<> ();
-		for( RoboconfError error : errors ) {
+		// Do not show errors in tooling when the project version looks like "${project.version}"
+		// Only valid if the project is a Maven one.
+		String path = appDirectory.getAbsolutePath().replaceAll( "\\\\", "/" );
+		if( ! path.endsWith( "/" ) && Constants.MAVEN_SRC_MAIN_MODEL.endsWith( "/" ))
+			path += "/";
 
-			// We ignore this error if it looks like a Maven property.
-			if( error.getErrorCode() == ErrorCode.RM_INVALID_APPLICATION_VERSION
-					&& error.getDetails().length > 0
-					&& error.getDetails()[ 0 ].getElementName().matches( "^\\$\\{.*\\}\\S*" )) {
+		if( path.endsWith( Constants.MAVEN_SRC_MAIN_MODEL )
+				&& new File( appDirectory, "../../../pom.xml" ).exists()) {
 
-				errorstoRemove.add( error );
+			List<RoboconfError> errorsToRemove = new ArrayList<> ();
+			for( RoboconfError error : errors ) {
+
+				// We ignore this error if it looks like a Maven property.
+				if( error.getErrorCode() == ErrorCode.RM_INVALID_APPLICATION_VERSION
+						&& error.getDetails().length > 0
+						&& error.getDetails()[ 0 ].getElementName().matches( "^\\$\\{.*\\}\\S*" )) {
+
+					errorsToRemove.add( error );
+				}
 			}
-		}
 
-		errors.removeAll( errorstoRemove );
+			errors.removeAll( errorsToRemove );
+		}
 
 		// Eventually, sort everything
 		List<RoboconfError> errorsList = new ArrayList<>( errors );
 		Collections.sort( errorsList, new RoboconfErrorComparator());
 
-		return errorsList;
+		return new ProjectValidationResult( errorsList, alr, isRecipe );
+	}
+
+
+
+	/**
+	 * A wrapper class with all the errors and the validation context.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ProjectValidationResult {
+
+		private final List<RoboconfError> errors;
+		private final ApplicationLoadResult rawParsingResult;
+		private final boolean isRecipe;
+
+
+		/**
+		 * Constructor.
+		 * @param errors
+		 * @param rawParsingResult
+		 */
+		public ProjectValidationResult( List<RoboconfError> errors, ApplicationLoadResult rawParsingResult, boolean isRecipe ) {
+			this.errors = errors;
+			this.isRecipe = isRecipe;
+			this.rawParsingResult = rawParsingResult;
+		}
+
+		/**
+		 * @return the errors
+		 */
+		public List<RoboconfError> getErrors() {
+			return this.errors;
+		}
+
+		/**
+		 * @return the rawParsingResult
+		 */
+		public ApplicationLoadResult getRawParsingResult() {
+			return this.rawParsingResult;
+		}
+
+		/**
+		 * @return the isRecipe
+		 */
+		public boolean isRecipe() {
+			return this.isRecipe;
+		}
 	}
 }

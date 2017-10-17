@@ -180,6 +180,15 @@ public final class RuntimeModelValidator {
 		// A component cannot import variables it exports unless these imports are optional.
 		// This covers cluster uses cases (where an element may want to know where are the similar nodes).
 		Map<String,String> allExportedVariables = ComponentHelpers.findAllExportedVariables( component );
+
+		// Wildcard variables are not listed. We add them here for validation.
+		for( Component superType : ComponentHelpers.findAllExtendedComponents( component ))
+			allExportedVariables.put( superType.getName() + "." + Constants.WILDCARD, null );
+
+		for( Facet superFacet : ComponentHelpers.findAllFacets( component ))
+			allExportedVariables.put( superFacet.getName() + "." + Constants.WILDCARD, null );
+
+		// Let's match imports then.
 		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
 
 			String varName = var.getName();
