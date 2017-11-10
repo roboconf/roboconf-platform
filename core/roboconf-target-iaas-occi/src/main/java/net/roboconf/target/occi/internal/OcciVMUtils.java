@@ -40,12 +40,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
 
 /**
  * Utilitary class to create and manage VMs using OCCI.
@@ -78,9 +78,9 @@ public class OcciVMUtils {
 			Map<String,String> config )
 	throws TargetException {
 
-		//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
-		if(hostIpPort.contains("multi-language-connector")) {
-			return createCloudAutomationVM(hostIpPort, template, title, userData, config, false);
+		//TODO Expecting more interoperable implementation !
+		if(config.get(CloudautomationMixins.PROVIDER_ENDPOINT) != null) {
+			return createCloudAutomationVM(hostIpPort, id, template, title, summary, userData, config, false);
 		}
 
 		String ret = null;
@@ -204,9 +204,9 @@ public class OcciVMUtils {
 			boolean waitForActive )
 	throws TargetException {
 
-		//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
-		if(hostIpPort.contains("multi-language-connector")) {
-			return createCloudAutomationVM(hostIpPort, template, title, userData, config, false);
+		//TODO Expecting more interoperable implementation !
+		if(config.get(CloudautomationMixins.PROVIDER_ENDPOINT) != null) {
+			return createCloudAutomationVM(hostIpPort, id, template, title, summary, userData, config, false);
 		} else {
 
 			String vmId = null;
@@ -288,8 +288,6 @@ public class OcciVMUtils {
 				vmId = rsp.getId();
 
 				if(! Utils.isEmptyOrWhitespaces(vmId)) {
-					if(vmId.startsWith("urn:uuid:")) vmId = vmId.substring(9);
-
 					// Wait until VM is active, if requested
 					if(waitForActive) {
 						int retries = 15;
@@ -301,7 +299,7 @@ public class OcciVMUtils {
 							} catch (InterruptedException e) {
 								// ignore
 							}
-							active = !Utils.isEmptyOrWhitespaces(getVMIP(hostIpPort, vmId));
+							active = !Utils.isEmptyOrWhitespaces(getVMIP(hostIpPort + "/compute", vmId));
 							//active = "ACTIVE".equalsIgnoreCase(getVMStatus(hostIpPort, ret));
 						}
 					}
@@ -334,8 +332,10 @@ public class OcciVMUtils {
 	 */
 	public static String createCloudAutomationVM(
 			String hostIpPort,
+			String id,
 			String image,
 			String title,
+			String summary,
 			String userData,
 			Map<String,String> config,
 			boolean waitForActive )
@@ -345,7 +345,7 @@ public class OcciVMUtils {
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
-			url = new URL("http://" + hostIpPort + "/compute/");
+			url = new URL("http://" + hostIpPort + "/" + id);
 
 		} catch (MalformedURLException e) {
 			throw new TargetException(e);
@@ -356,12 +356,13 @@ public class OcciVMUtils {
 		DataOutputStream output = null;
 		try {
 			httpURLConnection = (HttpURLConnection) url.openConnection();
-			httpURLConnection.setRequestMethod("POST");
+			httpURLConnection.setRequestMethod("PUT");
 			httpURLConnection.setRequestProperty("Content-Type", "application/json");
 			httpURLConnection.setRequestProperty("Accept", "application/json");
 			httpURLConnection.setDoInput(true);
 			httpURLConnection.setDoOutput(true);
 
+			// user-data support using agent-side script (compatible with Roboconf VMWare plugin)
 			String userDataScript = "printf test > /tmp/roboconf.properties";
 			if(userData != null) {
 				userDataScript = "printf \'"
@@ -371,7 +372,7 @@ public class OcciVMUtils {
 						+ "\' > /tmp/roboconf.properties";
 			}
 
-			String request = "{\n"
+			/* String request = "{\n"
 					+ "\"attributes\": {\n"
 						+ "\"occi.entity.title\": \"" + title + "\",\n"
 						+ "\"vmimage\": {\n"
@@ -381,10 +382,39 @@ public class OcciVMUtils {
 						+ "\"user_data\": {\n"
 						+ "\"occi.compute.userdata\": \"" + userDataScript + "\",\n"
 						+ "\"occi.category.title\": \"scriptMixin\"\n"
-					+ "}\n}\n}";
+					+ "}\n}\n}";*/
+
+			String request = "{\n"
+					//+ "\"id\": \"" + id + "\",\n"
+					+ "\"title\": \"" + title + "\",\n"
+					+ "\"summary\": \"" + summary + "\",\n"
+					+ "\"kind\": \"http://org.occiware.cloudautomation#cloudautomationinstance\",\n"
+					+ "\"mixins\": ["
+					+ "\"http://org.occiware.cloudautomation#provider\",\n"
+					+ "\"http://org.occiware.cloudautomation#credentials\",\n"
+					+ "\"http://org.occiware.cloudautomation#instancetemplate\",\n"
+					+ "\"http://schemas.ogf.org/occi/infrastructure/credentials#ssh_key\",\n"
+					+ "\"http://schemas.ogf.org/occi/infrastructure/compute#user_data\"\n"
+					+ "],\n"
+					+ "\"attributes\": {\n"
+					//+ "\"occi.compute.state\": \"" + "active" + "\",\n"
+					//+ "\"occi.compute.speed\": " + 3 + ",\n"
+					//+ "\"occi.compute.memory\": " + 2 + ",\n"
+					//+ "\"occi.compute.cores\": " + 2 + ",\n"
+					//+ "\"occi.compute.architecture\": \"" + "x64" + "\",\n"
+					+ "\"" + CloudautomationMixins.IMAGENAME + "\": \"" + image + "\",\n"
+					+ "\"occi.credentials.ssh.publickey\": \"" + config.get("occi.credentials.ssh.publickey") + "\",\n"
+					+ "\"occi.compute.userdata\": \"" + userDataScript + "\",\n"
+					+ "\"" + CloudautomationMixins.PROVIDER_TYPE + "\": \"" + config.get(CloudautomationMixins.PROVIDER_TYPE) + "\",\n"
+					+ "\"" + CloudautomationMixins.PROVIDER_ENDPOINT + "\": \"" + config.get(CloudautomationMixins.PROVIDER_ENDPOINT) + "\",\n"
+					+ "\"" + CloudautomationMixins.PROVIDER_USERNAME + "\": \"" + config.get(CloudautomationMixins.PROVIDER_USERNAME) + "\",\n"
+					+ "\"" + CloudautomationMixins.PROVIDER_PASSWORD + "\": \"" + config.get(CloudautomationMixins.PROVIDER_PASSWORD) + "\",\n"
+					+ "\"" + CloudautomationMixins.CREDENTIALS_USERNAME + "\": \"" + config.get(CloudautomationMixins.CREDENTIALS_USERNAME) + "\",\n"
+					+ "\"" + CloudautomationMixins.CREDENTIALS_PASSWORD + "\": \"" + config.get(CloudautomationMixins.CREDENTIALS_PASSWORD) + "\"\n"
+					+ "}\n}";
 
 			final Logger logger = Logger.getLogger( OcciVMUtils.class.getName());
-			logger.finest(request);
+			logger.info(request);
 			httpURLConnection.setRequestProperty(
 					"Content-Length",
 					Integer.toString(request.getBytes( StandardCharsets.UTF_8 ).length));
@@ -404,21 +434,24 @@ public class OcciVMUtils {
 			JsonResponse rsp = objectMapper.readValue(out.toString( "UTF-8" ), JsonResponse.class);
 			vmId = rsp.getId();
 
-			// Wait until VM is active
-			if(waitForActive && !Utils.isEmptyOrWhitespaces(vmId)) {
-				int retries = 15;
-				boolean active = false;
-				while(! active && retries-- > 0) {
-					logger.finest("retry: " + retries);
-					try {
-						Thread.sleep(10000);  // 10 seconds
-					} catch (InterruptedException e) {
-						// ignore
+			if(! Utils.isEmptyOrWhitespaces(vmId)) {
+				// Wait until VM is active, if requested
+				if(waitForActive) {
+					int retries = 15;
+					boolean active = false;
+					while(! active && retries-- > 0) {
+						logger.finest("retry: " + retries);
+						try {
+							Thread.sleep(10000);  // 10 seconds
+						} catch (InterruptedException e) {
+							// ignore
+						}
+						active = !Utils.isEmptyOrWhitespaces(getVMIP(hostIpPort, id));
+						//active = "ACTIVE".equalsIgnoreCase(getVMStatus(hostIpPort, ret));
 					}
-					active = !Utils.isEmptyOrWhitespaces(getVMIP(hostIpPort, vmId));
-					//active = "ACTIVE".equalsIgnoreCase(getVMStatus(hostIpPort, ret));
 				}
 			}
+
 		} catch (IOException e) {
 			throw new TargetException(e);
 
@@ -430,7 +463,7 @@ public class OcciVMUtils {
 			}
 		}
 
-		return (vmId);
+		return (id);
 	}
 
 
@@ -443,6 +476,7 @@ public class OcciVMUtils {
 	 */
 	public static String getVMStatus(String hostIpPort, String id) throws TargetException {
 
+		if(id.startsWith("urn:uuid:")) id = id.substring(9);
 		String status = null;
 		URL url = null;
 		try {
@@ -490,16 +524,12 @@ public class OcciVMUtils {
 	 */
 	public static boolean deleteVM(String hostIpPort, String id) throws TargetException {
 
+		if(id.startsWith("urn:uuid:")) id = id.substring(9);
 		String ret = null;
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
-			//TODO This is a HACK for CloudAutomation APIs. Expecting interoperable implementation !
-			if(hostIpPort.contains("multi-language-connector")) {
-				url = new URL("http://" + hostIpPort + "/compute/" + id);
-			} else {
-				url = new URL("http://" + hostIpPort + "/" + id);
-			}
+			url = new URL("http://" + hostIpPort + "/" + id);
 		} catch (MalformedURLException e) {
 			throw new TargetException(e);
 		}
@@ -539,11 +569,13 @@ public class OcciVMUtils {
 	 */
 	public static String getVMIP(String hostIpPort, String id) throws TargetException {
 
+		//TODO Expecting more interoperable implem... /compute/urn:uuid:ID for Scalair, /ID for CA !
+		if(! hostIpPort.endsWith("/compute") && id.startsWith("urn:uuid:")) id = id.substring(9);
 		String vmIp = null;
 		URL url = null;
 		try {
 			CookieHandler.setDefault(new CookieManager(null, CookiePolicy.ACCEPT_ALL));
-			url = new URL("http://" + hostIpPort + "/compute/" + id);
+			url = new URL("http://" + hostIpPort + "/" + id);
 		} catch (MalformedURLException e) {
 			throw new TargetException(e);
 		}
@@ -564,6 +596,8 @@ public class OcciVMUtils {
 			JsonResponse rsp = objectMapper.readValue(out.toString( "UTF-8" ), JsonResponse.class);
 			vmIp = rsp.getHostsystemname();
 			if(Utils.isEmptyOrWhitespaces(vmIp)) vmIp = rsp.getHostname();
+			if(Utils.isEmptyOrWhitespaces(vmIp) && rsp.getAttributes() != null)
+				vmIp = rsp.getAttributes().getHostname();
 
 		} catch (IOException e) {
 			throw new TargetException(e);
@@ -587,9 +621,7 @@ public class OcciVMUtils {
 	 */
 	public static boolean isVMRunning(String hostIpPort, String id)
 	throws TargetException {
-
 		boolean result = false;
-
 		String ip = OcciVMUtils.getVMIP(hostIpPort, id);
 		try {
 			InetAddress inet = InetAddress.getByName(ip);
@@ -610,15 +642,8 @@ public class OcciVMUtils {
 	 * @param args
 	 * @throws InterruptedException
 	 */
-	/*
+/*
 	public static void main(String[] args) throws Exception {
-
-		//String id = createCloudAutomationVM("81.200.35.140:8080/multi-language-connector/occi", "aab7ea48-0585-44b2-afd4-19e99b6581e7", "testCAjava", true);
-		//System.out.println("Created VM on CA:" + id);
-
-		//System.out.println("VM IP:" + getVMIP("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
-		//System.out.println("VM status:" + getVMStatus("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
-		//System.out.println("Delete VM: " + deleteVM("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
 
 		java.util.Properties p = new java.util.Properties();
 		p.setProperty("key1", "value1");
@@ -628,17 +653,39 @@ public class OcciVMUtils {
 		java.io.StringWriter writer = new java.io.StringWriter();
 		p.store( writer, "" );
 		String s = writer.toString();
-		//System.out.println(s);
+		System.out.println(s);
 		String userdata = s.replaceAll("\n\r", "\\\\n")
 				.replaceAll("\n", "\\\\n")
 				.replaceAll(System.lineSeparator(), "\\\\n");
-		System.out.println(userdata);
+		//System.out.println(userdata);
 
-		System.out.println("Create VM (JSON): " +
-				createVMJson("172.16.225.80:8080", "6157c4d2-08b3-4204-be85-d1828df74c25", "RoboconfAgentOcciware090117", "javaTest", "Java Test", userdata, "ubuntu", "ubuntu", null, false));
+		//Map<String, String> config = new java.util.HashMap<>();
+          //      config.put(VmwareFoldersMixin.DATACENTERNAME, "Production");
+          //    config.put(VmwareFoldersMixin.DATASTORENAME, "LUN_SAS_2_1");
+          //    config.put(VmwareFoldersMixin.CLUSTERNAME, "OCCIWARE");
+          //    config.put(VmwareFoldersMixin.HOSTSYSTEMNAME, "172.16.225.211");
+          //    config.put(VmwareFoldersMixin.INVENTORYPATH, "/LINAGORA");
 
+		//System.out.println("Create VM (JSON): " +
+			// createVMJson("172.16.225.80:8080", "6157c4d2-08b3-4204-be85-d1828df74c25", "RoboconfAgentOcciware090117", "javaTest", "Java Test", userdata, "ubuntu", "ubuntu", config, false));
+
+		Map<String, String> configCA = new java.util.HashMap<>();
+		configCA.put(CloudautomationMixins.PROVIDER_ENDPOINT, "http://devstack-occi.scalair.io:5000/v2.0/");
+		configCA.put(CloudautomationMixins.PROVIDER_TYPE, "openstack-nova");
+		configCA.put(CloudautomationMixins.PROVIDER_USERNAME, "Pierre");
+		configCA.put(CloudautomationMixins.PROVIDER_PASSWORD, "pLinagora");
+		configCA.put(CloudautomationMixins.CREDENTIALS_USERNAME, "gibello");
+		configCA.put(CloudautomationMixins.CREDENTIALS_PASSWORD, "linagora");
+
+		//System.out.println("Create VM (CA / JSON): " +
+		//createCloudAutomationVM("localhost:8080", "mycompute", "29ef46ad-ba95-48ec-925a-82589b4595bb", "javaTest", "Java Test", userdata, configCA, false));
 		//System.out.println("IP: " + getVMIP("172.16.225.80:8080", "6157c4d2-08b3-4204-be85-d1828df74c25"));
 		// curl -v -X DELETE http://172.16.225.80:8080/6157c4d2-08b3-4204-be85-d1828df74c25
+
+		//System.out.println("VM IP:" + getVMIP("localhost:8080", "mycompute"));
+		//System.out.println("VM status:" + getVMStatus("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
+		System.out.println("Delete VM: " + deleteVM("localhost:8080", "mycompute"));
+
 		System.exit(0);
 
 		//System.out.println("Create VM: " +
@@ -653,7 +700,8 @@ public class OcciVMUtils {
 		//System.out.println("Delete VM: " + deleteVM("81.200.35.151:8080", "8e0cb600-4478-4687-9fa4-135f5985efdf"));
 		//System.out.println("Delete VM: " + deleteVM("172.16.225.91:8080", "6157c4d2-08b3-4204-be85-d1828df74c22"));
 	}
-	*/
+*/
+
 }
 
 
@@ -670,7 +718,8 @@ class JsonResponse {
 	private String hostname;
 	@JsonProperty("occi.compute.state")
 	private String state;
-
+	@JsonProperty("attributes")
+	private Attributes attributes;
 
 	public String getId() {
 		return this.id;
@@ -695,5 +744,28 @@ class JsonResponse {
 	}
 	public void setState(String state) {
 		this.state = state;
+	}
+	public Attributes getAttributes() {
+		return attributes;
+	}
+	public void setAttributes(Attributes attributes) {
+		this.attributes = attributes;
+	}
+}
+
+/**
+ * Bean for (nested) JSON parsing (Jackson ObjectMapper).
+ * @author Pierre-Yves Gibello - Linagora
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+class Attributes {
+	@JsonProperty("occi.compute.hostname")
+	private String hostname;
+
+	public String getHostname() {
+		return this.hostname;
+	}
+	public void setHostname(String hostname) {
+		this.hostname = hostname;
 	}
 }

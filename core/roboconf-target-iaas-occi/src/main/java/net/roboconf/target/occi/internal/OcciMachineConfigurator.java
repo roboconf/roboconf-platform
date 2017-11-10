@@ -93,8 +93,10 @@ public class OcciMachineConfigurator implements MachineConfigurator {
 
 			// Is the VM up?
 			if(this.state == State.STARTING_VM) {
+				// TODO remove next line when APIs get compatible...
+				String postfix = (targetProperties.get(CloudautomationMixins.PROVIDER_ENDPOINT) != null ? "" : "/compute");
 				if(OcciVMUtils.isVMRunning(
-						targetProperties.get(OcciIaasHandler.SERVER_IP_PORT), machineId)) {
+						targetProperties.get(OcciIaasHandler.SERVER_IP_PORT) + postfix, machineId)) {
 					this.state = State.RUNNING_VM;
 				}
 			}
