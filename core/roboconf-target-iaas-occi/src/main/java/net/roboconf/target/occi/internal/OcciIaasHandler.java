@@ -51,6 +51,7 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	static final String USER = "occi.user";
 	static final String PASSWORD = "occi.password";
 	static final String RENDERING = "occi.rendering"; // http or json, default http
+	static final String BACKEND = "occi.backend"; // Backend IaaS (eg. "vmware" or "openstack")
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -155,7 +156,9 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public boolean isMachineRunning( TargetHandlerParameters parameters, String machineId )
 	throws TargetException {
-		return OcciVMUtils.isVMRunning(parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
+		// TODO remove next line when APIs get compatible...
+		String postfix = (parameters.getTargetProperties().get(CloudautomationMixins.PROVIDER_ENDPOINT) != null ? "" : "/compute");
+		return OcciVMUtils.isVMRunning(parameters.getTargetProperties().get(SERVER_IP_PORT) + postfix, machineId);
 	}
 
 
@@ -167,7 +170,9 @@ public class OcciIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public void terminateMachine( TargetHandlerParameters parameters, String machineId ) throws TargetException {
 		try {
-			OcciVMUtils.deleteVM( parameters.getTargetProperties().get(SERVER_IP_PORT), machineId);
+			// TODO remove next line when APIs get compatible...
+			String postfix = (parameters.getTargetProperties().get(CloudautomationMixins.PROVIDER_ENDPOINT) != null ? "" : "/compute");
+			OcciVMUtils.deleteVM( parameters.getTargetProperties().get(SERVER_IP_PORT) + postfix, machineId);
 		} catch(TargetException ignore) {
 			//ignore
 		}
