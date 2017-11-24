@@ -53,6 +53,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class OcciVMUtils {
 
+	static int vmCount = 0;
+
 	/**
 	 * Creates a VM (OCCI / VMWare) using HTTP rendering.
 	 * @param hostIpPort IP and port of OCCI server (eg. "172.16.225.91:8080")
@@ -77,6 +79,9 @@ public class OcciVMUtils {
 			String password,
 			Map<String,String> config )
 	throws TargetException {
+
+		// Count VM creations (+ make title unique, it is used as VM ID by VMWare !)
+		String uniqueTitle = title + (++vmCount);
 
 		//TODO Expecting more interoperable implementation !
 		if(config.get(CloudautomationMixins.PROVIDER_ENDPOINT) != null) {
@@ -118,7 +123,7 @@ public class OcciVMUtils {
 			httpURLConnection.addRequestProperty("X-OCCI-Attribute",
 					"occi.core.id=\"" + id + "\"");
 			httpURLConnection.addRequestProperty("X-OCCI-Attribute",
-					"occi.core.title=\"" + title + "\"");
+					"occi.core.title=\"" + uniqueTitle + "\"");
 			httpURLConnection.addRequestProperty("X-OCCI-Attribute",
 					"occi.core.summary=\"" + summary + "\"");
 			httpURLConnection.addRequestProperty("X-OCCI-Attribute",
@@ -204,6 +209,9 @@ public class OcciVMUtils {
 			boolean waitForActive )
 	throws TargetException {
 
+		// Count VM creations (+ make title unique, it is used as VM ID by VMWare !)
+		String uniqueTitle = title + (++vmCount);
+
 		//TODO Expecting more interoperable implementation !
 		if(config.get(CloudautomationMixins.PROVIDER_ENDPOINT) != null) {
 			return createCloudAutomationVM(hostIpPort, id, template, title, summary, userData, config, false);
@@ -239,7 +247,7 @@ public class OcciVMUtils {
 
 				String request = "{\n"
 						+ "\"id\": \"" + id + "\",\n"
-						+ "\"title\": \"" + title + "\",\n"
+						+ "\"title\": \"" + uniqueTitle + "\",\n"
 						+ "\"summary\": \"" + summary + "\",\n"
 						+ "\"kind\": \"http://schemas.ogf.org/occi/infrastructure#compute\",\n"
 						+ "\"mixins\": ["
