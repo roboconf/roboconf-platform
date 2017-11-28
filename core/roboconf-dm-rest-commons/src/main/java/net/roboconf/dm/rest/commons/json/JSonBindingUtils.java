@@ -1162,6 +1162,15 @@ public final class JSonBindingUtils {
 				instance.setComponent( instanceComponent );
 			}
 
+			// Add all the data (IP address, etc)
+			if(( n = node.get( INST_DATA )) != null ) {
+				for( Iterator<String> it = n.fieldNames(); it.hasNext(); ) {
+					String fieldName = it.next();
+					JsonNode dataNode = n.get( fieldName );
+					instance.data.put( fieldName, dataNode.asText());
+				}
+			}
+
 			// Add meta-data
 			if(( n = node.get( PATH )) != null ) {
 				instance.data.put( AT_INSTANCE_PATH, n.textValue());
