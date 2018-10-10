@@ -753,8 +753,16 @@ public class JSonBindingUtilsTest {
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, inst );
 		String s = writer.toString();
-
 		Assert.assertEquals( result, s );
+
+		Instance readInst = mapper.readValue( result, Instance.class );
+		Assert.assertEquals( inst.getName(), readInst.getName());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, readInst.getStatus());
+		Assert.assertEquals( inst.channels, readInst.channels );
+		Assert.assertEquals( "/instance", readInst.data.get( AT_INSTANCE_PATH ));
+
+		readInst.data.remove( AT_INSTANCE_PATH );
+		Assert.assertEquals( inst.data, readInst.data );
 	}
 
 
