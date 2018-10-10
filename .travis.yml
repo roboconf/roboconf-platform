@@ -7,6 +7,18 @@ sudo: false
 install: true
 
 
+# Use our own version of Maven
+cache:
+  directories:
+    - "$HOME/.m2/repository"
+    - "$HOME/apache-maven-3.5.4"
+
+before_install:
+  - export M2_HOME=$HOME/apache-maven-3.5.4
+  - if [ ! -d $M2_HOME/bin ]; then curl https://archive.apache.org/dist/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.tar.gz | tar zxf - -C $HOME; fi
+  - export PATH=$M2_HOME/bin:$PATH
+
+
 # Global ENV variables (shared by all the items in the build matrix).
 env:
   global:
