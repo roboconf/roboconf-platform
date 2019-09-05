@@ -51,15 +51,15 @@ env:
 #
 matrix:
   include:
-    - jdk: oraclejdk8
-      env: BUILD_CMD="mvn clean install -q -Droboconf.javadoc.check"
+#    - jdk: oraclejdk8
+#      env: BUILD_CMD="mvn clean install -q -Droboconf.javadoc.check"
+#    - jdk: openjdk8
+#      env: BUILD_CMD="mvn clean install -q"
     - jdk: openjdk8
-      env: BUILD_CMD="mvn clean install -q"
-    - jdk: openjdk7
       env: BUILD_CMD='( [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && wget http://roboconf.net/resources/build/settings.xml && mvn clean deploy cobertura:cobertura coveralls:report -q --settings settings.xml ) || mvn clean install -q'
-    - jdk: openjdk7
+    - jdk: openjdk8
       env: BUILD_CMD="mvn clean install -q -DskipTests && mvn versions:update-child-modules -DgenerateBackupPoms=false -DallowSnapshots=true -P it-all && mvn install -q -P it-dm-agent -rf :roboconf-integration-tests-commons"
-    - jdk: openjdk7
+    - jdk: openjdk8
       env: BUILD_CMD="mvn clean install -q -DskipTests && mvn versions:update-child-modules -DgenerateBackupPoms=false -DallowSnapshots=true -P it-all && mvn install -q -P it-agents-in-memory -rf :roboconf-integration-tests-commons"
 
 
