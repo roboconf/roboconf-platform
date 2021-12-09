@@ -43,7 +43,7 @@
 	<!-- Properties and other things... -->
 	<properties>
 		<jersey.stack.version>1.18.2</jersey.stack.version>
-		<jackson.stack.version>2.3.1</jackson.stack.version>
+		<jackson.stack.version>2.9.10.8</jackson.stack.version>
 		<karaf.version>4.0.9</karaf.version>
 		<ipojo.version>1.12.1</ipojo.version>
 		<jclouds.version>1.8.1</jclouds.version>
