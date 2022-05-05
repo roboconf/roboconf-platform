@@ -26,17 +26,17 @@ Roboconf handles application life cycle: hot reconfiguration (e.g. for elasticit
 The global idea is to apply to applications the concepts used in component technologies like OSGi. Roboconf achieves this in a non-intrusive
 way, so that it can work with legacy Software.
 
-<img src="http://roboconf.net/resources/img/roboconf-workflow.png" alt="Roboconf's workflow" style="max-width: 400px;" />
+<img src="https://roboconf.github.io/resources/img/roboconf-workflow.png" alt="Roboconf's workflow" style="max-width: 400px;" />
 
 Application parts use the message queue to communicate and take the appropriate actions depending on what is deployed or started.
 These *appropriate* actions are executed by plug-ins (such as bash or [Puppet](http://puppetlabs.com)). 
 
-<img src="http://roboconf.net/resources/img/roboconf-architecture-example.jpg" alt="Roboconf's architecture" style="max-width: 400px;" />
+<img src="https://roboconf.github.io/resources/img/roboconf-architecture-example.jpg" alt="Roboconf's architecture" style="max-width: 400px;" />
 
 Roboconf is distributed technology, based on AMQP 
 and REST / JSon. It is IaaS-agnostic, and supports many well-known IaaS (including OpenStack, Amazon Web Services, Microsoft Azure, VMWare, 
 as well as a "local" deployment plug-in for on-premise hosts).
 
-More information and tutorials are available on the [web site](http://roboconf.net).  
-Build instructions can be found [here](http://roboconf.net/en/sources.html).  
+More information and tutorials are available on the [web site](https://roboconf.github.io).  
+Build instructions can be found [here](https://roboconf.github.io/en/sources.html).  
 Roboconf is licensed under the terms of the **Apache License v2**.
