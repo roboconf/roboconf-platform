@@ -54,7 +54,7 @@
 		<pax.exam.version>4.9.1</pax.exam.version>
 		<pax.url.aether.version>2.4.5</pax.url.aether.version>
 		<pax.jdbc.version>1.1.0</pax.jdbc.version>
-		<bouncy.castle.version>1.56</bouncy.castle.version>
+		<bouncy.castle.version>1.67</bouncy.castle.version>
 		
 		<!-- To update on every release -->
 		<version.range>[${project.version},0.11)</version.range>
